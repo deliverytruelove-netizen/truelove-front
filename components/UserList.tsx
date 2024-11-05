@@ -10,6 +10,7 @@ import { DEFAULT_PAGE_SIZE } from '@/config/constanst';
 import { FaPlus } from 'react-icons/fa';
 import ConfirmationAlert from '@/components/ui/DataTable/ConfirmationAlert';
 import { showAlert } from '@/components/ui/DataTable/Alert';
+import UserModal from '@/components/ui/UserModal';
 
 const UserList: React.FC = () => {
     const queryClient = useQueryClient();
@@ -31,7 +32,7 @@ const UserList: React.FC = () => {
         mutationFn: changeStateUser,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
-            showAlert({ title: 'Éxito', text: 'Se cambió el estado del usuario.', icon: 'success' });
+            showAlert({ title: 'Éxito', text: 'Se cambio el estado del usuario.', icon: 'success' });
         },
         onError: (error: any) => {
             showAlert({ title: 'Error', text: error.message, icon: 'error' });
@@ -48,7 +49,6 @@ const UserList: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             showAlert({ title: 'Éxito', text: 'Usuario creado exitosamente.', icon: 'success' });
             setIsModalOpen(false);
-            setNewUser({ name: '', email: '', usuario: '', password: '' }); // Limpiar inputs después de crear usuario
         },
         onError: (error: any) => {
             showAlert({ title: 'Error', text: error.message, icon: 'error' });
@@ -86,99 +86,49 @@ const UserList: React.FC = () => {
             ),
         },
         {
-            accessorKey: 'action',
+            accessorKey: 'action', // Columna para el botón de desactivar
             header: () => <span className="m-auto">Acciones</span>,
             cell: ({ row }) => (
                 <ConfirmationAlert
                     title="¿Estás seguro?"
                     text="¡No podrás revertir esto!"
-                    onConfirm={() => handleDeactivate(row.original.id)}
+                    onConfirm={() => handleDeactivate(row.original.id)} // Maneja la desactivación
                 />
             ),
         },
     ];
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setNewUser({ name: '', email: '', usuario: '', password: '' }); // Limpiar inputs al cerrar modal
-    };
-
     return (
         <Section title="Listado de Usuarios">
+            {/* Input de búsqueda */}
             <div className="flex md:justify-end items-center px-2 lg:px-5 py-4">
                 <DebounceInput
                     type="text"
                     placeholder="Buscar..."
-                    className="border rounded w-100 outline-primary-400 py-2 px-3 mr-2"
+                    className="border rounded w-100 outline-primary-400 py-2 px-3 mr-2" // Añadido 'mr-2' para el margen a la derecha
                     value={globalFilter}
-                    onChange={(value) => setGlobalFilter(value)}
+                    onChange={(value) => setGlobalFilter(value)} // Actualiza el filtro global
                 />
                 <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
+                    title="Clic aquí para deshabilitar"
                     className="bg-primary-400 text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-primary-500/90 transition-all s3-button">
                     <FaPlus style={{ color: 'white', fontSize: '24px' }} />
                     Crear Usuario
                 </button>
             </div>
-            {isModalOpen && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-                    style={{ zIndex: 1050 }}
-                >
-                    <div className="bg-white p-6 rounded shadow-lg w-80 relative z-50">
-                        <h2 className="text-xl text-black font-semibold mb-4">Crear Usuario</h2>
-                        <input
-                            type="text"
-                            name="name"
-                            placeholder="Nombre"
-                            value={newUser.name}
-                            onChange={handleInputChange}
-                            className="w-full mb-3 px-3 py-2 border rounded text-black"
-                        />
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="Correo"
-                            value={newUser.email}
-                            onChange={handleInputChange}
-                            className="w-full mb-3 px-3 py-2 border rounded text-black"
-                        />
-                        <input
-                            type="text"
-                            name="usuario"
-                            placeholder="Usuario"
-                            value={newUser.usuario}
-                            onChange={handleInputChange}
-                            className="w-full mb-3 px-3 py-2 border rounded text-black"
-                        />
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="Clave"
-                            value={newUser.password}
-                            onChange={handleInputChange}
-                            className="w-full mb-3 px-3 py-2 border rounded text-black"
-                        />
-                        <div className="flex justify-end">
-                            <button
-                                onClick={handleCloseModal}
-                                className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCreateUser}
-                                className="bg-primary-400 text-white px-4 py-2 rounded"
-                            >
-                                Crear
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal para crear usuario */}
+            <UserModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                newUser={newUser}
+                onChange={handleInputChange}
+                onCreateUser={handleCreateUser}
+            />
 
             <div className="items-center m-auto text-center">
+                {/* Componente DataTable que recibe las columnas, datos, filtro y estado de carga */}
                 <DataTable
                     columns={columns}
                     data={users}
