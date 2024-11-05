@@ -1,36 +1,41 @@
+"use client"
+import { motion, useScroll } from "framer-motion"; // Importar Framer Motion
 import Image from "next/image";
-<<<<<<< HEAD
-
-import HomePage from "@/components/HomePage"
+import HomePage from "@/components/HomePage";
 import Footer from "@/components/Footer";
-
-import AboutContent from '@/components/AboutContent'
+import AboutContent from "@/components/AboutContent";
 import About from "@/components/About";
 import DeliveryAboutUs from "@/components/DeliveryAbout";
-=======
-import Navbar from "@/components/Navbar";
-import HomePage from "@/components/HomePage"
-import Footer from "@/components/Footer";
->>>>>>> 5ab54bc479f1f03d2f4bb12a0b68cf1f441938a8
+
 export default function Home() {
+  const { scrollYProgress } = useScroll(); // Hook para obtener el progreso de scroll
+
   return (
-   <>
-   <main>
-<<<<<<< HEAD
-  
-    <div>
-      <HomePage/>
-      <AboutContent/>
-      <About/>
-      <DeliveryAboutUs/>
-=======
-    <Navbar/>
-    <div>
-      <HomePage/>
->>>>>>> 5ab54bc479f1f03d2f4bb12a0b68cf1f441938a8
-    </div>
-    <Footer />
-   </main>
-   </>
+    <>
+      {/* Barra de progreso de scroll */}
+      <motion.div
+        style={{
+          scaleX: scrollYProgress,
+          backgroundColor: "red",
+          height: "6px",
+          width: "100%",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          transformOrigin: "0 0",
+          zIndex: 50,
+        }}
+      />
+
+      <main>
+        <div>
+          <HomePage />
+          <AboutContent />
+          <About />
+          <DeliveryAboutUs />
+        </div>
+        <Footer />
+      </main>
+    </>
   );
 }
