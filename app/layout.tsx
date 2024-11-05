@@ -1,7 +1,7 @@
 "use client"; // Asegúrate de incluir esta línea
 
 import localFont from "next/font/local";
-import Navbar from "@/src/components/Navbar";
+import Navbar from "@/components/Navbar";
 import "./globals.css";
 import { usePathname } from "next/navigation"; 
 import { metadata } from "./metadata"; // Asegúrate de que esta ruta sea correcta
@@ -32,7 +32,7 @@ export default function RootLayout({
         <meta name="description" content={metadata.description} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {pathname === "/login" ? null : <Navbar />} {/* Condición para mostrar el Navbar */}
+        {pathname === "/admin/login" ? null : <Navbar />} {/* Condición para mostrar el Navbar */}
         {children}
       </body>
     </html>

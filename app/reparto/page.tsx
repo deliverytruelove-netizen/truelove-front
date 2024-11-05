@@ -5,7 +5,7 @@ import Logo from "@/public/logo.png";
 import image from "@/src/assets/img/image.png";
 import img from "@/src/assets/img/image2.jpeg";
 
-import Footer from "@/src/components/Footer";
+import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 // import ParticlesBackground from "@/components/ParticlesBackground";
 

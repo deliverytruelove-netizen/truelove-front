@@ -6,9 +6,9 @@ import Image from "next/image";
 import { Menu } from "lucide-react";
 import Logotipo from '@/src/assets/img/logotipo.png'; 
 
-import { Button } from "@/src/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/src/components/ui/sheet";
-import { DialogTitle } from "@/src/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DialogTitle } from "@/components/ui/dialog";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -36,7 +36,7 @@ export default function Navbar() {
 
           <div className="flex items-center space-x-4">
             <Button asChild variant="default" className="bg-[#f34739] text-white hover:bg-[#d63c30]">
-              <Link href="/login">Iniciar Sesión</Link>
+              <Link href="/admin/login">Iniciar Sesión</Link>
             </Button>
 
             <Sheet open={isOpen} onOpenChange={setIsOpen}>

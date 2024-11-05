@@ -1,11 +1,11 @@
 import Image from "next/image";
 
-import HomePage from "@/src/components/HomePage"
-import Footer from "@/src/components/Footer";
+import HomePage from "@/components/HomePage"
+import Footer from "@/components/Footer";
 
-import AboutContent from '@/src/components/AboutContent'
-import About from "@/src/components/About";
-import DeliveryAboutUs from "@/src/components/DeliveryAbout";
+import AboutContent from '@/components/AboutContent'
+import About from "@/components/About";
+import DeliveryAboutUs from "@/components/DeliveryAbout";
 export default function Home() {
   return (
    <>
