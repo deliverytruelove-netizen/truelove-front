@@ -1,45 +1,17 @@
 "use client";
-import React, { useState } from 'react';
-import styles from '../styles/Login.module.css';
-import { postData } from '../../services/apiService';
-import Swal from 'sweetalert2';
 
+import React from 'react';
+import styles from './styles/Login.module.css';
+import { useLoginForm } from './useLoginForm';
 
-export default function LoginPage() {
-    const [formData, setFormData] = useState({ username: '', password: '' });
-    const [showPassword, setShowPassword] = useState(false); // Estado para manejar la visibilidad de la contraseña
-
-    const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword); // Cambiar el estado al hacer clic
-    };
-
-    const handleChange = (e: { target: { name: any; value: any; }; }) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
-
-    const handleSubmit = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        try {
-            const response = await postData({ endpoint: 'user/auth', data: formData });
-
-            // Manejar la respuesta de éxito, como redirigir a otra página
-            Swal.fire({
-                icon: 'success',
-                title: 'Éxito',
-                text: '¡Has iniciado sesión correctamente!',
-            });
-            console.log('Respuesta de la API:', response);
-            // Redireccionar o realizar otra acción después de un inicio de sesión exitoso
-        } catch (error) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Ocurrió un error al enviar el formulario.',
-            });
-        }
-    };
-
+const LoginPage: React.FC = () => {
+    const {
+        formData,
+        showPassword,
+        togglePasswordVisibility,
+        handleChange,
+        handleSubmit,
+    } = useLoginForm();
 
     return (
         <div className={styles.container}>
@@ -84,11 +56,11 @@ export default function LoginPage() {
                             <h3 className={styles.loginTitle}>Inicia sesión con tu usuario</h3>
                             <div className={styles.cotainerInput}>
                                 <div className="mb-6">
-                                    <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-black">Email address</label>
+                                    <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-black">Usuario</label>
                                     <input className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-white dark:border-gray-600 dark:placeholder-gray-400 dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="usuario"
                                         type="text"
-                                        name="username"
-                                        value={formData.username}
+                                        name="usuario"
+                                        value={formData.usuario}
                                         onChange={handleChange}
                                         required />
                                 </div>
@@ -140,4 +112,6 @@ export default function LoginPage() {
             </div>
         </div>
     );
-}
+};
+
+export default LoginPage;
