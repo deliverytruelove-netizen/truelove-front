@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-inter), var(--font-roboto-mono);
+  }
+}
