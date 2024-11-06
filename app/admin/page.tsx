@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
                         <div className={styles.authentication}>
                             <div className={styles.containerImg}>
                             <Image 
-                                    src="/food.svg" 
+                                    src="./food.svg" 
                                     alt="Store Icon" 
                                     className={styles.icon} 
                                     width={800} // Ajusta el ancho de la imagen
