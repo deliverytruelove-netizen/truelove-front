@@ -1,5 +1,5 @@
 import { rankItem } from '@tanstack/match-sorter-utils'
-import { type FilterFnOption, type Row } from '@tanstack/react-table'
+import {type Row } from '@tanstack/react-table'
 
 /**
  * Filter records
