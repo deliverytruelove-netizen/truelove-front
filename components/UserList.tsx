@@ -5,7 +5,7 @@ import { fetchUsers, changeStateUser, createUser } from '../app/admin/usuarios/s
 import DataTable from '@/components/ui/DataTable/DataTable';
 import { DebounceInput } from '@/components/ui/DataTable/DebounceInput';
 import { User } from '../app/admin/usuarios/types/User.types';
-import { ColumnSort, ColumnDef } from '@tanstack/react-table';
+import { ColumnSort, ColumnDef, Row } from '@tanstack/react-table';
 import { DEFAULT_PAGE_SIZE } from '@/config/constanst';
 import { FaPlus } from 'react-icons/fa';
 import ConfirmationAlert from '@/components/ui/DataTable/ConfirmationAlert';
@@ -34,8 +34,10 @@ const UserList: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             showAlert({ title: 'Éxito', text: 'Se cambio el estado del usuario.', icon: 'success' });
         },
-        onError: (error: any) => {
-            showAlert({ title: 'Error', text: error.message, icon: 'error' });
+        onError: (error: unknown) => {
+            if (error instanceof Error) {
+                showAlert({ title: 'Error', text: error.message, icon: 'error' });
+            }
         },
     });
 
@@ -50,8 +52,10 @@ const UserList: React.FC = () => {
             showAlert({ title: 'Éxito', text: 'Usuario creado exitosamente.', icon: 'success' });
             setIsModalOpen(false);
         },
-        onError: (error: any) => {
-            showAlert({ title: 'Error', text: error.message, icon: 'error' });
+        onError: (error: unknown) => {
+            if (error instanceof Error) {
+                showAlert({ title: 'Error', text: error.message, icon: 'error' });
+            }
         },
     });
 
@@ -76,19 +80,19 @@ const UserList: React.FC = () => {
         {
             accessorKey: 'created_at',
             header: () => <span className="m-auto">Fecha de Creación</span>,
-            cell: ({ row }) => formatDate(row.getValue('created_at')) // Formatear la fecha
+            cell: ({ row }: { row: Row<User> }) => formatDate(row.getValue('created_at') as string) // Formatear la fecha
         },
         {
             accessorKey: 'estado',
             header: () => <span className="m-auto">Estado</span>,
-            cell: ({ row }) => (
+            cell: ({ row }: { row: Row<User> }) => (
                 <span>{row.getValue('estado') === 1 ? 'Activo' : 'Inactivo'}</span>
             ),
         },
         {
             accessorKey: 'action', // Columna para el botón de desactivar
             header: () => <span className="m-auto">Acciones</span>,
-            cell: ({ row }) => (
+            cell: ({ row }: { row: Row<User> }) => (
                 <ConfirmationAlert
                     title="¿Estás seguro?"
                     text="¡No podrás revertir esto!"

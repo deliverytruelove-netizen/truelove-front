@@ -10,32 +10,32 @@ import {
   type ColumnDef,
   type SortingState,
   type PaginationState,
-  type RowSelectionState
-} from '@tanstack/react-table'
+  type RowSelectionState,
+  type Row  // Agrega esta importación
+} from '@tanstack/react-table';
 import classNames from 'classnames'
 import { MainTable } from './MainTable'
 import Pagination from './Pagination'
 import { filterRecords } from './utils'
 import { useEffect, useState } from 'react'
 
-interface Props {
-  columns: Array<ColumnDef<any, any>>
-  data: any[]
-  globalFilter: string
-  loading?: boolean
-  setSorting: React.Dispatch<React.SetStateAction<SortingState>>
-  setPagination: React.Dispatch<React.SetStateAction<PaginationState>>
-  sorting: SortingState
-  pagination: PaginationState
-  getRowId?: any
-  state?: any
-  setSelectedRowsParent?: React.Dispatch<
-    React.SetStateAction<Array<Record<string, any>>>
-  >
-  height?: number
+interface Props<T> {
+  columns: Array<ColumnDef<T, unknown>>;
+  data: T[];
+  globalFilter: string;
+  loading?: boolean;
+  setSorting: React.Dispatch<React.SetStateAction<SortingState>>;
+  setPagination: React.Dispatch<React.SetStateAction<PaginationState>>;
+  sorting: SortingState;
+  pagination: PaginationState;
+  getRowId?: (originalRow: T, index: number, parent?: Row<T> | undefined) => string;
+  state?: unknown;
+  setSelectedRowsParent?: React.Dispatch<React.SetStateAction<Array<T>>>;
+  height?: number;
 }
 
-const DataTable: React.FC<Props> = ({
+
+const DataTable = <T,>({
   columns,
   data,
   globalFilter,
@@ -48,8 +48,8 @@ const DataTable: React.FC<Props> = ({
   state,
   setSelectedRowsParent,
   height = undefined
-}) => {
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+}: Props<T>) => {
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const table = useReactTable({
     data,
@@ -66,7 +66,9 @@ const DataTable: React.FC<Props> = ({
     },
     manualSorting: true,
     manualPagination: true,
-    getRowId,
+    getRowId: getRowId
+      ? (originalRow, index, parent) => String(getRowId(originalRow, index, parent))
+      : undefined,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -76,24 +78,21 @@ const DataTable: React.FC<Props> = ({
     onPaginationChange: setPagination,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection
-  })
+  });
 
   useEffect(() => {
     const handleSelectionState = (selections: RowSelectionState): void => {
       if (setSelectedRowsParent) {
-        setSelectedRowsParent((prev: any[]) =>
-          Object.keys(selections).map(
-            (key) =>
-              table.getSelectedRowModel().rowsById[key]?.original ||
-              prev.find((row) => row.pkAtencion === key)
+        setSelectedRowsParent((prev) =>
+          Object.keys(selections).map((key) =>
+            table.getSelectedRowModel().rowsById[key]?.original as T
           )
-        )
+        );
       }
-    }
+    };
 
-    handleSelectionState(rowSelection)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowSelection])
+    handleSelectionState(rowSelection);
+  }, [rowSelection, setSelectedRowsParent, table]);
 
   return (
     <div>
@@ -127,7 +126,7 @@ const DataTable: React.FC<Props> = ({
         <Pagination table={table} />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default DataTable
+export default DataTable;
