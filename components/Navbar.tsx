@@ -29,7 +29,7 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex space-x-4">
-            <NavLink href="#">Acerca de</NavLink>
+            <NavLink href="#">Acerca de Nosotros</NavLink>
             {/* <NavLink href="#">Contact</NavLink> */}
             <NavLink href="/reparto">Repartos</NavLink>
           </div>
@@ -49,7 +49,7 @@ export default function Navbar() {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <DialogTitle className="sr-only">Menú de navegación</DialogTitle>
                 <nav className="flex flex-col space-y-4">
-                  <NavLink href="#">Acerca De</NavLink>
+                  <NavLink href="#">Acerca De Nosotros</NavLink>
                   {/* <NavLink href="#">Contact</NavLink> */}
                   <NavLink href="/reparto">Repartos</NavLink>
                 </nav>

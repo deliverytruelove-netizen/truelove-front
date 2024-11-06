@@ -81,7 +81,7 @@ const Footer = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          &copy; {currentYear} TRUE LOVE Delivery. Todos los derechos reservados.
+          &copy; {currentYear} Magus Technologies. Todos los derechos reservados.
         </motion.div>
       </div>
     </footer>
