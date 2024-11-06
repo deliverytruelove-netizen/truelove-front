@@ -3,6 +3,9 @@
 import React from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import Lok from "@/public/img/lok.jpg"
+import Pre from "@/public/img/pre.jpg"
+import Deli from "@/public/img/deli.jpg"
 
 export default function AboutContent() {
   // Define the animation for the cards
@@ -20,17 +23,17 @@ export default function AboutContent() {
   const cards = [
     {
       title: "Entrega Sin Retrasos",
-      image: "./img/lok.jpg",
+      image: Lok,
       description: "Asegura que cada pedido llegue a tiempo, siempre."
     },
     {
       title: "Productos Confiables",
-      image: "./img/pre.jpg",
+      image: Pre,
       description: "Garantizamos calidad en cada entrega para tus clientes."
     },
     {
       title: "Cobertura Ampliada",
-      image: "./img/deli.jpg",
+      image: Deli,
       description: "Llega a todas las regiones sin preocuparte por distancias."
     }
   ]
@@ -39,11 +42,11 @@ export default function AboutContent() {
     <div className="flex flex-col bg-[#f34739] min-h-screen justify-center items-center text-center p-4 md:p-8">
       {/* Main title */}
       <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 text-white">
-            Únete y <span className="text-gray-300">Crece</span> con Nosotros
-          </h1>
-          <p className="text-xl md:text-2xl text-red-100 max-w-3xl mx-auto">
-            Descubre cómo nuestra plataforma de entrega puede impulsar tu negocio al siguiente nivel.
-          </p>
+        Únete y <span className="text-gray-300">Crece</span> con Nosotros
+      </h1>
+      <p className="text-xl md:text-2xl text-red-100 max-w-3xl mx-auto">
+        Descubre cómo nuestra plataforma de entrega puede impulsar tu negocio al siguiente nivel.
+      </p>
       
       {/* Images and titles section */}
       <div className="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
