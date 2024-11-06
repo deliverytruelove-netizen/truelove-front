@@ -1,7 +1,6 @@
 // import { publicRoutes } from '@/config/routes'
 // import { useAuth } from '@/hooks'
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   RiAccountCircleLine,
@@ -11,7 +10,6 @@ import {
 
 const AvatarSettings: React.FC = () => {
   const [showMenuAvatar, setShowMenuAvatar] = useState(false)
-  const router = useRouter()
   // const { logout, user } = useAuth()
   const avatarMenuRef = useRef<HTMLDivElement | null>(null)
 

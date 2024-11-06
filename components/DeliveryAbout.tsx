@@ -62,7 +62,7 @@ export default function DeliveryAboutUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.5 }}
       >
-        {features.map((feature, index) => (
+        {features.map((feature) => (
           <motion.div
             key={feature.title}
             whileHover={{ scale: 1.05 }}

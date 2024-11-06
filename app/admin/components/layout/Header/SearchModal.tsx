@@ -20,7 +20,7 @@ const SearchModal: React.FC<Props> = ({ open, setOpen }) => {
       >
         <div className="relative flex items-center gap-3">
           <div className="relative flex-1">
-            {/* <RiSearchLine className="text-color-main/70 absolute top-[50%] left-3 -translate-y-[50%]" /> */}
+            <RiSearchLine className="text-color-main/70 absolute top-[50%] left-3 -translate-y-[50%]" />
             <input
               type="text"
               placeholder="Buscar..."

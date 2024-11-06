@@ -1,20 +1,7 @@
 'use client'
-// import { privateRoutes } from '@/config/routes'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { RiHome2Line } from 'react-icons/ri'
-
-/**
- * Get page name from path
- */
-const getPageName = (path: string): string => {
-  // for (const route in privateRoutes) {
-  //   if (privateRoutes[route as keyof typeof privateRoutes].path !== `/${path}`)
-  //     continue
-  //   return privateRoutes[route as keyof typeof privateRoutes].name
-  // }
-  return 'No definido'
-}
 
 /**
  * Get absolute path from current path and path
@@ -50,7 +37,6 @@ export const Breadcrumbs: React.FC = () => {
                 href={getAbsolutePath(pathname, path)}
                 className="group-hover:text-color-main transition-colors"
               >
-                <span className="capitalize">{getPageName(path)}</span>
               </Link>
             </span>
           )

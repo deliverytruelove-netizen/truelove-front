@@ -8,7 +8,6 @@ import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useRef } from 'react'
 import {
   RiDashboardLine,
-  RiExternalLinkLine,
   RiMenu3Line,
   RiShieldUserLine
 } from 'react-icons/ri'

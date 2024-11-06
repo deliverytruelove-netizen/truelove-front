@@ -85,7 +85,7 @@ export default function AboutUs() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    "Comprometido con la excelencia y la innovación en cada proyecto."
+                    &quot;Comprometido con la excelencia y la innovación en cada proyecto.&quot;
                   </motion.p>
                 )}
               </CardContent>
@@ -109,7 +109,7 @@ export default function AboutUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1, duration: 0.5 }}
       >
-        {values.map((value, index) => (
+        {values.map(value => (
           <Card key={value.title} className="bg-red-100 border-red-200">
             <CardContent className="flex flex-col items-center p-6">
               <motion.div 

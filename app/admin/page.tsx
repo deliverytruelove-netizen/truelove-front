@@ -3,6 +3,7 @@
 import React from 'react';
 import styles from './styles/Login.module.css';
 import { useLoginForm } from './useLoginForm';
+import Image from 'next/image';
 
 const LoginPage: React.FC = () => {
     const {
@@ -20,7 +21,13 @@ const LoginPage: React.FC = () => {
                     <div className={styles.authenticationContainer}>
                         <div className={styles.authentication}>
                             <div className={styles.containerImg}>
-                                <img src="/food.svg" alt="Store Icon" className={styles.icon} />
+                            <Image 
+                                    src="/food.svg" 
+                                    alt="Store Icon" 
+                                    className={styles.icon} 
+                                    width={800} // Ajusta el ancho de la imagen
+                                    height={435} // Ajusta la altura de la imagen
+                                />
                             </div>
                             <div className={styles.containerTitle}>
                                 <h4 className={styles.title}>Transforma tu negocio con True Love Portal</h4>

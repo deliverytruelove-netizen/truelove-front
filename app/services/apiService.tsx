@@ -1,19 +1,19 @@
 const API_URL = 'http://truelove-back.test/api';
 
+// apiService.tsx
 interface PostDataParams {
     endpoint: string;
-    data: any;
+    data: FormData;  // Cambiado a FormData
     token?: string;
 }
 
-export const postData = async ({ endpoint, data, token }: PostDataParams): Promise<any> => {
+export const postData = async ({ endpoint, data, token }: PostDataParams): Promise<Record<string, unknown>> => {
     const response = await fetch(`${API_URL}/${endpoint}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` }),
         },
-        body: JSON.stringify(data),
+        body: data,  // Usa FormData directamente en el cuerpo de la solicitud
     });
 
     if (!response.ok) {
@@ -22,3 +22,4 @@ export const postData = async ({ endpoint, data, token }: PostDataParams): Promi
 
     return await response.json();
 };
+
