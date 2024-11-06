@@ -1,6 +1,5 @@
-import type { Metadata } from "next";
-
-export const metadata:Metadata = {
-    title: "True Love",
-    description:"this my web site"
-}
+// Define the metadata type more strictly
+export const metadata = {
+    title: 'Dashboard - TRUELOVE',
+    description: 'View to authenticate in the application'
+  }

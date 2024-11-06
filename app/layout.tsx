@@ -1,9 +1,9 @@
-"use client"; // Asegúrate de incluir esta línea
+"use client"; // Ensure this line is included
 
 import localFont from "next/font/local";
 import "./globals.css";
 import { usePathname } from "next/navigation"; 
-import { metadata } from "./metadata"; // Asegúrate de que esta ruta sea correcta
+import { metadata } from "./metadata"; // Make sure the path is correct
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -18,21 +18,20 @@ const geistMono = localFont({
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const pathname = usePathname(); // Obtener la ruta actual
+}: {
+  children: React.ReactNode; // Explicitly typing children as ReactNode
+}) {
+  const pathname = usePathname(); // Get the current pathname
 
   return (
     <html lang="en">
       <head>
-        {/* Asegúrate de incluir el uso de metadata aquí */}
+        {/* Ensure metadata usage here */}
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        
-        {/* Ajuste de padding-top en el contenedor para compensar el Navbar fijo */}
+        {/* Adjust padding-top to compensate for fixed Navbar */}
         <main style={{ paddingTop: pathname === "/admin" ? "0" : "64px" }}>
           {children}
         </main>
