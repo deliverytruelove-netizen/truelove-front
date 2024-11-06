@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User } from '../types/User.types';
 
-const API_URL = 'https://magusemail.com/truelove-back/public/api';
+const API_URL = 'https://magusemail.com/truelove-back/public/api/';
 
 export const fetchUsers = async (): Promise<User[]> => {
   const response = await fetch(API_URL + 'admin/user');
