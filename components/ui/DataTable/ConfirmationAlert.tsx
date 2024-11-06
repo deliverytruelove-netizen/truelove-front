@@ -41,7 +41,7 @@ const ConfirmationAlert: React.FC<ConfirmationAlertProps> = ({
             onClick={showAlert}
             type="button"
             title="Clic aquí para deshabilitar"
-            className="m-auto bg-primary-400 self-end md:self-auto text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-primary-500/90 transition-all s3-button"
+            className="m-auto bg-rose-400 self-end md:self-auto text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-rose-500/90 transition-all s3-button"
         >
             <FaRegTrashAlt style={{ color: 'white', fontSize: '24px' }} />
 

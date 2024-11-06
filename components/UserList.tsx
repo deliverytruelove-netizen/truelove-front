@@ -117,7 +117,7 @@ const UserList: React.FC = () => {
                     type="button"
                     onClick={() => setIsModalOpen(true)}
                     title="Clic aquí para deshabilitar"
-                    className="bg-primary-400 text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-primary-500/90 transition-all s3-button">
+                    className="bg-cyan-400 text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-cyan-500/90 transition-all s3-button">
                     <FaPlus style={{ color: 'white', fontSize: '24px' }} />
                     Crear Usuario
                 </button>

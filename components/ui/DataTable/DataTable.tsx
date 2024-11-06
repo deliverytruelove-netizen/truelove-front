@@ -29,7 +29,6 @@ interface Props<T> {
   sorting: SortingState;
   pagination: PaginationState;
   getRowId?: (originalRow: T, index: number, parent?: Row<T> | undefined) => string;
-  state?: unknown;
   setSelectedRowsParent?: React.Dispatch<React.SetStateAction<Array<T>>>;
   height?: number;
 }
@@ -45,7 +44,6 @@ const DataTable = <T,>({
   setSorting,
   setPagination,
   getRowId,
-  state,
   setSelectedRowsParent,
   height = undefined
 }: Props<T>) => {
