@@ -85,7 +85,7 @@ export default function SobreNosotros() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    "En TRUE LOVE, cada entrega es nuestra prioridad."
+                  En TRUE LOVE, cada entrega es nuestra prioridad
                   </motion.p>
                 )}
               </CardContent>

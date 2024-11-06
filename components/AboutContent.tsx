@@ -68,7 +68,7 @@ export default function AboutContent() {
       
       {/* Action button */}
       <div className="mt-8 w-full md:w-auto">
-        <button className='px-6 py-3 w-full md:w-fit rounded-full bg-gradient-to-br from-red-300 to-red-400 shadow-lg shadow-cyan-500/50 hover:bg-slate-200 text-black font-bold transition-all duration-300 hover:shadow-cyan-600/50'>
+        <button className='px-6 py-3 w-full sm:w-fit rounded-full mr-4 bg-gradient-to-br bg-pink-200 shadow-lg shadow-pink-200/50 ... hover:bg-slate-200 text-black font-bold '>
           Empezar Ahora
         </button>
       </div>
