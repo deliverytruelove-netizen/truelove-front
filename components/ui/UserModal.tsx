@@ -22,7 +22,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, newUser, onChang
                 <input type="password" name="password" placeholder="Clave" value={newUser.password} onChange={onChange} className="w-full mb-3 px-3 py-2 border rounded text-black" />
                 <div className="flex justify-end">
                     <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded mr-2">Cancelar</button>
-                    <button onClick={onCreateUser} className="bg-primary-400 text-white px-4 py-2 rounded">Crear</button>
+                    <button onClick={onCreateUser} className="bg-lime-400 text-white px-4 py-2 rounded">Crear</button>
                 </div>
             </div>
         </div>
