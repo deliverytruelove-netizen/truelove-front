@@ -1,4 +1,4 @@
-const API_URL = 'http://truelove-back.test/api';
+const API_URL = 'https://magusemail.com/truelove-back/public/api';
 
 // apiService.tsx
 interface PostDataParams {
