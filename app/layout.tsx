@@ -31,7 +31,9 @@ export default function RootLayout({
         <meta name="description" content={metadata.description} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* Adjust padding-top to compensate for fixed Navbar */}
+        {/* {pathname === "/admin" ? null : <Navbar />}  */}
+        
+        {/* Ajuste de padding-top en el contenedor para compensar el Navbar fijo */}
         <main style={{ paddingTop: pathname === "/admin" ? "0" : "64px" }}>
           {children}
         </main>

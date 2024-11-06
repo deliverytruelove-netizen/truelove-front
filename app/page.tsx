@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import AboutContent from "@/components/AboutContent";
 import About from "@/components/About";
 import DeliveryAboutUs from "@/components/DeliveryAbout";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   const { scrollYProgress } = useScroll(); // Hook para obtener el progreso de scroll
@@ -27,6 +28,7 @@ export default function Home() {
       />
 
       <main>
+        <Navbar/>
         <div>
           <HomePage />
           <AboutContent />
