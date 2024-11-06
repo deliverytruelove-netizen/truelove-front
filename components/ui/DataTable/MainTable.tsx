@@ -2,11 +2,11 @@ import { flexRender, type Table } from '@tanstack/react-table'
 import classNames from 'classnames'
 import { RiArrowUpLine } from 'react-icons/ri'
 
-interface Props {
-  table: Table<any>
+interface Props<T> {  
+  table: Table<T>  
 }
 
-export const MainTable: React.FC<Props> = ({ table }) => {
+export const MainTable = <T,>({ table }: Props<T>) => {  // Aceptamos T como parámetro del componente
   return (
     <table className="relative table-auto w-full min-w-[750px]">
       <thead>

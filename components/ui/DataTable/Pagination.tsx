@@ -4,11 +4,11 @@ import { RiArrowLeftSLine } from 'react-icons/ri'
 import { getStateTable } from './utils'
 import { DEFAULT_PAGE_SIZE } from '../../../config/constanst'
 
-interface Props {
-  table: Table<any>
+interface Props<T> {  
+  table: Table<T>  
 }
 
-export const Pagination: React.FC<Props> = ({ table }) => {
+export const Pagination= <T,>({ table }: Props<T>) => { 
   return (
     <div className="sticky bottom-0 bg-white flex flex-col sm:flex-row sm:justify-between border-t items-center px-2 lg:px-5 py-4">
       <div className="flex justify-between sm:justify-normal w-full items-center gap-4">

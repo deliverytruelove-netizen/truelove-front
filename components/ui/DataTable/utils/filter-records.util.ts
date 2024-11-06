@@ -1,5 +1,5 @@
 import { rankItem } from '@tanstack/match-sorter-utils'
-import { type FilterFnOption } from '@tanstack/react-table'
+import { type FilterFnOption, type Row } from '@tanstack/react-table'
 
 /**
  * Filter records
@@ -9,11 +9,11 @@ import { type FilterFnOption } from '@tanstack/react-table'
  * @param addMeta - Add meta data
  * @returns - Boolean
  */
-export const filterRecords: FilterFnOption<any> | undefined = (
-  row,
-  columnId,
+export const filterRecords: FilterFnOption<any> = (
+  row: Row<any>,  
+  columnId: string,
   value: string | number,
-  addMeta
+  addMeta: (meta: { itemRank: any }) => void
 ) => {
   const itemRank = rankItem(row.getValue(columnId), String(value))
 
