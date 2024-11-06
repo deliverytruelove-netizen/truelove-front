@@ -3,23 +3,22 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Users, Rocket, Heart } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Truck, Clock, ThumbsUp, Package } from 'lucide-react'
 
-export default function AboutUs() {
+export default function SobreNosotros() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  const teamMembers = [
-    { name: 'Ana García', role: 'CEO', image: '/placeholder.svg?height=100&width=100' },
-    { name: 'Carlos Rodríguez', role: 'CTO', image: '/placeholder.svg?height=100&width=100' },
-    { name: 'Elena Martínez', role: 'Lead Designer', image: '/placeholder.svg?height=100&width=100' },
+  const reasons = [
+    { icon: <Truck className="h-6 w-6" />, title: 'Entrega Rápida', description: 'Llevamos tus paquetes a su destino en tiempo récord' },
+    { icon: <Clock className="h-6 w-6" />, title: 'Puntualidad', description: 'Cumplimos con los tiempos prometidos, siempre' },
+    { icon: <Package className="h-6 w-6" />, title: 'Cuidado Especial', description: 'Tratamos cada paquete con el máximo cuidado' },
   ]
 
   const values = [
-    { icon: <Users className="h-6 w-6" />, title: 'Colaboración', description: 'Trabajamos juntos para lograr grandes cosas' },
-    { icon: <Rocket className="h-6 w-6" />, title: 'Innovación', description: 'Siempre buscamos nuevas formas de mejorar' },
-    { icon: <Heart className="h-6 w-6" />, title: 'Pasión', description: 'Amamos lo que hacemos y se refleja en nuestro trabajo' },
+    { icon: <Truck className="h-6 w-6" />, title: 'Eficiencia', description: 'Optimizamos cada ruta para una entrega más rápida' },
+    { icon: <Clock className="h-6 w-6" />, title: 'Respeto por tu Tiempo', description: 'Valoramos tu tiempo como si fuera el nuestro' },
+    { icon: <ThumbsUp className="h-6 w-6" />, title: 'Calidad Garantizada', description: 'Nos aseguramos de que cada entrega cumpla con los más altos estándares' },
   ]
 
   return (
@@ -30,7 +29,7 @@ export default function AboutUs() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        Acerca de Nosotros
+        Sobre TRUE LOVE Delivery
       </motion.h1>
 
       <motion.div 
@@ -40,13 +39,11 @@ export default function AboutUs() {
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <p className="text-xl mb-6 text-gray-600">
-          Somos una empresa innovadora dedicada a transformar ideas en realidad. 
-          Nuestro equipo de expertos trabaja incansablemente para ofrecer soluciones 
-          creativas y eficientes a nuestros clientes.
+          En TRUE LOVE, nos dedicamos a ofrecer un servicio de entrega excepcional. Nuestro compromiso es llevar tus paquetes de manera segura y eficiente a su destino.
         </p>
-        <Badge variant="outline" className="text-lg px-4 py-2 bg-red-100 text-red-600 border-red-300">
-          Innovando desde 2010
-        </Badge>
+        <Button variant="outline" className="text-lg px-6 py-3 bg-red-100 text-red-600 border-red-300 hover:bg-red-200">
+          Haz tu Pedido Ahora
+        </Button>
       </motion.div>
 
       <motion.h2 
@@ -55,7 +52,7 @@ export default function AboutUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.5 }}
       >
-        Nuestro Equipo
+        POR QUÉ ELEGIR TRUE LOVE
       </motion.h2>
 
       <motion.div 
@@ -64,28 +61,31 @@ export default function AboutUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.5 }}
       >
-        {teamMembers.map((member, index) => (
+        {reasons.map((reason, index) => (
           <motion.div
-            key={member.name}
+            key={reason.title}
             whileHover={{ scale: 1.05 }}
             onHoverStart={() => setHoveredIndex(index)}
             onHoverEnd={() => setHoveredIndex(null)}
           >
             <Card className="bg-red-100 border-red-200">
               <CardContent className="flex flex-col items-center p-6">
-                <Avatar className="w-24 h-24 mb-4">
-                  <AvatarImage src={member.image} alt={member.name} />
-                  <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <h3 className="text-xl font-semibold mb-2 text-red-700">{member.name}</h3>
-                <p className="text-red-600">{member.role}</p>
+                <motion.div 
+                  className="text-red-600 mb-4"
+                  whileHover={{ scale: 1.2, rotate: 360 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {reason.icon}
+                </motion.div>
+                <h3 className="text-xl font-semibold mb-2 text-red-700">{reason.title}</h3>
+                <p className="text-center text-red-600">{reason.description}</p>
                 {hoveredIndex === index && (
                   <motion.p 
                     className="mt-4 text-sm text-center text-red-600"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    "Comprometido con la excelencia y la innovación en cada proyecto."
+                    "En TRUE LOVE, cada entrega es nuestra prioridad."
                   </motion.p>
                 )}
               </CardContent>
@@ -100,7 +100,7 @@ export default function AboutUs() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.5 }}
       >
-        Nuestros Valores
+        Nuestros Valores de Entrega
       </motion.h2>
 
       <motion.div 
