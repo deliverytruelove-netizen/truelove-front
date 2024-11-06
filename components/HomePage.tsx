@@ -48,12 +48,13 @@ export default function About() {
         transition={{ delay: 0.5, duration: 0.8 }}
          className="absolute top-1/4 left-11 transform -translate-x-12 text-center"
       >
-        <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
-          Haz crecer tu negocio con nosotros
-        </h1>
-        <p className="mt-4 text-xl text-white drop-shadow-lg">
-          Únete a nuestra red de establecimientos y alcanza a más clientes
-        </p>
+       <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-[2px_2px_4px_rgba(0,0,0,0.8)]">
+  Haz crecer tu negocio con nosotros
+</h1>
+<p className="mt-4 text-xl text-white drop-shadow-[2px_2px_4px_rgba(0,0,0,0.8)]">
+  Únete a nuestra red de establecimientos y alcanza a más clientes
+</p>
+
       </motion.div>
 
       <motion.div

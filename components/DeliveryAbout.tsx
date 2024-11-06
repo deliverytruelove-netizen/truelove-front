@@ -4,13 +4,15 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Truck, Clock, Shield } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Truck, Clock, Shield, Package } from 'lucide-react'
 
 export default function DeliveryAboutUs() {
   const features = [
     { icon: <Truck className="h-8 w-8" />, title: 'Entrega Rápida', description: 'Llegamos a tu puerta en tiempo récord' },
     { icon: <Clock className="h-8 w-8" />, title: '24/7 Disponible', description: 'Servicio ininterrumpido, todos los días' },
     { icon: <Shield className="h-8 w-8" />, title: 'Seguridad Garantizada', description: 'Tu paquete, nuestra responsabilidad' },
+    { icon: <Package className="h-8 w-8" />, title: 'Seguimiento en Tiempo Real', description: 'Monitorea tu envío en cada paso' },
   ]
 
   return (
@@ -34,7 +36,7 @@ export default function DeliveryAboutUs() {
           <iframe 
             className="absolute top-0 left-0 w-full h-full"
             src="https://www.youtube.com/embed/9uW6zblB-wI" 
-            title="Delivery Service Video"
+            title="TRUE LOVE Delivery Service Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowFullScreen
           ></iframe>
@@ -48,16 +50,17 @@ export default function DeliveryAboutUs() {
         transition={{ delay: 0.4, duration: 0.5 }}
       >
         <Badge variant="secondary" className="text-lg px-4 py-2 bg-white text-red-500">
-          Entregando Sonrisas desde 2010
+          Comienza Tu Experiencia de Entrega
         </Badge>
         <p className="text-xl mt-6 max-w-2xl mx-auto">
-          En DeliverEase, no solo entregamos paquetes, entregamos promesas. 
-          Nuestra misión es hacer que cada entrega sea una experiencia excepcional.
+          En TRUE LOVE, no solo entregamos paquetes, cumplimos promesas. 
+          Nuestra misión es hacer que cada entrega sea una experiencia excepcional,
+          utilizando tecnología de punta y un equipo dedicado.
         </p>
       </motion.div>
 
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.5 }}
@@ -68,8 +71,8 @@ export default function DeliveryAboutUs() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-              <CardContent className="flex flex-col items-center p-6">
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 h-full">
+              <CardContent className="flex flex-col items-center p-6 h-full">
                 <motion.div 
                   className="text-yellow-300 mb-4"
                   whileHover={{ rotate: 360 }}
@@ -92,9 +95,27 @@ export default function DeliveryAboutUs() {
         transition={{ delay: 0.8, duration: 0.5 }}
       >
         <h2 className="text-3xl font-semibold mb-4">¿Listo para una entrega perfecta?</h2>
-        <button className="bg-white text-red-500 px-8 py-3 rounded-full font-bold text-lg hover:bg-yellow-300 hover:text-red-600 transition-colors duration-300">
-          Haz tu Pedido Ahora
-        </button>
+        <Button 
+          variant="secondary" 
+          size="lg" 
+          className="bg-white text-red-500 hover:bg-yellow-300 hover:text-red-600 transition-colors duration-300"
+        >
+          Comenzar Ahora
+        </Button>
+      </motion.div>
+
+      <motion.div 
+        className="mt-16 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 0.5 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4">Nuestro Compromiso</h3>
+        <p className="max-w-2xl mx-auto text-lg">
+          Desde nuestra fundación, nos hemos dedicado a perfeccionar el arte de la entrega.
+          Con años de experiencia y constante innovación, hemos desarrollado un sistema
+          que garantiza la satisfacción de nuestros clientes en cada envío.
+        </p>
       </motion.div>
     </div>
   )
