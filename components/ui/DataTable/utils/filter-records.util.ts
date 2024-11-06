@@ -9,12 +9,12 @@ import { type FilterFnOption, type Row } from '@tanstack/react-table'
  * @param addMeta - Add meta data
  * @returns - Boolean
  */
-export const filterRecords: FilterFnOption<any> = <T>(
-  row: Row<T>,  // Asegúrate de que `T` es el tipo genérico que se usa en tu componente
+export const filterRecords = <T>(
+  row: Row<T>,  // Use `T` as the type for the row
   columnId: string,
   value: string | number,
   addMeta: (meta: { itemRank: { passed: boolean } }) => void
-) => {
+): boolean => {
   const itemRank = rankItem(row.getValue(columnId), String(value))
 
   addMeta({ itemRank })
