@@ -81,7 +81,7 @@ const DataTable = <T,>({
   useEffect(() => {
     const handleSelectionState = (selections: RowSelectionState): void => {
       if (setSelectedRowsParent) {
-        setSelectedRowsParent((prev) =>
+        setSelectedRowsParent(
           Object.keys(selections).map((key) =>
             table.getSelectedRowModel().rowsById[key]?.original as T
           )
