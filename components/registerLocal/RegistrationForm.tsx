@@ -67,6 +67,7 @@ export default function RegistrationForm() {
         lastName: ''
       }))
       setIsFieldsLocked(false)
+      setError('')  // Reset error when document type changes
       return
     }
 
@@ -97,7 +98,7 @@ export default function RegistrationForm() {
 
   const fetchDocumentInfo = async (type: string, number: string) => {
     setIsLoading(true)
-    setError('')
+    setError('')  // Reset error before fetching new data
     
     try {
       const url = type === 'DNI' 
@@ -139,9 +140,16 @@ export default function RegistrationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
+    setError('')  // Reset error before submitting
     
     try {
+      // Validate that all required fields are filled out
+      if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
+        setError('Todos los campos son obligatorios')
+        setIsLoading(false)
+        return
+      }
+
       const response = await fetch('http://localhost:8000/api/register', {
         method: 'POST',
         headers: {
@@ -249,33 +257,14 @@ export default function RegistrationForm() {
         )}
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
-          <select
+          <label className="block text-sm font-medium text-gray-700">Tipo de Negocio *</label>
+          <input
+            type="text"
             name="businessType"
             value={formData.businessType}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200"
-          >
-            <option value="">Seleccione el tipo de negocio</option>
-            <option value="Restaurante">Restaurante</option>
-            <option value="Cafetería">Cafetería</option>
-            <option value="Bar">Bar</option>
-            <option value="Tienda">Tienda</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Teléfono de contacto *</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            required
-            placeholder="+51"
+            placeholder="Ingrese el tipo de negocio"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
@@ -283,45 +272,50 @@ export default function RegistrationForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Email *</label>
+          <label className="block text-sm font-medium text-gray-700">Teléfono *</label>
+          <input
+            type="text"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            required
+            placeholder="Ingrese su número de teléfono"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
+                     transition-colors duration-200"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Correo Electrónico *</label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleInputChange}
             required
-            placeholder="Ingrese su email"
+            placeholder="Ingrese su correo electrónico"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
           />
         </div>
-        
-        {error && (
-          <p className="text-red-500 text-sm text-center">{error}</p>
-        )}
 
-        <motion.button
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 bg-[#f34739] text-white font-semibold rounded-lg
-                   shadow-lg hover:bg-[#e03e31] 
-                   transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[#f34739] focus:ring-offset-2
-                   disabled:opacity-50 disabled:cursor-not-allowed
-                   flex items-center justify-center"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          className="w-full px-4 py-3 bg-[#f34739] text-white font-semibold rounded-lg
+                   hover:bg-[#d83d31] focus:ring-2 focus:ring-[#f34739] disabled:bg-gray-400
+                   transition-colors duration-200"
         >
           {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Procesando...
-            </>
+            <Loader2 className="animate-spin w-5 h-5 mx-auto" />
           ) : (
-            'Comenzar Ahora'
+            'Registrar'
           )}
-        </motion.button>
+        </button>
       </form>
     </div>
   )
