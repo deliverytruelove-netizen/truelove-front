@@ -1,6 +1,6 @@
 "use client"
 import { motion, useScroll } from "framer-motion"; // Importar Framer Motion
-import Image from "next/image";
+
 import HomePage from "@/components/HomePage";
 import Footer from "@/components/Footer";
 import AboutContent from "@/components/AboutContent";
