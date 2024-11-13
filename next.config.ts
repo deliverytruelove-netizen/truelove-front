@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://truelove-back.test:path*', // Cambia esto a la URL de tu API de Laravel
+        destination: 'http://localhost:8000.test:path*', // Cambia esto a la URL de tu API de Laravel
       },
     ];
   },

@@ -22,7 +22,7 @@ const Footer = () => {
           >
             <Image src={Logo} alt="TRUE LOVE logo" width={200} height={100} className="mb-4" />
             <p className="text-sm text-center md:text-left text-gray-600 mt-2">
-              Entregando excelencia y puntualidad en cada paquete.
+              Entregando excelencia y puntualidad en cada pedido.
             </p>
           </motion.div>
 

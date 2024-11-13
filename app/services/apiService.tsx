@@ -1,4 +1,4 @@
-const API_URL = 'http://truelove-back.test/api';
+const API_URL = 'http://localhost:8000/api';
 
 interface PostDataParams {
     endpoint: string;

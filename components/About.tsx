@@ -10,9 +10,9 @@ export default function SobreNosotros() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const reasons = [
-    { icon: <Truck className="h-6 w-6" />, title: 'Entrega Rápida', description: 'Llevamos tus paquetes a su destino en tiempo récord' },
+    { icon: <Truck className="h-6 w-6" />, title: 'Entrega Rápida', description: 'Llevamos tus pedidos a su destino en tiempo récord' },
     { icon: <Clock className="h-6 w-6" />, title: 'Puntualidad', description: 'Cumplimos con los tiempos prometidos, siempre' },
-    { icon: <Package className="h-6 w-6" />, title: 'Cuidado Especial', description: 'Tratamos cada paquete con el máximo cuidado' },
+    { icon: <Package className="h-6 w-6" />, title: 'Cuidado Especial', description: 'Tratamos cada pedido con el máximo cuidado' },
   ]
 
   const values = [
@@ -39,7 +39,7 @@ export default function SobreNosotros() {
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <p className="text-xl mb-6 text-gray-600">
-          En TRUE LOVE, nos dedicamos a ofrecer un servicio de entrega excepcional. Nuestro compromiso es llevar tus paquetes de manera segura y eficiente a su destino.
+          En TRUE LOVE, nos dedicamos a ofrecer un servicio de entrega excepcional. Nuestro compromiso es llevar tus pedidos de manera segura y eficiente a su destino.
         </p>
         <Button variant="outline" className="text-lg px-6 py-3 bg-red-100 text-red-600 border-red-300 hover:bg-red-200">
           Haz tu Pedido Ahora

@@ -11,7 +11,7 @@ export default function DeliveryAboutUs() {
   const features = [
     { icon: <Truck className="h-8 w-8" />, title: 'Entrega Rápida', description: 'Llegamos a tu puerta en tiempo récord' },
     { icon: <Clock className="h-8 w-8" />, title: '24/7 Disponible', description: 'Servicio ininterrumpido, todos los días' },
-    { icon: <Shield className="h-8 w-8" />, title: 'Seguridad Garantizada', description: 'Tu paquete, nuestra responsabilidad' },
+    { icon: <Shield className="h-8 w-8" />, title: 'Seguridad Garantizada', description: 'Tu Pedido, nuestra responsabilidad' },
     { icon: <Package className="h-8 w-8" />, title: 'Seguimiento en Tiempo Real', description: 'Monitorea tu envío en cada paso' },
   ]
 
@@ -53,7 +53,7 @@ export default function DeliveryAboutUs() {
           Comienza Tu Experiencia de Entrega
         </Badge>
         <p className="text-xl mt-6 max-w-2xl mx-auto">
-          En TRUE LOVE, no solo entregamos paquetes, cumplimos promesas. 
+          En TRUE LOVE, no solo entregamos pedidos, cumplimos promesas. 
           Nuestra misión es hacer que cada entrega sea una experiencia excepcional,
           utilizando tecnología de punta y un equipo dedicado.
         </p>
