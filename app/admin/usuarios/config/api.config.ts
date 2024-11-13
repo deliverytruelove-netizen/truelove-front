@@ -1,1 +1,1 @@
-export const API_BASE_URL = 'http://truelove-back.test/api/admin';
+export const API_BASE_URL = 'http://localhost:8000/api/admin';
