@@ -39,7 +39,7 @@ export default function MapComponent({ selectedLocation }: { selectedLocation: {
         map.remove()
       }
     }
-  }, [map, selectedLocation, defaultCenter])
+  }, [])
 
   useEffect(() => {
     if (map && selectedLocation?.center) {

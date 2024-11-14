@@ -7,26 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import mapboxgl from 'mapbox-gl'
 
-// Define el tipo MapboxFeature aquí
-type MapboxFeature = {
-  id: string
-  place_name: string
-  center: [number, number]
-  text: string
-  context?: { id: string; text: string }[]
-}
-
-type MapboxResponse = {
-  features: MapboxFeature[]
-}
-
-interface SearchComponentProps {
-  onLocationSelect: (location: MapboxFeature) => void
-}
-
-export default function SearchComponent({ onLocationSelect }: SearchComponentProps) {
+export default function SearchComponent({ onLocationSelect }: { onLocationSelect: (location: any) => void }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<MapboxFeature[]>([])
+  const [suggestions, setSuggestions] = useState<any[]>([])
 
   const fetchSuggestions = async (query: string) => {
     if (query.length < 3) return
@@ -37,7 +20,7 @@ export default function SearchComponent({ onLocationSelect }: SearchComponentPro
           query
         )}.json?access_token=${mapboxgl.accessToken}&country=PE&types=address,poi,place`
       )
-      const data: MapboxResponse = await response.json()
+      const data = await response.json()
       setSuggestions(data.features)
     } catch (error) {
       console.error('Error al obtener sugerencias:', error)
@@ -80,7 +63,7 @@ export default function SearchComponent({ onLocationSelect }: SearchComponentPro
         )}
       </div>
 
-      {suggestions.length > 0 && (
+      {suggestions.length > 0 && !searchQuery.includes(', Peru') && (
         <Card className="absolute w-full mt-1 z-50">
           <CardContent className="p-0">
             <ul className="max-h-[280px] overflow-auto">
