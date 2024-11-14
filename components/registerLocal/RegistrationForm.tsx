@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -174,9 +173,9 @@ export default function RegistrationForm() {
 
       const data = await response.json()
       router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${data.registration_id}`)
-    } catch (error) {
-      console.error('Error submitting form:', error)
-      setError(error instanceof Error ? error.message : 'Error al conectar con el servidor')
+    } catch (err) {  
+      console.error('Error submitting form:', err)
+      setError(err instanceof Error ? err.message : 'Error al conectar con el servidor')
     } finally {
       setIsLoading(false)
     }
