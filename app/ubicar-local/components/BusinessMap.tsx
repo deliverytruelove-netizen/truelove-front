@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -11,7 +11,7 @@ export default function MapComponent({ selectedLocation }: { selectedLocation: {
   const [map, setMap] = useState<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
 
-  const defaultCenter: [number, number] = [-77.0369, -12.0464] // Coordenadas de Lima, Perú
+  const defaultCenter = useMemo(() => [-77.0369, -12.0464] as [number, number], [])
 
   useEffect(() => {
     if (!map && mapContainerRef.current) {
