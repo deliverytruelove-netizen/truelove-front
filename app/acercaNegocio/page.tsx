@@ -73,7 +73,6 @@ export default function BusinessDetailsForm() {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true)
     try {
-      console.log('Business details:', data)
       // Here you would typically send the data to your backend
       // await sendDataToBackend(data);
       router.push('/ubicar-local')

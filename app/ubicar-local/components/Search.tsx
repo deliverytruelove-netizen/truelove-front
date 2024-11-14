@@ -7,12 +7,31 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import mapboxgl from 'mapbox-gl'
 
-export default function SearchComponent({ onLocationSelect }: { onLocationSelect: (location: any) => void }) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<any[]>([])
+// Define el tipo MapboxFeature aquí
+type MapboxFeature = {
+  id: string
+  place_name: string
+  center: [number, number]
+  text: string
+  context?: { id: string; text: string }[]
+}
 
+type MapboxResponse = {
+  features: MapboxFeature[]
+}
+
+interface SearchComponentProps {
+  onLocationSelect: (location: MapboxFeature) => void
+}
+
+export default function SearchComponent({ onLocationSelect }: SearchComponentProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [suggestions, setSuggestions] = useState<MapboxFeature[]>([])
+  const [hasSelected, setHasSelected] = useState(false) // Nuevo estado para controlar si se ha seleccionado una ubicación
+
+  // Función para obtener sugerencias de Mapbox
   const fetchSuggestions = async (query: string) => {
-    if (query.length < 3) return
+    if (query.length < 3 || hasSelected) return // Evita hacer solicitudes si ya se ha seleccionado una ubicación
 
     try {
       const response = await fetch(
@@ -20,7 +39,7 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
           query
         )}.json?access_token=${mapboxgl.accessToken}&country=PE&types=address,poi,place`
       )
-      const data = await response.json()
+      const data: MapboxResponse = await response.json()
       setSuggestions(data.features)
     } catch (error) {
       console.error('Error al obtener sugerencias:', error)
@@ -35,9 +54,20 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
     return () => clearTimeout(timeoutId)
   }, [searchQuery])
 
+  // Limpia la búsqueda
   const handleClearSearch = () => {
     setSearchQuery('')
     setSuggestions([])
+    setHasSelected(false) // Permite que se puedan mostrar sugerencias nuevamente
+  }
+
+  // Manejador de selección de ubicación
+  const handleLocationSelect = (suggestion: MapboxFeature) => {
+    // Selecciona la ubicación, limpia las sugerencias y marca como seleccionado
+    onLocationSelect(suggestion)
+    setSearchQuery(suggestion.place_name)
+    setSuggestions([]) // Limpia las sugerencias después de la selección
+    setHasSelected(true) // Marca que se ha hecho una selección
   }
 
   return (
@@ -49,6 +79,7 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-10 pr-10"
+          disabled={hasSelected} // Desactiva el campo de búsqueda si ya se seleccionó una ubicación
         />
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         {searchQuery && (
@@ -63,7 +94,7 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
         )}
       </div>
 
-      {suggestions.length > 0 && !searchQuery.includes(', Peru') && (
+      {suggestions.length > 0 && !hasSelected && ( // Solo muestra las sugerencias si no se ha seleccionado ninguna
         <Card className="absolute w-full mt-1 z-50">
           <CardContent className="p-0">
             <ul className="max-h-[280px] overflow-auto">
@@ -71,11 +102,7 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
                 <li
                   key={suggestion.id}
                   className="p-3 hover:bg-accent cursor-pointer border-b last:border-0"
-                  onClick={() => {
-                    onLocationSelect(suggestion)
-                    setSearchQuery(suggestion.place_name)
-                    setSuggestions([])
-                  }}
+                  onClick={() => handleLocationSelect(suggestion)}
                 >
                   {suggestion.place_name}
                 </li>

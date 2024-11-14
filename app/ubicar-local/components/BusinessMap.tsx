@@ -14,6 +14,7 @@ export default function MapComponent({ selectedLocation }: { selectedLocation: {
   const defaultCenter = useMemo(() => [-77.0369, -12.0464] as [number, number], [])
 
   useEffect(() => {
+    // Solo inicializamos el mapa si no está ya inicializado
     if (!map && mapContainerRef.current) {
       const initializedMap = new mapboxgl.Map({
         container: mapContainerRef.current,
@@ -25,21 +26,15 @@ export default function MapComponent({ selectedLocation }: { selectedLocation: {
 
       initializedMap.addControl(new mapboxgl.NavigationControl())
 
-      initializedMap.on('load', () => {
+      // Manejo del evento de carga del mapa
+      const loadEventListener = () => {
         setMap(initializedMap)
         updateMarker(initializedMap, selectedLocation?.center || defaultCenter) // Mostrar marcador al cargar
-      })
-    }
+      }
 
-    return () => {
-      if (markerRef.current) {
-        markerRef.current.remove()
-      }
-      if (map) {
-        map.remove()
-      }
+      initializedMap.on('load', loadEventListener)
     }
-  }, [])
+  }, [map, selectedLocation, defaultCenter])
 
   useEffect(() => {
     if (map && selectedLocation?.center) {

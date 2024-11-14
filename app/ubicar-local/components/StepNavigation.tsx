@@ -20,7 +20,6 @@ export default function StepNavigation({
 }: StepNavigationProps) {
   const progress = (currentStep / totalSteps) * 100
 
-  console.log("isNextDisabled:", isNextDisabled)
 
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t bg-white p-4">

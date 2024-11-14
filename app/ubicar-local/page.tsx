@@ -39,13 +39,11 @@ export default function BusinessLocation() {
   const [formData, setFormData] = useState<FormData | null>(null)
 
   const handleLocationSelect = (location: MapboxFeature) => {
-    console.log("Location selected:", location)
     setSelectedLocation(location)
     setShowForm(true)
   }
 
   const handleFormSubmit = (data: FormData) => {
-    console.log("Form data submitted:", data)
     setFormData(data)
   }
 
@@ -56,7 +54,6 @@ export default function BusinessLocation() {
         coordinates: selectedLocation.center,
         fullAddress: selectedLocation.place_name,
       }
-      console.log("Location data:", locationData)
       router.push("/datosClaves")
     }
   }
@@ -64,13 +61,6 @@ export default function BusinessLocation() {
   const handleBack = () => {
     router.back()
   }
-
-  // Add this to debug the state
-  useEffect(() => {
-    console.log("Selected Location:", selectedLocation)
-    console.log("Form Data:", formData)
-    console.log("Button should be enabled:", !!(selectedLocation && formData))
-  }, [selectedLocation, formData])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -112,7 +102,7 @@ export default function BusinessLocation() {
               <div className="max-w-md mx-auto">
                 <SearchComponent onLocationSelect={handleLocationSelect} />
               </div>
-              
+
               <div className="space-y-6 max-w-md mx-auto">
                 <MapComponent selectedLocation={selectedLocation} />
 
