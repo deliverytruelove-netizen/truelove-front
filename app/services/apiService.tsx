@@ -1,4 +1,4 @@
-const API_URL = 'https://magusemail.com/truelove-back/public/api';
+const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
 // apiService.tsx
 interface PostDataParams {
