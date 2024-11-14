@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -49,11 +49,11 @@ export default function BusinessLocation() {
 
   const handleNext = () => {
     if (formData && selectedLocation) {
-      const locationData = {
-        ...formData,
-        coordinates: selectedLocation.center,
-        fullAddress: selectedLocation.place_name,
-      }
+      // const locationData = {
+      //   ...formData,
+      //   coordinates: selectedLocation.center,
+      //   fullAddress: selectedLocation.place_name,
+      // }
       router.push("/datosClaves")
     }
   }

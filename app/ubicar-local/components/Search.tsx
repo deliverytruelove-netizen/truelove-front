@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -30,7 +30,7 @@ export default function SearchComponent({ onLocationSelect }: SearchComponentPro
   const [hasSelected, setHasSelected] = useState(false) // Nuevo estado para controlar si se ha seleccionado una ubicación
 
   // Función para obtener sugerencias de Mapbox
-  const fetchSuggestions = async (query: string) => {
+  const fetchSuggestions = useCallback(async (query: string) => {
     if (query.length < 3 || hasSelected) return // Evita hacer solicitudes si ya se ha seleccionado una ubicación
 
     try {
@@ -44,7 +44,7 @@ export default function SearchComponent({ onLocationSelect }: SearchComponentPro
     } catch (error) {
       console.error('Error al obtener sugerencias:', error)
     }
-  }
+  }, [hasSelected]) // Dependencia de `hasSelected` para que se actualice cuando cambie
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -52,7 +52,7 @@ export default function SearchComponent({ onLocationSelect }: SearchComponentPro
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [searchQuery])
+  }, [searchQuery, fetchSuggestions]) // Incluye `fetchSuggestions` en las dependencias
 
   // Limpia la búsqueda
   const handleClearSearch = () => {
