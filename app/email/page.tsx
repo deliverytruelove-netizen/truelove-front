@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from "next/image"
@@ -26,7 +26,6 @@ function ImprovedNotification({ message, duration = 3000 }: ImprovedNotification
     return () => clearTimeout(timer)
   }, [duration])
 
-
   return (
     <AnimatePresence>
       {isVisible && (
@@ -42,10 +41,9 @@ function ImprovedNotification({ message, duration = 3000 }: ImprovedNotification
       )}
     </AnimatePresence>
   );
-  
 }
 
-export default function VerifyEmailPage() {
+function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
@@ -288,5 +286,13 @@ export default function VerifyEmailPage() {
         <ImprovedNotification message="Se ha reenviado el código a su correo" />
       )}
     </div>
+  )
+}
+
+export default function VerifyEmailPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailPage />
+    </Suspense>
   )
 }
