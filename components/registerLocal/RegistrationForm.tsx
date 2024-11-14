@@ -16,12 +16,12 @@ export default function RegistrationForm() {
     phone: "+51",
     email: ""
   })
-  const [error, setError] = useState<string | null>(null) // Cambiado a string | null
+  const [error, setError] = useState<string | null>(null) // Asegurando que el error sea solo string o null
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    
+
     // Si el usuario intenta modificar el prefijo, se evita
     if (!value.startsWith('+51')) {
       return
@@ -29,10 +29,10 @@ export default function RegistrationForm() {
 
     // Obtén solo la parte numérica (después del +51)
     const numberPart = value.substring(3)
-    
+
     // Elimina cualquier carácter no numérico
     const numbersOnly = numberPart.replace(/\D/g, '')
-    
+
     // Limita a 9 dígitos
     if (numbersOnly.length <= 9) {
       // Formatea el número de teléfono
@@ -46,7 +46,7 @@ export default function RegistrationForm() {
           }
         }
       }
-      
+
       setFormData(prev => ({
         ...prev,
         phone: formattedNumber
@@ -56,7 +56,7 @@ export default function RegistrationForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     if (name === 'documentType') {
       setFormData(prev => ({
         ...prev,
@@ -82,8 +82,8 @@ export default function RegistrationForm() {
         [name]: numbersOnly
       }))
 
-      if ((formData.documentType === 'DNI' && numbersOnly.length === 8) || 
-          (formData.documentType === 'RUC' && numbersOnly.length === 11)) {
+      if ((formData.documentType === 'DNI' && numbersOnly.length === 8) ||
+        (formData.documentType === 'RUC' && numbersOnly.length === 11)) {
         fetchDocumentInfo(formData.documentType, numbersOnly)
       }
       return
@@ -98,15 +98,15 @@ export default function RegistrationForm() {
   const fetchDocumentInfo = async (type: string, number: string) => {
     setIsLoading(true)
     setError(null)  // Reset error antes de realizar la solicitud
-    
+
     try {
-      const url = type === 'DNI' 
+      const url = type === 'DNI'
         ? `https://dniruc.apisperu.com/api/v1/dni/${number}`
         : `https://dniruc.apisperu.com/api/v1/ruc/${number}`
-      
+
       const response = await fetch(`${url}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`)
       const data = await response.json()
-      
+
       if (type === 'DNI') {
         if (data.success) {
           setFormData(prev => ({
@@ -140,9 +140,9 @@ export default function RegistrationForm() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)  // Reset error antes de enviar el formulario
-    
+
     try {
-      // Valida que todos los campos requeridos estén llenos
+      // Validación de campos requeridos
       if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
         setError('Todos los campos son obligatorios')
         setIsLoading(false)
@@ -165,7 +165,7 @@ export default function RegistrationForm() {
           email: formData.email
         }),
       })
-  
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || 'Error al enviar el formulario')
@@ -173,7 +173,7 @@ export default function RegistrationForm() {
 
       const data = await response.json()
       router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${data.registration_id}`)
-    } catch (err) {  
+    } catch (err) {
       console.error('Error submitting form:', err)
       setError(err instanceof Error ? err.message : 'Error al conectar con el servidor')
     } finally {
@@ -237,23 +237,21 @@ export default function RegistrationForm() {
           />
         </div>
 
-        {formData.documentType !== 'RUC' && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Apellido *</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              required
-              disabled={isFieldsLocked}
-              placeholder="Ingrese su apellido"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                       text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                       transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
-            />
-          </div>
-        )}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Apellido *</label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+            disabled={isFieldsLocked}
+            placeholder="Ingrese su apellido"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
+                     transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
+          />
+        </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
