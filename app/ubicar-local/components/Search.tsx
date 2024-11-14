@@ -7,9 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import mapboxgl from 'mapbox-gl'
 
-export default function SearchComponent({ onLocationSelect }: { onLocationSelect: (location: any) => void }) {
+// Define el tipo MapboxFeature aquí
+type MapboxFeature = {
+  id: string
+  place_name: string
+  center: [number, number]
+  [key: string]: any // Si hay otros campos adicionales que no necesitas definir ahora
+}
+
+export default function SearchComponent({ onLocationSelect }: { onLocationSelect: (location: MapboxFeature) => void }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [suggestions, setSuggestions] = useState<MapboxFeature[]>([])
 
   const fetchSuggestions = async (query: string) => {
     if (query.length < 3) return
