@@ -19,7 +19,7 @@ export default function RegistrationForm() {
   const [error, setError] = useState<string | null>(null) // Asegurando que el error sea solo string o null
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value
 
     // Si el usuario intenta modificar el prefijo, se evita
