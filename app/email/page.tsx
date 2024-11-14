@@ -95,7 +95,7 @@ function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/api/verify', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/api/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ function VerifyEmailPage() {
       setTimeout(() => {
         router.push('/acercaNegocio')
       }, 3000)
-      
+
     } catch (error) {
       console.error('Verification error:', error)
       if (error instanceof Error) {
@@ -139,14 +139,14 @@ function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/api/resend-code', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/resend-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email, 
-          registration_id: registrationId 
+        body: JSON.stringify({
+          email,
+          registration_id: registrationId
         }),
       })
 
@@ -177,8 +177,8 @@ function VerifyEmailPage() {
 
   return (
     <div className="bg-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
-      <Navbar/>
-      <motion.div 
+      <Navbar />
+      <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -186,11 +186,11 @@ function VerifyEmailPage() {
       >
         <div className="flex flex-col items-center">
           <div className="mb-6">
-            <Image 
-              src={emailIcon} 
-              alt="Email Icon" 
-              width={50} 
-              height={50} 
+            <Image
+              src={emailIcon}
+              alt="Email Icon"
+              width={50}
+              height={50}
             />
           </div>
 
@@ -219,11 +219,11 @@ function VerifyEmailPage() {
                 Te enviamos un correo electrónico a la dirección{" "}
                 <span className="font-bold">{email}</span>
               </p>
-              
+
               <form onSubmit={handleVerification} className="w-full space-y-4">
                 <div>
-                  <label 
-                    htmlFor="verificationCode" 
+                  <label
+                    htmlFor="verificationCode"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Código de verificación
@@ -246,8 +246,8 @@ function VerifyEmailPage() {
                   <p className="text-red-500 text-sm text-center">{error}</p>
                 )}
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-[#f34739] text-white hover:bg-[#d63c30] flex items-center justify-center"
                   disabled={isLoading || verificationCode.length !== 6}
                 >
@@ -264,8 +264,8 @@ function VerifyEmailPage() {
 
               <div className="text-center text-sm text-gray-500 mt-4">
                 ¿No lo recibiste?{" "}
-                <button 
-                  onClick={handleResendCode} 
+                <button
+                  onClick={handleResendCode}
                   className="text-[#d63c30] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isLoading || resendCooldown > 0}
                   type="button"
