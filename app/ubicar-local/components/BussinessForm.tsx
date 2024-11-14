@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 
+// Define el esquema del formulario usando Zod
 const formSchema = z.object({
   businessName: z.string().min(2, "El nombre es requerido"),
   street: z.string().min(2, "La calle es requerida"),
@@ -26,8 +27,20 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
+// Define un tipo específico para selectedLocation
+interface LocationContext {
+  id: string
+  text: string
+}
+
+interface SelectedLocation {
+  address?: string
+  text?: string
+  context?: LocationContext[]
+}
+
 interface BusinessFormProps {
-  selectedLocation: any
+  selectedLocation: SelectedLocation | null
   onSubmit: (data: FormData) => void
 }
 
@@ -35,13 +48,13 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      businessName: "",
-      street: "",
-      number: "",
-      postalCode: "",
-      province: "",
-      city: "",
-      reference: "",
+      businessName: '',
+      street: '',
+      number: '',
+      postalCode: '',
+      province: '',
+      city: '',
+      reference: '',
     },
   })
 
@@ -50,9 +63,9 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
       const context = selectedLocation.context || []
       const address = selectedLocation.address || ''
       const streetName = selectedLocation.text || ''
-      const postalCode = context.find((item: any) => item.id.startsWith('postcode'))?.text || ''
-      const city = context.find((item: any) => item.id.startsWith('place'))?.text || ''
-      const province = context.find((item: any) => item.id.startsWith('region'))?.text || ''
+      const postalCode = context.find((item) => item.id.startsWith('postcode'))?.text || ''
+      const city = context.find((item) => item.id.startsWith('place'))?.text || ''
+      const province = context.find((item) => item.id.startsWith('region'))?.text || ''
 
       form.reset({
         businessName: form.getValues('businessName'),
@@ -183,8 +196,8 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
             </FormItem>
           )}
         />
-{/* 
-        <Button type="submit" className="w-full bg-[#f34739] text-white hover:bg-[#d63c30]">
+
+        {/* <Button type="submit" className="w-full bg-[#f34739] text-white hover:bg-[#d63c30]">
           Guardar ubicación
         </Button> */}
       </form>
