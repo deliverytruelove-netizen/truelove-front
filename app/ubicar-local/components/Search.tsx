@@ -12,10 +12,19 @@ type MapboxFeature = {
   id: string
   place_name: string
   center: [number, number]
-  [key: string]: any // Si hay otros campos adicionales que no necesitas definir ahora
+  text: string
+  context?: { id: string; text: string }[]
 }
 
-export default function SearchComponent({ onLocationSelect }: { onLocationSelect: (location: MapboxFeature) => void }) {
+type MapboxResponse = {
+  features: MapboxFeature[]
+}
+
+interface SearchComponentProps {
+  onLocationSelect: (location: MapboxFeature) => void
+}
+
+export default function SearchComponent({ onLocationSelect }: SearchComponentProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [suggestions, setSuggestions] = useState<MapboxFeature[]>([])
 
@@ -28,7 +37,7 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
           query
         )}.json?access_token=${mapboxgl.accessToken}&country=PE&types=address,poi,place`
       )
-      const data = await response.json()
+      const data: MapboxResponse = await response.json()
       setSuggestions(data.features)
     } catch (error) {
       console.error('Error al obtener sugerencias:', error)
@@ -71,7 +80,7 @@ export default function SearchComponent({ onLocationSelect }: { onLocationSelect
         )}
       </div>
 
-      {suggestions.length > 0 && !searchQuery.includes(', Peru') && (
+      {suggestions.length > 0 && (
         <Card className="absolute w-full mt-1 z-50">
           <CardContent className="p-0">
             <ul className="max-h-[280px] overflow-auto">
