@@ -16,26 +16,26 @@ export default function RegistrationForm() {
     phone: "+51",
     email: ""
   })
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | null>(null) // Cambiado a string | null
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     
-    // If user is trying to modify the prefix, prevent it
+    // Si el usuario intenta modificar el prefijo, se evita
     if (!value.startsWith('+51')) {
       return
     }
 
-    // Get only the number part (after +51)
+    // Obtén solo la parte numérica (después del +51)
     const numberPart = value.substring(3)
     
-    // Remove any non-numeric characters from the number part
+    // Elimina cualquier carácter no numérico
     const numbersOnly = numberPart.replace(/\D/g, '')
     
-    // Limit to 9 digits
+    // Limita a 9 dígitos
     if (numbersOnly.length <= 9) {
-      // Format the phone number
+      // Formatea el número de teléfono
       let formattedNumber = '+51'
       if (numbersOnly.length > 0) {
         formattedNumber += ' ' + numbersOnly.substring(0, 3)
@@ -66,7 +66,7 @@ export default function RegistrationForm() {
         lastName: ''
       }))
       setIsFieldsLocked(false)
-      setError('')  // Reset error when document type changes
+      setError(null)  // Reset error cuando cambia el tipo de documento
       return
     }
 
@@ -97,7 +97,7 @@ export default function RegistrationForm() {
 
   const fetchDocumentInfo = async (type: string, number: string) => {
     setIsLoading(true)
-    setError('')  // Reset error before fetching new data
+    setError(null)  // Reset error antes de realizar la solicitud
     
     try {
       const url = type === 'DNI' 
@@ -139,10 +139,10 @@ export default function RegistrationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')  // Reset error before submitting
+    setError(null)  // Reset error antes de enviar el formulario
     
     try {
-      // Validate that all required fields are filled out
+      // Valida que todos los campos requeridos estén llenos
       if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
         setError('Todos los campos son obligatorios')
         setIsLoading(false)
@@ -256,14 +256,14 @@ export default function RegistrationForm() {
         )}
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Tipo de Negocio *</label>
+          <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
           <input
             type="text"
             name="businessType"
             value={formData.businessType}
             onChange={handleInputChange}
             required
-            placeholder="Ingrese el tipo de negocio"
+            placeholder="Ingrese tipo de negocio"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
@@ -273,10 +273,10 @@ export default function RegistrationForm() {
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Teléfono *</label>
           <input
-            type="text"
+            type="tel"
             name="phone"
             value={formData.phone}
-            onChange={handleInputChange}
+            onChange={handlePhoneChange}
             required
             placeholder="Ingrese su número de teléfono"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
@@ -305,15 +305,12 @@ export default function RegistrationForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full px-4 py-3 bg-[#f34739] text-white font-semibold rounded-lg
-                   hover:bg-[#d83d31] focus:ring-2 focus:ring-[#f34739] disabled:bg-gray-400
+          className="w-full px-4 py-3 rounded-lg bg-[#f34739] text-white font-semibold 
+                   focus:ring-2 focus:ring-[#f34739] focus:ring-opacity-50 
+                   hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
                    transition-colors duration-200"
         >
-          {isLoading ? (
-            <Loader2 className="animate-spin w-5 h-5 mx-auto" />
-          ) : (
-            'Registrar'
-          )}
+          {isLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Registrar'}
         </button>
       </form>
     </div>
