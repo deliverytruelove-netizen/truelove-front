@@ -10,7 +10,12 @@ import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
 import Navbar from '@/components/ui/navbar'
 
-function ImprovedNotification({ message, duration = 3000 }) {
+interface ImprovedNotificationProps {
+  message: string;
+  duration?: number;
+}
+
+function ImprovedNotification({ message, duration = 3000 }: ImprovedNotificationProps) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -20,6 +25,7 @@ function ImprovedNotification({ message, duration = 3000 }) {
 
     return () => clearTimeout(timer)
   }, [duration])
+
 
   return (
     <AnimatePresence>
