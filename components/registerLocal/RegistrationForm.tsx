@@ -130,7 +130,7 @@ export default function RegistrationForm() {
         }
       }
     } catch (error) {
-      setError('Error al conectar con el servicio de validación')
+      setError(`Error al conectar con el servicio de validación ${error}`)
     } finally {
       setIsLoading(false)
     }
