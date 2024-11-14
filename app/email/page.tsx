@@ -95,7 +95,7 @@ function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/api/verify', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
