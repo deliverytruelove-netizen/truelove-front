@@ -16,7 +16,7 @@ import Persona from "@/public/img/person.jpg"
 
 export default function DatosBancarios() {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(5)
+  const [currentStep] = useState(5)
   const totalSteps = 6
   const [formData, setFormData] = useState({
     accountHolder: '',
