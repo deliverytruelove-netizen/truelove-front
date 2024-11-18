@@ -14,7 +14,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <nav className="bg-[#e9eeea] py-4 fixed w-full top-0 z-50 shadow-md">
+    <nav className="bg-[#fff] py-2 fixed w-full top-0 z-50 shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex-shrink-0">
@@ -35,7 +35,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button asChild variant="default" className="bg-[#f34739] text-white hover:bg-[#d63c30]">
+            <Button asChild variant="default" className="bg-[#D9043D] text-white hover:bg-[#d63c30]">
               <Link href="/admin">Iniciar Sesión</Link>
             </Button>
 
@@ -66,7 +66,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="text-gray-500 hover:text-red-500 font-bold text-sm hover:underline hover:underline-offset-4 transition-colors"
+      className="text-gray-800 hover:text-red-500 font-bold text-sm hover:underline hover:underline-offset-4 transition-colors"
     >
       {children}
     </Link>

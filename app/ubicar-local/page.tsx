@@ -11,7 +11,26 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import MapComponent from "./components/BusinessMap"
 import SearchComponent from "./components/Search"
 import BusinessForm from "./components/BussinessForm"
-import StepNavigation from "./components/StepNavigation"
+import StepNavigation from "@/components/ui/StepNavigation"
+
+// Definir un tipo para la ubicación seleccionada
+type MapboxFeature = {
+  id: string
+  place_name: string
+  center: [number, number]
+  text: string
+  context?: { id: string; text: string }[]
+}
+
+type FormData = {
+  businessName: string
+  street: string
+  number: string
+  postalCode: string
+  province: string
+  city: string
+  reference?: string
+}
 
 // Definir un tipo para la ubicación seleccionada
 type MapboxFeature = {
@@ -39,21 +58,24 @@ export default function BusinessLocation() {
   const [formData, setFormData] = useState<FormData | null>(null)
 
   const handleLocationSelect = (location: MapboxFeature) => {
+    console.log("Location selected:", location)
     setSelectedLocation(location)
     setShowForm(true)
   }
 
   const handleFormSubmit = (data: FormData) => {
+    console.log("Form data submitted:", data)
     setFormData(data)
   }
 
   const handleNext = () => {
     if (formData && selectedLocation) {
-      // const locationData = {
-      //   ...formData,
-      //   coordinates: selectedLocation.center,
-      //   fullAddress: selectedLocation.place_name,
-      // }
+      const locationData = {
+        ...formData,
+        coordinates: selectedLocation.center,
+        fullAddress: selectedLocation.place_name,
+      }
+      console.log("Location data:", locationData)
       router.push("/datosClaves")
     }
   }
@@ -121,8 +143,8 @@ export default function BusinessLocation() {
       </div>
 
       <StepNavigation
-        currentStep={1}
-        totalSteps={6}
+        currentStep={3}
+        totalSteps={8}
         onNext={handleNext}
         onBack={handleBack}
         isNextDisabled={!(selectedLocation && formData)}

@@ -130,7 +130,7 @@ export default function RegistrationForm() {
         }
       }
     } catch (error) {
-      setError(`Error al conectar con el servicio de validación ${error}`)
+      setError(`Error al conectar con el servicio de validación${error}`)
     } finally {
       setIsLoading(false)
     }
@@ -182,20 +182,20 @@ export default function RegistrationForm() {
   }
 
   return (
-    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-8 rounded-lg shadow-xl">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
         ¡Registra tu local ahora!
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Tipo de Documento *</label>
           <select
             name="documentType"
             value={formData.documentType}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
           >
@@ -205,7 +205,7 @@ export default function RegistrationForm() {
           </select>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Número de Documento *</label>
           <input
             type="text"
@@ -215,13 +215,13 @@ export default function RegistrationForm() {
             required
             maxLength={formData.documentType === 'RUC' ? 11 : 8}
             placeholder="Ingrese su número de documento"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Nombre *</label>
           <input
             type="text"
@@ -231,13 +231,13 @@ export default function RegistrationForm() {
             required
             disabled={isFieldsLocked}
             placeholder="Ingrese su nombre"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Apellido *</label>
           <input
             type="text"
@@ -247,13 +247,13 @@ export default function RegistrationForm() {
             required
             disabled={isFieldsLocked}
             placeholder="Ingrese su apellido"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
           <input
             type="text"
@@ -262,13 +262,13 @@ export default function RegistrationForm() {
             onChange={handleInputChange}
             required
             placeholder="Ingrese tipo de negocio"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Teléfono *</label>
           <input
             type="tel"
@@ -277,13 +277,13 @@ export default function RegistrationForm() {
             onChange={handlePhoneChange}
             required
             placeholder="Ingrese su número de teléfono"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Correo Electrónico *</label>
           <input
             type="email"
@@ -292,7 +292,7 @@ export default function RegistrationForm() {
             onChange={handleInputChange}
             required
             placeholder="Ingrese su correo electrónico"
-            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
           />
@@ -303,7 +303,7 @@ export default function RegistrationForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full px-4 py-3 rounded-lg bg-[#f34739] text-white font-semibold 
+          className="w-full px-4 py-2 rounded-lg bg-[#D9043D] text-white font-semibold 
                    focus:ring-2 focus:ring-[#f34739] focus:ring-opacity-50 
                    hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
                    transition-colors duration-200"

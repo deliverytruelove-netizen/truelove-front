@@ -9,6 +9,7 @@ import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
 import Navbar from '@/components/ui/navbar'
+import EmailImage from '@/public/img/emailsended.jpg'
 
 interface ImprovedNotificationProps {
   message: string;
@@ -176,13 +177,21 @@ function VerifyEmailPage() {
   }
 
   return (
-    <div className="bg-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
+      <Image
+        src={EmailImage}
+        alt="Background"
+        layout="fill"
+        objectFit="cover"
+        quality={100}
+        className="z-0"
+      />
       <Navbar />
-      <motion.div
+      <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full bg-white rounded-lg shadow-lg p-8"
+        className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 z-10"
       >
         <div className="flex flex-col items-center">
           <div className="mb-6">

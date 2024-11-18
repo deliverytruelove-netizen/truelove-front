@@ -81,7 +81,7 @@ const Footer = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          &copy; {currentYear} Magus Technologies. Todos los derechos reservados.
+          &copy; {currentYear} <Link href="https://magustechnologies.com/" className='text-red-600'> Magus Technologies</Link>. Todos los derechos reservados.
         </motion.div>
       </div>
     </footer>
