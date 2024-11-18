@@ -32,25 +32,6 @@ type FormData = {
   reference?: string
 }
 
-// Definir un tipo para la ubicación seleccionada
-type MapboxFeature = {
-  id: string
-  place_name: string
-  center: [number, number]
-  text: string
-  context?: { id: string; text: string }[]
-}
-
-type FormData = {
-  businessName: string
-  street: string
-  number: string
-  postalCode: string
-  province: string
-  city: string
-  reference?: string
-}
-
 export default function BusinessLocation() {
   const router = useRouter()
   const [selectedLocation, setSelectedLocation] = useState<MapboxFeature | null>(null)
