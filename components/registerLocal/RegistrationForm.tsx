@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -17,26 +16,26 @@ export default function RegistrationForm() {
     phone: "+51",
     email: ""
   })
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | null>(null) // Asegurando que el error sea solo string o null
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value
-    
-    // If user is trying to modify the prefix, prevent it
+
+    // Si el usuario intenta modificar el prefijo, se evita
     if (!value.startsWith('+51')) {
       return
     }
 
-    // Get only the number part (after +51)
+    // Obtén solo la parte numérica (después del +51)
     const numberPart = value.substring(3)
-    
-    // Remove any non-numeric characters from the number part
+
+    // Elimina cualquier carácter no numérico
     const numbersOnly = numberPart.replace(/\D/g, '')
-    
-    // Limit to 9 digits
+
+    // Limita a 9 dígitos
     if (numbersOnly.length <= 9) {
-      // Format the phone number
+      // Formatea el número de teléfono
       let formattedNumber = '+51'
       if (numbersOnly.length > 0) {
         formattedNumber += ' ' + numbersOnly.substring(0, 3)
@@ -47,7 +46,7 @@ export default function RegistrationForm() {
           }
         }
       }
-      
+
       setFormData(prev => ({
         ...prev,
         phone: formattedNumber
@@ -57,7 +56,7 @@ export default function RegistrationForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     if (name === 'documentType') {
       setFormData(prev => ({
         ...prev,
@@ -67,7 +66,7 @@ export default function RegistrationForm() {
         lastName: ''
       }))
       setIsFieldsLocked(false)
-      setError('')  // Reset error when document type changes
+      setError(null)  // Reset error cuando cambia el tipo de documento
       return
     }
 
@@ -83,8 +82,8 @@ export default function RegistrationForm() {
         [name]: numbersOnly
       }))
 
-      if ((formData.documentType === 'DNI' && numbersOnly.length === 8) || 
-          (formData.documentType === 'RUC' && numbersOnly.length === 11)) {
+      if ((formData.documentType === 'DNI' && numbersOnly.length === 8) ||
+        (formData.documentType === 'RUC' && numbersOnly.length === 11)) {
         fetchDocumentInfo(formData.documentType, numbersOnly)
       }
       return
@@ -98,16 +97,16 @@ export default function RegistrationForm() {
 
   const fetchDocumentInfo = async (type: string, number: string) => {
     setIsLoading(true)
-    setError('')  // Reset error before fetching new data
-    
+    setError(null)  // Reset error antes de realizar la solicitud
+
     try {
-      const url = type === 'DNI' 
+      const url = type === 'DNI'
         ? `https://dniruc.apisperu.com/api/v1/dni/${number}`
         : `https://dniruc.apisperu.com/api/v1/ruc/${number}`
-      
+
       const response = await fetch(`${url}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`)
       const data = await response.json()
-      
+
       if (type === 'DNI') {
         if (data.success) {
           setFormData(prev => ({
@@ -131,7 +130,7 @@ export default function RegistrationForm() {
         }
       }
     } catch (error) {
-      setError('Error al conectar con el servicio de validación')
+      setError(`Error al conectar con el servicio de validación ${error}`)
     } finally {
       setIsLoading(false)
     }
@@ -140,17 +139,17 @@ export default function RegistrationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')  // Reset error before submitting
-    
+    setError(null)  // Reset error antes de enviar el formulario
+
     try {
-      // Validate that all required fields are filled out
+      // Validación de campos requeridos
       if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
         setError('Todos los campos son obligatorios')
         setIsLoading(false)
         return
       }
 
-      const response = await fetch('http://localhost:8000/api/register', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +165,7 @@ export default function RegistrationForm() {
           email: formData.email
         }),
       })
-  
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || 'Error al enviar el formulario')
@@ -174,9 +173,9 @@ export default function RegistrationForm() {
 
       const data = await response.json()
       router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${data.registration_id}`)
-    } catch (error) {
-      console.error('Error submitting form:', error)
-      setError(error instanceof Error ? error.message : 'Error al conectar con el servidor')
+    } catch (err) {
+      console.error('Error submitting form:', err)
+      setError(err instanceof Error ? err.message : 'Error al conectar con el servidor')
     } finally {
       setIsLoading(false)
     }
@@ -238,33 +237,31 @@ export default function RegistrationForm() {
           />
         </div>
 
-        {formData.documentType !== 'RUC' && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Apellido *</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              required
-              disabled={isFieldsLocked}
-              placeholder="Ingrese su apellido"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                       text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                       transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
-            />
-          </div>
-        )}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Apellido *</label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+            disabled={isFieldsLocked}
+            placeholder="Ingrese su apellido"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
+                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
+                     transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
+          />
+        </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Tipo de Negocio *</label>
+          <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
           <input
             type="text"
             name="businessType"
             value={formData.businessType}
             onChange={handleInputChange}
             required
-            placeholder="Ingrese el tipo de negocio"
+            placeholder="Ingrese tipo de negocio"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
@@ -274,10 +271,10 @@ export default function RegistrationForm() {
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Teléfono *</label>
           <input
-            type="text"
+            type="tel"
             name="phone"
             value={formData.phone}
-            onChange={handleInputChange}
+            onChange={handlePhoneChange}
             required
             placeholder="Ingrese su número de teléfono"
             className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
@@ -306,15 +303,12 @@ export default function RegistrationForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full px-4 py-3 bg-[#f34739] text-white font-semibold rounded-lg
-                   hover:bg-[#d83d31] focus:ring-2 focus:ring-[#f34739] disabled:bg-gray-400
+          className="w-full px-4 py-3 rounded-lg bg-[#f34739] text-white font-semibold 
+                   focus:ring-2 focus:ring-[#f34739] focus:ring-opacity-50 
+                   hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
                    transition-colors duration-200"
         >
-          {isLoading ? (
-            <Loader2 className="animate-spin w-5 h-5 mx-auto" />
-          ) : (
-            'Registrar'
-          )}
+          {isLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Registrar'}
         </button>
       </form>
     </div>
