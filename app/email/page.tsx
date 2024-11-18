@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from "next/image"
@@ -9,8 +9,14 @@ import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
 import Navbar from '@/components/ui/navbar'
+import EmailImage from '@/public/img/emailsended.jpg'
 
-function ImprovedNotification({ message, duration = 3000 }) {
+interface ImprovedNotificationProps {
+  message: string;
+  duration?: number;
+}
+
+function ImprovedNotification({ message, duration = 3000 }: ImprovedNotificationProps) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -36,10 +42,9 @@ function ImprovedNotification({ message, duration = 3000 }) {
       )}
     </AnimatePresence>
   );
-  
 }
 
-export default function VerifyEmailPage() {
+function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
@@ -91,7 +96,7 @@ export default function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/api/verify', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +120,7 @@ export default function VerifyEmailPage() {
       setTimeout(() => {
         router.push('/acercaNegocio')
       }, 3000)
-      
+
     } catch (error) {
       console.error('Verification error:', error)
       if (error instanceof Error) {
@@ -135,14 +140,14 @@ export default function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/api/resend-code', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/resend-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email, 
-          registration_id: registrationId 
+        body: JSON.stringify({
+          email,
+          registration_id: registrationId
         }),
       })
 
@@ -172,13 +177,21 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="bg-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
-      <Navbar/>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
+      <Image
+        src={EmailImage}
+        alt="Background"
+        layout="fill"
+        objectFit="cover"
+        quality={100}
+        className="z-0"
+      />
+      <Navbar />
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full bg-white rounded-lg shadow-lg p-8"
+        className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 z-10"
       >
         <div className="flex flex-col items-center">
           <div className="mb-6">
@@ -215,11 +228,11 @@ export default function VerifyEmailPage() {
                 Te enviamos un correo electrónico a la dirección{" "}
                 <span className="font-bold">{email}</span>
               </p>
-              
+
               <form onSubmit={handleVerification} className="w-full space-y-4">
                 <div>
-                  <label 
-                    htmlFor="verificationCode" 
+                  <label
+                    htmlFor="verificationCode"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Código de verificación
@@ -242,8 +255,8 @@ export default function VerifyEmailPage() {
                   <p className="text-red-500 text-sm text-center">{error}</p>
                 )}
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-[#f34739] text-white hover:bg-[#d63c30] flex items-center justify-center"
                   disabled={isLoading || verificationCode.length !== 6}
                 >
@@ -260,8 +273,8 @@ export default function VerifyEmailPage() {
 
               <div className="text-center text-sm text-gray-500 mt-4">
                 ¿No lo recibiste?{" "}
-                <button 
-                  onClick={handleResendCode} 
+                <button
+                  onClick={handleResendCode}
                   className="text-[#d63c30] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isLoading || resendCooldown > 0}
                   type="button"
@@ -282,5 +295,13 @@ export default function VerifyEmailPage() {
         <ImprovedNotification message="Se ha reenviado el código a su correo" />
       )}
     </div>
+  )
+}
+
+export default function VerifyEmailPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailPage />
+    </Suspense>
   )
 }
