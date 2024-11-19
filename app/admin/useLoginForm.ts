@@ -13,7 +13,7 @@ interface LoginResponse {
         id: number;
         usuario: string;
         email: string;
-        [key: string]: any; // Otros campos opcionales en la respuesta del usuario
+        [key: string]: unknown; 
     };
 }
 
@@ -52,9 +52,13 @@ export const useLoginForm = () => {
             localStorage.setItem('user', JSON.stringify(user));
 
             router.replace('admin/dashboard');
-        } catch (error: any) {
-            const backendMessage = error.response?.data?.error || 'Error desconocido en el servidor';
-            setErrorMessage(backendMessage);
+        } catch (error: unknown) { // Cambié `any` por `unknown`
+            if (error instanceof Error) { // Verificación de tipo
+                const backendMessage = (error as any).response?.data?.error || 'Error desconocido en el servidor';
+                setErrorMessage(backendMessage);
+            } else {
+                setErrorMessage('Error desconocido');
+            }
         } finally {
             setIsLoading(false);
         }
