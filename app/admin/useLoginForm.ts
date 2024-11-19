@@ -13,7 +13,16 @@ interface LoginResponse {
         id: number;
         usuario: string;
         email: string;
-        [key: string]: unknown; 
+        [key: string]: unknown; // Otros campos opcionales en la respuesta del usuario
+    };
+}
+
+// Definimos un tipo para el error esperado
+interface ErrorResponse {
+    response?: {
+        data: {
+            error: string;
+        };
     };
 }
 
@@ -52,9 +61,10 @@ export const useLoginForm = () => {
             localStorage.setItem('user', JSON.stringify(user));
 
             router.replace('admin/dashboard');
-        } catch (error: unknown) { // Cambié `any` por `unknown`
-            if (error instanceof Error) { // Verificación de tipo
-                const backendMessage = (error as any).response?.data?.error || 'Error desconocido en el servidor';
+        } catch (error: unknown) { // Cambié a 'unknown' para manejarlo de manera segura
+            if (isErrorResponse(error)) {
+                // Aquí accedemos de manera segura a la propiedad `error` de la respuesta
+                const backendMessage = error.response?.data?.error || 'Error desconocido en el servidor';
                 setErrorMessage(backendMessage);
             } else {
                 setErrorMessage('Error desconocido');
@@ -74,3 +84,11 @@ export const useLoginForm = () => {
         handleSubmit,
     };
 };
+
+// Función de verificación de tipo para errores
+function isErrorResponse(error: unknown): error is ErrorResponse {
+    return (
+        (error as ErrorResponse).response !== undefined &&
+        (error as ErrorResponse).response?.data?.error !== undefined
+    );
+}
