@@ -1,25 +1,28 @@
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
-// apiService.tsx
 interface PostDataParams {
     endpoint: string;
-    data: FormData;  // Cambiado a FormData
+    data: FormData; // Usa FormData para manejar datos de formulario
     token?: string;
 }
 
-export const postData = async ({ endpoint, data, token }: PostDataParams): Promise<Record<string, unknown>> => {
+export const postData = async <T = Record<string, unknown>>({
+    endpoint,
+    data,
+    token,
+}: PostDataParams): Promise<T> => {
     const response = await fetch(`${API_URL}/${endpoint}`, {
         method: 'POST',
         headers: {
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...(token && { Authorization: `Bearer ${token}` }), // Agrega el token si está presente
         },
-        body: data,  // Usa FormData directamente en el cuerpo de la solicitud
+        body: data, // El cuerpo es directamente FormData
     });
 
     if (!response.ok) {
-        throw new Error('Error en la respuesta de la API');
+        const errorBody = await response.json();
+        throw new Error(errorBody.error || 'Error en la solicitud a la API');
     }
 
     return await response.json();
 };
-

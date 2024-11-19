@@ -1,18 +1,31 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './styles/Login.module.css';
 import { useLoginForm } from './useLoginForm';
 import Image from 'next/image';
+import { Loader2 } from 'lucide-react'
 
 const LoginPage: React.FC = () => {
     const {
         formData,
         showPassword,
+        isLoading,
         togglePasswordVisibility,
         handleChange,
         handleSubmit,
     } = useLoginForm();
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            // Redirige inmediatamente si el usuario ya está autenticado
+            router.replace('/admin/dashboard');
+        }
+    }, [router]);
 
     return (
         <div className={styles.container}>
@@ -21,10 +34,10 @@ const LoginPage: React.FC = () => {
                     <div className={styles.authenticationContainer}>
                         <div className={styles.authentication}>
                             <div className={styles.containerImg}>
-                            <Image 
-                                    src="./food.svg" 
-                                    alt="Store Icon" 
-                                    className={styles.icon} 
+                                <Image
+                                    src="./food.svg"
+                                    alt="Store Icon"
+                                    className={styles.icon}
                                     width={800} // Ajusta el ancho de la imagen
                                     height={435} // Ajusta la altura de la imagen
                                 />
@@ -107,7 +120,9 @@ const LoginPage: React.FC = () => {
                             <div className={styles.containerForgot}>
                                 <a href="#" className={styles.forgotPassword}>¿Olvidaste tu contraseña?</a>
                             </div>
-                            <button type="submit" className={styles.loginButton}>Iniciar sesión</button>
+                            <button type="submit" disabled={isLoading} className={styles.loginButton}>
+                                {isLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Iniciar Sesión'}
+                            </button>
                             <div className={styles.containerOr}>
                                 <span>O</span>
                             </div>

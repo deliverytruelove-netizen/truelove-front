@@ -1,24 +1,46 @@
-// import { publicRoutes } from '@/config/routes'
-// import { useAuth } from '@/hooks'
 import { motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
-import {
-  RiAccountCircleLine,
-  RiLogoutBoxLine,
-  RiSettings4Line
-} from 'react-icons/ri'
+import { useState, useEffect, useRef } from 'react'
+import { RiAccountCircleLine, RiLogoutBoxLine, RiSettings4Line } from 'react-icons/ri'
+import { redirect } from 'next/navigation'
 
 const AvatarSettings: React.FC = () => {
   const [showMenuAvatar, setShowMenuAvatar] = useState(false)
-  // const { logout, user } = useAuth()
   const avatarMenuRef = useRef<HTMLDivElement | null>(null)
+  const [userInitials, setUserInitials] = useState<string>('')
+  const [firstName, setFirstName] = useState<string>('')
+  const [email, setEmail] = useState<string>('')
+
+  // Obtener las iniciales del usuario desde localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      const user = JSON.parse(storedUser) // Convertir el string JSON a objeto
+      const firstName = user?.name || ''
+      const lastName = user?.lastName || ''
+      const fullName = `${firstName.toUpperCase()} ${lastName.toUpperCase()}`
+      const email = user?.email || ''
+      // Obtener las iniciales del nombre y apellido
+      const initials = `${firstName.charAt(0).toUpperCase()}${lastName.charAt(0).toUpperCase()}`
+      setUserInitials(initials)
+      setFirstName(fullName)
+      setEmail(email)
+    }
+  }, [])
+
+  const handleLogout = () => {
+    // Elimina el token del localStorage o cookies
+    localStorage.removeItem('authToken') // Si usas localStorage
+    // Cookies.remove('authToken') // O si usas cookies
+
+    // Redirigir al login
+    redirect('/admin')  // Redirige al login usando la API de redirección de Next.js
+  }
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent): void => {
       if (
         avatarMenuRef.current !== null &&
-        !(avatarMenuRef.current?.contains(e.target as Node) ?? false) &&
-        !(avatarMenuRef.current?.contains(e.target as Node) ?? false)
+        !avatarMenuRef.current.contains(e.target as Node)
       ) {
         setShowMenuAvatar(false)
       }
@@ -41,7 +63,7 @@ const AvatarSettings: React.FC = () => {
           }}
         >
           <span className="font-medium text-gray-600 uppercase">
-            {/* {user?.firstname.charAt(0)} {user?.lastname.charAt(0)} */}
+            {userInitials}
           </span>
         </button>
         <motion.div
@@ -57,10 +79,10 @@ const AvatarSettings: React.FC = () => {
           <div className="py-2">
             <div className="px-4 py-2 hover:bg-gray-100 w-full transition-colors">
               <div className="font-medium">
-                {/* {user?.firstname ?? ''} {user?.lastname ?? ''} */}
+                {firstName}
               </div>
               <div className="text-sm truncate">
-                {/* {user?.email ?? 'Email no registrado'} */}
+                {email}
               </div>
             </div>
           </div>
@@ -81,10 +103,7 @@ const AvatarSettings: React.FC = () => {
           <div className="py-2">
             <button
               className="flex gap-2 py-2 items-center px-4 text-left hover:text-gray-900 cursor-pointer hover:bg-gray-100 w-full transition-colors"
-              onClick={() => {
-                // logout()
-                // router.push(publicRoutes.LOGIN.path)
-              }}
+              onClick={handleLogout}
             >
               <span>
                 <RiLogoutBoxLine className="text-xl" />

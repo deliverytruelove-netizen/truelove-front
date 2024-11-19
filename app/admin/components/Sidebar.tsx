@@ -103,6 +103,14 @@ export const Sidebar: React.FC<Props> = ({
           <RiShieldUserLine className="text-2xl" />
           <span style={{ color: matchPath('/admin/usuarios') ? 'white !important' : 'inherit' }}>Usuarios</span>
         </Link>
+        <Link
+          href={'/admin/socios'}
+          className={`${matchPath('/admin/socios') ? activeStyles : hoverStyles
+            } flex gap-2 rounded-md text-color-main  transition-colors p-2`}
+        >
+          <RiShieldUserLine className="text-2xl" />
+          <span style={{ color: matchPath('/admin/socios') ? 'white !important' : 'inherit' }}>Socios</span>
+        </Link>
       </nav>
     </div>
   )
