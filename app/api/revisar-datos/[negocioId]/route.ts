@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  context: { params: { negocioId: string } }
+  { params }: { params: { negocioId: string } }
 ) {
   try {
-    const { negocioId } = context.params
+    const { negocioId } = params
     const searchParams = request.nextUrl.searchParams
     const establecimientoId = searchParams.get('establecimiento_id')
     const datosClaveNegocioId = searchParams.get('datos_clave_negocio_id')
