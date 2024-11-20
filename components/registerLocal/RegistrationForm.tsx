@@ -183,7 +183,7 @@ export default function RegistrationForm() {
   }
 
   return (
-    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mr-32  ">
+    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto md:ml-80">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
         ¡Registra tu local ahora!
       </h2>
