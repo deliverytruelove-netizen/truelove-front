@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from 'next/navigation'
 import Image from "next/image"
 import { CircleHelp, Loader2 } from 'lucide-react'
@@ -15,6 +15,7 @@ import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "../../hooks/use-toast"
 
+// Definición de la interfaz para la dirección del establecimiento
 interface EstablecimientoDireccion {
   calle: string
   numero: string
@@ -44,6 +45,7 @@ export default function DatosBancarios() {
   })
   const [isFormValid, setIsFormValid] = useState(false)
 
+  // Efecto para validar el formulario
   useEffect(() => {
     const isValid = Object.values(formData).every(value => 
       typeof value === 'boolean' ? true : value.trim() !== ''
@@ -51,16 +53,11 @@ export default function DatosBancarios() {
     setIsFormValid(isValid)
   }, [formData])
 
-  useEffect(() => {
-    if (formData.useBusinessAddress) {
-      fetchEstablecimientoDireccion()
-    }
-  }, [formData.useBusinessAddress])
-
-  const fetchEstablecimientoDireccion = async () => {
+  // Función para obtener la dirección del establecimiento, ahora envuelta en useCallback
+  const fetchEstablecimientoDireccion = useCallback(async () => {
     try {
       setIsLoading(true)
-      const establecimientoId = 1 // Replace with actual ID from your app state
+      const establecimientoId = 1 // Reemplazar con el ID real de tu estado de la aplicación
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${establecimientoId}/direccion`)
       
       if (!response.ok) {
@@ -83,21 +80,32 @@ export default function DatosBancarios() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast]) // Agregamos toast como dependencia
 
+  // Efecto para obtener la dirección del establecimiento cuando se usa la dirección del negocio
+  useEffect(() => {
+    if (formData.useBusinessAddress) {
+      fetchEstablecimientoDireccion()
+    }
+  }, [formData.useBusinessAddress, fetchEstablecimientoDireccion])
+
+  // Manejador para cambios en los inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
+  // Manejador para cambios en los selects
   const handleSelectChange = (id: string, value: string) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
+  // Manejador para cambios en el checkbox
   const handleCheckboxChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, useBusinessAddress: checked }))
   }
 
+  // Función para manejar el envío del formulario
   const handleNext = async () => {
     if (!isFormValid) return
 
@@ -132,7 +140,7 @@ export default function DatosBancarios() {
         description: "Los datos bancarios se han guardado correctamente"
       })
       
-   
+      // Redirigir a la siguiente página después de un breve retraso
       setTimeout(() => {
         router.push('/planes')
       }, 1000)
@@ -148,6 +156,7 @@ export default function DatosBancarios() {
     }
   }
 
+  // Función para manejar el botón de retroceso
   const handleBack = () => {
     router.back()
   }

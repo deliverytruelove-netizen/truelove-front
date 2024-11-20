@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Check, ChevronDown, Smartphone } from 'lucide-react'
@@ -36,11 +36,7 @@ export default function PricingPlan() {
   const currentStep = 6
   const totalSteps = 8
 
-  useEffect(() => {
-    fetchLatestIds()
-  }, [])
-
-  const fetchLatestIds = async () => {
+  const fetchLatestIds = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/obtener-ultimos-ids`, {
         method: 'GET',
@@ -66,7 +62,11 @@ export default function PricingPlan() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    fetchLatestIds()
+  }, [fetchLatestIds])
 
   const benefits = [
     "10% de comisión durante los primeros 30 días",
