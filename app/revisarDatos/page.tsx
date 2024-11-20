@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import StepNavigation from '@/components/ui/StepNavigation'
 import DeliveryImage from "@/public/img/negocio.jpg"
 import { useToast } from "@/hooks/use-toast"
 
+// Definición de la interfaz para los datos a revisar
 interface ReviewData {
   datos_negocio: {
     nombre: string
@@ -61,30 +62,15 @@ export default function ReviewData() {
   const currentStep = 7
   const totalSteps = 8
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const negocioId = searchParams.get('negocioId')
-    const establecimientoId = searchParams.get('establecimientoId')
-    const datosClaveId = searchParams.get('datosClaveId')
-    const datosBancariosId = searchParams.get('datosBancariosId')
-
-    if (!negocioId || !establecimientoId || !datosClaveId || !datosBancariosId) {
-      setError('Faltan parámetros necesarios en la URL')
-      setLoading(false)
-      return
-    }
-
-    fetchData(negocioId, establecimientoId, datosClaveId, datosBancariosId)
-  }, [])
-
-  const fetchData = async (
+  // Función para obtener los datos, ahora usando useCallback
+  const fetchData = useCallback(async (
     negocioId: string,
     establecimientoId: string,
     datosClaveId: string,
     datosBancariosId: string
   ) => {
     try {
-      // Construct URL with the correct parameter names
+      // Construir URL con los parámetros correctos
       const url = new URL(`${process.env.NEXT_PUBLIC_API_WEB}/revisarDatos`)
       url.searchParams.append('negocioId', negocioId)
       url.searchParams.append('establecimientoId', establecimientoId)
@@ -118,8 +104,26 @@ export default function ReviewData() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast]) // Dependencias del useCallback
 
+  // Efecto para cargar los datos iniciales
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const negocioId = searchParams.get('negocioId')
+    const establecimientoId = searchParams.get('establecimientoId')
+    const datosClaveId = searchParams.get('datosClaveId')
+    const datosBancariosId = searchParams.get('datosBancariosId')
+
+    if (!negocioId || !establecimientoId || !datosClaveId || !datosBancariosId) {
+      setError('Faltan parámetros necesarios en la URL')
+      setLoading(false)
+      return
+    }
+
+    fetchData(negocioId, establecimientoId, datosClaveId, datosBancariosId)
+  }, [fetchData]) // Ahora fetchData es una dependencia
+
+  // Función para manejar el avance al siguiente paso
   const handleNext = async () => {
     if (!acceptedTerms) return
 
@@ -155,10 +159,12 @@ export default function ReviewData() {
     }
   }
 
+  // Función para volver al paso anterior
   const handleBack = () => {
     router.back()
   }
 
+  // Función para manejar la edición de secciones
   const handleEdit = (section: string) => {
     const searchParams = new URLSearchParams(window.location.search)
     const negocioId = searchParams.get('negocioId')
@@ -193,6 +199,7 @@ export default function ReviewData() {
     }
   }
 
+  // Renderizado condicional para el estado de error
   if (error) {
     return (
       <div className="flex h-screen items-center justify-center bg-background p-4">
@@ -215,6 +222,7 @@ export default function ReviewData() {
     )
   }
   
+  // Renderizado condicional para el estado de carga
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -226,6 +234,7 @@ export default function ReviewData() {
     )
   }
 
+  // Renderizado condicional si no hay datos
   if (!data) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -242,6 +251,7 @@ export default function ReviewData() {
     )
   }
 
+  // Renderizado principal del componente
   return (
     <section className="min-h-screen w-full bg-gray-50">
       <Navbar />
@@ -264,7 +274,7 @@ export default function ReviewData() {
             </CardHeader>
             <ScrollArea className="h-[60vh]">
               <CardContent className="space-y-6">
-                {/* Business Data Section */}
+                {/* Sección de Datos del Negocio */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Datos del negocio</h3>
@@ -290,7 +300,7 @@ export default function ReviewData() {
                   </div>
                 </div>
 
-                {/* Business Address Section */}
+                {/* Sección de Dirección del Negocio */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Dirección del Negocio</h3>
@@ -314,7 +324,7 @@ export default function ReviewData() {
                   </div>
                 </div>
 
-                {/* Legal Data Section */}
+                {/* Sección de Datos Legales */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Datos legales</h3>
@@ -338,7 +348,7 @@ export default function ReviewData() {
                   </div>
                 </div>
 
-                {/* Bank Data Section */}
+                {/* Sección de Datos Bancarios */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Datos bancarios</h3>
@@ -364,7 +374,7 @@ export default function ReviewData() {
                   </div>
                 </div>
 
-                {/* Commercial Relationship Section */}
+                {/* Sección de Relación Comercial */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Relación comercial</h3>
