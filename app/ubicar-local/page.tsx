@@ -12,8 +12,8 @@ import MapComponent from "./components/BusinessMap"
 import SearchComponent from "./components/Search"
 import BusinessForm from "./components/BussinessForm"
 import StepNavigation from "@/components/ui/StepNavigation"
+import { useToast } from "@/hooks/use-toast"
 
-// Definir un tipo para la ubicación seleccionada
 type MapboxFeature = {
   id: string
   place_name: string
@@ -34,6 +34,7 @@ type FormData = {
 
 export default function BusinessLocation() {
   const router = useRouter()
+  const { toast } = useToast()
   const [selectedLocation, setSelectedLocation] = useState<MapboxFeature | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<FormData | null>(null)
@@ -49,7 +50,7 @@ export default function BusinessLocation() {
     setFormData(data)
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (formData && selectedLocation) {
       const locationData = {
         ...formData,
@@ -57,7 +58,35 @@ export default function BusinessLocation() {
         fullAddress: selectedLocation.place_name,
       }
       console.log("Location data:", locationData)
-      router.push("/datosClaves")
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimientos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(locationData),
+        })
+
+        if (!response.ok) {
+          throw new Error('Error al guardar los datos')
+        }
+
+        const result = await response.json()
+        console.log(result)
+        toast({
+          title: "Éxito",
+          description: "Los datos del establecimiento se han guardado correctamente",
+        })
+        router.push("/datosClaves")
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Hubo un error al guardar los datos del establecimiento",
+          variant: "destructive",
+        })
+        console.error('Error:', error)
+      }
     }
   }
 

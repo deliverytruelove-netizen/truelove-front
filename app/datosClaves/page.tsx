@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from 'next/navigation'
 import Image from "next/image"
+import { Loader2 } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,29 +11,120 @@ import { Label } from "@/components/ui/label"
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
+import { useToast } from "../../hooks/use-toast"
 
-
-export default function Component() {
+export default function DatosClaveNegocio() {
   const router = useRouter()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
     ruc: '',
     razonSocial: '',
-    email: '',
-    phone: ''
   })
 
-  const isFormValid = Object.values(formData).every(value => value.trim() !== '')
+  const isFormValid = formData.ruc.trim() !== '' && formData.razonSocial.trim() !== ''
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFormData(prev => ({ ...prev, [id]: value }))
+  const fetchRucData = async (ruc: string) => {
+    if (ruc.length !== 11) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(
+        `https://dniruc.apisperu.com/api/v1/ruc/${ruc}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`
+      )
+      
+      if (!response.ok) {
+        throw new Error('Error al consultar el RUC')
+      }
+
+      const data = await response.json()
+      
+      if (data.razonSocial) {
+        setFormData(prev => ({
+          ...prev,
+          razonSocial: data.razonSocial
+        }))
+      } else {
+        toast({
+          title: "RUC no encontrado",
+          description: "No se encontró información para el RUC ingresado",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un error al consultar el RUC",
+        variant: "destructive"
+      })
+      console.error('Error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleNext = () => {
-    if (isFormValid) {
-      console.log('Form data:', formData)
-      router.push('/datosBancarios')
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setFormData(prev => ({ ...prev, [id]: value }))
+
+    if (id === 'ruc' && value.length === 11) {
+      await fetchRucData(value)
     }
+  }
+
+  const handleNext = async () => {
+    if (!isFormValid) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/datos-clave-negocio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          ruc: formData.ruc,
+          razon_social: formData.razonSocial
+        })
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.mensaje || 'Error al guardar los datos')
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Los datos se han guardado correctamente"
+      })
+      
+      router.push('/datosBancarios')
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error completo:', error)
+        toast({
+          title: "Error",
+          description: error.message || "Hubo un error al guardar los datos",
+          variant: "destructive"
+        })
+      } else {
+        console.error('Error desconocido:', error)
+        toast({
+          title: "Error",
+          description: "Ocurrió un error inesperado",
+          variant: "destructive"
+        })
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleBack = () => {
+    router.back()
   }
 
   return (
@@ -41,7 +133,7 @@ export default function Component() {
       <div className="grid lg:grid-cols-2">
         <div className="relative hidden h-full min-h-[600px] lg:block">
           <Image
-            alt="Business person working on a laptop"
+            alt="Persona de negocios trabajando en una laptop"
             className="absolute inset-0 h-full w-full object-cover"
             height={1080}
             src={Persona}
@@ -58,17 +150,28 @@ export default function Component() {
               <CardTitle className="text-2xl font-bold">Algunos datos clave</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault()
+                handleNext()
+              }}>
                 <div className="space-y-2">
                   <Label htmlFor="ruc">RUC</Label>
-                  <Input 
-                    id="ruc" 
-                    placeholder="Ingrese su RUC" 
-                    required 
-                    type="text"
-                    value={formData.ruc}
-                    onChange={handleInputChange}
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="ruc" 
+                      placeholder="Ingrese su RUC" 
+                      required 
+                      type="text"
+                      maxLength={11}
+                      value={formData.ruc}
+                      onChange={handleInputChange}
+                      className={isLoading ? "pr-10" : ""}
+                      disabled={isLoading || isSaving}
+                    />
+                    {isLoading && (
+                      <Loader2 className="absolute right-3 top-2.5 h-5 w-5 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="razonSocial">Razón Social</Label>
@@ -79,28 +182,8 @@ export default function Component() {
                     type="text"
                     value={formData.razonSocial}
                     onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo electrónico</Label>
-                  <Input 
-                    id="email" 
-                    placeholder="Ingrese su correo" 
-                    required 
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input 
-                    id="phone" 
-                    placeholder="Ingrese su teléfono" 
-                    required 
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
+                    readOnly={isLoading}
+                    disabled={isLoading || isSaving}
                   />
                 </div>
               </form>
@@ -113,8 +196,8 @@ export default function Component() {
         currentStep={4}
         totalSteps={6}
         onNext={handleNext}
-        onBack={() => router.back()}
-        isNextDisabled={!isFormValid}
+        onBack={handleBack}
+        isNextDisabled={false}
       />
     </section>
   )

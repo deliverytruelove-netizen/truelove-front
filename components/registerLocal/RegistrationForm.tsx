@@ -19,21 +19,21 @@ export default function RegistrationForm() {
   const [error, setError] = useState<string | null>(null) // Asegurando que el error sea solo string o null
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
 
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value
-
-    // Si el usuario intenta modificar el prefijo, se evita
+    
+ 
     if (!value.startsWith('+51')) {
       return
     }
 
-    // Obtén solo la parte numérica (después del +51)
+
     const numberPart = value.substring(3)
 
-    // Elimina cualquier carácter no numérico
     const numbersOnly = numberPart.replace(/\D/g, '')
-
-    // Limita a 9 dígitos
+    
+    // limite 9 digitos
     if (numbersOnly.length <= 9) {
       // Formatea el número de teléfono
       let formattedNumber = '+51'
@@ -182,7 +182,7 @@ export default function RegistrationForm() {
   }
 
   return (
-    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl">
+    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mr-32  ">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
         ¡Registra tu local ahora!
       </h2>
@@ -303,7 +303,7 @@ export default function RegistrationForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full px-4 py-2 rounded-lg bg-[#D9043D] text-white font-semibold 
+          className="w-full px-4 py-2 rounded-lg bg-red-500 text-white font-semibold 
                    focus:ring-2 focus:ring-[#f34739] focus:ring-opacity-50 
                    hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
                    transition-colors duration-200"
