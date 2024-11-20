@@ -1,29 +1,72 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Check, ChevronDown, Smartphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
+import { Check, ChevronDown, Smartphone } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import Navbar from "@/components/ui/navbar";
-import StepNavigation from "@/components/ui/StepNavigation";
-import DeliveryImage from "@/public/img/deli.jpg";
+} from "@/components/ui/collapsible"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import Navbar from "@/components/ui/navbar"
+import StepNavigation from '@/components/ui/StepNavigation'
+import DeliveryImage from "@/public/img/deli.jpg"
+import { useToast } from "@/hooks/use-toast"
+
+interface LatestIds {
+  negocioId: number
+  establecimientoId: number
+  datosClaveId: number
+  datosBancariosId: number
+}
 
 export default function PricingPlan() {
-  const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(false);
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState(false)
+  const [latestIds, setLatestIds] = useState<LatestIds | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const currentStep = 6;
-  const totalSteps = 6;
+  const currentStep = 6
+  const totalSteps = 8
+
+  useEffect(() => {
+    fetchLatestIds()
+  }, [])
+
+  const fetchLatestIds = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/obtener-ultimos-ids`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al obtener los IDs más recientes')
+      }
+
+      const data = await response.json()
+      setLatestIds(data)
+    } catch (error) {
+      console.error('Error fetching latest IDs:', error)
+      toast({
+        title: "Error",
+        description: "No se pudieron obtener los IDs más recientes",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const benefits = [
     "10% de comisión durante los primeros 30 días",
@@ -32,18 +75,36 @@ export default function PricingPlan() {
     "Gestiona órdenes fácilmente",
     "Compatible con tu teléfono móvil",
     "Sin costos ocultos ni mensualidades",
-  ];
+  ]
 
   const handleNext = () => {
-    if (selectedPlan) {
-      console.log("Selected plan:", selectedPlan);
-      router.push("/revisarDatos");
-    }
-  };
+    if (!selectedPlan || !latestIds) return
+
+    // Construct URL with latest IDs
+    const params = new URLSearchParams({
+      negocioId: latestIds.negocioId.toString(),
+      establecimientoId: latestIds.establecimientoId.toString(),
+      datosClaveId: latestIds.datosClaveId.toString(),
+      datosBancariosId: latestIds.datosBancariosId.toString()
+    })
+
+    router.push(`/revisarDatos?${params.toString()}`)
+  }
 
   const handleBack = () => {
-    router.back();
-  };
+    router.back()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <section className="min-h-screen w-full bg-gray-50">
@@ -162,5 +223,5 @@ export default function PricingPlan() {
         isNextDisabled={!selectedPlan}
       />
     </section>
-  );
+  )
 }

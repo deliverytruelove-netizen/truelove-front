@@ -6,10 +6,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import Image from 'next/image'
-import { Building2, Phone, Store, ChevronRight, CheckCircle2 } from 'lucide-react'
-import Navbar from '@/components/ui/navbar'
-import { Button } from '@/components/ui/button'
 import Negocio from '@/public/img/negocio.jpg'
+import { Building2, Phone, Store, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -27,29 +26,42 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { toast } from '../../hooks/use-toast'
+
+interface TipoNegocio {
+  id: number
+  nombre: string
+}
+
+interface Categoria {
+  id: number
+  nombre: string
+}
 
 const formSchema = z.object({
-  businessName: z.string().min(2, "El nombre es requerido"),
-  businessType: z.string().min(2, "El tipo de negocio es requerido"),
-  category: z.string().min(2, "La categoría es requerida"),
-  branches: z.coerce.number().min(1, "Número de sucursales requerido"),
+  businessName: z.string().min(2, "El nombre del negocio es requerido"),
+  businessType: z.string().min(1, "El tipo de negocio es requerido"),
+  category: z.string().min(1, "La categoría es requerida"),
+  branches: z.coerce.number().min(1, "El número de sucursales es requerido"),
   isStreetLocation: z.enum(['Si', 'No']),
-  contactMethod: z.string().min(2, "El método de contacto es requerido"),
+  contactMethod: z.string().min(1, "El método de contacto es requerido"),
   phoneNumber: z.string().regex(/^\+51\d{9}$/, "Número de teléfono inválido"),
 })
 
 const steps = [
-  { id: 1, name: 'Información básica', completed: true },
-  { id: 2, name: 'Detalles del negocio', completed: false },
+  { id: 1, name: 'Información Básica', completed: true },
+  { id: 2, name: 'Detalles del Negocio', completed: false },
   { id: 3, name: 'Ubicación', completed: false },
   { id: 4, name: 'Horarios', completed: false },
   { id: 5, name: 'Galería', completed: false },
   { id: 6, name: 'Confirmación', completed: false },
 ]
 
-export default function BusinessDetailsForm() {
+export default function FormularioDetallesNegocio() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [tiposNegocio, setTiposNegocio] = useState<TipoNegocio[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,29 +77,74 @@ export default function BusinessDetailsForm() {
   })
 
   useEffect(() => {
-    const preventNavigation = (event: PopStateEvent) => {
-      event.preventDefault()
-      window.history.pushState(null, '', window.location.href)
-    }
-
-    window.history.pushState(null, '', window.location.href)
-    window.addEventListener('popstate', preventNavigation)
-
-    return () => {
-      window.removeEventListener('popstate', preventNavigation)
-    }
+    fetchTiposNegocio()
   }, [])
+
+  const fetchTiposNegocio = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-negocio`)
+      if (!response.ok) throw new Error('Error al obtener tipos de negocio')
+      const data = await response.json()
+      setTiposNegocio(data)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `No se pudieron cargar los tipos de negocio ${error}`,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const fetchCategorias = async (tipoNegocioId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/categorias/${tipoNegocioId}`)
+      if (!response.ok) throw new Error('Error al obtener categorías')
+      const data = await response.json()
+      setCategorias(data)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `No se pudieron cargar las categorías ${error}`,
+        variant: "destructive",
+      })
+    }
+  }
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true)
     try {
-      console.log('Business details:', data)
-      // Here you would typically send the data to your backend
-      // await sendDataToBackend(data);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/negocios`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: data.businessName,
+          tipo_negocio_id: parseInt(data.businessType),
+          categoria_id: parseInt(data.category),
+          total_sucursales: data.branches,
+          es_local_calle: data.isStreetLocation === 'Si',
+          metodo_contacto: data.contactMethod,
+          telefono: data.phoneNumber,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al guardar los datos')
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Negocio registrado correctamente",
+      })
       router.push('/ubicar-local')
     } catch (error) {
-      console.error('Error:', error)
-      // Handle error (e.g., show error message to user)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al guardar los datos del negocio",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -95,24 +152,20 @@ export default function BusinessDetailsForm() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <div className="fixed top-0 left-0 right-0 z-10 bg-white">
-        <Navbar />
-      </div>
-
       <div className="mx-auto max-w-5xl p-8 pt-20 pb-24 grid md:grid-cols-2 gap-12">
         <div className="hidden md:block">
           <div className="sticky top-8 space-y-6">
             <Image
               src={Negocio}
-              alt="Business Illustration"
+              alt="Ilustración de Negocio"
               width={400}
               height={400}
               className="rounded-lg object-cover"
             />
             <div className="space-y-4">
-              <FeatureItem icon={Store} text="Configura tu negocio en minutos" />
-              <FeatureItem icon={Building2} text="Gestiona múltiples sucursales" />
-              <FeatureItem icon={Phone} text="Conecta con tus clientes fácilmente" />
+              <FeatureItem icon={Store} text="Configure su negocio en minutos" />
+              <FeatureItem icon={Building2} text="Administre múltiples sucursales" />
+              <FeatureItem icon={Phone} text="Conéctese fácilmente con sus clientes" />
             </div>
           </div>
         </div>
@@ -120,9 +173,9 @@ export default function BusinessDetailsForm() {
         <div className="overflow-y-auto max-h-[calc(100vh-200px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 pr-4">
           <div className="space-y-8">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Cuéntanos acerca de tu negocio</h1>
+              <h1 className="text-2xl font-bold mb-2">Cuéntenos sobre su negocio</h1>
               <p className="text-muted-foreground">
-                Esta información se mostrará en la aplicación para que los clientes puedan buscarte y contactarte en caso de que tengan alguna pregunta.
+                Esta información se mostrará en la aplicación para que los clientes puedan encontrarlo y contactarlo si tienen preguntas.
               </p>
             </div>
 
@@ -133,7 +186,7 @@ export default function BusinessDetailsForm() {
                   name="businessName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre del local *</FormLabel>
+                      <FormLabel>Nombre del Negocio *</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -147,17 +200,25 @@ export default function BusinessDetailsForm() {
                   name="businessType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de negocio *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>Tipo de Negocio *</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          fetchCategorias(value)
+                        }}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecciona el tipo de negocio" />
+                            <SelectValue placeholder="Seleccione tipo de negocio" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="restaurant">Restaurante</SelectItem>
-                          <SelectItem value="market">Mercado</SelectItem>
-                          <SelectItem value="cafe">Café</SelectItem>
+                          {tiposNegocio.map((tipo) => (
+                            <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                              {tipo.nombre}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -174,13 +235,15 @@ export default function BusinessDetailsForm() {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecciona la categoría" />
+                            <SelectValue placeholder="Seleccione categoría" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="peruvian">Comida Peruana</SelectItem>
-                          <SelectItem value="fast-food">Comida Rápida</SelectItem>
-                          <SelectItem value="drinks">Bebidas</SelectItem>
+                          {categorias.map((categoria) => (
+                            <SelectItem key={categoria.id} value={categoria.id.toString()}>
+                              {categoria.nombre}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -193,7 +256,7 @@ export default function BusinessDetailsForm() {
                   name="branches"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sucursales *</FormLabel>
+                      <FormLabel>Número de Sucursales *</FormLabel>
                       <FormControl>
                         <Input {...field} type="number" min="1" />
                       </FormControl>
@@ -207,7 +270,7 @@ export default function BusinessDetailsForm() {
                   name="isStreetLocation"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel>¿Es un local a la calle? *</FormLabel>
+                      <FormLabel>¿Es un local con acceso a la calle? *</FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -219,7 +282,7 @@ export default function BusinessDetailsForm() {
                               <RadioGroupItem value="Si" />
                             </FormControl>
                             <FormLabel className="font-normal">
-                              Si
+                              Sí
                             </FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
@@ -246,7 +309,7 @@ export default function BusinessDetailsForm() {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecciona el método de contacto" />
+                            <SelectValue placeholder="Seleccione método de contacto" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -265,13 +328,13 @@ export default function BusinessDetailsForm() {
                   name="phoneNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Teléfono del local *</FormLabel>
+                      <FormLabel>Número de Teléfono del Negocio *</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="+51123456789" />
                       </FormControl>
                       <FormMessage />
                       <p className="text-sm text-muted-foreground">
-                        El formato del teléfono debe comenzar con +51 seguido de 9 dígitos
+                        El número debe comenzar con +51 seguido de 9 dígitos
                       </p>
                     </FormItem>
                   )}
@@ -283,7 +346,7 @@ export default function BusinessDetailsForm() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-10">
-        <BottomNavigation 
+        <NavegacionInferior 
           steps={steps} 
           currentStep={2} 
           onSubmit={form.handleSubmit(onSubmit)}
@@ -303,7 +366,7 @@ function FeatureItem({ icon: Icon, text }: { icon: React.ElementType; text: stri
   )
 }
 
-function BottomNavigation({ steps, currentStep, onSubmit, isSubmitting }: {
+function NavegacionInferior({ steps, currentStep, onSubmit, isSubmitting }: {
   steps: Array<{ id: number; name: string; completed: boolean }>;
   currentStep: number;
   onSubmit: () => void;
@@ -337,7 +400,7 @@ function BottomNavigation({ steps, currentStep, onSubmit, isSubmitting }: {
                   </span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-12 h-0.5 mx-2 ${
+                <div className={`w-12 h-0.5 mx-2 ${
                     step.completed ? 'bg-[#f34739]' : 'bg-gray-200'
                   }`} />
                 )}
