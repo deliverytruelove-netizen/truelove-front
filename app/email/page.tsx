@@ -281,27 +281,22 @@ export default function VerifyEmailPage() {
                 </form>
 
                 <div className="text-center text-sm text-gray-500 mt-4">
-                  ¿No lo recibiste?{" "}
-                  <button 
+                  ¿No has recibido el correo?
+                  <Button 
                     onClick={handleResendCode} 
-                    className="text-[#d63c30] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isLoading || resendCooldown > 0}
-                    type="button"
+                    disabled={resendCooldown > 0 || isLoading}
+                    className="ml-2 text-blue-600 hover:text-blue-800"
                   >
-                    {resendCooldown > 0 ? `Reenviar (${resendCooldown}s)` : 'Reenviar'}
-                  </button>{" "}
-                  o{" "}
-                  <Link href="/" className="text-[#d63c30] hover:underline">
-                    cambiar
-                  </Link>{" "}
-                  la dirección de correo
+                    {resendCooldown > 0 ? `${resendCooldown}s` : 'Reenviar código'}
+                  </Button>
                 </div>
               </>
             )}
           </div>
         </motion.div>
+
         {showNotification && (
-          <ImprovedNotification message="Se ha reenviado el código a su correo" />
+          <ImprovedNotification message="Código reenviado correctamente." />
         )}
       </div>
     </Suspense>
