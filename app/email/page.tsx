@@ -13,7 +13,7 @@ import EmailEnviado from '@/public/img/data.svg'
 import Navbar from '@/components/ui/navbar'
 import EmailImage from '@/public/img/emailsended.jpg'
 
-function ImprovedNotification({ message, duration = 3000 }) {
+function ImprovedNotification({ message, duration = 3000 } : {message: string, duration?: number}) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
