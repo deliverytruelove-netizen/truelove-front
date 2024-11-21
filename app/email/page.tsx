@@ -7,14 +7,18 @@ import Image from "next/image"
 import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
-import EmailEnviado from '@/public/img/data.svg'
-
 import Navbar from '@/components/ui/navbar'
 import EmailImage from '@/public/img/emailsended.jpg'
+import EmailEnviado from '@/public/img/data.svg'
 
-function ImprovedNotification({ message, duration = 3000 } : {message: string, duration?: number}) {
+interface ImprovedNotificationProps {
+  message: string;
+  duration?: number;
+}
+
+function ImprovedNotification({ message, duration = 3000 }: ImprovedNotificationProps) {
   const [isVisible, setIsVisible] = useState(true)
- 
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false)
@@ -27,20 +31,20 @@ function ImprovedNotification({ message, duration = 3000 } : {message: string, d
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg flex items-center"
+          exit={{ opacity: 0, y: 0 }}
+          className="justify-center content-center bg-green-500 text-white -top-5 rounded-md p-2 gap-2 mt-2 shadow-lg flex"
         >
-          <CheckCircle className="w-5 h-5 mr-2" />
+          <CheckCircle className="w-5 h-5" />
           <span>{message}</span>
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }
 
-export default function VerifyEmailPage() {
+function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
@@ -116,7 +120,7 @@ export default function VerifyEmailPage() {
       setTimeout(() => {
         router.push('/acercaNegocio')
       }, 3000)
-      
+
     } catch (error) {
       console.error('Verification error:', error)
       if (error instanceof Error) {
@@ -136,14 +140,14 @@ export default function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/api/resend-code', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/resend-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email, 
-          registration_id: registrationId 
+        body: JSON.stringify({
+          email,
+          registration_id: registrationId
         }),
       })
 
@@ -173,8 +177,7 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
         {!isVerified && (
           <Image
             src={EmailImage}
@@ -293,11 +296,17 @@ export default function VerifyEmailPage() {
             )}
           </div>
         </motion.div>
+      {showNotification && (
+        <ImprovedNotification message="Se ha reenviado el código a su correo" />
+      )}
+    </div>
+  )
+}
 
-        {showNotification && (
-          <ImprovedNotification message="Código reenviado correctamente." />
-        )}
-      </div>
+export default function VerifyEmailPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailPage />
     </Suspense>
   )
 }
