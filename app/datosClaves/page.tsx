@@ -78,7 +78,7 @@ export default function DatosClaveNegocio() {
 
     setIsSaving(true)
     try {
-      const response = await fetch('http://localhost:8000/api/datos-clave-negocio', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
