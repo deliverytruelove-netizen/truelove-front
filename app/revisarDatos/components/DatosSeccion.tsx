@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 interface ReviewSectionProps {
   title: string
   onEdit: () => void
-  data: Record<string, any>
+  data: Record<string, string | boolean>
 }
 
 export function DatosSeccion({ title, onEdit, data }: ReviewSectionProps) {

@@ -14,7 +14,7 @@ import {
 import { CapturarImagen } from "./CapturarImagen"
 import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
-
+import Image from 'next/image'
 interface Ciudad {
   id: number;
   nombre: string;
@@ -265,7 +265,7 @@ export function FormularioDatos() {
             {imagenCapturada && (
               <div className="mt-4">
                 <p className="text-xs md:text-sm text-gray-500 mb-2">Imagen capturada:</p>
-                <img 
+                <Image 
                   src={imagenCapturada} 
                   alt="Selfie capturada" 
                   className="max-w-[200px] h-auto rounded-lg mx-auto" 

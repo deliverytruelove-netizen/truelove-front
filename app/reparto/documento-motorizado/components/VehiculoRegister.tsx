@@ -4,10 +4,9 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import Webcam from "react-webcam"
 import { Camera, Upload } from 'lucide-react'
 import { CameraCapture } from "./CapturarCamara"
-
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -24,7 +23,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -236,7 +234,7 @@ function DocumentUpload({
       {image && (
         <Card className="mt-2">
           <CardContent className="p-2">
-            <img src={image} alt="Documento" className="max-h-32 object-contain" />
+            <Image src={image} alt="Documento" className="max-h-32 object-contain" />
           </CardContent>
         </Card>
       )}
