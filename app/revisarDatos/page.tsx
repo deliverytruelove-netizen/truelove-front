@@ -35,8 +35,6 @@ export default function ReviewData() {
     const datosBancariosId = searchParams.get('datosBancariosId')
 
     if (!negocioId || !establecimientoId || !datosClaveId || !datosBancariosId) {
-      setError('Faltan parámetros necesarios en la URL')
-      setLoading(false)
       return
     }
 
