@@ -14,6 +14,8 @@ import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "../../hooks/use-toast"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 // Definición de la interfaz para la dirección del establecimiento
 interface EstablecimientoDireccion {
@@ -27,11 +29,12 @@ interface EstablecimientoDireccion {
 }
 
 export default function DatosBancarios() {
+  useBodyScrollLock()
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [currentStep] = useState(5)
+  const [currentStep] = useState(4)
   const totalSteps = 6
   const [establecimientoDireccion, setEstablecimientoDireccion] = useState<EstablecimientoDireccion | null>(null)
   const [formData, setFormData] = useState({
