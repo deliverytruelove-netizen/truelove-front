@@ -7,7 +7,7 @@ interface StepNavigationProps {
   currentStep: number
   totalSteps: number
   onNext: () => void
-  onBack: () => void
+  onBack?: () => void
   isNextDisabled?: boolean
   stepName?: string
 }
@@ -21,20 +21,19 @@ export default function StepNavigation({
   stepName,
 }: StepNavigationProps) {
   const steps = [
-    { id: 1, name: "Información básica" },
-    { id: 2, name: "Detalles del negocio" },
-    { id: 3, name: "Ubicación" },
-    { id: 4, name: "Datos Claves" },
-    { id: 5, name: "Datos Bancarios" },
-    { id: 6, name: "planes" },
-    { id: 7, name: "revisar Datos" },
+    { id: 1, name: "Detalles del negocio" },
+    { id: 2, name: "Ubicación" },
+    { id: 3, name: "Datos Claves" },
+    { id: 4, name: "Datos Bancarios" },
+    { id: 5, name: "planes" },
+    { id: 6, name: "revisar Datos" },
   ]
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-      <div className="mx-auto max-w-7xl px-4 py-4">
+      <div className="mx-auto max-w-7xl px-4 py-2">
         <div className="flex items-center justify-between">
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4 ml-[15%]"> {/* Added ml-[15%] for right offset */}
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div className="flex flex-col items-center">
@@ -76,14 +75,16 @@ export default function StepNavigation({
           </div>
 
           <div className="flex gap-4 ml-5">
-            <Button
-              variant="outline"
-              onClick={onBack}
-              className="min-w-[120px]"
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Atrás
-            </Button>
+            {currentStep > 1 && onBack && (
+              <Button
+                variant="outline"
+                onClick={onBack}
+                className="min-w-[120px]"
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Atrás
+              </Button>
+            )}
             
             <Button
               onClick={onNext}
@@ -99,3 +100,4 @@ export default function StepNavigation({
     </div>
   )
 }
+

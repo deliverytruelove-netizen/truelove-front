@@ -1,16 +1,17 @@
-"use client"; // Asegúrate de incluir esta línea
+"use client";
 
 import localFont from "next/font/local";
-import Navbar from "@/components/Navbar";
+
 import "./globals.css";
 import { usePathname } from "next/navigation"; 
-import { metadata } from "./metadata"; // Asegúrate de que esta ruta sea correcta
+import { metadata } from "./metadata";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
@@ -22,23 +23,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname(); // Obtener la ruta actual
+  const pathname = usePathname();
 
   return (
     <html lang="en">
       <head>
-        {/* Asegúrate de incluir el uso de metadata aquí */}
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* {pathname === "/admin" ? null : <Navbar />}  */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
+        {/* {pathname === "/admin" ? null : <Navbar />} */}
         
-        {/* Ajuste de padding-top en el contenedor para compensar el Navbar fijo */}
-        <main style={{ paddingTop: pathname === "/admin" ? "0" : "64px" }}>
-          {children}
+        <main 
+          className="h-full"
+         
+        >
+          <div className=" overflow-hidden">
+            {children}
+          </div>
         </main>
       </body>
     </html>
   );
 }
+
