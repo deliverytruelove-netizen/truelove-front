@@ -3,20 +3,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Check, ChevronDown, Smartphone } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useToast } from "@/hooks/use-toast"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+import dynamic from 'next/dynamic'
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
+import FormularioPlanes from "./components/FormularioPlanes"
 import DeliveryImage from "@/public/img/deli.jpg"
-import { useToast } from "@/hooks/use-toast"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface LatestIds {
   negocioId: number
@@ -25,16 +19,24 @@ interface LatestIds {
   datosBancariosId: number
 }
 
-export default function PricingPlan() {
+function PlanPrecios() {
   const router = useRouter()
   const { toast } = useToast()
-  const [isOpen, setIsOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState(false)
   const [latestIds, setLatestIds] = useState<LatestIds | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const currentStep = 6
-  const totalSteps = 8
+  const currentStep = 5
+  const totalSteps = 7
+
+  useBodyScrollLock();
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
 
   const fetchLatestIds = useCallback(async () => {
     try {
@@ -68,19 +70,9 @@ export default function PricingPlan() {
     fetchLatestIds()
   }, [fetchLatestIds])
 
-  const benefits = [
-    "10% de comisión durante los primeros 30 días",
-    "Configuración simple y gratuita",
-    "Notificaciones instantáneas de nuevos pedidos",
-    "Gestiona órdenes fácilmente",
-    "Compatible con tu teléfono móvil",
-    "Sin costos ocultos ni mensualidades",
-  ]
-
   const handleNext = () => {
     if (!selectedPlan || !latestIds) return
 
-    // Construct URL with latest IDs
     const params = new URLSearchParams({
       negocioId: latestIds.negocioId.toString(),
       establecimientoId: latestIds.establecimientoId.toString(),
@@ -107,112 +99,23 @@ export default function PricingPlan() {
   }
 
   return (
-    <section className="min-h-screen w-full bg-gray-50">
+    <section className="min-h-screen flex flex-col w-full bg-gray-50">
       <Navbar />
-      <div className="grid lg:grid-cols-2">
-        <div className="relative hidden h-full min-h-[600px] lg:block">
+      <div className="flex-grow grid lg:grid-cols-2">
+        <div className="relative hidden h-full lg:block">
           <Image
             alt="Delivery person handing over a package"
             src={DeliveryImage}
             layout="fill"
             objectFit="cover"
+            priority
           />
         </div>
-        <div className="flex items-center justify-center p-6 lg:p-8">
-          <Card className="w-full max-w-2xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl font-bold">
-                Planes ideales para tu negocio de delivery
-              </CardTitle>
-              <p className="text-muted-foreground">
-                Optimiza tus entregas y gestiona tus pedidos sin complicaciones.
-              </p>
-            </CardHeader>
-            <ScrollArea className="h-[60vh]">
-              <CardContent className="relative space-y-6">
-                <Badge className="absolute right-[-35px] top-[25px] rotate-45 bg-red-600 px-10 py-1 text-white">
-                  Popular
-                </Badge>
-
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-red-100 p-2">
-                    <Smartphone className="h-6 w-6 text-red-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold">
-                    App para Delivery en Android
-                  </h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Descarga nuestra app en tu celular Android para gestionar
-                  pedidos desde cualquier lugar.
-                </p>
-
-                <div>
-                  <h3 className="mb-3 font-medium">Beneficios</h3>
-                  <ul className="space-y-2">
-                    {benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="mt-1 h-4 w-4 text-red-600" />
-                        <span className="text-sm">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b py-3">
-                    <span className="text-sm">Comisión por uso</span>
-                    <span className="font-medium">21 %</span>
-                  </div>
-                  <div className="flex items-center justify-between border-b py-3">
-                    <span className="text-sm">Costo de instalación</span>
-                    <span className="font-medium">175 PEN</span>
-                  </div>
-                  <div className="flex items-center justify-between border-b py-3">
-                    <span className="text-sm">Tarifa de plataforma</span>
-                    <span className="font-medium">50 PEN</span>
-                  </div>
-                  <div className="flex items-center justify-between border-b py-3">
-                    <span className="text-sm">Uso de la app</span>
-                    <span className="font-medium">0 PEN</span>
-                  </div>
-                </div>
-
-                <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
-                    >
-                      <span>Ver requisitos técnicos</span>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-2">
-                    <ul className="list-inside list-disc space-y-2 text-sm text-muted-foreground">
-                      <li>Dispositivo móvil con GPS habilitado</li>
-                      <li>Aplicación de seguimiento instalada y configurada</li>
-                      <li>Conexión a internet estable durante las entregas</li>
-                      <li>Conocimiento básico de las rutas locales</li>
-                      <li>Disponibilidad de un medio de transporte adecuado</li>
-                    </ul>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <Button
-                  className="w-full bg-red-600 hover:bg-red-700"
-                  onClick={() => setSelectedPlan(true)}
-                >
-                  Seleccionar
-                </Button>
-              </CardContent>
-            </ScrollArea>
-          </Card>
-        </div>
+        <ScrollArea className="h-[calc(100vh-120px)]">
+          <div className="flex items-center justify-center p-4 lg:p-8">
+            <FormularioPlanes onPlanSelect={setSelectedPlan} />
+          </div>
+        </ScrollArea>
       </div>
 
       <StepNavigation
@@ -225,3 +128,6 @@ export default function PricingPlan() {
     </section>
   )
 }
+
+export default dynamic(() => Promise.resolve(PlanPrecios), { ssr: false })
+
