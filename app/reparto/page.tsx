@@ -8,15 +8,13 @@ import PromotionalSection from './components/SeccionHome'
 import Footer from '@/components/Footer'
 import Repart from "@/src/assets/img/image.png"
 
-
 export default function Page() {
   return (
     <div className="min-h-screen bg-white">
-      {/* <Navbar /> */}
       <div className="container mx-auto px-4 py-2">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-start justify-between gap-16">
-            <div className="w-full lg:w-1/2 py-24">
+            <div className="hidden lg:block w-full lg:w-1/2 py-24">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -49,7 +47,7 @@ export default function Page() {
             </div>
             
             <motion.div 
-              className="w-full lg:w-1/2"
+              className="w-full"
               initial={{ opacity: 0, y: 20 }} 
               animate={{ opacity: 1, y: 0 }} 
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
@@ -64,7 +62,7 @@ export default function Page() {
         </div>
         
         <Footer />
-      </div>
+      </div> 
     </div>
   )
 }

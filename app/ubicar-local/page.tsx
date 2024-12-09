@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -13,6 +13,7 @@ import SearchComponent from "./components/Search"
 import BusinessForm from "./components/BussinessForm"
 import StepNavigation from "@/components/ui/StepNavigation"
 import { useToast } from "@/hooks/use-toast"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 
 type MapboxFeature = {
   id: string
@@ -33,6 +34,7 @@ type FormData = {
 }
 
 export default function BusinessLocation() {
+  useBodyScrollLock()
   const router = useRouter()
   const { toast } = useToast()
   const [selectedLocation, setSelectedLocation] = useState<MapboxFeature | null>(null)
@@ -57,7 +59,6 @@ export default function BusinessLocation() {
         coordinates: selectedLocation.center,
         fullAddress: selectedLocation.place_name,
       }
-      console.log("Location data:", locationData)
 
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimientos`, {
@@ -93,12 +94,6 @@ export default function BusinessLocation() {
   const handleBack = () => {
     router.back()
   }
-
-  useEffect(() => {
-    console.log("Selected Location:", selectedLocation)
-    console.log("Form Data:", formData)
-    console.log("Button should be enabled:", !!(selectedLocation && formData))
-  }, [selectedLocation, formData])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -142,7 +137,10 @@ export default function BusinessLocation() {
               </div>
               
               <div className="space-y-6 max-w-md mx-auto">
-                <MapComponent selectedLocation={selectedLocation} />
+                <MapComponent 
+                  selectedLocation={selectedLocation}
+                  onLocationUpdate={handleLocationSelect}
+                />
 
                 {showForm && selectedLocation && (
                   <div className="mt-6 border rounded-lg bg-white p-6">
@@ -159,8 +157,8 @@ export default function BusinessLocation() {
       </div>
 
       <StepNavigation
-        currentStep={3}
-        totalSteps={8}
+        currentStep={2}
+        totalSteps={7}
         onNext={handleNext}
         onBack={handleBack}
         isNextDisabled={!(selectedLocation && formData)}
@@ -168,3 +166,4 @@ export default function BusinessLocation() {
     </div>
   )
 }
+

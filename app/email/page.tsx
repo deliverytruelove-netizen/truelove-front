@@ -4,7 +4,6 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from "next/image"
-import Link from "next/link"
 import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
@@ -284,20 +283,14 @@ function VerifyEmailPage() {
                 </form>
 
                 <div className="text-center text-sm text-gray-500 mt-4">
-                  ¿No lo recibiste?{" "}
-                  <button 
+                  ¿No has recibido el correo?
+                  <Button 
                     onClick={handleResendCode} 
-                    className="text-[#d63c30] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isLoading || resendCooldown > 0}
-                    type="button"
+                    disabled={resendCooldown > 0 || isLoading}
+                    className="ml-2 text-red-600 hover:text-red-800 bg-white hover:bg-white"
                   >
-                    {resendCooldown > 0 ? `Reenviar (${resendCooldown}s)` : 'Reenviar'}
-                  </button>{" "}
-                  o{" "}
-                  <Link href="/" className="text-[#d63c30] hover:underline">
-                    cambiar
-                  </Link>{" "}
-                  la dirección de correo
+                    {resendCooldown > 0 ? `${resendCooldown}s` : 'Reenviar código'}
+                  </Button>
                 </div>
               </>
             )}
@@ -317,4 +310,3 @@ export default function VerifyEmailPageWrapper() {
     </Suspense>
   )
 }
-
