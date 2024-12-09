@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
-
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -17,26 +16,40 @@ export default function RegistrationForm() {
     phone: "+51",
     email: ""
   })
-  const [error, setError] = useState<string | null>(null) // Asegurando que el error sea solo string o null
+  const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
+  const [businessTypes, setBusinessTypes] = useState<Array<{
+    id: number;
+    nombre: string;
+  
+  }>>([])
 
+  useEffect(() => {
+    const fetchBusinessTypes = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-negocio`)
+        const data = await response.json()
+        setBusinessTypes(data)
+      } catch (error) {
+        console.error('Error fetching business types:', error)
+        setError('Error al cargar los tipos de negocio')
+      }
+    }
+
+    fetchBusinessTypes()
+  }, [])
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value
     
- 
     if (!value.startsWith('+51')) {
       return
     }
 
-
     const numberPart = value.substring(3)
-
     const numbersOnly = numberPart.replace(/\D/g, '')
     
-    // limite 9 digitos
     if (numbersOnly.length <= 9) {
-      // Format the phone number
       let formattedNumber = '+51'
       if (numbersOnly.length > 0) {
         formattedNumber += ' ' + numbersOnly.substring(0, 3)
@@ -67,7 +80,7 @@ export default function RegistrationForm() {
         lastName: ''
       }))
       setIsFieldsLocked(false)
-      setError(null)  // Reset error when document type changes
+      setError(null)
       return
     }
 
@@ -98,7 +111,7 @@ export default function RegistrationForm() {
 
   const fetchDocumentInfo = async (type: string, number: string) => {
     setIsLoading(true)
-    setError(null)  // Reset error before fetching new data
+    setError(null)
     
     try {
       const url = type === 'DNI' 
@@ -140,17 +153,16 @@ export default function RegistrationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')  // Reset error before submitting
+    setError('')
     
     try {
-      // Validate that all required fields are filled out
       if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
         setError('Todos los campos son obligatorios')
         setIsLoading(false)
         return
       }
-
-      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/register', {
+  
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,13 +179,13 @@ export default function RegistrationForm() {
         }),
       })
   
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Error al enviar el formulario')
-      }
-
       const data = await response.json()
-      router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${data.registration_id}`)
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al enviar el formulario')
+      }
+  
+      router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${encodeURIComponent(data.registration_id)}`)
     } catch (error) {
       console.error('Error submitting form:', error)
       setError(error instanceof Error ? error.message : 'Error al conectar con el servidor')
@@ -181,7 +193,7 @@ export default function RegistrationForm() {
       setIsLoading(false)
     }
   }
-
+  
   return (
     <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
@@ -256,17 +268,22 @@ export default function RegistrationForm() {
 
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
-          <input
-            type="text"
+          <select
             name="businessType"
             value={formData.businessType}
             onChange={handleInputChange}
             required
-            placeholder="Ingrese tipo de negocio"
             className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
+                     text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
                      transition-colors duration-200"
-          />
+          >
+            <option value="">Seleccione tipo de negocio</option>
+            {businessTypes.map((type) => (
+              <option key={type.id} value={type.nombre}>
+                {type.nombre}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">
@@ -314,5 +331,5 @@ export default function RegistrationForm() {
       </form>
     </div>
   )
-
 }
+
