@@ -1,140 +1,116 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useCallback } from 'react'
-import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
+import { useEffect, useRef, useCallback, useMemo } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 interface MapboxFeature {
-  id: string
-  place_name: string
-  center: [number, number]
-  text: string
+  id: string;
+  place_name: string;
+  center: [number, number];
+  text: string;
   context?: Array<{
-    id: string
-    text: string
-  }>
+    id: string;
+    text: string;
+  }>;
 }
 
 interface MapComponentProps {
-  selectedLocation: { center: [number, number] } | null
-  onLocationUpdate?: (location: MapboxFeature) => void
+  selectedLocation: { center: [number, number] } | null;
+  onLocationUpdate?: (location: MapboxFeature) => void;
 }
 
 export default function MapComponent({ selectedLocation, onLocationUpdate }: MapComponentProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<mapboxgl.Map | null>(null)
-  const markerRef = useRef<mapboxgl.Marker | null>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const defaultCenter = useMemo<[number, number]>(() => [-77.0369, -12.0464], []);
 
-  // Actualiza el marcador en el mapa
-  const updateMarker = useCallback((coordinates: [number, number]) => {
-    if (!mapRef.current) return
+  const handleClick = useCallback((e: mapboxgl.MapMouseEvent & { lngLat: mapboxgl.LngLat }) => {
+    const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+    markerRef.current?.setLngLat(coordinates);
+    mapRef.current?.flyTo({ center: coordinates, zoom: 15, essential: true });
 
-    if (markerRef.current) {
-      markerRef.current.setLngLat(coordinates)
-    } else {
-      markerRef.current = new mapboxgl.Marker({ color: "#FF0000" })
-        .setLngLat(coordinates)
-        .addTo(mapRef.current)
-    }
-  }, [])
-
-  // Maneja los clics en el mapa
-  const handleMapClick = useCallback(async (e: mapboxgl.MapMouseEvent & { lngLat: mapboxgl.LngLat }) => {
-    if (!onLocationUpdate || !mapRef.current) return
-    
-    const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat]
-    updateMarker(coordinates)
-
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}&types=address&country=PE&language=es`
+    if (onLocationUpdate) {
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}&types=address&country=PE&language=es`
       )
-      
-      if (!response.ok) throw new Error('Error en la respuesta de Mapbox')
-      
-      const data = await response.json()
-      
-      if (data.features?.[0]) {
-        onLocationUpdate({
-          id: data.features[0].id,
-          place_name: data.features[0].place_name,
-          center: coordinates,
-          text: data.features[0].text,
-          context: data.features[0].context
+        .then(response => {
+          if (!response.ok) throw new Error('Error en la respuesta de Mapbox');
+          return response.json();
         })
-      }
-    } catch (error) {
-      console.error('Error al obtener la dirección:', error)
+        .then(data => {
+          if (data.features?.[0]) {
+            onLocationUpdate({
+              id: data.features[0].id,
+              place_name: data.features[0].place_name,
+              center: coordinates,
+              text: data.features[0].text,
+              context: data.features[0].context,
+            });
+          }
+        })
+        .catch(error => console.error('Error al obtener la dirección:', error));
     }
-  }, [onLocationUpdate, updateMarker])
+  }, [onLocationUpdate]);
 
-  // Inicializar mapa
   useEffect(() => {
-    if (!mapContainerRef.current) return
-    
-    // Definir defaultCenter dentro de useEffect para evitar la advertencia
-    const defaultCenter: [number, number] = [-77.0369, -12.0464]
+    if (!mapContainerRef.current) return;
 
-    // Limpiar mapa existente si existe
-    if (mapRef.current) {
-      mapRef.current.remove()
-      mapRef.current = null
-    }
+    const cleanup = () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+      }
+    };
 
-    // Limpiar marcador si existe
-    if (markerRef.current) {
-      markerRef.current.remove()
-      markerRef.current = null
-    }
+    cleanup();
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: defaultCenter,
-      zoom: 12,
+      center: selectedLocation?.center || defaultCenter,
+      zoom: 13,
       attributionControl: true,
-      preserveDrawingBuffer: true,
-      antialias: true
-    })
+    });
 
-    map.addControl(new mapboxgl.NavigationControl())
+    map.addControl(new mapboxgl.NavigationControl());
 
-    // Asegurarse de que el mapa esté completamente cargado antes de agregar eventos
-    map.once('load', () => {
-      mapRef.current = map
-      updateMarker(defaultCenter)
-    })
+    const marker = new mapboxgl.Marker({ color: '#FF0000', draggable: false })
+      .setLngLat(selectedLocation?.center || defaultCenter)
+      .addTo(map);
 
-    // Agregar el evento click después de que el mapa esté listo
-    map.on('click', handleMapClick)
+    mapRef.current = map;
+    markerRef.current = marker;
 
-    return () => {
-      if (markerRef.current) {
-        markerRef.current.remove()
-      }
-      map.remove()
-    }
-  }, [handleMapClick, updateMarker])  // No es necesario agregar defaultCenter a las dependencias
+    map.on('click', handleClick);
 
-  // Manejar cambios en la ubicación seleccionada
+    map.on('load', () => {
+      map.resize();
+    });
+
+    return cleanup;
+  }, [selectedLocation, handleClick, defaultCenter]);
+
   useEffect(() => {
-    if (!mapRef.current || !selectedLocation?.center) return
+    if (!mapRef.current || !markerRef.current || !selectedLocation?.center) return;
 
-    updateMarker(selectedLocation.center)
-    
+    markerRef.current.setLngLat(selectedLocation.center);
     mapRef.current.flyTo({
       center: selectedLocation.center,
       zoom: 15,
       essential: true,
-    
-    })
-  }, [selectedLocation, updateMarker])
+    });
+  }, [selectedLocation]);
 
   return (
     <div className="relative h-64 mb-6 overflow-hidden max-w-[430px] w-full rounded-lg border">
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
     </div>
-  )
+  );
 }
