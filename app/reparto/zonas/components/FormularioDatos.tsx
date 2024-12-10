@@ -15,7 +15,6 @@ import {
 import { CapturarImagen } from "./CapturarImagen"
 import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
-import Image from 'next/image'
 interface Ciudad {
   id: number;
   nombre: string;
