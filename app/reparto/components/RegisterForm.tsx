@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import * as React from "react"
 import Image from "next/image"
@@ -20,9 +20,34 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { fetchDocumentInfo } from '@/utils/api'
 import { useToast } from "@/hooks/use-toast"
-import WebcamModal from './WebcamModal'
+import { WebcamModal } from "./WebcamModal"
 import { useMediaQuery } from '../hooks/use-media-query'
-import { compressImage } from '@/utils/comprimir-imagen'
+
+interface FormData {
+  departamento: string
+  vehiculo: string
+  tipoDocumento: string
+  nroDocumento: string
+  nombres: string
+  apellidos: string
+  celular: string
+  email: string
+  mayorEdad: string
+  aceptaPolitica: boolean
+  documentoImagen: string | null
+}
+
+interface DocumentInfo {
+  nombres?: string
+  apellidoPaterno?: string
+  apellidoMaterno?: string
+  razonSocial?: string
+}
+
+interface ApiResponse {
+  message: string
+  data: Record<string, unknown>
+}
 
 const formVariants = {
   hidden: { opacity: 0, x: 20 },
@@ -30,13 +55,14 @@ const formVariants = {
   exit: { opacity: 0, x: -20, transition: { duration: 0.3 } }
 }
 
-export default function RegistrationForm() {
+export default function RegisterForm() {
   const [step, setStep] = React.useState(1)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isCameraOpen, setIsCameraOpen] = React.useState(false)
+  const [previewImage, setPreviewImage] = React.useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = React.useState<FormData>({
     departamento: "",
     vehiculo: "",
     tipoDocumento: "",
@@ -47,31 +73,29 @@ export default function RegistrationForm() {
     email: "",
     mayorEdad: "",
     aceptaPolitica: false,
-    documentoImagen: null as string | null
+    documentoImagen: null
   })
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const isMobile = useMediaQuery('(max-width: 768px)')
 
-  const updateFormData = (field: string, value: string | boolean | null) => {
+  const updateFormData = (field: keyof FormData, value: FormData[keyof FormData]): void => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     if (step < 3) setStep(step + 1)
-    else handleSubmit()
+    else void handleSubmit()
   }
 
-  const handleBack = () => {
+  const handleBack = (): void => {
     if (step > 1) setStep(step - 1)
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     setIsLoading(true)
     try {
-      // Split the form data into chunks if necessary
-      const formDataToSend = {
-        ...formData,
+      const requestData = {
         departamento: formData.departamento,
         vehiculo: formData.vehiculo,
         tipo_documento: formData.tipoDocumento,
@@ -82,33 +106,39 @@ export default function RegistrationForm() {
         email: formData.email,
         mayor_edad: formData.mayorEdad === 'si',
         acepta_politica: formData.aceptaPolitica,
-        documento_imagen: formData.documentoImagen,
-      };
+      } as Record<string, string | boolean>
+
+      // Solo agregar la imagen si existe y extraer la parte base64
+      if (formData.documentoImagen) {
+        const base64Data = formData.documentoImagen.split(',')[1]
+        if (base64Data) {
+          requestData.documento_imagen = base64Data
+        }
+      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formDataToSend),
+        body: JSON.stringify(requestData),
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
+        const errorData = await response.json()
         throw new Error(errorData?.message || `Error ${response.status}: ${response.statusText}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse
       toast({
         title: "Registro exitoso",
         description: "Tus datos han sido guardados correctamente.",
-      
       })
-
       console.log(data)
+
       router.push('/reparto/zonas')
     } catch (error) {
-      console.error('Error details:', error)
+      console.error('Detalles del error:', error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Hubo un problema al enviar el formulario. Por favor, intenta de nuevo.",
@@ -119,7 +149,7 @@ export default function RegistrationForm() {
     }
   }
 
-  const handleDocumentChange = async (value: string) => {
+  const handleDocumentChange = async (value: string): Promise<void> => {
     const numbersOnly = value.replace(/\D/g, '')
     updateFormData("nroDocumento", numbersOnly)
 
@@ -130,20 +160,20 @@ export default function RegistrationForm() {
         const data = await fetchDocumentInfo(
           formData.tipoDocumento.toLowerCase() as 'dni' | 'ruc', 
           numbersOnly
-        )
-        
+        ) as DocumentInfo
+
         if ('nombres' in data) {
-          updateFormData("nombres", data.nombres)
-          updateFormData("apellidos", `${data.apellidoPaterno} ${data.apellidoMaterno}`.trim())
+          updateFormData("nombres", data.nombres || '')
+          updateFormData("apellidos", `${data.apellidoPaterno || ''} ${data.apellidoMaterno || ''}`.trim())
         } else if ('razonSocial' in data) {
-          updateFormData("nombres", data.razonSocial)
-          updateFormData("apellidos", "")
+          updateFormData("nombres", data.razonSocial || '')
+          updateFormData("apellidos", '')
         }
       } catch (error) {
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Error al consultar el documento",
-          variant: "destructive"
+          variant: "destructive",
         })
       } finally {
         setIsLoading(false)
@@ -151,39 +181,56 @@ export default function RegistrationForm() {
     }
   }
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = async () => {
-        try {
-          const base64Image = reader.result as string;
-          const compressedImage = await compressImage(base64Image);
-          updateFormData("documentoImagen", compressedImage);
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: `Error al procesar la imagen. Por favor, intenta con otra imagen.${error}` ,
-            variant: "destructive"
-          });
-        }
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            if (typeof reader.result === 'string') {
+              resolve(reader.result)
+            } else {
+              reject(new Error('Failed to read file as base64'))
+            }
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+        
+        setPreviewImage(base64)
+        updateFormData("documentoImagen", base64)
+      } catch (error) {
+        console.error('Error al procesar la imagen:', error)
+        toast({
+          title: "Error",
+          description: "No se pudo procesar la imagen",
+          variant: "destructive",
+        })
       }
-      reader.readAsDataURL(file)
     }
   }
 
-  const handleCameraCapture = () => {
-    setIsCameraOpen(true)
+  const handleCameraCapture = (imageData: { imageSrc: string; text: string }): void => {
+    setPreviewImage(imageData.imageSrc)
+    updateFormData("documentoImagen", imageData.imageSrc)
+    // You can also use the OCR text result if needed
+    console.log('OCR Text:', imageData.text)
   }
 
-  const isStepComplete = () => {
+  const isStepComplete = (): boolean => {
     switch(step) {
       case 1: return !!formData.departamento
       case 2: return !!formData.vehiculo
-      case 3: return formData.tipoDocumento && formData.nroDocumento && formData.nombres && 
-               (formData.tipoDocumento === 'RUC' || formData.apellidos) && formData.celular && 
-               formData.email && formData.mayorEdad && formData.aceptaPolitica &&
-               (formData.tipoDocumento === 'RUC' || formData.documentoImagen)
+      case 3: return formData.tipoDocumento !== '' && 
+              formData.nroDocumento !== '' && 
+              formData.nombres !== '' && 
+              (formData.tipoDocumento === 'RUC' || formData.apellidos !== '') && 
+              formData.celular !== '' && 
+              formData.email !== '' && 
+              formData.mayorEdad !== '' && 
+              formData.aceptaPolitica && 
+              (formData.tipoDocumento === 'RUC' || formData.documentoImagen !== null) 
       default: return false
     }
   }
@@ -287,6 +334,7 @@ export default function RegistrationForm() {
                         updateFormData("nombres", "")
                         updateFormData("apellidos", "")
                         updateFormData("documentoImagen", null)
+                        setPreviewImage(null)
                       }}
                     >
                       <SelectTrigger className="w-full">
@@ -326,7 +374,7 @@ export default function RegistrationForm() {
                           <Upload className="mr-2 h-4 w-4" /> Subir imagen
                         </Button>
                         {isMobile && (
-                          <Button onClick={handleCameraCapture} variant="outline">
+                          <Button onClick={() => setIsCameraOpen(true)} variant="outline">
                             <Camera className="mr-2 h-4 w-4" /> Usar cámara
                           </Button>
                         )}
@@ -338,10 +386,17 @@ export default function RegistrationForm() {
                           className="hidden"
                         />
                       </div>
-                      {formData.documentoImagen && (
+                      {previewImage && (
                         <div className="mt-2">
                           <p className="text-sm text-green-600 mb-2">Imagen cargada</p>
-                          <Image src={formData.documentoImagen} alt="Documento" width={200} height={150} className="rounded-md" />
+                          <Image 
+                            src={previewImage} 
+                            alt="Vista previa del documento" 
+                            width={200} 
+                            height={150} 
+                            className="rounded-md"
+                            unoptimized
+                          />
                         </div>
                       )}
                     </div>
@@ -461,7 +516,7 @@ export default function RegistrationForm() {
       <WebcamModal 
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
-        onCapture={(imageSrc) => updateFormData("documentoImagen", imageSrc)}
+        onCapture={handleCameraCapture}
       />
     </div>
   )

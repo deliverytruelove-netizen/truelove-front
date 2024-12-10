@@ -4,7 +4,7 @@ import Image from 'next/image'
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center py-5 px-2">
+    <div className="relative min-h-screen flex flex-col items-center justify-center py-5 px-2  ">
       {/* Imagen de fondo */}
       <Image
         src={Fondo.src}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { 
@@ -166,7 +167,6 @@ export function FormularioDatos() {
       if (imagenCapturada) {
         try {
           const imagenBase64 = await compressImage(imagenCapturada)
-          // Convertir base64 a Blob
           const response = await fetch(imagenBase64)
           imagenComprimida = await response.blob()
         } catch (error) {
@@ -195,19 +195,13 @@ export function FormularioDatos() {
         body: datosFormulario,
       })
 
-      const contentType = respuesta.headers.get("content-type");
       if (!respuesta.ok) {
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-          const datosError = await respuesta.json();
-          throw new Error(datosError.message || 'Error al enviar el formulario');
-        } else {
-          throw new Error('Error al enviar el formulario');
+        const contentType = respuesta.headers.get("content-type")
+        if (contentType?.includes("application/json")) {
+          const datosError = await respuesta.json()
+          throw new Error(datosError.message || 'Error al enviar el formulario')
         }
-      }
-
-      // Solo intentar parsear JSON si el content-type es application/json
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        await respuesta.json(); // No necesitamos guardar el resultado si no lo vamos a usar
+        throw new Error('Error al enviar el formulario')
       }
 
       toast({
@@ -230,24 +224,34 @@ export function FormularioDatos() {
   }
 
   return (
-    <form className="space-y-6" onSubmit={manejarEnvio}>
+    <form 
+      className="space-y-6" 
+      onSubmit={manejarEnvio}
+      aria-label="Formulario de datos personales"
+    >
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="fechaNacimiento">Fecha de Nacimiento</Label>
           <input
             type="date"
             id="fechaNacimiento"
+            name="fechaNacimiento"
             required
             value={fechaNacimiento}
             onChange={(e) => setFechaNacimiento(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-required="true"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="genero">Género</Label>
-          <Select value={genero} onValueChange={setGenero}>
-            <SelectTrigger id="genero">
+          <Select 
+            value={genero} 
+            onValueChange={setGenero}
+            name="genero"
+          >
+            <SelectTrigger id="genero" aria-required="true">
               <SelectValue placeholder="Selecciona tu género" />
             </SelectTrigger>
             <SelectContent>
@@ -259,8 +263,11 @@ export function FormularioDatos() {
         </div>
 
         <div className="space-y-2">
-          <Label>Tómate una selfie</Label>
-          <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
+          <Label id="selfie-label">Tómate una selfie</Label>
+          <div 
+            className="border-2 border-dashed rounded-lg p-4 text-center space-y-4"
+            aria-labelledby="selfie-label"
+          >
             <CapturarImagen onCapture={manejarCaptura} />
             {imagenCapturada && (
               <div className="mt-4">
@@ -268,6 +275,8 @@ export function FormularioDatos() {
                 <Image 
                   src={imagenCapturada} 
                   alt="Selfie capturada" 
+                  width={200}
+                  height={150}
                   className="max-w-[200px] h-auto rounded-lg mx-auto" 
                 />
               </div>
@@ -277,8 +286,12 @@ export function FormularioDatos() {
 
         <div className="space-y-2">
           <Label htmlFor="ciudad">Ciudad</Label>
-          <Select value={ciudadSeleccionada} onValueChange={manejarCambioCiudad}>
-            <SelectTrigger>
+          <Select 
+            value={ciudadSeleccionada} 
+            onValueChange={manejarCambioCiudad}
+            name="ciudad"
+          >
+            <SelectTrigger id="ciudad" aria-required="true">
               <SelectValue placeholder="Selecciona tu ciudad" />
             </SelectTrigger>
             <SelectContent>
@@ -297,8 +310,9 @@ export function FormularioDatos() {
             value={distritoSeleccionado} 
             onValueChange={setDistritoSeleccionado}
             disabled={!ciudadSeleccionada}
+            name="distrito"
           >
-            <SelectTrigger>
+            <SelectTrigger id="distrito" aria-required="true">
               <SelectValue placeholder="Selecciona tu distrito" />
             </SelectTrigger>
             <SelectContent>
@@ -317,6 +331,7 @@ export function FormularioDatos() {
           type="submit"
           className="bg-red-500 hover:bg-red-600 text-white"
           disabled={cargando}
+          aria-busy={cargando}
         >
           {cargando ? 'Cargando...' : 'Continuar'}
         </Button>

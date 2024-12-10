@@ -4,9 +4,12 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import Image from "next/image"
 import { Camera, Upload } from 'lucide-react'
 import { CameraCapture } from "./CapturarCamara"
-import Image from 'next/image'
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
+
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -27,30 +30,77 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 
 const formSchema = z.object({
-  licensePlate: z.string().min(6, "La placa debe tener al menos 6 caracteres"),
-  driverLicense: z.string().min(8, "El número de licencia debe tener al menos 8 caracteres"),
-  insurance: z.string().min(8, "El número de seguro debe tener al menos 8 caracteres"),
-  propertyCard: z.string().min(8, "El número de tarjeta debe tener al menos 8 caracteres"),
+  placa: z.string().min(6, "La placa debe tener al menos 6 caracteres"),
+  licenciaConducir: z.string().min(8, "El número de licencia debe tener al menos 8 caracteres"),
+  seguro: z.string().min(8, "El número de seguro debe tener al menos 8 caracteres"),
+  tarjetaPropiedad: z.string().min(8, "El número de tarjeta debe tener al menos 8 caracteres"),
 })
 
 export function VehicleRegistrationForm() {
+  const router = useRouter()
   const [images, setImages] = useState<{ [key: string]: string }>({})
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [currentField, setCurrentField] = useState<string>("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      licensePlate: "",
-      driverLicense: "",
-      insurance: "",
-      propertyCard: "",
+      placa: "",
+      licenciaConducir: "",
+      seguro: "",
+      tarjetaPropiedad: "",
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    console.log(images)
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true)
+    try {
+      const formData = new FormData()
+
+      // Append text fields
+      Object.entries(values).forEach(([key, value]) => {
+        formData.append(key, value)
+      })
+
+      // Append image fields
+      Object.entries(images).forEach(([key, value]) => {
+        const imageFile = dataURLtoFile(value, `${key}.jpg`)
+        formData.append(`${key}_imagen`, imageFile)
+      })
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/registro-vehiculo`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.mensaje || 'Error al enviar el formulario')
+      }
+
+      const data = await response.json()
+      toast({
+        title: "Registro exitoso",
+        description: "El vehículo ha sido registrado correctamente.",
+      })
+      console.log(data)
+      form.reset()
+      setImages({})
+      
+      // Redirigir a la página de éxito
+      router.push('/reparto/registro-exitoso')
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Hubo un problema al registrar el vehículo. Por favor, intente de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleCapture = (field: string) => {
@@ -69,12 +119,24 @@ export function VehicleRegistrationForm() {
     }
   }
 
+  const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',')
+    const mime = arr[0].match(/:(.*?);/)?.[1]
+    const bstr = atob(arr[1])
+    let n = bstr.length
+    const u8arr = new Uint8Array(n)
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n)
+    }
+    return new File([u8arr], filename, { type: mime })
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="licensePlate"
+          name="placa"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Placa del Vehículo</FormLabel>
@@ -87,8 +149,8 @@ export function VehicleRegistrationForm() {
               <FormMessage />
               <div className="flex gap-2 mt-2">
                 <DocumentUpload
-                  field="licensePlate"
-                  image={images.licensePlate}
+                  field="placa"
+                  image={images.placa}
                   onCapture={handleCapture}
                   onFileUpload={handleFileUpload}
                 />
@@ -99,12 +161,12 @@ export function VehicleRegistrationForm() {
 
         <FormField
           control={form.control}
-          name="driverLicense"
+          name="licenciaConducir"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Licencia de Conducir</FormLabel>
               <FormControl>
-                <Input placeholder="Número de licencia" {...field} />
+                <Input placeholder="Número de licencia" {...field} maxLength={8} />
               </FormControl>
               <FormDescription>
                 Ingrese el número de su licencia de conducir
@@ -112,8 +174,8 @@ export function VehicleRegistrationForm() {
               <FormMessage />
               <div className="flex gap-2 mt-2">
                 <DocumentUpload
-                  field="driverLicense"
-                  image={images.driverLicense}
+                  field="licenciaConducir"
+                  image={images.licenciaConducir}
                   onCapture={handleCapture}
                   onFileUpload={handleFileUpload}
                 />
@@ -124,7 +186,7 @@ export function VehicleRegistrationForm() {
 
         <FormField
           control={form.control}
-          name="insurance"
+          name="seguro"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Seguro del Vehículo</FormLabel>
@@ -137,8 +199,8 @@ export function VehicleRegistrationForm() {
               <FormMessage />
               <div className="flex gap-2 mt-2">
                 <DocumentUpload
-                  field="insurance"
-                  image={images.insurance}
+                  field="seguro"
+                  image={images.seguro}
                   onCapture={handleCapture}
                   onFileUpload={handleFileUpload}
                 />
@@ -149,7 +211,7 @@ export function VehicleRegistrationForm() {
 
         <FormField
           control={form.control}
-          name="propertyCard"
+          name="tarjetaPropiedad"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tarjeta de Propiedad</FormLabel>
@@ -162,8 +224,8 @@ export function VehicleRegistrationForm() {
               <FormMessage />
               <div className="flex gap-2 mt-2">
                 <DocumentUpload
-                  field="propertyCard"
-                  image={images.propertyCard}
+                  field="tarjetaPropiedad"
+                  image={images.tarjetaPropiedad}
                   onCapture={handleCapture}
                   onFileUpload={handleFileUpload}
                 />
@@ -172,7 +234,13 @@ export function VehicleRegistrationForm() {
           )}
         />
 
-        <Button type="submit" className="w-full bg-red-500 hover:bg-red-600">Guardar Información</Button>
+        <Button 
+          type="submit" 
+          className="w-full bg-[#f34739] hover:bg-[#d63c30] text-white" 
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Guardando...' : 'Guardar Información'}
+        </Button>
       </form>
 
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
@@ -234,7 +302,13 @@ function DocumentUpload({
       {image && (
         <Card className="mt-2">
           <CardContent className="p-2">
-            <Image src={image} alt="Documento" className="max-h-32 object-contain" />
+            <Image 
+              src={image} 
+              alt="Documento" 
+              width={200} 
+              height={200} 
+              className="max-h-32 object-contain" 
+            />
           </CardContent>
         </Card>
       )}

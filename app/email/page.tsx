@@ -287,7 +287,7 @@ function VerifyEmailPage() {
                   <Button 
                     onClick={handleResendCode} 
                     disabled={resendCooldown > 0 || isLoading}
-                    className="ml-2 text-blue-600 hover:text-blue-800"
+                    className="ml-2 text-red-600 hover:text-red-800 bg-white hover:bg-white"
                   >
                     {resendCooldown > 0 ? `${resendCooldown}s` : 'Reenviar código'}
                   </Button>

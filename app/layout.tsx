@@ -2,7 +2,8 @@
 
 import localFont from "next/font/local";
 import "./globals.css";
-import { metadata } from "./metadata";
+
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -21,11 +22,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+
   return (
     <html lang="en">
       <head>
-        <title>{metadata.title}</title>
-        <meta name="description" content={metadata.description} />
+   
+        <meta name="description" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
         {/* {pathname === "/admin" ? null : <Navbar />} */}
