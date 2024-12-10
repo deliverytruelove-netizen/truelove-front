@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -26,6 +28,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
   const markerRef = useRef<mapboxgl.Marker | null>(null)
   const defaultCenter: [number, number] = [-77.0369, -12.0464]
 
+  // Actualiza el marcador en el mapa
   const updateMarker = useCallback((coordinates: [number, number]) => {
     if (!mapRef.current) return
 
@@ -38,6 +41,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
     }
   }, [])
 
+  // Maneja los clics en el mapa
   const handleMapClick = useCallback(async (e: mapboxgl.MapMouseEvent & { lngLat: mapboxgl.LngLat }) => {
     if (!onLocationUpdate || !mapRef.current) return
     
@@ -86,7 +90,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: defaultCenter,
+      center: defaultCenter,  // Static value, no need for inclusion in dependencies
       zoom: 12,
       attributionControl: true,
       preserveDrawingBuffer: true,
@@ -110,7 +114,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       }
       map.remove()
     }
-  }, [handleMapClick, updateMarker]) // Agregamos 'handleMapClick' y 'updateMarker' como dependencias
+  }, [handleMapClick, updateMarker])  // Solo agregamos 'handleMapClick' y 'updateMarker' como dependencias
 
   // Manejar cambios en la ubicación seleccionada
   useEffect(() => {
@@ -124,7 +128,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       essential: true,
     
     })
-  }, [selectedLocation, updateMarker]) // Ya está bien como está
+  }, [selectedLocation, updateMarker])
 
   return (
     <div className="relative h-64 mb-6 overflow-hidden max-w-[430px] w-full rounded-lg border">
