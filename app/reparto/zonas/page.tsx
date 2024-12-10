@@ -31,11 +31,10 @@ export default function RepartoDocumento() {
           <Image
             src={Moto}
             alt="Motocicleta de reparto"
-            layout="fill"
-            objectFit="cover"
-            priority
-            className="object-center"
+            fill
+            className="object-cover object-center"
           />
+
         </div>
 
         <div className="w-full md:w-1/2 bg-white">
