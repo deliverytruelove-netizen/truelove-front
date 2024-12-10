@@ -44,7 +44,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
   // Maneja los clics en el mapa
   const handleMapClick = useCallback(async (e: mapboxgl.MapMouseEvent & { lngLat: mapboxgl.LngLat }) => {
     if (!onLocationUpdate || !mapRef.current) return
-
+    
     const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat]
     updateMarker(coordinates)
 
@@ -52,11 +52,11 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}&types=address&country=PE&language=es`
       )
-
+      
       if (!response.ok) throw new Error('Error en la respuesta de Mapbox')
-
+      
       const data = await response.json()
-
+      
       if (data.features?.[0]) {
         onLocationUpdate({
           id: data.features[0].id,
@@ -74,7 +74,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
   // Inicializar mapa
   useEffect(() => {
     if (!mapContainerRef.current) return
-
+    
     // Limpiar mapa existente si existe
     if (mapRef.current) {
       mapRef.current.remove()
@@ -121,12 +121,12 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
     if (!mapRef.current || !selectedLocation?.center) return
 
     updateMarker(selectedLocation.center)
-
+    
     mapRef.current.flyTo({
       center: selectedLocation.center,
       zoom: 15,
       essential: true,
-
+    
     })
   }, [selectedLocation, updateMarker])
 
