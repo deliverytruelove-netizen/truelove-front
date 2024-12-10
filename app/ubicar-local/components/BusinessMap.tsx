@@ -112,7 +112,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       }
       map.remove()
     }
-  }, []) // Solo se ejecuta una vez al montar el componente
+  }, [])
 
   // Manejar cambios en la ubicación seleccionada
   useEffect(() => {

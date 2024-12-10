@@ -160,7 +160,7 @@ export default function CuentaBancariaPage() {
                     {capturedImage && (
                       <div className="mt-4">
                         <p className="text-xs md:text-sm text-gray-500 mb-2">Imagen capturada:</p>
-                        <img src={capturedImage} alt="Captured" className="max-w-full h-auto rounded-lg" />
+                        <Image src={capturedImage} alt="Captured" className="max-w-full h-auto rounded-lg" />
                       </div>
                     )}
                   </div>
