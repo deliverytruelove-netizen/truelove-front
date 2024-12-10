@@ -34,12 +34,8 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
     mapRef.current?.flyTo({ center: coordinates, zoom: 15, essential: true });
 
     if (onLocationUpdate) {
-      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}&types=address&country=PE&language=es`
-      )
-        .then(response => {
-          if (!response.ok) throw new Error('Error en la respuesta de Mapbox');
-          return response.json();
-        })
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}&types=address&country=PE&language=es`)
+        .then(response => response.json())
         .then(data => {
           if (data.features?.[0]) {
             onLocationUpdate({
@@ -56,56 +52,57 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
   }, [onLocationUpdate]);
 
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerRef.current) {
+      console.error("El contenedor del mapa no está disponible.");
+      return;
+    }
 
-    const cleanup = () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      if (markerRef.current) {
-        markerRef.current.remove();
-        markerRef.current = null;
-      }
+    if (!mapboxgl.accessToken) {
+      console.error("Mapbox Access Token no está configurado.");
+      return;
+    }
+
+    // Solo crear el mapa si no existe uno ya
+    if (!mapRef.current) {
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: selectedLocation?.center || defaultCenter,
+        zoom: 13,
+      });
+
+      mapRef.current = map;
+
+      const marker = new mapboxgl.Marker({ color: '#FF0000', draggable: false })
+        .setLngLat(selectedLocation?.center || defaultCenter)
+        .addTo(map);
+
+      markerRef.current = marker;
+
+      map.addControl(new mapboxgl.NavigationControl());
+
+      map.on('click', handleClick);
+
+      map.on('load', () => {
+        console.log("Mapa cargado correctamente");
+        map.resize(); // Asegura que el mapa se redimensione
+      });
+    }
+
+    return () => {
+      // No eliminamos el mapa aquí, ya que lo queremos mantener
     };
-
-    cleanup();
-
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: selectedLocation?.center || defaultCenter,
-      zoom: 13,
-      attributionControl: true,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl());
-
-    const marker = new mapboxgl.Marker({ color: '#FF0000', draggable: false })
-      .setLngLat(selectedLocation?.center || defaultCenter)
-      .addTo(map);
-
-    mapRef.current = map;
-    markerRef.current = marker;
-
-    map.on('click', handleClick);
-
-    map.on('load', () => {
-      map.resize();
-    });
-
-    return cleanup;
-  }, [selectedLocation, handleClick, defaultCenter]);
+  }, [selectedLocation, defaultCenter, handleClick]);
 
   useEffect(() => {
-    if (!mapRef.current || !markerRef.current || !selectedLocation?.center) return;
-
-    markerRef.current.setLngLat(selectedLocation.center);
-    mapRef.current.flyTo({
-      center: selectedLocation.center,
-      zoom: 15,
-      essential: true,
-    });
+    if (mapRef.current && markerRef.current && selectedLocation?.center) {
+      markerRef.current.setLngLat(selectedLocation.center);
+      mapRef.current.flyTo({
+        center: selectedLocation.center,
+        zoom: 15,
+        essential: true,
+      });
+    }
   }, [selectedLocation]);
 
   return (
