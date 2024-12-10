@@ -11,7 +11,7 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  ...rest
+  ...props
 }: CalendarProps) {
   return (
     <DayPicker
@@ -55,7 +55,7 @@ function Calendar({
         IconLeft: () => <ChevronLeft className="h-4 w-4" />,
         IconRight: () => <ChevronRight className="h-4 w-4" />,
       }}
-      {...rest}
+      {...props}
     />
   )
 }

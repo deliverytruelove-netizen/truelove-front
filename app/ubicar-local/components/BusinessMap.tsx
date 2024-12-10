@@ -1,5 +1,3 @@
-'use client'
-
 import { useEffect, useRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -112,7 +110,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       }
       map.remove()
     }
-  }, []) // Solo se ejecuta una vez al montar el componente
+  }, [handleMapClick, updateMarker]) // Agregamos 'handleMapClick' y 'updateMarker' como dependencias
 
   // Manejar cambios en la ubicación seleccionada
   useEffect(() => {
@@ -126,7 +124,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       essential: true,
     
     })
-  }, [selectedLocation, updateMarker])
+  }, [selectedLocation, updateMarker]) // Ya está bien como está
 
   return (
     <div className="relative h-64 mb-6 overflow-hidden max-w-[430px] w-full rounded-lg border">
@@ -134,4 +132,3 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
     </div>
   )
 }
-
