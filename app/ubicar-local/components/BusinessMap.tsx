@@ -26,6 +26,8 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
+
+  // Mantener defaultCenter fuera de useEffect
   const defaultCenter: [number, number] = [-77.0369, -12.0464]
 
   // Actualiza el marcador en el mapa
@@ -90,7 +92,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: defaultCenter,  // Se mantiene como está
+      center: defaultCenter,
       zoom: 12,
       attributionControl: true,
       preserveDrawingBuffer: true,
@@ -114,7 +116,7 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
       }
       map.remove()
     }
-  }, [handleMapClick, updateMarker])  // 'defaultCenter' no es necesario en las dependencias
+  }, [handleMapClick, updateMarker, defaultCenter])  // Agregado defaultCenter a las dependencias
 
   // Manejar cambios en la ubicación seleccionada
   useEffect(() => {
