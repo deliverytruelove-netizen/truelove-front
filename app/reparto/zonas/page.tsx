@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -32,6 +32,8 @@ export default function RepartoDocumento() {
             src={Moto}
             alt="Motocicleta de reparto"
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
             className="object-cover object-center"
           />
 

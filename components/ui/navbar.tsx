@@ -13,7 +13,7 @@ interface NavbarProps {
 
 export default function Navbar({ children }: NavbarProps) {
   return (
-    <nav className="bg-[#e9eeea] py-2  w-full top-0 z-50 shadow-md fixed">
+    <nav className="bg-[#e9eeea] py-2  w-full top-0 z-50 shadow-md ">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex-shrink-0">
