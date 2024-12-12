@@ -135,7 +135,7 @@ export default function BusinessLocation() {
               <div className="max-w-md mx-auto">
                 <SearchComponent onLocationSelect={handleLocationSelect} />
               </div>
-              
+
               <div className="space-y-6 max-w-md mx-auto">
                 <MapComponent 
                   selectedLocation={selectedLocation}
@@ -166,4 +166,3 @@ export default function BusinessLocation() {
     </div>
   )
 }
-
