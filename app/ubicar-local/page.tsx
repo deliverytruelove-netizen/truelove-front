@@ -75,11 +75,18 @@ export default function BusinessLocation() {
 
         const result = await response.json()
         console.log(result)
+        
+        // Primero mostramos el toast
         toast({
           title: "Éxito",
           description: "Los datos del establecimiento se han guardado correctamente",
         })
-        router.push("/datosClaves")
+        
+        // Esperamos un momento antes de la navegación
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Forzamos la navegación usando replace en lugar de push
+        router.replace("/datosClaves")
       } catch (error) {
         toast({
           title: "Error",
@@ -107,8 +114,9 @@ export default function BusinessLocation() {
         </Button>
       </Navbar>
 
-      <div className="flex flex-1">
-        <div className="w-1/2 p-4 bg-gray-100">
+      <div className="flex flex-1 flex-col md:flex-row">
+        {/* Imagen solo visible en desktop */}
+        <div className="hidden md:flex w-full md:w-1/2 p-4 bg-gray-100">
           <div className="h-full flex justify-center items-center">
             <Image
               src={ImaDelivery}
@@ -121,9 +129,10 @@ export default function BusinessLocation() {
           </div>
         </div>
 
-        <div className="w-1/2 bg-gray-50">
+        {/* Formulario que ocupa todo el ancho en móvil */}
+        <div className="w-full md:w-1/2 bg-gray-50">
           <ScrollArea className="h-[calc(100vh-8rem)]">
-            <div className="p-8 space-y-6">
+            <div className="p-4 md:p-8 space-y-6">
               <div className="text-center max-w-md mx-auto">
                 <h2 className="text-2xl font-bold">Ubicación del negocio</h2>
                 <p className="text-muted-foreground mt-2">

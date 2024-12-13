@@ -7,7 +7,7 @@ import Image from "next/image"
 import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
-import Navbar from '@/components/ui/navbar'
+// import Navbar from '@/components/ui/navbar'
 import EmailImage from '@/public/img/emailsended.jpg'
 import EmailEnviado from '@/public/img/data.svg'
 
@@ -188,7 +188,7 @@ function VerifyEmailPage() {
             className="z-0"
           />
         )}
-        <Navbar />
+        {/* <Navbar /> */}
         <motion.div 
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
