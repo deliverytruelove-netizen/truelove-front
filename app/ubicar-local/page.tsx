@@ -56,7 +56,7 @@ export default function BusinessLocation() {
   const handleNext = async () => {
     if (isSubmitting || !formData || !selectedLocation) return
     setIsSubmitting(true)
-    console.log('Iniciando handleNext');
+    console.log('Iniciando handleNext')
 
     const locationData = {
       ...formData,
@@ -85,27 +85,32 @@ export default function BusinessLocation() {
         title: "Éxito",
         description: "Los datos del establecimiento se han guardado correctamente",
       })
+
+      // Esperamos que el toast se muestre
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      await new Promise(resolve => setTimeout(resolve, 500))
+      console.log('Intentando navegar a /datosClaves')
       
-      console.log('Intentando navegar a /datosClaves');
       try {
-        await router.push('/datosClaves')
-      } catch (navError) {
-        console.log('Fallback: usando window.location.href');
-        console.error('Error en router.push:', navError)
+        // Intentamos la navegación directa primero
+        console.log('Intentando navegación con window.location')
         window.location.href = '/datosClaves'
+      } catch (error) {
+        // Si falla, intentamos con router como fallback
+        console.log('Fallback: Intentando con router.push')
+        router.push('/datosClaves')
+        console.log(error)
       }
+
     } catch (error) {
-      console.log('Error en handleNext:', error);
-      console.error('Error completo:', error)
+      console.log('Error en handleNext:', error)
       toast({
         title: "Error",
         description: "Hubo un error al guardar los datos del establecimiento",
         variant: "destructive",
       })
     } finally {
-      console.log('Finalizando handleNext');
+      console.log('Finalizando handleNext')
       setIsSubmitting(false)
     }
   }
