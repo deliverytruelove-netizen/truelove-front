@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { EmailAlert } from './email-alert'
 
 export default function RegistrationForm() {
   const router = useRouter()
@@ -188,7 +189,11 @@ export default function RegistrationForm() {
       router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${encodeURIComponent(data.registration_id)}`)
     } catch (error) {
       console.error('Error submitting form:', error)
-      setError(error instanceof Error ? error.message : 'Error al conectar con el servidor')
+      if (error instanceof Error && error.message.includes('email has already been taken')) {
+        setError('email_taken')
+      } else {
+        setError('Error al conectar con el servidor')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -316,7 +321,11 @@ export default function RegistrationForm() {
           />
         </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error === 'email_taken' ? (
+          <EmailAlert onClose={() => setError(null)} />
+        ) : error ? (
+          <p className="text-red-600 text-sm">{error}</p>
+        ) : null}
 
         <button
           type="submit"
