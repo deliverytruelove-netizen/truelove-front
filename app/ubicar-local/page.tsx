@@ -56,6 +56,7 @@ export default function BusinessLocation() {
   const handleNext = async () => {
     if (isSubmitting || !formData || !selectedLocation) return
     setIsSubmitting(true)
+    console.log('Iniciando handleNext');
 
     const locationData = {
       ...formData,
@@ -78,7 +79,7 @@ export default function BusinessLocation() {
       }
 
       const result = await response.json()
-      console.log('Respuesta del servidor:', result)
+      console.log('Respuesta del servidor recibida:', result)
       
       toast({
         title: "Éxito",
@@ -87,13 +88,16 @@ export default function BusinessLocation() {
       
       await new Promise(resolve => setTimeout(resolve, 500))
       
+      console.log('Intentando navegar a /datosClaves');
       try {
         await router.push('/datosClaves')
       } catch (navError) {
+        console.log('Fallback: usando window.location.href');
         console.error('Error en router.push:', navError)
         window.location.href = '/datosClaves'
       }
     } catch (error) {
+      console.log('Error en handleNext:', error);
       console.error('Error completo:', error)
       toast({
         title: "Error",
@@ -101,6 +105,7 @@ export default function BusinessLocation() {
         variant: "destructive",
       })
     } finally {
+      console.log('Finalizando handleNext');
       setIsSubmitting(false)
     }
   }
