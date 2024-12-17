@@ -40,6 +40,7 @@ export default function BusinessLocation() {
   const [selectedLocation, setSelectedLocation] = useState<MapboxFeature | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<FormData | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleLocationSelect = (location: MapboxFeature) => {
     console.log("Location selected:", location)
@@ -53,48 +54,54 @@ export default function BusinessLocation() {
   }
 
   const handleNext = async () => {
-    if (formData && selectedLocation) {
-      const locationData = {
-        ...formData,
-        coordinates: selectedLocation.center,
-        fullAddress: selectedLocation.place_name,
+    if (isSubmitting || !formData || !selectedLocation) return
+    setIsSubmitting(true)
+
+    const locationData = {
+      ...formData,
+      coordinates: selectedLocation.center,
+      fullAddress: selectedLocation.place_name,
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimientos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(locationData),
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al guardar los datos')
       }
 
+      const result = await response.json()
+      console.log('Respuesta del servidor:', result)
+      
+      toast({
+        title: "Éxito",
+        description: "Los datos del establecimiento se han guardado correctamente",
+      })
+      
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimientos`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(locationData),
-        })
-
-        if (!response.ok) {
-          throw new Error('Error al guardar los datos')
-        }
-
-        const result = await response.json()
-        console.log(result)
-        
-        // Primero mostramos el toast
-        toast({
-          title: "Éxito",
-          description: "Los datos del establecimiento se han guardado correctamente",
-        })
-        
-        // Esperamos un momento antes de la navegación
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // Forzamos la navegación usando replace en lugar de push
-        router.replace("/datosClaves")
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Hubo un error al guardar los datos del establecimiento",
-          variant: "destructive",
-        })
-        console.error('Error:', error)
+        await router.push('/datosClaves')
+      } catch (navError) {
+        console.error('Error en router.push:', navError)
+        window.location.href = '/datosClaves'
       }
+    } catch (error) {
+      console.error('Error completo:', error)
+      toast({
+        title: "Error",
+        description: "Hubo un error al guardar los datos del establecimiento",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -115,7 +122,6 @@ export default function BusinessLocation() {
       </Navbar>
 
       <div className="flex flex-1 flex-col md:flex-row">
-        {/* Imagen solo visible en desktop */}
         <div className="hidden md:flex w-full md:w-1/2 p-4 bg-gray-100">
           <div className="h-full flex justify-center items-center">
             <Image
@@ -129,7 +135,6 @@ export default function BusinessLocation() {
           </div>
         </div>
 
-        {/* Formulario que ocupa todo el ancho en móvil */}
         <div className="w-full md:w-1/2 bg-gray-50">
           <ScrollArea className="h-[calc(100vh-8rem)]">
             <div className="p-4 md:p-8 space-y-6">
@@ -170,7 +175,7 @@ export default function BusinessLocation() {
         totalSteps={7}
         onNext={handleNext}
         onBack={handleBack}
-        isNextDisabled={!(selectedLocation && formData)}
+        isNextDisabled={!(selectedLocation && formData) || isSubmitting}
       />
     </div>
   )
