@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -58,10 +58,22 @@ export default function BusinessLocation() {
     setIsSubmitting(true)
     console.log('Iniciando handleNext')
 
+    const businessRegistrationId = sessionStorage.getItem('business_registration_id')
+    if (!businessRegistrationId) {
+      toast({
+        title: "Error",
+        description: "Por favor complete el registro primero",
+        variant: "destructive",
+      })
+      router.push('/')
+      return
+    }
+
     const locationData = {
       ...formData,
       coordinates: selectedLocation.center,
       fullAddress: selectedLocation.place_name,
+      business_registration_id: businessRegistrationId
     }
 
     try {
@@ -75,42 +87,32 @@ export default function BusinessLocation() {
       })
 
       if (!response.ok) {
-        throw new Error('Error al guardar los datos')
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al guardar los datos')
       }
 
       const result = await response.json()
       console.log('Respuesta del servidor recibida:', result)
+      
+      // Guardar el ID del establecimiento para usarlo en pasos posteriores
+      sessionStorage.setItem('establecimiento_id', result.establecimiento.id)
       
       toast({
         title: "Éxito",
         description: "Los datos del establecimiento se han guardado correctamente",
       })
 
-      // Esperamos que el toast se muestre
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      console.log('Intentando navegar a /datosClaves')
-      
-      try {
-        // Intentamos la navegación directa primero
-        console.log('Intentando navegación con window.location')
-        window.location.href = '/datosClaves'
-      } catch (error) {
-        // Si falla, intentamos con router como fallback
-        console.log('Fallback: Intentando con router.push')
-        router.push('/datosClaves')
-        console.log(error)
-      }
+      router.push('/datosClaves')
 
     } catch (error) {
-      console.log('Error en handleNext:', error)
+      console.error('Error en handleNext:', error)
       toast({
         title: "Error",
-        description: "Hubo un error al guardar los datos del establecimiento",
+        description: error instanceof Error ? error.message : "Error al guardar los datos del establecimiento",
         variant: "destructive",
       })
     } finally {
-      console.log('Finalizando handleNext')
       setIsSubmitting(false)
     }
   }
@@ -190,3 +192,4 @@ export default function BusinessLocation() {
     </div>
   )
 }
+

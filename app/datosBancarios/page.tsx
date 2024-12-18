@@ -13,11 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
-import { useToast } from "../../hooks/use-toast"
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useToast } from "@/hooks/use-toast"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 
-
-// Definición de la interfaz para la dirección del establecimiento
 interface EstablecimientoDireccion {
   calle: string
   numero: string
@@ -48,7 +46,6 @@ export default function DatosBancarios() {
   })
   const [isFormValid, setIsFormValid] = useState(false)
 
-  // Efecto para validar el formulario
   useEffect(() => {
     const isValid = Object.values(formData).every(value => 
       typeof value === 'boolean' ? true : value.trim() !== ''
@@ -56,11 +53,19 @@ export default function DatosBancarios() {
     setIsFormValid(isValid)
   }, [formData])
 
-  // Función para obtener la dirección del establecimiento, ahora envuelta en useCallback
   const fetchEstablecimientoDireccion = useCallback(async () => {
+    const establecimientoId = sessionStorage.getItem('establecimiento_id')
+    if (!establecimientoId) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del establecimiento",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
       setIsLoading(true)
-      const establecimientoId = 1 // Reemplazar con el ID real de tu estado de la aplicación
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${establecimientoId}/direccion`)
       
       if (!response.ok) {
@@ -83,34 +88,42 @@ export default function DatosBancarios() {
     } finally {
       setIsLoading(false)
     }
-  }, [toast]) // Agregamos toast como dependencia
+  }, [toast])
 
-  // Efecto para obtener la dirección del establecimiento cuando se usa la dirección del negocio
   useEffect(() => {
     if (formData.useBusinessAddress) {
       fetchEstablecimientoDireccion()
     }
   }, [formData.useBusinessAddress, fetchEstablecimientoDireccion])
 
-  // Manejador para cambios en los inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  // Manejador para cambios en los selects
   const handleSelectChange = (id: string, value: string) => {
     setFormData(prev => ({ ...prev, [id]: value }))
   }
 
-  // Manejador para cambios en el checkbox
   const handleCheckboxChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, useBusinessAddress: checked }))
   }
 
-  // Función para manejar el envío del formulario
   const handleNext = async () => {
     if (!isFormValid) return
+
+    const businessRegistrationId = sessionStorage.getItem('business_registration_id')
+    const establecimientoId = sessionStorage.getItem('establecimiento_id')
+
+    if (!businessRegistrationId || !establecimientoId) {
+      toast({
+        title: "Error",
+        description: "Información de registro incompleta",
+        variant: "destructive"
+      })
+      router.push('/')
+      return
+    }
 
     setIsSaving(true)
     try {
@@ -127,7 +140,8 @@ export default function DatosBancarios() {
           documento_titular: formData.documentNumber,
           codigo_cci: formData.cci,
           usar_direccion_negocio: formData.useBusinessAddress,
-          establecimiento_id: 1 
+          establecimiento_id: establecimientoId,
+          business_registration_id: businessRegistrationId
         })
       })
 
@@ -137,13 +151,18 @@ export default function DatosBancarios() {
       }
 
       const result = await response.json()
-      console.log(result)
+      console.log('Respuesta del servidor:', result)
+      
+      // Guardar el ID de los datos bancarios
+      if (result.datos?.id) {
+        sessionStorage.setItem('datos_bancarios_id', result.datos.id)
+      }
+
       toast({
         title: "Éxito",
         description: "Los datos bancarios se han guardado correctamente"
       })
       
-      // Redirigir a la siguiente página después de un breve retraso
       setTimeout(() => {
         router.push('/planes')
       }, 1000)
@@ -159,7 +178,6 @@ export default function DatosBancarios() {
     }
   }
 
-  // Función para manejar el botón de retroceso
   const handleBack = () => {
     router.back()
   }
@@ -196,7 +214,7 @@ export default function DatosBancarios() {
                     <div className="relative">
                       <Input
                         id="accountHolder"
-                        placeholder="titular"
+                        placeholder="Nombre del titular"
                         required
                         value={formData.accountHolder}
                         onChange={handleInputChange}
@@ -214,6 +232,7 @@ export default function DatosBancarios() {
                     <div className="relative">
                       <Input
                         id="accountNumber"
+                        placeholder="Número de cuenta"
                         required
                         value={formData.accountNumber}
                         onChange={handleInputChange}
@@ -256,8 +275,8 @@ export default function DatosBancarios() {
                         <SelectValue placeholder="Seleccionar tipo de cuenta" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="savings">Cuenta de Ahorros</SelectItem>
-                        <SelectItem value="checking">Cuenta Corriente</SelectItem>
+                        <SelectItem value="Ahorros">Cuenta de Ahorros</SelectItem>
+                        <SelectItem value="Corriente">Cuenta Corriente</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -269,6 +288,7 @@ export default function DatosBancarios() {
                     <div className="relative">
                       <Input
                         id="documentNumber"
+                        placeholder="Número de RUC"
                         required
                         value={formData.documentNumber}
                         onChange={handleInputChange}
@@ -286,6 +306,7 @@ export default function DatosBancarios() {
                     <div className="relative">
                       <Input
                         id="cci"
+                        placeholder="Número de CCI"
                         required
                         value={formData.cci}
                         onChange={handleInputChange}
@@ -340,3 +361,4 @@ export default function DatosBancarios() {
     </section>
   )
 }
+

@@ -18,4 +18,3 @@ export function EmailAlert({ onClose }: EmailAlertProps) {
     </Alert>
   )
 }
-

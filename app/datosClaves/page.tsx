@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
-import { useToast } from "../../hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DatosClaveNegocio() {
   const router = useRouter()
@@ -76,6 +76,17 @@ export default function DatosClaveNegocio() {
   const handleNext = async () => {
     if (!isFormValid) return
 
+    const businessRegistrationId = sessionStorage.getItem('business_registration_id')
+    if (!businessRegistrationId) {
+      toast({
+        title: "Error",
+        description: "Por favor complete el registro primero",
+        variant: "destructive",
+      })
+      router.push('/')
+      return
+    }
+
     setIsSaving(true)
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio`, {
@@ -86,7 +97,8 @@ export default function DatosClaveNegocio() {
         },
         body: JSON.stringify({
           ruc: formData.ruc,
-          razon_social: formData.razonSocial
+          razon_social: formData.razonSocial,
+          business_registration_id: businessRegistrationId
         })
       })
 
@@ -96,6 +108,11 @@ export default function DatosClaveNegocio() {
         throw new Error(data.mensaje || 'Error al guardar los datos')
       }
 
+      // Guardar el ID de los datos clave para usarlo en pasos posteriores
+      if (data.datos?.id) {
+        sessionStorage.setItem('datos_clave_id', data.datos.id)
+      }
+
       toast({
         title: "Éxito",
         description: "Los datos se han guardado correctamente"
@@ -103,21 +120,12 @@ export default function DatosClaveNegocio() {
       
       router.push('/datosBancarios')
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Error completo:', error)
-        toast({
-          title: "Error",
-          description: error.message || "Hubo un error al guardar los datos",
-          variant: "destructive"
-        })
-      } else {
-        console.error('Error desconocido:', error)
-        toast({
-          title: "Error",
-          description: "Ocurrió un error inesperado",
-          variant: "destructive"
-        })
-      }
+      console.error('Error completo:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
+        variant: "destructive"
+      })
     } finally {
       setIsSaving(false)
     }
@@ -197,8 +205,9 @@ export default function DatosClaveNegocio() {
         totalSteps={6}
         onNext={handleNext}
         onBack={handleBack}
-        isNextDisabled={false}
+        isNextDisabled={!isFormValid || isLoading || isSaving}
       />
     </section>
   )
 }
+

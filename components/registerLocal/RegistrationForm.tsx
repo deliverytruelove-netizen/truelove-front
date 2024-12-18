@@ -22,7 +22,6 @@ export default function RegistrationForm() {
   const [businessTypes, setBusinessTypes] = useState<Array<{
     id: number;
     nombre: string;
-  
   }>>([])
 
   useEffect(() => {
@@ -145,7 +144,8 @@ export default function RegistrationForm() {
         }
       }
     } catch (error) {
-      setError(`Error al conectar con el servicio de validación${error}`)
+      setError('Error al conectar con el servicio de validación')
+      console.log(error)
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +154,7 @@ export default function RegistrationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
+    setError(null)
     
     try {
       if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
@@ -162,8 +162,8 @@ export default function RegistrationForm() {
         setIsLoading(false)
         return
       }
-  
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,28 +177,43 @@ export default function RegistrationForm() {
           businessType: formData.businessType,
           phone: formData.phone.replace(/\D/g, ''),
           email: formData.email
-        }),
-      })
-  
+        })
+      });
+
       const data = await response.json()
-      
+    
+      // Log the entire server response for debugging
+      console.log('Server response:', data)
+
       if (!response.ok) {
-        throw new Error(data.message || 'Error al enviar el formulario')
+        // Check for specific error messages or codes from the server
+        if (data.error && typeof data.error === 'string' && 
+           (data.error.toLowerCase().includes('email') || 
+            data.error.toLowerCase().includes('correo') ||
+            data.error.toLowerCase().includes('duplicado'))) {
+          setError('email_taken')
+        } else if (data.message && typeof data.message === 'string' &&
+           (data.message.toLowerCase().includes('email') || 
+            data.message.toLowerCase().includes('correo') ||
+            data.message.toLowerCase().includes('duplicado'))) {
+          setError('email_taken')
+        } else {
+          // If it's not a specific email error, set a generic error message
+          setError('Hubo un problema al registrar el negocio. Por favor, intente nuevamente.')
+        }
+        return
       }
-  
+
+      // If everything is OK, redirect
       router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${encodeURIComponent(data.registration_id)}`)
     } catch (error) {
       console.error('Error submitting form:', error)
-      if (error instanceof Error && error.message.includes('email has already been taken')) {
-        setError('email_taken')
-      } else {
-        setError('Error al conectar con el servidor')
-      }
+      setError('Hubo un problema al registrar el negocio. Por favor, intente nuevamente.')
     } finally {
       setIsLoading(false)
     }
   }
-  
+
   return (
     <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
@@ -321,11 +336,13 @@ export default function RegistrationForm() {
           />
         </div>
 
-        {error === 'email_taken' ? (
-          <EmailAlert onClose={() => setError(null)} />
-        ) : error ? (
-          <p className="text-red-600 text-sm">{error}</p>
-        ) : null}
+        {error && (
+          error === 'email_taken' ? (
+            <EmailAlert onClose={() => setError(null)} />
+          ) : (
+            <p className="text-red-600 text-sm">{error}</p>
+          )
+        )}
 
         <button
           type="submit"

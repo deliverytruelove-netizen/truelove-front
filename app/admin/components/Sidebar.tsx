@@ -111,6 +111,7 @@ export const Sidebar: React.FC<Props> = ({
           <RiShieldUserLine className="text-2xl" />
           <span style={{ color: matchPath('/admin/socios') ? 'white !important' : 'inherit' }}>Socios</span>
         </Link>
+      
       </nav>
     </div>
   )

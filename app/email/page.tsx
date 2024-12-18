@@ -7,7 +7,6 @@ import Image from "next/image"
 import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
-// import Navbar from '@/components/ui/navbar'
 import EmailImage from '@/public/img/emailsended.jpg'
 import EmailEnviado from '@/public/img/data.svg'
 
@@ -41,7 +40,7 @@ function ImprovedNotification({ message, duration = 3000 }: ImprovedNotification
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }
 
 function VerifyEmailPage() {
@@ -56,17 +55,26 @@ function VerifyEmailPage() {
   const [resendCooldown, setResendCooldown] = useState(0)
   const [showNotification, setShowNotification] = useState(false)
 
+  // Combined useEffect for initialization and cleanup
   useEffect(() => {
+    // Validation and redirect logic
     if (!email || !registrationId) {
+      console.log('Missing email or registration ID, redirecting to home')
       router.push('/')
+      return
     }
 
-    const isUserVerified = localStorage.getItem('isVerified')
+    const isUserVerified = sessionStorage.getItem('isVerified')
     if (isUserVerified === 'true') {
+      console.log('User already verified, redirecting to business details')
       router.push('/acercaNegocio')
+      return
     }
 
-    // Disable back navigation
+    // Store registration ID in sessionStorage
+    sessionStorage.setItem('business_registration_id', registrationId)
+
+    // Back navigation prevention
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault()
       window.history.pushState(null, '', window.location.href)
@@ -75,20 +83,20 @@ function VerifyEmailPage() {
     window.history.pushState(null, '', window.location.href)
     window.addEventListener('popstate', handlePopState)
 
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [email, registrationId, router])
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout
+    // Countdown timer
+    let countdownTimer: NodeJS.Timeout
     if (resendCooldown > 0) {
-      timer = setTimeout(() => {
-        setResendCooldown(resendCooldown - 1)
+      countdownTimer = setInterval(() => {
+        setResendCooldown(prev => Math.max(0, prev - 1))
       }, 1000)
     }
-    return () => clearTimeout(timer)
-  }, [resendCooldown])
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      if (countdownTimer) clearInterval(countdownTimer)
+    }
+  }, [email, registrationId, router, resendCooldown])
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,7 +104,7 @@ function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/verify', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,18 +124,16 @@ function VerifyEmailPage() {
       }
 
       setIsVerified(true)
-      localStorage.setItem('isVerified', 'true')
+      sessionStorage.setItem('isVerified', 'true')
+      
+      // Redirect after success
       setTimeout(() => {
         router.push('/acercaNegocio')
       }, 3000)
 
     } catch (error) {
       console.error('Verification error:', error)
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError('Error al verificar el código. Por favor, intente nuevamente.')
-      }
+      setError(error instanceof Error ? error.message : 'Error al verificar el código. Por favor, intente nuevamente.')
     } finally {
       setIsLoading(false)
     }
@@ -140,7 +146,7 @@ function VerifyEmailPage() {
     setError('')
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_API_WEB + '/resend-code', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/resend-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,11 +168,7 @@ function VerifyEmailPage() {
       setTimeout(() => setShowNotification(false), 3000)
     } catch (error) {
       console.error('Resend error:', error)
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError('Error al reenviar el código')
-      }
+      setError(error instanceof Error ? error.message : 'Error al reenviar el código')
     } finally {
       setIsLoading(false)
     }
@@ -178,124 +180,123 @@ function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
-        {!isVerified && (
-          <Image
-            src={EmailImage}
-            alt="Background"
-            layout="fill"
-            objectFit="cover"
-            quality={100}
-            className="z-0"
-          />
-        )}
-        {/* <Navbar /> */}
-        <motion.div 
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 z-10"
-        >
-          <div className="flex flex-col items-center">
-            {!isVerified && (
-              <div className="mb-6">
-                <Image 
-                  src={emailIcon} 
-                  alt="Email Icon" 
-                  width={50} 
-                  height={50} 
-                />
-              </div>
-            )}
+      {!isVerified && (
+        <Image
+          src={EmailImage}
+          alt="Background"
+          layout="fill"
+          objectFit="cover"
+          quality={100}
+          className="z-0"
+        />
+      )}
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 z-10"
+      >
+        <div className="flex flex-col items-center">
+          {!isVerified && (
+            <div className="mb-6">
+              <Image 
+                src={emailIcon} 
+                alt="Email Icon" 
+                width={50} 
+                height={50} 
+              />
+            </div>
+          )}
 
-            {isVerified ? (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="text-center"
-              >
-                <Image
-                  src={EmailEnviado}
-                  alt="Email Enviado"
-                  width={60}
-                  height={60}
-                  className="mx-auto mb-4"
-                />
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  ¡Verificación exitosa!
-                </h2>
-                <p className="text-gray-600">
-                  Serás redirigido en unos segundos...
-                </p>
-              </motion.div>
-            ) : (
-              <>
-                <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
-                  Te enviamos un correo electrónico de verificación
-                </h2>
+          {isVerified ? (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-center"
+            >
+              <Image
+                src={EmailEnviado}
+                alt="Email Enviado"
+                width={60}
+                height={60}
+                className="mx-auto mb-4"
+              />
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                ¡Verificación exitosa!
+              </h2>
+              <p className="text-gray-600">
+                Serás redirigido en unos segundos...
+              </p>
+            </motion.div>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                Te enviamos un correo electrónico de verificación
+              </h2>
 
-                <p className="text-gray-600 text-center mb-6">
-                  Te enviamos un correo electrónico a la dirección{" "}
-                  <span className="font-bold">{email}</span>
-                </p>
-                
-                <form onSubmit={handleVerification} className="w-full space-y-4">
-                  <div>
-                    <label 
-                      htmlFor="verificationCode" 
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Código de verificación
-                    </label>
-                    <input
-                      type="text"
-                      id="verificationCode"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#f34739] focus:border-[#f34739]"
-                      placeholder="Ingrese el código de 6 dígitos"
-                      required
-                      disabled={isLoading}
-                      maxLength={6}
-                      autoComplete="off"
-                    />
-                  </div>
-
-                  {error && (
-                    <p className="text-red-500 text-sm text-center">{error}</p>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-[#f34739] text-white hover:bg-[#d63c30] flex items-center justify-center"
-                    disabled={isLoading || verificationCode.length !== 6}
+              <p className="text-gray-600 text-center mb-6">
+                Te enviamos un correo electrónico a la dirección{" "}
+                <span className="font-bold">{email}</span>
+              </p>
+              
+              <form onSubmit={handleVerification} className="w-full space-y-4">
+                <div>
+                  <label 
+                    htmlFor="verificationCode" 
+                    className="block text-sm font-medium text-gray-700"
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Verificando...
-                      </>
-                    ) : (
-                      'Verificar'
-                    )}
-                  </Button>
-                </form>
-
-                <div className="text-center text-sm text-gray-500 mt-4">
-                  ¿No has recibido el correo?
-                  <Button 
-                    onClick={handleResendCode} 
-                    disabled={resendCooldown > 0 || isLoading}
-                    className="ml-2 text-red-600 hover:text-red-800 bg-white hover:bg-white"
-                  >
-                    {resendCooldown > 0 ? `${resendCooldown}s` : 'Reenviar código'}
-                  </Button>
+                    Código de verificación
+                  </label>
+                  <input
+                    type="text"
+                    id="verificationCode"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#f34739] focus:border-[#f34739]"
+                    placeholder="Ingrese el código de 6 dígitos"
+                    required
+                    disabled={isLoading}
+                    maxLength={6}
+                    autoComplete="off"
+                  />
                 </div>
-              </>
-            )}
-          </div>
-        </motion.div>
+
+                {error && (
+                  <p className="text-red-500 text-sm text-center">{error}</p>
+                )}
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-[#f34739] text-white hover:bg-[#d63c30] flex items-center justify-center"
+                  disabled={isLoading || verificationCode.length !== 6}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    'Verificar'
+                  )}
+                </Button>
+              </form>
+
+              <div className="text-center text-sm text-gray-500 mt-4">
+                ¿No has recibido el correo?
+                <Button 
+                  onClick={handleResendCode} 
+                  disabled={resendCooldown > 0 || isLoading}
+                  className="ml-2 text-red-600 hover:text-red-800 bg-white hover:bg-white"
+                >
+                  {resendCooldown > 0 ? `${resendCooldown}s` : 'Reenviar código'}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
       {showNotification && (
         <ImprovedNotification message="Se ha reenviado el código a su correo" />
       )}
@@ -310,3 +311,4 @@ export default function VerifyEmailPageWrapper() {
     </Suspense>
   )
 }
+

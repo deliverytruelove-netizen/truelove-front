@@ -1,48 +1,93 @@
-import axios from 'axios';
-import { Socio } from '../types/Socios.types';
+import { Socio, DetallesSocio } from '../types/Socios.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
 export const fetchSocios = async (): Promise<Socio[]> => {
-  // Obtén el token del almacenamiento local o de las cookies
-  const token = localStorage.getItem('authToken'); // O usa cookies si es el caso
+  const token = localStorage.getItem('authToken');
 
-  // Si no hay token, puedes lanzar un error o manejarlo de otra manera
   if (!token) {
-    throw new Error('No token found');
+    throw new Error('No se encontró el token');
   }
 
-  // Realiza la solicitud fetch con el token en los encabezados
-  const response = await fetch(API_URL + '/admin/socio', {
-    method: 'GET', // Método GET para obtener usuarios
+  const response = await fetch(`${API_URL}/admin/socio`, {
     headers: {
-      'Authorization': `Bearer ${token}`,  // Agregar el token Bearer a los headers
-      'Content-Type': 'application/json',  // Establecer el tipo de contenido
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
   });
 
-  // Verifica si la respuesta fue correcta
   if (!response.ok) {
-    throw new Error('Network response was not ok');
+    throw new Error('Error en la respuesta del servidor');
   }
 
-  // Retorna los datos como JSON
   return response.json();
 };
 
-
-export const changeStateSocio = async (socio: number): Promise<void> => {
-  // Obtén el token desde el localStorage o las cookies
-  const token = localStorage.getItem('authToken'); // O usa cookies si es el caso
+export const fetchSocioDetails = async (id: number): Promise<DetallesSocio> => {
+  const token = localStorage.getItem('authToken');
 
   if (!token) {
-    throw new Error('No token found');
+    throw new Error('No se encontró el token');
   }
 
-  await axios.post(API_URL + `/admin/socio/change/state/${socio}`, {}, {
+  const response = await fetch(`${API_URL}/admin/socio/${id}/details`, {
     headers: {
-      'Authorization': `Bearer ${token}`,  // Agregar el token Bearer
-      'Content-Type': 'application/json',  // Establecer tipo de contenido si es necesario
-    }
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
+
+  if (!response.ok) {
+    throw new Error('Error al obtener los detalles del socio');
+  }
+
+  const data = await response.json();
+  return data.data;
 };
+
+export const changeStateSocio = async (id: number): Promise<void> => {
+  const token = localStorage.getItem('authToken');
+
+  if (!token) {
+    throw new Error('No se encontró el token');
+  }
+
+  const response = await fetch(`${API_URL}/admin/socio/change/state/${id}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al cambiar el estado del socio');
+  }
+};
+
+export const aprobarSocio = async (id: number): Promise<void> => {
+  const token = localStorage.getItem('authToken');
+
+  if (!token) {
+    throw new Error('No se encontró el token');
+  }
+
+  const response = await fetch(`${API_URL}/admin/socio/${id}/aprobar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.message || 'Error al aprobar el socio');
+  }
+
+  const data = await response.json();
+  if (data.status !== 'success') {
+    throw new Error(data.message || 'Error al aprobar el socio');
+  }
+};
+
