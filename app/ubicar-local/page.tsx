@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -14,6 +14,7 @@ import BusinessForm from "./components/BussinessForm"
 import StepNavigation from "@/components/ui/StepNavigation"
 import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 type MapboxFeature = {
   id: string
@@ -42,6 +43,23 @@ export default function BusinessLocation() {
   const [formData, setFormData] = useState<FormData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Efecto para verificar el token de registro al cargar el componente
+  useEffect(() => {
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || data.current_step !== '/ubicar-local') {
+        toast({
+          title: "Error",
+          description: "Por favor complete los pasos anteriores",
+          variant: "destructive",
+        });
+        router.push('/');
+      }
+    };
+
+    checkToken();
+  }, [router, toast]);
+
   const handleLocationSelect = (location: MapboxFeature) => {
     console.log("Location selected:", location)
     setSelectedLocation(location)
@@ -58,29 +76,24 @@ export default function BusinessLocation() {
     setIsSubmitting(true)
     console.log('Iniciando handleNext')
 
-    const businessRegistrationId = sessionStorage.getItem('business_registration_id')
-    if (!businessRegistrationId) {
-      toast({
-        title: "Error",
-        description: "Por favor complete el registro primero",
-        variant: "destructive",
-      })
-      router.push('/')
-      return
-    }
-
-    const locationData = {
-      ...formData,
-      coordinates: selectedLocation.center,
-      fullAddress: selectedLocation.place_name,
-      business_registration_id: businessRegistrationId
-    }
-
     try {
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
+      const locationData = {
+        ...formData,
+        coordinates: selectedLocation.center,
+        fullAddress: selectedLocation.place_name,
+        business_registration_id: registrationData.registration_id
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimientos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getRegistrationToken()}`
         },
         body: JSON.stringify(locationData),
         cache: 'no-store',
@@ -94,9 +107,9 @@ export default function BusinessLocation() {
       const result = await response.json()
       console.log('Respuesta del servidor recibida:', result)
       
-      // Guardar el ID del establecimiento para usarlo en pasos posteriores
-      sessionStorage.setItem('establecimiento_id', result.establecimiento.id)
-      
+      // Actualizar el paso del registro
+      await updateRegistrationStep('/datosClaves')
+
       toast({
         title: "Éxito",
         description: "Los datos del establecimiento se han guardado correctamente",

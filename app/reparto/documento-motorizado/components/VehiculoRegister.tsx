@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -38,11 +38,26 @@ const formSchema = z.object({
 
 export function VehicleRegistrationForm() {
   const router = useRouter()
+  const [repartoRegistroId, setRepartoRegistroId] = useState<string | null>(null)
   const [images, setImages] = useState<{ [key: string]: string }>({})
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [currentField, setCurrentField] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    const id = sessionStorage.getItem('repartoRegistroId')
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del registro",
+        variant: "destructive",
+      })
+      router.push('/reparto/registro')
+    } else {
+      setRepartoRegistroId(id)
+    }
+  }, [router, toast])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,9 +70,21 @@ export function VehicleRegistrationForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!repartoRegistroId) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del registro",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const formData = new FormData()
+
+      // Append reparto_registro_id
+      formData.append('reparto_registro_id', repartoRegistroId)
 
       // Append text fields
       Object.entries(values).forEach(([key, value]) => {
@@ -86,10 +113,9 @@ export function VehicleRegistrationForm() {
         description: "El vehículo ha sido registrado correctamente.",
       })
       console.log(data)
-      form.reset()
-      setImages({})
       
-      // Redirigir a la página de éxito
+      // Mantener el ID en sessionStorage
+      sessionStorage.setItem('repartoRegistroId', repartoRegistroId)
       router.push('/reparto/registro-exitoso')
     } catch (error) {
       console.error('Error:', error)
@@ -130,6 +156,8 @@ export function VehicleRegistrationForm() {
     }
     return new File([u8arr], filename, { type: mime })
   }
+
+  if (!repartoRegistroId) return null;
 
   return (
     <Form {...form}>

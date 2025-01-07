@@ -15,18 +15,21 @@ import {
 import { CapturarImagen } from "./CapturarImagen"
 import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
+import React from 'react';
+
 interface Ciudad {
-  id: number;
-  nombre: string;
+  id: number
+  nombre: string
 }
 
 interface Distrito {
-  id: number;
-  nombre: string;
+  id: number
+  nombre: string
 }
 
 export function FormularioDatos() {
   const router = useRouter()
+  const [repartoRegistroId, setRepartoRegistroId] = React.useState<string | null>(null)
   const [imagenCapturada, setImagenCapturada] = useState<string | null>(null)
   const [ciudades, setCiudades] = useState<Ciudad[]>([])
   const [distritos, setDistritos] = useState<Distrito[]>([])
@@ -35,6 +38,56 @@ export function FormularioDatos() {
   const [genero, setGenero] = useState<string>("")
   const [fechaNacimiento, setFechaNacimiento] = useState<string>("")
   const [cargando, setCargando] = useState(false)
+
+  React.useEffect(() => {
+    const id = sessionStorage.getItem('repartoRegistroId')
+    if (!id) {
+      router.push('/reparto/registro')
+    } else {
+      setRepartoRegistroId(id)
+    }
+  }, [router])
+
+  // Define obtenerDistritos first since it's used in manejarCambioCiudad
+  const obtenerDistritos = useCallback(async (ciudadId: string) => {
+    if (!ciudadId) return
+    
+    try {
+      setCargando(true)
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${ciudadId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+      
+      if (!respuesta.ok) {
+        throw new Error(`Error al obtener distritos: ${respuesta.status}`)
+      }
+      
+      const datos = await respuesta.json()
+      setDistritos(datos)
+    } catch (error) {
+      console.error('Error al obtener distritos:', error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los distritos. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  const manejarCaptura = useCallback((srcImagen: string) => {
+    setImagenCapturada(srcImagen)
+  }, [])
+
+  const manejarCambioCiudad = useCallback((ciudadId: string) => {
+    setCiudadSeleccionada(ciudadId)
+    setDistritoSeleccionado("")
+    void obtenerDistritos(ciudadId)
+  }, [obtenerDistritos])
 
   const obtenerCiudades = useCallback(async () => {
     try {
@@ -65,48 +118,8 @@ export function FormularioDatos() {
   }, [])
 
   useEffect(() => {
-    obtenerCiudades()
+    void obtenerCiudades()
   }, [obtenerCiudades])
-
-  const obtenerDistritos = async (ciudadId: string) => {
-    if (!ciudadId) return
-    
-    try {
-      setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${ciudadId}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      })
-      
-      if (!respuesta.ok) {
-        throw new Error(`Error al obtener distritos: ${respuesta.status}`)
-      }
-      
-      const datos = await respuesta.json()
-      setDistritos(datos)
-    } catch (error) {
-      console.error('Error al obtener distritos:', error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los distritos. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
-    }
-  }
-
-  const manejarCaptura = useCallback((srcImagen: string) => {
-    setImagenCapturada(srcImagen)
-  }, [])
-
-  const manejarCambioCiudad = useCallback((ciudadId: string) => {
-    setCiudadSeleccionada(ciudadId)
-    setDistritoSeleccionado("")
-    obtenerDistritos(ciudadId)
-  }, [])
 
   const validarFormulario = useCallback(() => {
     if (!fechaNacimiento) {
@@ -180,6 +193,7 @@ export function FormularioDatos() {
       }
 
       const datosFormulario = new FormData()
+      datosFormulario.append('reparto_registro_id', repartoRegistroId!)
       datosFormulario.append('fecha_nacimiento', fechaNacimiento)
       datosFormulario.append('genero', genero)
       datosFormulario.append('ciudad_id', ciudadSeleccionada)
@@ -208,6 +222,8 @@ export function FormularioDatos() {
         description: "Datos personales guardados correctamente.",
       })
 
+      // Mantener el ID en sessionStorage para la siguiente página
+      sessionStorage.setItem('repartoRegistroId', repartoRegistroId!)
       router.push('/reparto/documentos')
 
     } catch (error) {
@@ -221,6 +237,9 @@ export function FormularioDatos() {
       setCargando(false)
     }
   }
+
+  if (!repartoRegistroId) return null;
+
 
   return (
     <form 
@@ -332,7 +351,7 @@ export function FormularioDatos() {
           disabled={cargando}
           aria-busy={cargando}
         >
-          {cargando ? 'Cargando...' : 'Continuar'}
+          {cargando ? 'Guardando...' : 'Guardar y Continuar'}
         </Button>
       </div>
     </form>

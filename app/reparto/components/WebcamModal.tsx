@@ -18,9 +18,10 @@ interface WebcamModalProps {
   isOpen: boolean
   onClose: () => void
   onCapture: (imageData: { imageSrc: string; text: string }) => void
+  title: string  // Nuevo prop para el título
 }
 
-export function WebcamModal({ isOpen, onClose, onCapture }: WebcamModalProps) {
+export function WebcamModal({ isOpen, onClose, onCapture, title }: WebcamModalProps) {
   const webcamRef = useRef<Webcam>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [documentoDetectado, setDocumentoDetectado] = useState(false)
@@ -117,7 +118,7 @@ export function WebcamModal({ isOpen, onClose, onCapture }: WebcamModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl p-0">
         <DialogHeader className="p-6">
-          <DialogTitle>Capturar DNI</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Coloque su DNI dentro del marco
           </DialogDescription>

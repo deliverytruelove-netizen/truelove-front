@@ -15,6 +15,7 @@ import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 interface EstablecimientoDireccion {
   calle: string
@@ -35,6 +36,7 @@ export default function DatosBancarios() {
   const [currentStep] = useState(4)
   const totalSteps = 6
   const [establecimientoDireccion, setEstablecimientoDireccion] = useState<EstablecimientoDireccion | null>(null)
+  const [establecimientoId, setEstablecimientoId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     accountHolder: '',
     accountNumber: '',
@@ -53,48 +55,71 @@ export default function DatosBancarios() {
     setIsFormValid(isValid)
   }, [formData])
 
-  const fetchEstablecimientoDireccion = useCallback(async () => {
-    const establecimientoId = sessionStorage.getItem('establecimiento_id')
-    if (!establecimientoId) {
-      toast({
-        title: "Error",
-        description: "No se encontró el ID del establecimiento",
-        variant: "destructive"
-      })
-      return
-    }
+  useEffect(() => {
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || data.current_step !== '/datosBancarios') {
+        toast({
+          title: "Error",
+          description: "Por favor complete los pasos anteriores",
+          variant: "destructive",
+        });
+        router.push('/');
+      }
+    };
 
+    checkToken();
+  }, [router, toast]);
+
+  const fetchEstablecimientoDireccion = useCallback(async () => {
     try {
-      setIsLoading(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${establecimientoId}/direccion`)
+      setIsLoading(true);
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
+      console.log('ID de registro:', registrationData.registration_id); // Para depuración
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${registrationData.registration_id}/direccion`, {
+        headers: {
+          'Authorization': `Bearer ${getRegistrationToken()}`
+        }
+      });
       
       if (!response.ok) {
-        throw new Error('Error al obtener la dirección del establecimiento')
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || `Error del servidor: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
       if (data && data.direccion) {
-        setEstablecimientoDireccion(data.direccion)
+        setEstablecimientoDireccion(data.direccion);
+        setEstablecimientoId(data.establecimiento_id); // Asegúrate de que esto esté presente
+        console.log('Establecimiento ID:', data.establecimiento_id); // Para depuración
       } else {
-        throw new Error('No se encontró la dirección del establecimiento')
+        throw new Error('La respuesta del servidor no contiene la dirección esperada');
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error al obtener la dirección:', error);
       toast({
         title: "Error",
-        description: "No se pudo obtener la dirección del establecimiento",
+        description: error instanceof Error ? error.message : "No se pudo obtener la dirección del establecimiento",
         variant: "destructive"
-      })
+      });
+      setEstablecimientoDireccion(null);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [toast])
+  }, [toast]);
 
   useEffect(() => {
     if (formData.useBusinessAddress) {
-      fetchEstablecimientoDireccion()
+      fetchEstablecimientoDireccion();
+    } else {
+      setEstablecimientoDireccion(null);
     }
-  }, [formData.useBusinessAddress, fetchEstablecimientoDireccion])
+  }, [formData.useBusinessAddress, fetchEstablecimientoDireccion]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -112,25 +137,20 @@ export default function DatosBancarios() {
   const handleNext = async () => {
     if (!isFormValid) return
 
-    const businessRegistrationId = sessionStorage.getItem('business_registration_id')
-    const establecimientoId = sessionStorage.getItem('establecimiento_id')
-
-    if (!businessRegistrationId || !establecimientoId) {
-      toast({
-        title: "Error",
-        description: "Información de registro incompleta",
-        variant: "destructive"
-      })
-      router.push('/')
-      return
-    }
-
     setIsSaving(true)
     try {
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
+      console.log('Establecimiento ID antes de enviar:', establecimientoId); // Para depuración
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getRegistrationToken()}`
         },
         body: JSON.stringify({
           titular_cuenta: formData.accountHolder,
@@ -140,8 +160,8 @@ export default function DatosBancarios() {
           documento_titular: formData.documentNumber,
           codigo_cci: formData.cci,
           usar_direccion_negocio: formData.useBusinessAddress,
-          establecimiento_id: establecimientoId,
-          business_registration_id: businessRegistrationId
+          establecimiento_id: establecimientoId, // Asegúrate de que esto se esté enviando
+          business_registration_id: registrationData.registration_id
         })
       })
 
@@ -153,10 +173,8 @@ export default function DatosBancarios() {
       const result = await response.json()
       console.log('Respuesta del servidor:', result)
       
-      // Guardar el ID de los datos bancarios
-      if (result.datos?.id) {
-        sessionStorage.setItem('datos_bancarios_id', result.datos.id)
-      }
+      // Actualizar el paso del registro
+      await updateRegistrationStep('/planes');
 
       toast({
         title: "Éxito",
@@ -331,16 +349,23 @@ export default function DatosBancarios() {
                       >
                         Mi dirección de facturación es la misma que la dirección del negocio
                       </label>
-                      {formData.useBusinessAddress && establecimientoDireccion && (
-                        <p className="text-sm text-muted-foreground">
-                          {establecimientoDireccion.direccion_completa}
-                        </p>
-                      )}
-                      {isLoading && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Cargando dirección...
-                        </div>
+                      {formData.useBusinessAddress && (
+                        <>
+                          {establecimientoDireccion ? (
+                            <p className="text-sm text-muted-foreground">
+                              {establecimientoDireccion.direccion_completa}
+                            </p>
+                          ) : isLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Cargando dirección...
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              No se pudo cargar la dirección
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
