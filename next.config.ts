@@ -8,11 +8,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
+        destination: 'https://magusemail.com/truelove-back/public/api/:path*',
       },
       {
         source: '/storage/:path*',
-        destination: 'http://localhost:8000/storage/:path*',
+        destination: 'https://magusemail.com/truelove-back/public/storage/:path*',
       },
     ];
   },
