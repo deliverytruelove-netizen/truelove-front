@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { EmailAlert } from './email-alert'
+import {createRegistrationToken} from '@/services/registrationTokenService'
 
 export default function RegistrationForm() {
   const router = useRouter()
@@ -152,18 +153,23 @@ export default function RegistrationForm() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Prevenir el comportamiento por defecto del formulario
     e.preventDefault()
+    // Activar el estado de carga
     setIsLoading(true)
+    // Limpiar cualquier error previo
     setError(null)
     
     try {
+      // Verificar que todos los campos requeridos estén llenos
       if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
         setError('Todos los campos son obligatorios')
         setIsLoading(false)
         return
       }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/api/register`, {
+  
+      // Realizar la petición POST al endpoint de registro
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,18 +181,20 @@ export default function RegistrationForm() {
           name: formData.name,
           lastName: formData.lastName,
           businessType: formData.businessType,
-          phone: formData.phone.replace(/\D/g, ''),
+          phone: formData.phone.replace(/\D/g, ''), // Eliminar caracteres no numéricos
           email: formData.email
         })
       });
-
+  
+      // Parsear la respuesta del servidor
       const data = await response.json()
     
-      // Log the entire server response for debugging
+      // Registrar la respuesta completa del servidor para depuración
       console.log('Server response:', data)
-
+  
+      // Manejar respuestas no exitosas
       if (!response.ok) {
-        // Check for specific error messages or codes from the server
+        // Verificar si hay mensajes de error específicos relacionados con el email
         if (data.error && typeof data.error === 'string' && 
            (data.error.toLowerCase().includes('email') || 
             data.error.toLowerCase().includes('correo') ||
@@ -198,21 +206,38 @@ export default function RegistrationForm() {
             data.message.toLowerCase().includes('duplicado'))) {
           setError('email_taken')
         } else {
-          // If it's not a specific email error, set a generic error message
+          // Si no es un error específico de email, establecer un mensaje de error genérico
           setError('Hubo un problema al registrar el negocio. Por favor, intente nuevamente.')
         }
         return
       }
-
-      // If everything is OK, redirect
-      router.push(`/email?email=${encodeURIComponent(formData.email)}&registration_id=${encodeURIComponent(data.registration_id)}`)
+  
+      // Si la respuesta es exitosa y contiene un token
+      if (data.registration_id) {
+        // Crear y almacenar el token de registro
+        try {
+          await createRegistrationToken(data.registration_id.toString(), '/email');
+          router.push(`/email?email=${encodeURIComponent(formData.email)}`);
+        } catch (tokenError) {
+          console.error('Error al crear el token de registro:', tokenError);
+          setError('Hubo un problema al procesar su registro. Por favor, intente nuevamente.');
+        }
+      } else {
+        setError('No se recibió un ID de registro válido del servidor.');
+      }
+      
+      
     } catch (error) {
+      // Manejar cualquier error no previsto durante el proceso
       console.error('Error submitting form:', error)
       setError('Hubo un problema al registrar el negocio. Por favor, intente nuevamente.')
     } finally {
+      // Desactivar el estado de carga, independientemente del resultado
       setIsLoading(false)
     }
   }
+  
+  
 
   return (
     <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
@@ -358,4 +383,3 @@ export default function RegistrationForm() {
     </div>
   )
 }
-

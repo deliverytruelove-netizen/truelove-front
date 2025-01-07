@@ -42,11 +42,13 @@ interface ApiResponse {
 
 export function FormularioBancario() {
   const router = useRouter()
+  const [repartoRegistroId, setRepartoRegistroId] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
   const [filePreview, setFilePreview] = useState<string[]>([])
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [bancos, setBancos] = useState<Banco[]>([])
   const [tiposCuenta, setTiposCuenta] = useState<TipoCuenta[]>([])
+  const [isMobile, setIsMobile] = useState(false)
   const [formData, setFormData] = useState({
     titular: '',
     dni: '',
@@ -56,6 +58,26 @@ export function FormularioBancario() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  useEffect(() => {
+    const id = sessionStorage.getItem('repartoRegistroId')
+    if (!id) {
+      toast.error('No se encontró el ID del registro')
+      router.push('/reparto/registro')
+    } else {
+      setRepartoRegistroId(id)
+    }
+  }, [router])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,8 +102,10 @@ export function FormularioBancario() {
       }
     }
 
-    fetchData()
-  }, [])
+    if (repartoRegistroId) {
+      fetchData()
+    }
+  }, [repartoRegistroId])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length <= 2) {
@@ -113,7 +137,6 @@ export function FormularioBancario() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
     if (id === 'dni') {
-      // Permitir solo números y limitar a 8 dígitos
       const numericValue = value.replace(/\D/g, '').slice(0, 8)
       setFormData({ ...formData, [id]: numericValue })
     } else {
@@ -151,11 +174,17 @@ export function FormularioBancario() {
       toast.error('Por favor, complete todos los campos obligatorios correctamente')
       return
     }
+
+    if (!repartoRegistroId) {
+      toast.error('No se encontró el ID del registro')
+      return
+    }
   
     setIsSubmitting(true)
   
     try {
       const formDataToSend = new FormData()
+      formDataToSend.append('reparto_registro_id', repartoRegistroId)
       formDataToSend.append('titular', formData.titular)
       formDataToSend.append('dni', formData.dni)
       formDataToSend.append('banco_id', formData.banco_id)
@@ -185,6 +214,8 @@ export function FormularioBancario() {
       }
 
       toast.success('mensaje' in data ? data.mensaje : 'Cuenta bancaria guardada exitosamente')
+      
+      sessionStorage.setItem('repartoRegistroId', repartoRegistroId)
       router.push('/reparto/documento-motorizado')
     } catch (error) {
       if (error instanceof Error) {
@@ -197,6 +228,8 @@ export function FormularioBancario() {
       setIsSubmitting(false)
     }
   }
+
+  if (!repartoRegistroId) return null;
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
@@ -300,7 +333,7 @@ export function FormularioBancario() {
               <div className="flex flex-col items-center gap-2">
                 <p className="text-xs md:text-sm text-gray-500">
                   Adjuntar en formato JPEG, PDF o PNG.
-                  Tamaño máximo del archivo: 4 MB. Puedes subir un máximo de 2 archivos
+                 
                 </p>
                 <Input
                   type="file"
@@ -324,12 +357,14 @@ export function FormularioBancario() {
                   </div>
                 )}
               </div>
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-xs md:text-sm text-gray-500">
-                  O captura una imagen con tu cámara
-                </p>
-                <CapturarImagen onCapture={handleCapture} />
-              </div>
+              {isMobile && (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-xs md:text-sm text-gray-500">
+                    O captura una imagen con tu cámara
+                  </p>
+                  <CapturarImagen onCapture={handleCapture} />
+                </div>
+              )}
               {filePreview.length > 0 && (
                 <div className="mt-4 space-y-2">
                   <p className="text-xs md:text-sm text-gray-500 mb-2">Imágenes seleccionadas:</p>
@@ -388,4 +423,3 @@ export function FormularioBancario() {
     </ScrollArea>
   )
 }
-

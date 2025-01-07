@@ -13,17 +13,16 @@ interface LoginResponse {
         id: number;
         usuario: string;
         email: string;
-        [key: string]: unknown; // Otros campos opcionales en la respuesta del usuario
+        [key: string]: unknown;
     };
 }
 
-// Definimos un tipo para el error esperado
-interface ErrorResponse {
-    response?: {
-        data: {
-            error: string;
-        };
+interface ApiError {
+    status: number;
+    data: {
+        error: string;
     };
+    message: string;
 }
 
 export const useLoginForm = () => {
@@ -37,7 +36,7 @@ export const useLoginForm = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -55,19 +54,23 @@ export const useLoginForm = () => {
                 data: formDataToSend,
             });
 
-            const { token, user } = response;
+            localStorage.setItem('authToken', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
 
-            localStorage.setItem('authToken', token);
-            localStorage.setItem('user', JSON.stringify(user));
+            document.cookie = `authToken=${response.token}; path=/`;
 
-            router.replace('admin/dashboard');
-        } catch (error: unknown) { // Cambié a 'unknown' para manejarlo de manera segura
-            if (isErrorResponse(error)) {
-                // Aquí accedemos de manera segura a la propiedad `error` de la respuesta
-                const backendMessage = error.response?.data?.error || 'Error desconocido en el servidor';
-                setErrorMessage(backendMessage);
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            router.replace('/admin/dashboard');
+            
+        } catch (error) {
+            console.error('Error en login:', error);
+            if ((error as ApiError).data?.error) {
+                setErrorMessage((error as ApiError).data.error);
+            } else if (error instanceof Error) {
+                setErrorMessage(error.message);
             } else {
-                setErrorMessage('Error desconocido');
+                setErrorMessage('Error al iniciar sesión. Por favor, intente nuevamente.');
             }
         } finally {
             setIsLoading(false);
@@ -85,10 +88,3 @@ export const useLoginForm = () => {
     };
 };
 
-// Función de verificación de tipo para errores
-function isErrorResponse(error: unknown): error is ErrorResponse {
-    return (
-        (error as ErrorResponse).response !== undefined &&
-        (error as ErrorResponse).response?.data?.error !== undefined
-    );
-}

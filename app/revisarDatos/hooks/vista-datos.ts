@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { ReviewData } from '../types/review-data'
 import { useToast } from '@/hooks/use-toast'
+import { getRegistrationToken } from '@/services/registrationTokenService'
 
 export function useReviewData() {
   const { toast } = useToast()
@@ -8,24 +9,19 @@ export function useReviewData() {
   const [data, setData] = useState<ReviewData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = useCallback(async (
-    negocioId: string,
-    establecimientoId: string,
-    datosClaveId: string,
-    datosBancariosId: string
-  ) => {
+  const fetchData = useCallback(async () => {
     try {
-      const url = new URL(`${process.env.NEXT_PUBLIC_API_WEB}/revisarDatos`)
-      url.searchParams.append('negocioId', negocioId)
-      url.searchParams.append('establecimientoId', establecimientoId)
-      url.searchParams.append('datosClaveId', datosClaveId)
-      url.searchParams.append('datosBancariosId', datosBancariosId)
+      const token = getRegistrationToken()
+      if (!token) {
+        throw new Error('No se encontró el token de registro')
+      }
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/revisarDatos`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       })
 

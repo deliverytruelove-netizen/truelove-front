@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
@@ -11,19 +11,12 @@ import StepNavigation from '@/components/ui/StepNavigation'
 import FormularioPlanes from "./components/FormularioPlanes"
 import DeliveryImage from "@/public/img/deli.jpg"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-interface LatestIds {
-  negocioId: number
-  establecimientoId: number
-  datosClaveId: number
-  datosBancariosId: number
-}
+import { updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 function PlanPrecios() {
   const router = useRouter()
   const { toast } = useToast()
   const [selectedPlan, setSelectedPlan] = useState(false)
-  const [latestIds, setLatestIds] = useState<LatestIds | null>(null)
   const [loading, setLoading] = useState(true)
 
   const currentStep = 5
@@ -38,49 +31,38 @@ function PlanPrecios() {
     };
   }, []);
 
-  const fetchLatestIds = useCallback(async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/obtener-ultimos-ids`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Error al obtener los IDs más recientes')
+  useEffect(() => {
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || data.current_step !== '/planes') {
+        toast({
+          title: "Error",
+          description: "Por favor complete los pasos anteriores",
+          variant: "destructive",
+        });
+        router.push('/');
+      } else {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json()
-      setLatestIds(data)
+    checkToken();
+  }, [router, toast]);
+
+  const handleNext = async () => {
+    if (!selectedPlan) return;
+
+    try {
+      await updateRegistrationStep('/revisarDatos');
+      router.push('/revisarDatos');
     } catch (error) {
-      console.error('Error fetching latest IDs:', error)
+      console.error('Error updating registration step:', error);
       toast({
         title: "Error",
-        description: "No se pudieron obtener los IDs más recientes",
+        description: "No se pudo actualizar el paso de registro",
         variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
+      });
     }
-  }, [toast])
-
-  useEffect(() => {
-    fetchLatestIds()
-  }, [fetchLatestIds])
-
-  const handleNext = () => {
-    if (!selectedPlan || !latestIds) return
-
-    const params = new URLSearchParams({
-      negocioId: latestIds.negocioId.toString(),
-      establecimientoId: latestIds.establecimientoId.toString(),
-      datosClaveId: latestIds.datosClaveId.toString(),
-      datosBancariosId: latestIds.datosBancariosId.toString()
-    })
-
-    router.push(`/revisarDatos?${params.toString()}`)
   }
 
   const handleBack = () => {

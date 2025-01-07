@@ -7,14 +7,17 @@ import Image from "next/image"
 import { Loader2, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import emailIcon from "@/public/img/gmail.png"
-import EmailImage from '@/public/img/emailsended.jpg'
-import EmailEnviado from '@/public/img/data.svg'
+import EmailImage from "@/public/img/emailsended.jpg"
+import EmailEnviado from "@/public/img/data.svg"
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
+// Interfaz para las props de la notificación mejorada
 interface ImprovedNotificationProps {
   message: string;
   duration?: number;
 }
 
+// Componente de notificación mejorada
 function ImprovedNotification({ message, duration = 3000 }: ImprovedNotificationProps) {
   const [isVisible, setIsVisible] = useState(true)
 
@@ -43,11 +46,11 @@ function ImprovedNotification({ message, duration = 3000 }: ImprovedNotification
   )
 }
 
+// Componente principal de verificación de email
 function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
-  const registrationId = searchParams.get('registration_id')
   const [verificationCode, setVerificationCode] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -55,26 +58,19 @@ function VerifyEmailPage() {
   const [resendCooldown, setResendCooldown] = useState(0)
   const [showNotification, setShowNotification] = useState(false)
 
-  // Combined useEffect for initialization and cleanup
+  // Efecto para inicialización y limpieza
   useEffect(() => {
-    // Validation and redirect logic
-    if (!email || !registrationId) {
-      console.log('Missing email or registration ID, redirecting to home')
-      router.push('/')
-      return
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || data.current_step !== '/email' || !email) {
+        router.push('/')
+        return
+      }
     }
 
-    const isUserVerified = sessionStorage.getItem('isVerified')
-    if (isUserVerified === 'true') {
-      console.log('User already verified, redirecting to business details')
-      router.push('/acercaNegocio')
-      return
-    }
+    checkToken()
 
-    // Store registration ID in sessionStorage
-    sessionStorage.setItem('business_registration_id', registrationId)
-
-    // Back navigation prevention
+    // Prevención de navegación hacia atrás
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault()
       window.history.pushState(null, '', window.location.href)
@@ -83,7 +79,7 @@ function VerifyEmailPage() {
     window.history.pushState(null, '', window.location.href)
     window.addEventListener('popstate', handlePopState)
 
-    // Countdown timer
+    // Temporizador de cuenta regresiva para reenvío de código
     let countdownTimer: NodeJS.Timeout
     if (resendCooldown > 0) {
       countdownTimer = setInterval(() => {
@@ -91,29 +87,36 @@ function VerifyEmailPage() {
       }, 1000)
     }
 
-    // Cleanup function
+    // Función de limpieza
     return () => {
       window.removeEventListener('popstate', handlePopState)
       if (countdownTimer) clearInterval(countdownTimer)
     }
-  }, [email, registrationId, router, resendCooldown])
+  }, [email, router, resendCooldown])
 
+  // Función para manejar la verificación del código
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
     try {
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': `Bearer ${getRegistrationToken()}`
         },
         body: JSON.stringify({
           email,
           code: verificationCode.trim(),
-          registration_id: registrationId,
+          registration_id: registrationData.registration_id,
         }),
       })
 
@@ -124,9 +127,10 @@ function VerifyEmailPage() {
       }
 
       setIsVerified(true)
-      sessionStorage.setItem('isVerified', 'true')
       
-      // Redirect after success
+      // Actualizar el paso del registro
+      await updateRegistrationStep('/acercaNegocio')
+     
       setTimeout(() => {
         router.push('/acercaNegocio')
       }, 3000)
@@ -139,21 +143,28 @@ function VerifyEmailPage() {
     }
   }
 
+  // Función para manejar el reenvío del código
   const handleResendCode = async () => {
-    if (!email || !registrationId || isLoading || resendCooldown > 0) return
+    if (!email || isLoading || resendCooldown > 0) return
 
     setIsLoading(true)
     setError('')
 
     try {
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/resend-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getRegistrationToken()}`
         },
         body: JSON.stringify({
           email,
-          registration_id: registrationId
+          registration_id: registrationData.registration_id
         }),
       })
 
@@ -174,7 +185,7 @@ function VerifyEmailPage() {
     }
   }
 
-  if (!email || !registrationId) {
+  if (!email) {
     return null
   }
 

@@ -16,6 +16,7 @@ import { useReviewData } from './hooks/vista-datos'
 import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import DeliveryImage from "@/public/img/negocio.jpg"
+import { updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 export default function ReviewData() {
   useBodyScrollLock()
@@ -25,36 +26,27 @@ export default function ReviewData() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { data, loading, error, fetchData } = useReviewData()
   const currentStep = 6
-  const totalSteps = 7
+  const totalSteps = 8
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const negocioId = searchParams.get('negocioId')
-    const establecimientoId = searchParams.get('establecimientoId')
-    const datosClaveId = searchParams.get('datosClaveId')
-    const datosBancariosId = searchParams.get('datosBancariosId')
+    const checkTokenAndFetchData = async () => {
+      const registrationData = await getRegistrationData();
+      if (!registrationData || registrationData.current_step !== '/revisarDatos') {
+        toast({
+          title: "Error",
+          description: "Por favor complete los pasos anteriores",
+          variant: "destructive",
+        });
+        router.push('/');
+        return;
+      }
+      fetchData();
+    };
 
-    if (!negocioId || !establecimientoId || !datosClaveId || !datosBancariosId) {
-      return
-    }
-
-    fetchData(negocioId, establecimientoId, datosClaveId, datosBancariosId)
-  }, [fetchData])
+    checkTokenAndFetchData();
+  }, [fetchData, router, toast]);
 
   const handleEdit = (section: string) => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const negocioId = searchParams.get('negocioId')
-    const establecimientoId = searchParams.get('establecimientoId')
-
-    if (!negocioId || !establecimientoId) {
-      toast({
-        title: "Error",
-        description: "No se pueden editar los datos sin los identificadores necesarios",
-        variant: "destructive"
-      })
-      return
-    }
-
     const routes = {
       business: '/datos-negocio',
       address: '/direccion-negocio',
@@ -65,13 +57,7 @@ export default function ReviewData() {
     
     const route = routes[section as keyof typeof routes]
     if (route) {
-      const queryParams = new URLSearchParams({
-        negocioId,
-        establecimientoId,
-        edit: 'true'
-      })
-      
-      router.push(`${route}?${queryParams.toString()}`)
+      router.push(`${route}?edit=true`)
     }
   }
 
@@ -90,6 +76,7 @@ export default function ReviewData() {
     setIsSubmitting(true)
 
     try {
+      await updateRegistrationStep('/firmar-contrato');
       router.push('/firmar-contrato')
     } catch (error) {
       console.error('Error en handleNext:', error)

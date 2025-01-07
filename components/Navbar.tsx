@@ -36,7 +36,7 @@ export default function Navbar() {
 
           <div className="flex items-center space-x-4">
             <Button asChild variant="default" className="bg-[#D9043D] text-white hover:bg-[#d63c30]">
-              <Link href="/admin">Iniciar Sesión</Link>
+              <Link href="/login">Iniciar Sesión</Link>
             </Button>
 
             <Sheet open={isOpen} onOpenChange={setIsOpen}>

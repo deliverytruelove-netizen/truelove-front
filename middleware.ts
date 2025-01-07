@@ -1,18 +1,87 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from 'jose';
 
-export function middleware(req: NextRequest) {
-    const token = req.cookies.get('authToken'); // O localStorage en el cliente
+// Rutas protegidas y su orden en el proceso de registro
+const RUTAS_PROTEGIDAS = [
+  "/email",
+  "/acercaNegocio",
+  "/ubicar-local",
+  "/datosClaves",
+  "/datosBancarios",
+  "/planes",
+  "/revisarDatos",
+  "/cuenta-bancaria",
+  "/firmar-contrato",
+];
 
-    if (token && req.nextUrl.pathname === '/admin') {
-        // Redirige al dashboard si el usuario está autenticado y está en la página de login
-        return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  const authToken = req.cookies.get("authToken");
+  const registrationToken = req.cookies.get("registrationToken")?.value;
+  const esRutaAdmin = path.startsWith("/admin");
+  const esPaginaLogin = path === "/login";
+
+  // Lógica para rutas de admin y login
+  if (authToken && esPaginaLogin) {
+    console.log("Usuario ya autenticado, redirigiendo al dashboard");
+    return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+  }
+
+  if (!authToken && esRutaAdmin) {
+    console.log("Intento de acceso no autorizado a admin, redirigiendo al login");
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // Lógica para las rutas protegidas del proceso de registro
+  if (RUTAS_PROTEGIDAS.includes(path)) {
+    if (!registrationToken) {
+      console.log("No se encontró token de registro, redirigiendo al inicio");
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
-    return NextResponse.next(); // Continúa con la solicitud
+    try {
+      // Verificar el token de registro
+      const secretKey = new TextEncoder().encode(process.env.JWT_SECRET);
+      const { payload } = await jwtVerify(registrationToken, secretKey);
+
+      // Verificar que el token contiene la información necesaria
+      if (!payload.registration_id || !payload.current_step) {
+        throw new Error("Token inválido");
+      }
+
+      const currentStepIndex = RUTAS_PROTEGIDAS.indexOf(payload.current_step as string);
+      const requestedStepIndex = RUTAS_PROTEGIDAS.indexOf(path);
+
+      // Permitir acceso solo si es el paso actual o el siguiente
+      if (requestedStepIndex > currentStepIndex + 1) {
+        console.log("Intento de acceso a un paso no permitido");
+        return NextResponse.redirect(new URL(payload.current_step as string, req.url));
+      }
+
+    } catch (error) {
+      console.error("Error al verificar el token de registro:", error);
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
+  // Para todos los demás casos, continuar con la solicitud
+  return NextResponse.next();
 }
 
-// Aplica el middleware solo a estas rutas
 export const config = {
-    matcher: ['/admin'], // Solo aplica en /admin
+  matcher: [
+    "/admin/:path*",
+    "/login",
+    "/email",
+    "/acercaNegocio",
+    "/ubicar-local",
+    "/datosClaves",
+    "/datosBancarios",
+    "/planes",
+    "/revisarDatos",
+    "/cuenta-bancaria",
+    "/firmar-contrato",
+  ],
 };
+

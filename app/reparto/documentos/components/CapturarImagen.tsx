@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState, useEffect } from 'react'
 import Webcam from 'react-webcam'
 import { Button } from "@/components/ui/button"
 import { Camera, RotateCcw } from 'lucide-react'
@@ -13,6 +13,23 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
   const webcamRef = useRef<Webcam>(null)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detectar si es dispositivo móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    // Verificar inicialmente
+    checkMobile()
+
+    // Agregar listener para cambios de tamaño de ventana
+    window.addEventListener('resize', checkMobile)
+
+    // Limpiar listener
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot()
@@ -26,6 +43,12 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
     setFacingMode(prevMode => prevMode === 'user' ? 'environment' : 'user')
   }, [])
 
+  // Si no es móvil, no mostrar nada
+  if (!isMobile) {
+    return null
+  }
+
+  // Si la cámara no está abierta, mostrar solo el botón
   if (!isCameraOpen) {
     return (
       <Button 
@@ -38,6 +61,7 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
     )
   }
 
+  // Interfaz de la cámara (solo visible en móvil)
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -74,4 +98,3 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
     </div>
   )
 }
-
