@@ -1,5 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
+
 interface PostDataParams {
     endpoint: string;
     data: FormData; // Usa FormData para manejar datos de formulario

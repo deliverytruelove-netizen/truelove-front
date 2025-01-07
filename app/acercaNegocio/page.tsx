@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -11,15 +11,14 @@ import { toast } from "@/hooks/use-toast";
 import StepNavigation from '@/components/ui/StepNavigation'
 import Loading from "./components/Loading";
 import { BusinessForm } from "./components/Fomurlulario";
-
 import { formSchema, type BusinessFormValues } from "./schemas/business-form";
 import type { TipoNegocio, Categoria } from "./types/business";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 function FormularioDetallesNegocioContent() {
   useBodyScrollLock();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tiposNegocio, setTiposNegocio] = useState<TipoNegocio[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -41,17 +40,9 @@ function FormularioDetallesNegocioContent() {
   });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
-
-    // Obtener el ID del registro del negocio
-    const registration_id = searchParams.get('registration_id');
-    
-    if (!registration_id) {
-      // Si no hay ID en la URL, verificar en sessionStorage
-      const storedId = sessionStorage.getItem('business_registration_id');
-      if (!storedId) {
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || data.current_step !== '/acercaNegocio') {
         toast({
           title: "Error",
           description: "Por favor complete el registro primero",
@@ -60,17 +51,12 @@ function FormularioDetallesNegocioContent() {
         router.push('/');
         return;
       }
-    } else {
-      // Si hay ID en la URL, guardarlo en sessionStorage
-      sessionStorage.setItem('business_registration_id', registration_id);
-    }
+      setIsLoading(false);
+    };
 
-    return () => clearTimeout(timer);
-  }, [router, searchParams]);
-
-  useEffect(() => {
+    checkToken();
     fetchTiposNegocio();
-  }, []);
+  }, [router]);
 
   const fetchTiposNegocio = async () => {
     try {
@@ -107,26 +93,20 @@ function FormularioDetallesNegocioContent() {
   };
 
   const onSubmit = useCallback(async (data: BusinessFormValues) => {
-    const businessRegistrationId = sessionStorage.getItem('business_registration_id');
-    
-    if (!businessRegistrationId) {
-      toast({
-        title: "Error",
-        description: "Por favor complete el registro primero",
-        variant: "destructive",
-      });
-      router.push('/');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_WEB}/negocios`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${getRegistrationToken()}`
           },
           body: JSON.stringify({
             nombre: data.businessName,
@@ -136,7 +116,7 @@ function FormularioDetallesNegocioContent() {
             es_local_calle: data.isStreetLocation === "Si",
             metodo_contacto: data.contactMethod,
             telefono: data.phoneNumber.replace(/\s/g, ''),
-            business_registration_id: businessRegistrationId,
+            business_registration_id: registrationData.registration_id, // Cambiado de registration_id a business_registration_id
           }),
         }
       );
@@ -147,8 +127,8 @@ function FormularioDetallesNegocioContent() {
         throw new Error(responseData.message || "Error al guardar los datos");
       }
 
-      // Guardar el ID del negocio para los siguientes pasos
-      sessionStorage.setItem('negocio_id', responseData.negocio.id);
+      // Actualizar el paso del registro
+      await updateRegistrationStep('/ubicar-local');
 
       toast({
         title: "Éxito",

@@ -9,7 +9,8 @@ import { useCallback, useEffect, useRef } from 'react'
 import {
   RiDashboardLine,
   RiMenu3Line,
-  RiShieldUserLine
+  RiShieldUserLine,
+  RiRidingFill
 } from 'react-icons/ri'
 
 const activeStyles =
@@ -110,6 +111,15 @@ export const Sidebar: React.FC<Props> = ({
         >
           <RiShieldUserLine className="text-2xl" />
           <span style={{ color: matchPath('/admin/socios') ? 'white !important' : 'inherit' }}>Socios</span>
+        </Link>
+
+        {/* motorizados */}
+        <Link
+        href={'/admin/motorizado'}
+        className={`${matchPath('/admin/motorizado') ? activeStyles : hoverStyles} flex gap-2 rounded-md text-color-main transition-colors p-2`}
+        >
+             <RiRidingFill className="text-2xl" />
+            <span style={{color : matchPath('/admin/motorizado') ? 'white !important': 'inherit'}}> motorizados</span>
         </Link>
       
       </nav>

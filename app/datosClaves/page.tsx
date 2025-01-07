@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import Image from "next/image"
 import { Loader2 } from 'lucide-react'
@@ -12,6 +12,7 @@ import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "@/hooks/use-toast"
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 export default function DatosClaveNegocio() {
   const router = useRouter()
@@ -24,6 +25,22 @@ export default function DatosClaveNegocio() {
   })
 
   const isFormValid = formData.ruc.trim() !== '' && formData.razonSocial.trim() !== ''
+
+  useEffect(() => {
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || data.current_step !== '/datosClaves') {
+        toast({
+          title: "Error",
+          description: "Por favor complete los pasos anteriores",
+          variant: "destructive",
+        });
+        router.push('/');
+      }
+    };
+
+    checkToken();
+  }, [router, toast]);
 
   const fetchRucData = async (ruc: string) => {
     if (ruc.length !== 11) return
@@ -76,29 +93,24 @@ export default function DatosClaveNegocio() {
   const handleNext = async () => {
     if (!isFormValid) return
 
-    const businessRegistrationId = sessionStorage.getItem('business_registration_id')
-    if (!businessRegistrationId) {
-      toast({
-        title: "Error",
-        description: "Por favor complete el registro primero",
-        variant: "destructive",
-      })
-      router.push('/')
-      return
-    }
-
     setIsSaving(true)
     try {
+      const registrationData = await getRegistrationData();
+      if (!registrationData) {
+        throw new Error('Datos de registro no encontrados');
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${getRegistrationToken()}`
         },
         body: JSON.stringify({
           ruc: formData.ruc,
           razon_social: formData.razonSocial,
-          business_registration_id: businessRegistrationId
+          business_registration_id: registrationData.registration_id
         })
       })
 
@@ -108,10 +120,8 @@ export default function DatosClaveNegocio() {
         throw new Error(data.mensaje || 'Error al guardar los datos')
       }
 
-      // Guardar el ID de los datos clave para usarlo en pasos posteriores
-      if (data.datos?.id) {
-        sessionStorage.setItem('datos_clave_id', data.datos.id)
-      }
+      // Actualizar el paso del registro
+      await updateRegistrationStep('/datosBancarios');
 
       toast({
         title: "Éxito",

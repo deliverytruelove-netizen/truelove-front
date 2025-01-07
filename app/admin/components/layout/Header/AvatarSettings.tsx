@@ -1,7 +1,9 @@
+'use client'
+
 import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import { RiAccountCircleLine, RiLogoutBoxLine, RiSettings4Line } from 'react-icons/ri'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 const AvatarSettings: React.FC = () => {
   const [showMenuAvatar, setShowMenuAvatar] = useState(false)
@@ -9,6 +11,7 @@ const AvatarSettings: React.FC = () => {
   const [userInitials, setUserInitials] = useState<string>('')
   const [firstName, setFirstName] = useState<string>('')
   const [email, setEmail] = useState<string>('')
+  const router = useRouter() //añadir useRouter
 
   // Obtener las iniciales del usuario desde localStorage
   useEffect(() => {
@@ -28,13 +31,18 @@ const AvatarSettings: React.FC = () => {
   }, [])
 
   const handleLogout = () => {
-    // Elimina el token del localStorage o cookies
-    localStorage.removeItem('authToken') // Si usas localStorage
-    // Cookies.remove('authToken') // O si usas cookies
-
-    // Redirigir al login
-    redirect('/admin')  // Redirige al login usando la API de redirección de Next.js
+    // Eliminar token del localStorage
+    localStorage.removeItem('authToken')
+    //eliminamos los datos de usuario del local storage
+    localStorage.removeItem('user')
+    
+    // Eliminar la cookie , estable una fecha de expiracion en el pasado
+    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+    
+    // Redirigir al login usando useRouter
+    router.push('/login')
   }
+
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent): void => {
