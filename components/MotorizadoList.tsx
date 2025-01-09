@@ -12,7 +12,6 @@ import { Motorizado, DetallesMotorizado } from '@/app/admin/motorizado/types/mot
 import { ColumnSort, ColumnDef, Row } from '@tanstack/react-table';
 import { DEFAULT_PAGE_SIZE } from '@/config/constanst';
 import ConfirmationAlert from '@/components/ui/DataTable/ConfirmationAlert';
-import { showAlert } from '@/components/ui/DataTable/Alert';
 import { DetallesMotorizadoModal } from './modals/DetallesMotorizadoModal';
 
 const MotorizadoList: React.FC = () => {
@@ -45,12 +44,6 @@ const MotorizadoList: React.FC = () => {
         mutationFn: changeStateMotorizado,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['motorizados'] });
-            showAlert({ title: 'Éxito', text: 'Se cambió el estado del motorizado.', icon: 'success' });
-        },
-        onError: (error: unknown) => {
-            if (error instanceof Error) {
-                showAlert({ title: 'Error', text: error.message, icon: 'error' });
-            }
         },
     });
 
@@ -58,12 +51,6 @@ const MotorizadoList: React.FC = () => {
         mutationFn: aprobarMotorizado,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['motorizados'] });
-            showAlert({ title: 'Éxito', text: 'Se aprobó el motorizado.', icon: 'success' });
-        },
-        onError: (error: unknown) => {
-            if (error instanceof Error) {
-                showAlert({ title: 'Error', text: error.message, icon: 'error' });
-            }
         },
     });
 

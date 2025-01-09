@@ -38,6 +38,7 @@ export interface DetallesMotorizado {
     banco: string;
     tipo_cuenta: string;
     numero_cuenta: string;
+    imagen_cuenta?: string; 
   } | null;
   registroVehiculo: {
     placa: string;

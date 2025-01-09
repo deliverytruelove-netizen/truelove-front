@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { User, Briefcase, MapPin, CreditCard, Mail, Phone, Calendar, Building } from 'lucide-react'
+import { User, Briefcase, MapPin, CreditCard, Mail, Phone, Calendar, Building, Image } from 'lucide-react'
+import NextImage from 'next/image'
 
 interface DetallesSocioModalProps {
   isOpen: boolean;
@@ -63,8 +64,10 @@ const TabButton = ({
 );
 
 export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: DetallesSocioModalProps) {
-  const [activeTab, setActiveTab] = useState<'personal' | 'negocio' | 'establecimiento' | 'bancarios'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'negocio' | 'establecimiento' | 'bancarios' | 'cuenta_bancaria'>('personal');
   const [error, setError] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   if (!data) return null;
 
@@ -74,10 +77,17 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
       return;
     }
     onAprobar(data.id);
+    onClose();
+    
   };
 
   const handleCloseError = () => {
     setError(null);
+  };
+
+  const handleImageClick = (imageSrc: string) => {
+    setSelectedImage(imageSrc);
+    setShowImageModal(true);
   };
 
   const renderContent = () => {
@@ -113,10 +123,30 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
           </div>
         );
       case 'negocio':
-        return data.businessData ? (
+        return data.business && data.businessData ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem 
               icon={<Building className="w-5 h-5" />} 
+              label="Nombre del Negocio" 
+              value={data.business.nombre} 
+            />
+            <InfoItem 
+              icon={<Building className="w-5 h-5" />} 
+              label="Total Sucursales" 
+              value={data.business.total_sucursales.toString()} 
+            />
+            <InfoItem 
+              icon={<Phone className="w-5 h-5" />} 
+              label="Método de Contacto" 
+              value={data.business.metodo_contacto} 
+            />
+            <InfoItem 
+              icon={<Phone className="w-5 h-5" />} 
+              label="Teléfono del Negocio" 
+              value={data.business.telefono} 
+            />
+            <InfoItem 
+              icon={<Briefcase className="w-5 h-5" />} 
               label="RUC" 
               value={data.businessData.ruc} 
             />
@@ -125,20 +155,6 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               label="Razón Social" 
               value={data.businessData.razon_social} 
             />
-            {data.business && (
-              <>
-                <InfoItem 
-                  icon={<Building className="w-5 h-5" />} 
-                  label="Total Sucursales" 
-                  value={data.business.total_sucursales} 
-                />
-                <InfoItem 
-                  icon={<Phone className="w-5 h-5" />} 
-                  label="Método de Contacto" 
-                  value={data.business.metodo_contacto} 
-                />
-              </>
-            )}
           </div>
         ) : (
           <p className="text-gray-500 text-center py-4">No hay datos del negocio disponibles</p>
@@ -148,7 +164,7 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem 
               icon={<Building className="w-5 h-5" />} 
-              label="Nombre" 
+              label="Nombre del Establecimiento" 
               value={data.establishment.nombre_establecimiento} 
             />
             <InfoItem 
@@ -174,6 +190,16 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
         return data.bankData ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem 
+              icon={<User className="w-5 h-5" />} 
+              label="Titular de la Cuenta" 
+              value={data.bankData.titular_cuenta} 
+            />
+            <InfoItem 
+              icon={<CreditCard className="w-5 h-5" />} 
+              label="Número de Cuenta" 
+              value={data.bankData.numero_cuenta} 
+            />
+            <InfoItem 
               icon={<Building className="w-5 h-5" />} 
               label="Banco" 
               value={data.bankData.nombre_banco} 
@@ -183,78 +209,125 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               label="Tipo de Cuenta" 
               value={data.bankData.tipo_cuenta} 
             />
-            <InfoItem 
-              icon={<User className="w-5 h-5" />} 
-              label="Titular" 
-              value={data.bankData.titular_cuenta} 
-            />
-            <InfoItem 
-              icon={<CreditCard className="w-5 h-5" />} 
-              label="Número de Cuenta" 
-              value={data.bankData.numero_cuenta} 
-            />
           </div>
         ) : (
           <p className="text-gray-500 text-center py-4">No hay datos bancarios disponibles</p>
         );
+      case 'cuenta_bancaria':
+        return data.cuentaBancaria ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoItem 
+                icon={<User className="w-5 h-5" />} 
+                label="Titular de la Cuenta" 
+                value={data.cuentaBancaria.titular_cuenta} 
+              />
+              <InfoItem 
+                icon={<CreditCard className="w-5 h-5" />} 
+                label="DNI" 
+                value={data.cuentaBancaria.dni} 
+              />
+              <InfoItem 
+                icon={<Building className="w-5 h-5" />} 
+                label="Banco" 
+                value={data.cuentaBancaria.banco} 
+              />
+              <InfoItem 
+                icon={<CreditCard className="w-5 h-5" />} 
+                label="Tipo de Cuenta" 
+                value={data.cuentaBancaria.tipo_cuenta} 
+              />
+              <InfoItem 
+                icon={<CreditCard className="w-5 h-5" />} 
+                label="Número de Cuenta" 
+                value={data.cuentaBancaria.numero_cuenta} 
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Imágenes de la Cuenta</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {data.cuentaBancaria.imagenes_cuenta.map((imagen, index) => (
+                  <div key={index} className="relative aspect-square cursor-pointer" onClick={() => handleImageClick(imagen)}>
+                    <NextImage 
+                      src={`/storage/${imagen}`}
+                      alt={`Imagen de cuenta bancaria ${index + 1}`}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-4">No hay datos de la cuenta bancaria disponibles</p>
+        );
+      default:
+        return null;
     }
   };
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-6 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-t-lg">
-          <DialogTitle className="text-2xl font-bold">Detalles del Socio</DialogTitle>
-          {/* <p className="text-blue-100">ID: {data.id}</p> */}
-        </DialogHeader>
-        
-        <div className="p-6">
-          <div className="flex flex-wrap gap-2 p-2 bg-gray-100 rounded-lg mb-6">
-            <TabButton
-              isActive={activeTab === 'personal'}
-              icon={<User className="w-5 h-5" />}
-              label="Personal"
-              onClick={() => setActiveTab('personal')}
-            />
-            <TabButton
-              isActive={activeTab === 'negocio'}
-              icon={<Briefcase className="w-5 h-5" />}
-              label="Negocio"
-              onClick={() => setActiveTab('negocio')}
-            />
-            <TabButton
-              isActive={activeTab === 'establecimiento'}
-              icon={<MapPin className="w-5 h-5" />}
-              label="Establecimiento"
-              onClick={() => setActiveTab('establecimiento')}
-            />
-            <TabButton
-              isActive={activeTab === 'bancarios'}
-              icon={<CreditCard className="w-5 h-5" />}
-              label="Bancarios"
-              onClick={() => setActiveTab('bancarios')}
-            />
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="p-6 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-t-lg">
+            <DialogTitle className="text-2xl font-bold">Detalles del Socio</DialogTitle>
+          </DialogHeader>
+          
+          <div className="p-6">
+            <div className="flex flex-wrap gap-2 p-2 bg-gray-100 rounded-lg mb-6">
+              <TabButton
+                isActive={activeTab === 'personal'}
+                icon={<User className="w-5 h-5" />}
+                label="Personal"
+                onClick={() => setActiveTab('personal')}
+              />
+              <TabButton
+                isActive={activeTab === 'negocio'}
+                icon={<Briefcase className="w-5 h-5" />}
+                label="Negocio"
+                onClick={() => setActiveTab('negocio')}
+              />
+              <TabButton
+                isActive={activeTab === 'establecimiento'}
+                icon={<MapPin className="w-5 h-5" />}
+                label="Establecimiento"
+                onClick={() => setActiveTab('establecimiento')}
+              />
+              <TabButton
+                isActive={activeTab === 'bancarios'}
+                icon={<CreditCard className="w-5 h-5" />}
+                label="Datos Bancarios"
+                onClick={() => setActiveTab('bancarios')}
+              />
+              <TabButton
+                isActive={activeTab === 'cuenta_bancaria'}
+                icon={<Image className="w-5 h-5" />}
+                label="Cuenta Bancaria"
+                onClick={() => setActiveTab('cuenta_bancaria')}
+              />
+            </div>
+
+            <div className="mt-6">
+              {renderContent()}
+            </div>
           </div>
 
-          <div className="mt-6">
-            {renderContent()}
-          </div>
-        </div>
-
-        <DialogFooter className="p-6 bg-gray-50 border-t">
-          <Button onClick={onClose} variant="outline">
-            Cerrar
-          </Button>
-          <Button 
-            onClick={handleAprobar}
-            disabled={data.aprobado}
-            className={`${data.aprobado ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white transition-colors duration-200`}
-          >
-            {data.aprobado ? 'Aprobado' : 'Aprobar Socio'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter className="p-6 bg-gray-50 border-t">
+            <Button onClick={onClose} variant="outline">
+              Cerrar
+            </Button>
+            <Button 
+              onClick={handleAprobar}
+              disabled={data.aprobado}
+              className={`${data.aprobado ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white transition-colors duration-200`}
+            >
+              {data.aprobado ? 'Aprobado' : 'Aprobar Socio'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!error} onOpenChange={handleCloseError}>
@@ -272,6 +345,21 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showImageModal && selectedImage && (
+        <Dialog open={showImageModal} onOpenChange={() => setShowImageModal(false)}>
+          <DialogContent className="max-w-3xl">
+            <div className="relative aspect-square">
+              <NextImage 
+                src={`/storage/${selectedImage}`}
+                alt="Imagen de cuenta bancaria ampliada"
+                layout="fill"
+                objectFit="contain"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
