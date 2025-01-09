@@ -382,36 +382,49 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
               </div>
             )}
 
-            {/* Pestaña de Datos Bancarios */}
-            {activeTab === 'bancarios' && data.datosBancarios && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoItem 
-                  icon={<User className="w-5 h-5" />}
-                  label="Titular"
-                  value={data.datosBancarios.titular}
-                />
-                <InfoItem 
-                  icon={<FileText className="w-5 h-5" />}
-                  label="DNI"
-                  value={data.datosBancarios.dni}
-                />
-                <InfoItem 
-                  icon={<CreditCard className="w-5 h-5" />}
-                  label="Banco"
-                  value={data.datosBancarios.banco}
-                />
-                <InfoItem 
-                  icon={<CreditCard className="w-5 h-5" />}
-                  label="Tipo de Cuenta"
-                  value={data.datosBancarios.tipo_cuenta}
-                />
-                <InfoItem 
-                  icon={<CreditCard className="w-5 h-5" />}
-                  label="Número de Cuenta"
-                  value={data.datosBancarios.numero_cuenta}
-                />
-              </div>
-            )}
+           {/* Pestaña de Datos Bancarios */}
+{activeTab === 'bancarios' && data.datosBancarios && (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <InfoItem 
+        icon={<User className="w-5 h-5" />}
+        label="Titular"
+        value={data.datosBancarios.titular}
+      />
+      <InfoItem 
+        icon={<FileText className="w-5 h-5" />}
+        label="DNI"
+        value={data.datosBancarios.dni}
+      />
+      <InfoItem 
+        icon={<CreditCard className="w-5 h-5" />}
+        label="Banco"
+        value={data.datosBancarios.banco}
+      />
+      <InfoItem 
+        icon={<CreditCard className="w-5 h-5" />}
+        label="Tipo de Cuenta"
+        value={data.datosBancarios.tipo_cuenta}
+      />
+      <InfoItem 
+        icon={<CreditCard className="w-5 h-5" />}
+        label="Número de Cuenta"
+        value={data.datosBancarios.numero_cuenta}
+      />
+    </div>
+    {data.datosBancarios.imagen_cuenta && (
+      <div className="mt-6">
+        <ImageTitle>Imagen de la Cuenta Bancaria</ImageTitle>
+        <ImageDisplay 
+          src={data.datosBancarios.imagen_cuenta}
+          alt="Imagen de la Cuenta Bancaria" 
+          title="Imagen de la Cuenta Bancaria"
+        />
+      </div>
+    )}
+  </div>
+)}
+
 
             {/* Mensaje cuando no hay datos disponibles */}
             {(!data.datosPersonales && activeTab === 'personal') || 

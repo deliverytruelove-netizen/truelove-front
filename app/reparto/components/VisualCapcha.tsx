@@ -117,13 +117,13 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
             />
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 ">
             {currentVerification.options.map((src, index) => (
               <button
                 key={index}
                 onClick={() => handleImageClick(index)}
-                className={`p-2 border rounded hover:border-primary transition-all aspect-square ${
-                  selectedImage === index ? 'border-primary ring-2 ring-primary' : ''
+                className={`p-2 border rounded hover:border-red-700 transition-all aspect-square ${
+                  selectedImage === index ? 'border-red-600 ring-2 ring-red-600' : ''
                 }`}
               >
                 <Image
@@ -148,6 +148,7 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
               Cancelar
             </Button>
             <Button 
+            className='bg-red-600 hover:bg-red-800'
               onClick={handleVerify} 
               disabled={selectedImage === null}
             >

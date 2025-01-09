@@ -49,6 +49,13 @@ export interface DetallesSocio {
   businessData: DatosNegocio | null;
   establishment: DatosEstablecimiento | null;
   bankData: DatosBancarios | null;
+  cuentaBancaria: {
+    titular_cuenta: string;
+    dni: string;
+    banco: string;
+    tipo_cuenta: string;
+    numero_cuenta: string;
+    imagenes_cuenta: string[];
+  } | null;
   aprobado: boolean;
 }
-

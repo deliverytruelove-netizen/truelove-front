@@ -610,8 +610,9 @@ export default function RegisterForm() {
                     />
                   </div>
 
-                  <div className="flex items-start space-x-2">
+                  <div className="flex items-start space-x-2 ">
                     <Checkbox
+                    
                       id="politica"
                       checked={formData.aceptaPolitica}
                       onCheckedChange={(checked: boolean) =>
