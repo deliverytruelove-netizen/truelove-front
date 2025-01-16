@@ -1,18 +1,28 @@
-'use client'
+"use client";
 
-import { useState } from 'react';
-import { DetallesMotorizado } from '@/app/admin/motorizado/types/motorizado.types';
+import { useState } from "react";
+import { DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { User, MapPin, CreditCard, Mail, Phone, Calendar, Car, FileText, X } from 'lucide-react'
-import Image from 'next/image'
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  User,
+  MapPin,
+  CreditCard,
+  Mail,
+  Phone,
+  Calendar,
+  Car,
+  FileText,
+  X,
+} from "lucide-react";
+import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 // Interfaces para las props de los componentes
 interface DetallesMotorizadoModalProps {
@@ -35,23 +45,23 @@ interface ImageDisplayProps {
 }
 
 // Componente para los botones de las pestañas
-const TabButton = ({ 
-  isActive, 
-  icon, 
-  label, 
-  onClick 
-}: { 
-  isActive: boolean; 
-  icon: React.ReactNode; 
-  label: string; 
+const TabButton = ({
+  isActive,
+  icon,
+  label,
+  onClick,
+}: {
+  isActive: boolean;
+  icon: React.ReactNode;
+  label: string;
   onClick: () => void;
 }) => (
   <button
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      isActive 
-        ? 'bg-white shadow-md text-red-600' 
-        : 'hover:bg-white/50 text-gray-600'
+      isActive
+        ? "bg-white shadow-md text-red-600"
+        : "hover:bg-white/50 text-gray-600"
     }`}
   >
     {icon}
@@ -67,7 +77,7 @@ const InfoItem = ({ icon, label, value }: InfoItemProps) => (
     </div>
     <div className="flex-1">
       <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-sm font-medium">{value || 'No disponible'}</p>
+      <p className="text-sm font-medium">{value || "No disponible"}</p>
     </div>
   </div>
 );
@@ -79,18 +89,18 @@ const ImageDisplay = ({ src, alt, title }: ImageDisplayProps) => {
   if (!src) return <p className="text-gray-500">Imagen no disponible</p>;
 
   try {
-    const fullUrl = src.startsWith('http') 
-      ? src 
-      : `/storage/${src.replace(/^\/?(storage\/)?/, '')}`;
+    const fullUrl = src.startsWith("http")
+      ? src
+      : `/storage/${src.replace(/^\/?(storage\/)?/, "")}`;
 
     return (
       <>
         <div className="flex flex-col items-center w-full">
-          <div 
+          <div
             className="relative w-full aspect-[4/3] cursor-pointer transition-transform hover:scale-[1.02]"
             onClick={() => setShowFullSize(true)}
           >
-            <Image 
+            <Image
               src={fullUrl}
               alt={alt}
               fill
@@ -102,15 +112,18 @@ const ImageDisplay = ({ src, alt, title }: ImageDisplayProps) => {
 
         {/* Modal para vista ampliada */}
         {showFullSize && (
-          <div 
+          <div
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80"
             onClick={() => setShowFullSize(false)}
           >
             <div className="relative flex flex-col items-center max-w-[90vw] max-h-[90vh]">
               <h3 className="text-white text-xl font-medium mb-4">{title}</h3>
-              
-              <div className="relative" style={{ width: '80vw', height: '70vh' }}>
-                <Image 
+
+              <div
+                className="relative"
+                style={{ width: "80vw", height: "70vh" }}
+              >
+                <Image
                   src={fullUrl}
                   alt={alt}
                   fill
@@ -131,7 +144,7 @@ const ImageDisplay = ({ src, alt, title }: ImageDisplayProps) => {
                 Volver
               </Button>
 
-              <button 
+              <button
                 className="absolute -top-2 -right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -160,8 +173,13 @@ const ImageTitle = ({ children }: { children: React.ReactNode }) => (
 );
 
 // Componente principal del modal
-export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: DetallesMotorizadoModalProps) {
-  const [activeTab, setActiveTab] = useState('registros');
+export function DetallesMotorizadoModal({
+  isOpen,
+  onClose,
+  data,
+  onAprobar,
+}: DetallesMotorizadoModalProps) {
+  const [activeTab, setActiveTab] = useState("registros");
   const { toast } = useToast();
 
   if (!data) return null;
@@ -172,10 +190,11 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
       await onAprobar(data.id);
       toast({
         title: "Éxito",
-        description: "Se aprobó el motorizado.",
+        description:
+          "Se aprobó el motorizado y se enviaron las credenciales por correo electrónico.",
         action: (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onClose}
             className="bg-white hover:bg-gray-100"
           >
@@ -188,7 +207,8 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo aprobar el motorizado.",
+        description:
+          "No se pudo aprobar el motorizado o enviar las credenciales.",
       });
     }
   };
@@ -197,60 +217,62 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-6 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-t-lg">
-          <DialogTitle className="text-2xl font-bold">Detalles del Motorizado</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            Detalles del Motorizado
+          </DialogTitle>
         </DialogHeader>
 
         <div className="p-6">
           {/* Pestañas de navegación */}
           <div className="flex flex-wrap gap-2 p-2 bg-gray-100 rounded-lg mb-6">
             <TabButton
-              isActive={activeTab === 'registros'}
+              isActive={activeTab === "registros"}
               icon={<FileText className="w-5 h-5" />}
               label="Registros"
-              onClick={() => setActiveTab('registros')}
+              onClick={() => setActiveTab("registros")}
             />
             <TabButton
-              isActive={activeTab === 'personal'}
+              isActive={activeTab === "personal"}
               icon={<User className="w-5 h-5" />}
               label="Personal"
-              onClick={() => setActiveTab('personal')}
+              onClick={() => setActiveTab("personal")}
             />
             <TabButton
-              isActive={activeTab === 'vehiculo'}
+              isActive={activeTab === "vehiculo"}
               icon={<Car className="w-5 h-5" />}
               label="Vehículo"
-              onClick={() => setActiveTab('vehiculo')}
+              onClick={() => setActiveTab("vehiculo")}
             />
             <TabButton
-              isActive={activeTab === 'bancarios'}
+              isActive={activeTab === "bancarios"}
               icon={<CreditCard className="w-5 h-5" />}
               label="Bancarios"
-              onClick={() => setActiveTab('bancarios')}
+              onClick={() => setActiveTab("bancarios")}
             />
           </div>
 
           <div className="space-y-6">
             {/* Pestaña de Registros */}
-            {activeTab === 'registros' && (
+            {activeTab === "registros" && (
               <div className="space-y-6">
                 {/* Información básica */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoItem 
+                  <InfoItem
                     icon={<User className="w-5 h-5" />}
                     label="Nombre Completo"
                     value={`${data.personal.name} ${data.personal.lastName}`}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<Mail className="w-5 h-5" />}
                     label="Correo Electrónico"
                     value={data.personal.email}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<Phone className="w-5 h-5" />}
                     label="Teléfono"
                     value={data.personal.phone}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<FileText className="w-5 h-5" />}
                     label="Documento"
                     value={`${data.personal.tipo_documento}: ${data.personal.nro_documento}`}
@@ -262,9 +284,9 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                   {data.personal.documento_imagen_frente && (
                     <div>
                       <ImageTitle>Frente del Documento</ImageTitle>
-                      <ImageDisplay 
-                        src={data.personal.documento_imagen_frente} 
-                        alt="Frente del Documento" 
+                      <ImageDisplay
+                        src={data.personal.documento_imagen_frente}
+                        alt="Frente del Documento"
                         title="Frente del Documento de Identidad"
                       />
                     </div>
@@ -272,9 +294,9 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                   {data.personal.documento_imagen_reverso && (
                     <div>
                       <ImageTitle>Reverso del Documento</ImageTitle>
-                      <ImageDisplay 
-                        src={data.personal.documento_imagen_reverso} 
-                        alt="Reverso del Documento" 
+                      <ImageDisplay
+                        src={data.personal.documento_imagen_reverso}
+                        alt="Reverso del Documento"
                         title="Reverso del Documento de Identidad"
                       />
                     </div>
@@ -284,25 +306,25 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
             )}
 
             {/* Pestaña de Datos Personales */}
-            {activeTab === 'personal' && data.datosPersonales && (
+            {activeTab === "personal" && data.datosPersonales && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoItem 
+                  <InfoItem
                     icon={<Calendar className="w-5 h-5" />}
                     label="Fecha de Nacimiento"
                     value={data.datosPersonales.fecha_nacimiento}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<User className="w-5 h-5" />}
                     label="Género"
                     value={data.datosPersonales.genero}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<MapPin className="w-5 h-5" />}
                     label="Ciudad"
                     value={data.datosPersonales.ciudad}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<MapPin className="w-5 h-5" />}
                     label="Distrito"
                     value={data.datosPersonales.distrito}
@@ -310,9 +332,9 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                 </div>
                 <div className="w-full max-w-md mx-auto">
                   <ImageTitle>Foto de Perfil del Motorizado</ImageTitle>
-                  <ImageDisplay 
-                    src={data.datosPersonales.url_selfie} 
-                    alt="Selfie" 
+                  <ImageDisplay
+                    src={data.datosPersonales.url_selfie}
+                    alt="Selfie"
                     title="Foto de Perfil"
                   />
                 </div>
@@ -320,61 +342,63 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
             )}
 
             {/* Pestaña de Vehículo */}
-            {activeTab === 'vehiculo' && data.registroVehiculo && (
+            {activeTab === "vehiculo" && data.registroVehiculo && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoItem 
+                  <InfoItem
                     icon={<Car className="w-5 h-5" />}
                     label="Placa"
                     value={data.registroVehiculo.placa}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<FileText className="w-5 h-5" />}
                     label="Licencia de Conducir"
                     value={data.registroVehiculo.licencia_conducir}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<FileText className="w-5 h-5" />}
                     label="Seguro"
                     value={data.registroVehiculo.seguro}
                   />
-                  <InfoItem 
+                  <InfoItem
                     icon={<FileText className="w-5 h-5" />}
                     label="Tarjeta de Propiedad"
                     value={data.registroVehiculo.tarjeta_propiedad}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <ImageTitle>Fotografía de la Placa</ImageTitle>
-                    <ImageDisplay 
-                      src={data.registroVehiculo.imagen_placa} 
-                      alt="Placa" 
+                    <ImageDisplay
+                      src={data.registroVehiculo.imagen_placa}
+                      alt="Placa"
                       title="Placa del Vehículo"
                     />
                   </div>
                   <div>
                     <ImageTitle>Fotografía de la Licencia</ImageTitle>
-                    <ImageDisplay 
-                      src={data.registroVehiculo.imagen_licencia} 
-                      alt="Licencia" 
+                    <ImageDisplay
+                      src={data.registroVehiculo.imagen_licencia}
+                      alt="Licencia"
                       title="Licencia de Conducir"
                     />
                   </div>
                   <div>
                     <ImageTitle>Fotografía del Seguro</ImageTitle>
-                    <ImageDisplay 
-                      src={data.registroVehiculo.imagen_seguro} 
-                      alt="Seguro" 
+                    <ImageDisplay
+                      src={data.registroVehiculo.imagen_seguro}
+                      alt="Seguro"
                       title="Seguro del Vehículo"
                     />
                   </div>
                   <div>
-                    <ImageTitle>Fotografía de la Tarjeta de Propiedad</ImageTitle>
-                    <ImageDisplay 
-                      src={data.registroVehiculo.imagen_tarjeta_propiedad} 
-                      alt="Tarjeta de Propiedad" 
+                    <ImageTitle>
+                      Fotografía de la Tarjeta de Propiedad
+                    </ImageTitle>
+                    <ImageDisplay
+                      src={data.registroVehiculo.imagen_tarjeta_propiedad}
+                      alt="Tarjeta de Propiedad"
                       title="Tarjeta de Propiedad"
                     />
                   </div>
@@ -382,58 +406,59 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
               </div>
             )}
 
-           {/* Pestaña de Datos Bancarios */}
-{activeTab === 'bancarios' && data.datosBancarios && (
-  <div className="space-y-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <InfoItem 
-        icon={<User className="w-5 h-5" />}
-        label="Titular"
-        value={data.datosBancarios.titular}
-      />
-      <InfoItem 
-        icon={<FileText className="w-5 h-5" />}
-        label="DNI"
-        value={data.datosBancarios.dni}
-      />
-      <InfoItem 
-        icon={<CreditCard className="w-5 h-5" />}
-        label="Banco"
-        value={data.datosBancarios.banco}
-      />
-      <InfoItem 
-        icon={<CreditCard className="w-5 h-5" />}
-        label="Tipo de Cuenta"
-        value={data.datosBancarios.tipo_cuenta}
-      />
-      <InfoItem 
-        icon={<CreditCard className="w-5 h-5" />}
-        label="Número de Cuenta"
-        value={data.datosBancarios.numero_cuenta}
-      />
-    </div>
-    {data.datosBancarios.imagen_cuenta && (
-      <div className="mt-6">
-        <ImageTitle>Imagen de la Cuenta Bancaria</ImageTitle>
-        <ImageDisplay 
-          src={data.datosBancarios.imagen_cuenta}
-          alt="Imagen de la Cuenta Bancaria" 
-          title="Imagen de la Cuenta Bancaria"
-        />
-      </div>
-    )}
-  </div>
-)}
-
-
-            {/* Mensaje cuando no hay datos disponibles */}
-            {(!data.datosPersonales && activeTab === 'personal') || 
-             (!data.registroVehiculo && activeTab === 'vehiculo') || 
-             (!data.datosBancarios && activeTab === 'bancarios') && (
-              <div className="h-full flex items-center justify-center py-8">
-                <p className="text-gray-500 text-center text-lg">No hay datos disponibles</p>
+            {/* Pestaña de Datos Bancarios */}
+            {activeTab === "bancarios" && data.datosBancarios && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InfoItem
+                    icon={<User className="w-5 h-5" />}
+                    label="Titular"
+                    value={data.datosBancarios.titular}
+                  />
+                  <InfoItem
+                    icon={<FileText className="w-5 h-5" />}
+                    label="DNI"
+                    value={data.datosBancarios.dni}
+                  />
+                  <InfoItem
+                    icon={<CreditCard className="w-5 h-5" />}
+                    label="Banco"
+                    value={data.datosBancarios.banco}
+                  />
+                  <InfoItem
+                    icon={<CreditCard className="w-5 h-5" />}
+                    label="Tipo de Cuenta"
+                    value={data.datosBancarios.tipo_cuenta}
+                  />
+                  <InfoItem
+                    icon={<CreditCard className="w-5 h-5" />}
+                    label="Número de Cuenta"
+                    value={data.datosBancarios.numero_cuenta}
+                  />
+                </div>
+                {data.datosBancarios.imagen_cuenta && (
+                  <div className="mt-6">
+                    <ImageTitle>Imagen de la Cuenta Bancaria</ImageTitle>
+                    <ImageDisplay
+                      src={data.datosBancarios.imagen_cuenta}
+                      alt="Imagen de la Cuenta Bancaria"
+                      title="Imagen de la Cuenta Bancaria"
+                    />
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Mensaje cuando no hay datos disponibles */}
+            {(!data.datosPersonales && activeTab === "personal") ||
+              (!data.registroVehiculo && activeTab === "vehiculo") ||
+              (!data.datosBancarios && activeTab === "bancarios" && (
+                <div className="h-full flex items-center justify-center py-8">
+                  <p className="text-gray-500 text-center text-lg">
+                    No hay datos disponibles
+                  </p>
+                </div>
+              ))}
           </div>
         </div>
 
@@ -443,7 +468,7 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
             Cerrar
           </Button>
           {!data.aprobado && (
-            <Button 
+            <Button
               onClick={handleAprobar}
               className="bg-red-500 hover:bg-red-600 text-white"
             >
@@ -455,4 +480,3 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
     </Dialog>
   );
 }
-

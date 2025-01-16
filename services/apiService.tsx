@@ -6,24 +6,32 @@ interface PostDataParams {
     data: FormData; // Usa FormData para manejar datos de formulario
     token?: string;
 }
-
 export const postData = async <T = Record<string, unknown>>({
     endpoint,
     data,
     token,
 }: PostDataParams): Promise<T> => {
-    const response = await fetch(`${API_URL}/${endpoint}`, {
-        method: 'POST',
-        headers: {
-            ...(token && { Authorization: `Bearer ${token}` }), // Agrega el token si está presente
-        },
-        body: data, // El cuerpo es directamente FormData
-    });
+    try {
+        const response = await fetch(`${API_URL}/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            body: data,
+        });
 
-    if (!response.ok) {
-        const errorBody = await response.json();
-        throw new Error(errorBody.error || 'Error en la solicitud a la API');
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'Error en la solicitud a la API');
+            }
+            return result;
+        } else {
+            throw new Error('La respuesta no es JSON válido');
+        }
+    } catch (error) {
+        console.error('Error en la solicitud:', error);
+        throw error;
     }
-
-    return await response.json();
 };
