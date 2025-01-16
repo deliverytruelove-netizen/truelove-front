@@ -15,6 +15,7 @@ interface LoginResponse {
         email: string;
         [key: string]: unknown;
     };
+    role: string; // Add the role property to the LoginResponse interface
 }
 
 interface ApiError {
@@ -43,25 +44,40 @@ export const useLoginForm = () => {
         e.preventDefault();
         setIsLoading(true);
         setErrorMessage(null);
-
+    
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('usuario', formData.usuario);
             formDataToSend.append('password', formData.password);
-
+    
             const response = await postData<LoginResponse>({
                 endpoint: 'admin/login',
                 data: formDataToSend,
             });
-
+    
             localStorage.setItem('authToken', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
-
+            localStorage.setItem('userRole', response.role);
+    
             document.cookie = `authToken=${response.token}; path=/`;
-
+            document.cookie = `userRole=${response.role}; path=/`;
+    
             await new Promise(resolve => setTimeout(resolve, 100));
-
-            router.replace('/admin/dashboard');
+    
+            // Redirigir basado en el rol
+            switch (response.role) {
+                case 'admin':
+                    router.replace('/admin/dashboard');
+                    break;
+                case 'negocio':
+                    router.replace('/socio/admin');
+                    break;
+                case 'motorizado':
+                    router.replace('/motorizado/admin');
+                    break;
+                default:
+                    router.replace('/login'); // O una página de error
+            }
             
         } catch (error) {
             console.error('Error en login:', error);
@@ -87,4 +103,3 @@ export const useLoginForm = () => {
         handleSubmit,
     };
 };
-

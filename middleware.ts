@@ -18,19 +18,44 @@ const RUTAS_PROTEGIDAS = [
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const authToken = req.cookies.get("authToken");
+  const userRole = req.cookies.get("userRole")?.value;
   const registrationToken = req.cookies.get("registrationToken")?.value;
   const esRutaAdmin = path.startsWith("/admin");
+  const esRutaSocio = path.startsWith("/socio");
+  const esRutaMotorizado = path.startsWith("/motorizado");
   const esPaginaLogin = path === "/login";
 
-  // Lógica para rutas de admin y login
+  // Lógica para rutas de admin, socio, motorizado y login
   if (authToken && esPaginaLogin) {
-    console.log("Usuario ya autenticado, redirigiendo al dashboard");
-    return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+    console.log("Usuario ya autenticado, redirigiendo al dashboard correspondiente");
+    switch (userRole) {
+      case 'admin':
+        return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+      case 'negocio':
+        return NextResponse.redirect(new URL("/socio/admin", req.url));
+      case 'motorizado':
+        return NextResponse.redirect(new URL("/motorizado/admin", req.url));
+      default:
+        return NextResponse.redirect(new URL("/login", req.url));
+    }
   }
 
-  if (!authToken && esRutaAdmin) {
-    console.log("Intento de acceso no autorizado a admin, redirigiendo al login");
+  if (!authToken && (esRutaAdmin || esRutaSocio || esRutaMotorizado)) {
+    console.log("Intento de acceso no autorizado, redirigiendo al login");
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // Verificar que el usuario tenga el rol correcto para acceder a las rutas
+  if (authToken) {
+    if (esRutaAdmin && userRole !== 'admin') {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (esRutaSocio && userRole !== 'negocio') {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (esRutaMotorizado && userRole !== 'motorizado') {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
   }
 
   // Lógica para las rutas protegidas del proceso de registro
@@ -72,6 +97,8 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/socio/:path*",
+    "/motorizado/:path*",
     "/login",
     "/email",
     "/acercaNegocio",
@@ -84,4 +111,3 @@ export const config = {
     "/firmar-contrato",
   ],
 };
-
