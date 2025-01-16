@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-
   env: {
     JWT_SECRET: process.env.JWT_SECRET,
   },
@@ -9,15 +8,14 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
+        destination: 'https://magusemail.com/truelove-back/public/api/:path*',
       },
       {
         source: '/storage/:path*',
-        destination: 'http://localhost:8000/storage/:path*',
+        destination: 'https://magusemail.com/truelove-back/public/storage/:path*',
       },
     ];
   },
 };
 
-export default nextConfig;
-
+export default nextConfig;
