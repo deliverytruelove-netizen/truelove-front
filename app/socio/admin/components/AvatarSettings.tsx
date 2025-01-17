@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { User, Settings, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,27 +13,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import Link from 'next/link'
 
 const AvatarSettings = () => {
   const [userInitials, setUserInitials] = useState<string>('')
   const [fullName, setFullName] = useState<string>('')
   const [email, setEmail] = useState<string>('')
+  const [avatarUrl, setAvatarUrl] = useState<string>('')
+  const [imageError, setImageError] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
-      const user = JSON.parse(storedUser)
-      const firstName = user?.name || ''
-      const lastName = user?.lastName || ''
-      const fullName = `${firstName} ${lastName}`.trim()
-      const email = user?.email || ''
-      const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-      setUserInitials(initials || email.charAt(0).toUpperCase())
-      setFullName(fullName || email)
-      setEmail(email)
+      try {
+        const user = JSON.parse(storedUser)
+        const firstName = user?.name || ''
+        const lastName = user?.lastName || ''
+        const fullName = `${firstName} ${lastName}`.trim()
+        const email = user?.email || ''
+        const profilePhoto = user?.profile_photo || user?.avatar || user?.photo_url
+        
+        // Configurar iniciales
+        const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+        setUserInitials(initials || email.charAt(0).toUpperCase())
+        setFullName(fullName || email)
+        setEmail(email)
+        
+        // Usar la foto de perfil del backend si existe
+        if (profilePhoto) {
+          // Usar la ruta relativa, Next.js se encargará de la redirección
+          setAvatarUrl(`/storage/${profilePhoto}`)
+        } else {
+          // Fallback a UI Avatars si no hay foto
+          setAvatarUrl(getUIAvatarUrl(fullName || email))
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+        setImageError(true)
+      }
     }
   }, [])
+
+  const getUIAvatarUrl = (name: string) => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&bold=true&format=svg`
+  }
+
+  const handleImageError = () => {
+    setImageError(true)
+    setAvatarUrl(getUIAvatarUrl(fullName || email))
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('authToken')
@@ -46,10 +77,21 @@ const AvatarSettings = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-            <span className="font-medium text-sm">{userInitials}</span>
-          </div>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+          <Avatar>
+            {avatarUrl && !imageError && (
+              <Image
+                src={avatarUrl || "/placeholder.svg"}
+                alt={fullName}
+                width={32}
+                height={32}
+                className="h-full w-full rounded-full object-cover"
+                onError={handleImageError}
+                unoptimized
+              />
+            )}
+            <AvatarFallback>{userInitials}</AvatarFallback>
+          </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end">
@@ -62,13 +104,17 @@ const AvatarSettings = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <User className="mr-2 h-4 w-4" />
-          <span>Perfil</span>
+        <DropdownMenuItem asChild>
+          <Link href="/socio/admin/perfil">
+            <User className="mr-2 h-4 w-4" />
+            <span>Perfil</span>
+          </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Configuración</span>
+        <DropdownMenuItem asChild>
+          <Link href="/socio/admin/configuracion">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Configuración</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
