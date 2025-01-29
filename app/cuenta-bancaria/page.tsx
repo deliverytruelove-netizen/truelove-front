@@ -101,53 +101,56 @@ export default function CuentaBancariaPage() {
     }
 
     try {
-      const registrationData = await getRegistrationData();
+      const registrationData = await getRegistrationData()
       if (!registrationData || !registrationData.registration_id) {
-        throw new Error('No se encontró el ID de registro del negocio');
+        throw new Error("No se encontró el ID de registro del negocio")
       }
-      submitData.append('business_registration_id', registrationData.registration_id);
-
-      const token = getRegistrationToken();
+      submitData.append("business_registration_id", registrationData.registration_id)
+  
+      const token = getRegistrationToken()
       if (!token) {
-        throw new Error('No se encontró el token de registro');
+        throw new Error("No se encontró el token de registro")
       }
-
+  
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/socios/cuenta-bancaria`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: submitData
-      });
-
+        body: submitData,
+      })
+  
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json()
         if (response.status === 500) {
-          throw new Error('Error interno del servidor. Por favor, inténtelo de nuevo más tarde.');
+          throw new Error("Error interno del servidor. Por favor, inténtelo de nuevo más tarde.")
         } else {
-          throw new Error(errorData.mensaje || 'Error al guardar la cuenta bancaria');
+          throw new Error(errorData.mensaje || "Error al guardar la cuenta bancaria")
         }
       }
-
+  
       toast({
         title: "Éxito",
         description: "Cuenta bancaria guardada correctamente",
-      });
-
+      })
+  
       // Actualizar el paso de registro y redirigir al usuario
-      await updateRegistrationStep('/crea-tu-perfil');
-      router.push('/crea-tu-perfil');
+      await updateRegistrationStep("/verificacion-documentos")
+      router.push("/verificacion-documentos")
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo guardar la cuenta bancaria. Por favor, inténtelo de nuevo.",
-        variant: "destructive"
-      });
+        description:
+          error instanceof Error
+            ? error.message
+            : "No se pudo guardar la cuenta bancaria. Por favor, inténtelo de nuevo.",
+        variant: "destructive",
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

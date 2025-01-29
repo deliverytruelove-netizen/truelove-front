@@ -1,10 +1,11 @@
-'use client'
+"use client"
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import { EmailAlert } from './email-alert'
-import {createRegistrationToken} from '@/services/registrationTokenService'
+import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Loader2,  } from "lucide-react"
+import { EmailAlert } from "./email-alert"
+import { DocumentAlert } from "./document-alert"
+import { createRegistrationToken } from "@/services/registrationTokenService"
 
 export default function RegistrationForm() {
   const router = useRouter()
@@ -16,14 +17,16 @@ export default function RegistrationForm() {
     lastName: "",
     businessType: "",
     phone: "+51",
-    email: ""
+    email: "",
   })
   const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
-  const [businessTypes, setBusinessTypes] = useState<Array<{
-    id: number;
-    nombre: string;
-  }>>([])
+  const [businessTypes, setBusinessTypes] = useState<
+    Array<{
+      id: number
+      nombre: string
+    }>
+  >([])
 
   useEffect(() => {
     const fetchBusinessTypes = async () => {
@@ -32,8 +35,8 @@ export default function RegistrationForm() {
         const data = await response.json()
         setBusinessTypes(data)
       } catch (error) {
-        console.error('Error fetching business types:', error)
-        setError('Error al cargar los tipos de negocio')
+        console.error("Error fetching business types:", error)
+        setError("Error al cargar los tipos de negocio")
       }
     }
 
@@ -42,29 +45,29 @@ export default function RegistrationForm() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = e.target.value
-    
-    if (!value.startsWith('+51')) {
+
+    if (!value.startsWith("+51")) {
       return
     }
 
     const numberPart = value.substring(3)
-    const numbersOnly = numberPart.replace(/\D/g, '')
-    
+    const numbersOnly = numberPart.replace(/\D/g, "")
+
     if (numbersOnly.length <= 9) {
-      let formattedNumber = '+51'
+      let formattedNumber = "+51"
       if (numbersOnly.length > 0) {
-        formattedNumber += ' ' + numbersOnly.substring(0, 3)
+        formattedNumber += " " + numbersOnly.substring(0, 3)
         if (numbersOnly.length > 3) {
-          formattedNumber += ' ' + numbersOnly.substring(3, 6)
+          formattedNumber += " " + numbersOnly.substring(3, 6)
           if (numbersOnly.length > 6) {
-            formattedNumber += ' ' + numbersOnly.substring(6)
+            formattedNumber += " " + numbersOnly.substring(6)
           }
         }
       }
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        phone: formattedNumber
+        phone: formattedNumber,
       }))
     }
   }
@@ -72,80 +75,83 @@ export default function RegistrationForm() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
 
-    if (name === 'documentType') {
-      setFormData(prev => ({
+    if (name === "documentType") {
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
-        documentNumber: '',
-        name: '',
-        lastName: ''
+        documentNumber: "",
+        name: "",
+        lastName: "",
       }))
       setIsFieldsLocked(false)
       setError(null)
       return
     }
 
-    if (name === 'phone') {
+    if (name === "phone") {
       handlePhoneChange(e)
       return
     }
 
-    if (name === 'documentNumber') {
-      const numbersOnly = value.replace(/\D/g, '')
-      setFormData(prev => ({
+    if (name === "documentNumber") {
+      const numbersOnly = value.replace(/\D/g, "")
+      setFormData((prev) => ({
         ...prev,
-        [name]: numbersOnly
+        [name]: numbersOnly,
       }))
 
-      if ((formData.documentType === 'DNI' && numbersOnly.length === 8) ||
-        (formData.documentType === 'RUC' && numbersOnly.length === 11)) {
+      if (
+        (formData.documentType === "DNI" && numbersOnly.length === 8) ||
+        (formData.documentType === "RUC" && numbersOnly.length === 11)
+      ) {
         fetchDocumentInfo(formData.documentType, numbersOnly)
       }
       return
     }
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
   const fetchDocumentInfo = async (type: string, number: string) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
-      const url = type === 'DNI'
-        ? `https://dniruc.apisperu.com/api/v1/dni/${number}`
-        : `https://dniruc.apisperu.com/api/v1/ruc/${number}`
+      const url =
+        type === "DNI"
+          ? `https://dniruc.apisperu.com/api/v1/dni/${number}`
+          : `https://dniruc.apisperu.com/api/v1/ruc/${number}`
 
       const response = await fetch(`${url}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`)
       const data = await response.json()
 
-      if (type === 'DNI') {
+      if (type === "DNI") {
         if (data.success) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             name: data.nombres,
-            lastName: `${data.apellidoPaterno} ${data.apellidoMaterno}`.trim()
+            lastName: `${data.apellidoPaterno} ${data.apellidoMaterno}`.trim(),
           }))
           setIsFieldsLocked(true)
         } else {
-          setError('No se encontraron datos para el DNI proporcionado')
+          setError("No se encontraron datos para el DNI proporcionado")
         }
       } else {
         if (data.ruc) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            name: data.razonSocial
+            name: data.razonSocial,
           }))
           setIsFieldsLocked(true)
         } else {
-          setError('No se encontraron datos para el RUC proporcionado')
+          setError("No se encontraron datos para el RUC proporcionado")
         }
       }
     } catch (error) {
-      setError('Error al conectar con el servicio de validación')
+      setError("Error al conectar con el servicio de validación")
       console.log(error)
     } finally {
       setIsLoading(false)
@@ -153,27 +159,29 @@ export default function RegistrationForm() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    // Prevenir el comportamiento por defecto del formulario
     e.preventDefault()
-    // Activar el estado de carga
     setIsLoading(true)
-    // Limpiar cualquier error previo
     setError(null)
-    
+
     try {
-      // Verificar que todos los campos requeridos estén llenos
-      if (!formData.documentNumber || !formData.name || !formData.lastName || !formData.businessType || !formData.phone || !formData.email) {
-        setError('Todos los campos son obligatorios')
+      if (
+        !formData.documentNumber ||
+        !formData.name ||
+        !formData.lastName ||
+        !formData.businessType ||
+        !formData.phone ||
+        !formData.email
+      ) {
+        setError("Todos los campos son obligatorios")
         setIsLoading(false)
         return
       }
-  
-      // Realizar la petición POST al endpoint de registro
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           documentType: formData.documentType,
@@ -181,69 +189,62 @@ export default function RegistrationForm() {
           name: formData.name,
           lastName: formData.lastName,
           businessType: formData.businessType,
-          phone: formData.phone.replace(/\D/g, ''), // Eliminar caracteres no numéricos
-          email: formData.email
-        })
-      });
-  
-      // Parsear la respuesta del servidor
+          phone: formData.phone.replace(/\D/g, ""),
+          email: formData.email,
+        }),
+      })
+
       const data = await response.json()
-    
-      // Registrar la respuesta completa del servidor para depuración
-      console.log('Server response:', data)
-  
-      // Manejar respuestas no exitosas
+
+      console.log("Server response:", data)
+
       if (!response.ok) {
-        // Verificar si hay mensajes de error específicos relacionados con el email
-        if (data.error && typeof data.error === 'string' && 
-           (data.error.toLowerCase().includes('email') || 
-            data.error.toLowerCase().includes('correo') ||
-            data.error.toLowerCase().includes('duplicado'))) {
-          setError('email_taken')
-        } else if (data.message && typeof data.message === 'string' &&
-           (data.message.toLowerCase().includes('email') || 
-            data.message.toLowerCase().includes('correo') ||
-            data.message.toLowerCase().includes('duplicado'))) {
-          setError('email_taken')
+        if (data.error === "dni_registered") {
+          setError("dni_registered")
+        } else if (
+          data.error &&
+          typeof data.error === "string" &&
+          (data.error.toLowerCase().includes("email") ||
+            data.error.toLowerCase().includes("correo") ||
+            data.error.toLowerCase().includes("duplicado"))
+        ) {
+          setError("email_taken")
+        } else if (
+          data.message &&
+          typeof data.message === "string" &&
+          (data.message.toLowerCase().includes("email") ||
+            data.message.toLowerCase().includes("correo") ||
+            data.message.toLowerCase().includes("duplicado"))
+        ) {
+          setError("email_taken")
         } else {
-          // Si no es un error específico de email, establecer un mensaje de error genérico
-          setError('Hubo un problema al registrar el negocio. Por favor, intente nuevamente.')
+          setError("Hubo un problema al registrar el negocio. Por favor, intente nuevamente.")
         }
         return
       }
-  
-      // Si la respuesta es exitosa y contiene un token
+
       if (data.registration_id) {
-        // Crear y almacenar el token de registro
         try {
-          await createRegistrationToken(data.registration_id.toString(), '/email');
-          router.push(`/email?email=${encodeURIComponent(formData.email)}`);
+          await createRegistrationToken(data.registration_id.toString(), "/email")
+          router.push(`/email?email=${encodeURIComponent(formData.email)}`)
         } catch (tokenError) {
-          console.error('Error al crear el token de registro:', tokenError);
-          setError('Hubo un problema al procesar su registro. Por favor, intente nuevamente.');
+          console.error("Error al crear el token de registro:", tokenError)
+          setError("Hubo un problema al procesar su registro. Por favor, intente nuevamente.")
         }
       } else {
-        setError('No se recibió un ID de registro válido del servidor.');
+        setError("No se recibió un ID de registro válido del servidor.")
       }
-      
-      
     } catch (error) {
-      // Manejar cualquier error no previsto durante el proceso
-      console.error('Error submitting form:', error)
-      setError('Hubo un problema al registrar el negocio. Por favor, intente nuevamente.')
+      console.error("Error submitting form:", error)
+      setError("Hubo un problema al registrar el negocio. Por favor, intente nuevamente.")
     } finally {
-      // Desactivar el estado de carga, independientemente del resultado
       setIsLoading(false)
     }
   }
-  
-  
 
   return (
     <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-        ¡Registra tu local ahora!
-      </h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">¡Registra tu local ahora!</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1">
@@ -271,7 +272,7 @@ export default function RegistrationForm() {
             value={formData.documentNumber}
             onChange={handleInputChange}
             required
-            maxLength={formData.documentType === 'RUC' ? 11 : 8}
+            maxLength={formData.documentType === "RUC" ? 11 : 8}
             placeholder="Ingrese su número de documento"
             className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
@@ -361,13 +362,14 @@ export default function RegistrationForm() {
           />
         </div>
 
-        {error && (
-          error === 'email_taken' ? (
+        {error &&
+          (error === "email_taken" ? (
             <EmailAlert onClose={() => setError(null)} />
+          ) : error === "dni_registered" ? (
+            <DocumentAlert onClose={() => setError(null)} />
           ) : (
             <p className="text-red-600 text-sm">{error}</p>
-          )
-        )}
+          ))}
 
         <button
           type="submit"
@@ -377,9 +379,10 @@ export default function RegistrationForm() {
                    hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
                    transition-colors duration-200"
         >
-          {isLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Registrar'}
+          {isLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : "Registrar"}
         </button>
       </form>
     </div>
   )
 }
+

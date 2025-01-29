@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from 'jose';
+import { jwtVerify, SignJWT } from 'jose';
 
 // Rutas protegidas y su orden en el proceso de registro
 const RUTAS_PROTEGIDAS = [
@@ -13,6 +13,8 @@ const RUTAS_PROTEGIDAS = [
   "/revisarDatos",
   "/cuenta-bancaria",
   "/firmar-contrato",
+  "/verificacion-documentos",
+  "/socio-aprobado",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -24,6 +26,46 @@ export async function middleware(req: NextRequest) {
   const esRutaSocio = path.startsWith("/socio");
   const esRutaMotorizado = path.startsWith("/motorizado");
   const esPaginaLogin = path === "/login";
+  const esSocioAprobado = path === "/socio-aprobado";
+
+  // Manejo especial para la ruta /socio-aprobado
+  if (esSocioAprobado) {
+    const registrationId = req.nextUrl.searchParams.get("registration_id");
+    
+    if (!registrationId) {
+      console.log("No se encontró ID de registro");
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    try {
+      // Verificar si el socio está aprobado usando el ID
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_WEB}/negocios/${registrationId}/approval-status`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al verificar estado de aprobación");
+      }
+
+      const data = await response.json();
+      
+      if (!data.aprobado) {
+        console.log("Socio no aprobado");
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+
+      // Si el socio está aprobado, permitir acceso
+      return NextResponse.next();
+    } catch (error) {
+      console.error("Error al verificar aprobación:", error);
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
   // Lógica para rutas de admin, socio, motorizado y login
   if (authToken && esPaginaLogin) {
@@ -40,6 +82,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Verificar acceso a rutas protegidas por rol
   if (!authToken && (esRutaAdmin || esRutaSocio || esRutaMotorizado)) {
     console.log("Intento de acceso no autorizado, redirigiendo al login");
     return NextResponse.redirect(new URL("/login", req.url));
@@ -59,7 +102,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Lógica para las rutas protegidas del proceso de registro
-  if (RUTAS_PROTEGIDAS.includes(path)) {
+  if (RUTAS_PROTEGIDAS.includes(path) && path !== "/socio-aprobado") {
     if (!registrationToken) {
       console.log("No se encontró token de registro, redirigiendo al inicio");
       return NextResponse.redirect(new URL("/", req.url));
@@ -80,10 +123,19 @@ export async function middleware(req: NextRequest) {
 
       // Permitir acceso solo si es el paso actual o el siguiente
       if (requestedStepIndex > currentStepIndex + 1) {
-        console.log("Intento de acceso a un paso no permitido");
-        return NextResponse.redirect(new URL(payload.current_step as string, req.url));
+        console.log("Intento de saltar pasos, redirigiendo al paso actual")
+        return NextResponse.redirect(new URL(payload.current_step as string, req.url))
       }
 
+      if (requestedStepIndex < currentStepIndex) {
+        const updatedToken = await updateRegistrationToken(registrationToken, path)
+        const response = NextResponse.next()
+        response.cookies.set("registrationToken", updatedToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+        })
+        return response
+      }
     } catch (error) {
       console.error("Error al verificar el token de registro:", error);
       return NextResponse.redirect(new URL("/", req.url));
@@ -92,6 +144,21 @@ export async function middleware(req: NextRequest) {
 
   // Para todos los demás casos, continuar con la solicitud
   return NextResponse.next();
+}
+
+async function updateRegistrationToken(token: string, newStep: string): Promise<string> {
+  const secretKey = new TextEncoder().encode(process.env.JWT_SECRET)
+  const { payload } = await jwtVerify(token, secretKey)
+
+  const updatedPayload = { ...payload, current_step: newStep }
+
+  const updatedToken = await new SignJWT(updatedPayload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("2h")
+    .sign(secretKey)
+
+  return updatedToken
 }
 
 export const config = {
@@ -109,5 +176,7 @@ export const config = {
     "/revisarDatos",
     "/cuenta-bancaria",
     "/firmar-contrato",
+    "/verificacion-documentos",
+    "/socio-aprobado",
   ],
 };

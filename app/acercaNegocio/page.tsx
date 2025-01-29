@@ -15,6 +15,7 @@ import { formSchema, type BusinessFormValues } from "./schemas/business-form";
 import type { TipoNegocio, Categoria } from "./types/business";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
+import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/utils/saveStorage'
 
 function FormularioDetallesNegocioContent() {
   useBodyScrollLock();
@@ -39,10 +40,36 @@ function FormularioDetallesNegocioContent() {
     },
   });
 
+  const fetchNegocioData = async (registrationId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_WEB}/negocios/${registrationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getRegistrationToken()}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status !== 404) {
+          throw new Error("Error al obtener datos del negocio");
+        }
+        return null;
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching business data:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const checkToken = async () => {
       const data = await getRegistrationData();
-      if (!data || data.current_step !== '/acercaNegocio') {
+      if (!data || (data.current_step !== '/acercaNegocio' && data.current_step !== '/ubicar-local')) {
         toast({
           title: "Error",
           description: "Por favor complete el registro primero",
@@ -51,12 +78,43 @@ function FormularioDetallesNegocioContent() {
         router.push('/');
         return;
       }
+
+      // Cargar datos del negocio si existen
+      const negocioData = await fetchNegocioData(data.registration_id);
+      if (negocioData) {
+        form.reset({
+          businessName: negocioData.nombre,
+          businessType: negocioData.tipo_negocio_id.toString(),
+          category: negocioData.categoria_id.toString(),
+          branches: negocioData.total_sucursales,
+          isStreetLocation: negocioData.es_local_calle ? "Si" : "No",
+          contactMethod: negocioData.metodo_contacto,
+          phoneNumber: negocioData.telefono,
+        });
+        
+        // Cargar las categorías correspondientes
+        await fetchCategorias(negocioData.tipo_negocio_id.toString());
+      } else {
+        // Si no hay datos, cargar del localStorage
+        const savedData = getLocalStorage<BusinessFormValues>("businessFormData");
+        if (savedData) {
+          form.reset(savedData);
+        }
+      }
+
       setIsLoading(false);
     };
 
     checkToken();
     fetchTiposNegocio();
-  }, [router]);
+  }, [form, router]);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      setLocalStorage("businessFormData", value)
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   const fetchTiposNegocio = async () => {
     try {
@@ -100,26 +158,30 @@ function FormularioDetallesNegocioContent() {
         throw new Error('Datos de registro no encontrados');
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/negocios`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getRegistrationToken()}`
-          },
-          body: JSON.stringify({
-            nombre: data.businessName,
-            tipo_negocio_id: parseInt(data.businessType),
-            categoria_id: parseInt(data.category),
-            total_sucursales: data.branches,
-            es_local_calle: data.isStreetLocation === "Si",
-            metodo_contacto: data.contactMethod,
-            telefono: data.phoneNumber.replace(/\s/g, ''),
-            business_registration_id: registrationData.registration_id, // Cambiado de registration_id a business_registration_id
-          }),
-        }
-      );
+      // Verificar si ya existe un negocio
+      const existingBusiness = await fetchNegocioData(registrationData.registration_id);
+      const method = existingBusiness ? 'PUT' : 'POST';
+      const url = existingBusiness 
+        ? `${process.env.NEXT_PUBLIC_API_WEB}/negocios/${existingBusiness.id}`
+        : `${process.env.NEXT_PUBLIC_API_WEB}/negocios`;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getRegistrationToken()}`
+        },
+        body: JSON.stringify({
+          nombre: data.businessName,
+          tipo_negocio_id: parseInt(data.businessType),
+          categoria_id: parseInt(data.category),
+          total_sucursales: data.branches,
+          es_local_calle: data.isStreetLocation === "Si",
+          metodo_contacto: data.contactMethod,
+          telefono: data.phoneNumber.replace(/\s/g, ''),
+          business_registration_id: registrationData.registration_id,
+        }),
+      });
 
       const responseData = await response.json();
 
@@ -127,13 +189,11 @@ function FormularioDetallesNegocioContent() {
         throw new Error(responseData.message || "Error al guardar los datos");
       }
 
+      // Eliminar los datos del almacenamiento local
+      removeLocalStorage("businessFormData")
       // Actualizar el paso del registro
       await updateRegistrationStep('/ubicar-local');
 
-      toast({
-        title: "Éxito",
-        description: "Negocio registrado correctamente",
-      });
       
       router.push("/ubicar-local");
     } catch (error) {
