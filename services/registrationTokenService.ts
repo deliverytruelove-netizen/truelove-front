@@ -5,6 +5,7 @@ interface DecodedToken {
   exp: number;                // Tiempo de expiración del token
   registration_id: string;    // ID único del registro
   current_step: string;       // Paso actual del proceso de registro
+  token?: string;             // Token de autorización
 }
 
 // Función para obtener la clave secreta
@@ -63,7 +64,8 @@ export const getRegistrationData = async (): Promise<DecodedToken | null> => {
       return {
         exp: payload.exp,
         registration_id: payload.registration_id,
-        current_step: payload.current_step
+        current_step: payload.current_step,
+        token
       };
     }
     return null;
@@ -104,6 +106,7 @@ export const updateRegistrationStep = async (current_step: string): Promise<stri
 
   // Creamos un nuevo token con el paso actualizado
   const newToken = await createRegistrationToken(data.registration_id, current_step);
+  setRegistrationToken(newToken);
   return newToken;
 };
 

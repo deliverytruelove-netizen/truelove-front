@@ -29,7 +29,7 @@ export default function DatosClaveNegocio() {
   useEffect(() => {
     const checkToken = async () => {
       const data = await getRegistrationData();
-      if (!data || data.current_step !== '/datosClaves') {
+      if (!data || (data.current_step !== '/datosClaves' && data.current_step !== '/ubicar-local')) {
         toast({
           title: "Error",
           description: "Por favor complete los pasos anteriores",
@@ -141,8 +141,18 @@ export default function DatosClaveNegocio() {
     }
   }
 
-  const handleBack = () => {
-    router.back()
+  const handleBack = async () => {
+    try {
+      await updateRegistrationStep("/ubicar-local")
+      router.push("/ubicar-local")
+    } catch (error) {
+      console.error("Error al navegar hacia atrás:", error)
+      toast({
+        title: "Error",
+        description: "Error al navegar hacia atrás",
+        variant: "destructive",
+      })
+    }
   }
 
   return (

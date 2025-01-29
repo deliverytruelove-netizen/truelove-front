@@ -63,12 +63,21 @@ export default function SearchComponent({ onLocationSelect }: SearchComponentPro
 
   // Manejador de selección de ubicación
   const handleLocationSelect = (suggestion: MapboxFeature) => {
-    // Selecciona la ubicación, limpia las sugerencias y marca como seleccionado
-    onLocationSelect(suggestion)
-    setSearchQuery(suggestion.place_name)
-    setSuggestions([]) // Limpia las sugerencias después de la selección
-    setHasSelected(true) // Marca que se ha hecho una selección
-  }
+    // Asegurarse de que todos los datos necesarios estén presentes
+    const locationData = {
+      id: suggestion.id,
+      place_name: suggestion.place_name,
+      center: suggestion.center,
+      text: suggestion.text,
+      context: suggestion.context,
+      // Otros datos que puedan ser necesarios
+    };
+    
+    onLocationSelect(locationData);
+    setSearchQuery(suggestion.place_name);
+    setSuggestions([]);
+    setHasSelected(true);
+  };
 
   return (
     <div className="relative mb-6 max-w-[430px] w-full">

@@ -110,11 +110,6 @@ export default function BusinessLocation() {
       // Actualizar el paso del registro
       await updateRegistrationStep('/datosClaves')
 
-      toast({
-        title: "Éxito",
-        description: "Los datos del establecimiento se han guardado correctamente",
-      })
-
       await new Promise(resolve => setTimeout(resolve, 1000))
       router.push('/datosClaves')
 

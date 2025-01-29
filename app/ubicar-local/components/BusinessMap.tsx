@@ -15,6 +15,7 @@ interface MapboxFeature {
     id: string;
     text: string;
   }>;
+  address?: string;
 }
 
 interface MapComponentProps {
@@ -38,12 +39,14 @@ export default function MapComponent({ selectedLocation, onLocationUpdate }: Map
         .then(response => response.json())
         .then(data => {
           if (data.features?.[0]) {
+            const feature = data.features[0];
             onLocationUpdate({
-              id: data.features[0].id,
-              place_name: data.features[0].place_name,
+              id: feature.id,
+              place_name: feature.place_name,
               center: coordinates,
-              text: data.features[0].text,
-              context: data.features[0].context,
+              text: feature.text,
+              context: feature.context,
+              address: feature.address
             });
           }
         })
