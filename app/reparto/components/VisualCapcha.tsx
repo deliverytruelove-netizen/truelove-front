@@ -22,23 +22,58 @@ interface Challenge {
   options: string[]
   correctAnswer: number[] | number
   timeLimit?: number
+  initialRotation?: number
+}
+
+const ANIMALS = [
+  {
+    name: "gallina",
+    target: "/captcha/gallina.jpg",
+    distractors: ["/captcha/gato.jpg", "/captcha/vaca.jpg", "/captcha/oveja.jpg"],
+  },
+  {
+    name: "gato",
+    target: "/captcha/gato.jpg",
+    distractors: ["/captcha/gallina.jpg", "/captcha/vaca.jpg", "/captcha/oveja.jpg"],
+  },
+  {
+    name: "vaca",
+    target: "/captcha/vaca.jpg",
+    distractors: ["/captcha/gato.jpg", "/captcha/gallina.jpg", "/captcha/oveja.jpg"],
+  },
+  {
+    name: "oveja",
+    target: "/captcha/oveja.jpg",
+    distractors: ["/captcha/gato.jpg", "/captcha/vaca.jpg", "/captcha/gallina.jpg"],
+  },
+]
+
+const getRandomAnimalChallenge = (): Challenge => {
+  const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]
+  const options = [...randomAnimal.distractors, randomAnimal.target]
+
+  return {
+    type: "imageMatch",
+    question: "Selecciona la fotografía que muestra el mismo animal del dibujo",
+    target: randomAnimal.target,
+    options: options,
+    correctAnswer: 3,
+    timeLimit: 20,
+  }
+}
+
+const getRandomRotation = () => {
+  const rotations = [90, 180, 270]
+  return rotations[Math.floor(Math.random() * rotations.length)]
 }
 
 const CHALLENGES: Challenge[] = [
-  {
-    type: "imageMatch",
-    question: "Selecciona la fotografía que muestra el mismo animal del dibujo",
-    target: "/captcha/gallina.jpg",
-    options: ["/captcha/gato.jpg", "/captcha/vaca.jpg", "/captcha/oveja.jpg", "/captcha/gallina.jpg"],
-    correctAnswer: 3,
-    timeLimit: 20,
-  },
   {
     type: "patternMatch",
     question: "Selecciona los símbolos en el orden correcto. Haz clic de nuevo en un símbolo para deseleccionarlo.",
     target: "/captcha/pattern1.jpg",
     options: ["/captcha/symbol1.jpg", "/captcha/symbol2.jpg", "/captcha/symbol3.jpg", "/captcha/symbol4.jpg"],
-    correctAnswer: [0, 1, 2, 3], // estrellas, aspas, cruces, triángulos
+    correctAnswer: [0, 1, 2, 3],
     timeLimit: 30,
   },
   {
@@ -54,7 +89,7 @@ const CHALLENGES: Challenge[] = [
 function shuffleArray<T>(array: T[]): { shuffled: T[]; indices: number[] } {
   const shuffled = [...array]
   const indices = Array.from({ length: array.length }, (_, i) => i)
-  
+
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
@@ -79,28 +114,45 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
   const maxAttempts = 3
 
   const getRandomChallenge = useCallback(() => {
-    if (!CHALLENGES.length) return null
-    const challenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)]
+    const challengeTypes = ["animal", "pattern", "rotation"]
+    const selectedType = challengeTypes[Math.floor(Math.random() * challengeTypes.length)]
 
-    if (challenge.type === "patternMatch") {
-      const { shuffled, indices } = shuffleArray(challenge.options)
-      setShuffledOptions(shuffled)
-      setShuffleIndices(indices)
+    let challenge: Challenge
+
+    if (selectedType === "animal") {
+      challenge = getRandomAnimalChallenge()
+    } else if (selectedType === "pattern") {
+      challenge = { ...CHALLENGES[0] }
     } else {
-      setShuffledOptions(challenge.options)
-      setShuffleIndices([])
+      challenge = {
+        ...CHALLENGES[1],
+        initialRotation: getRandomRotation(),
+      }
     }
 
-    return challenge
+    const { shuffled, indices } = shuffleArray(challenge.options)
+
+    if (challenge.type === "imageMatch") {
+      challenge.correctAnswer = indices.indexOf(3)
+    }
+
+    return { challenge, shuffled, indices }
   }, [])
 
   const resetChallenge = useCallback(() => {
-    const newChallenge = getRandomChallenge()
-    if (newChallenge) {
-      setCurrentChallenge(newChallenge)
-      setSelectedAnswers([])
-      setTimeLeft(newChallenge.timeLimit || null)
-      setFeedback(null)
+    const { challenge, shuffled, indices } = getRandomChallenge()
+
+    setCurrentChallenge(challenge)
+    setShuffledOptions(shuffled)
+    setShuffleIndices(indices)
+    setSelectedAnswers([])
+    setTimeLeft(challenge.timeLimit || null)
+    setFeedback(null)
+
+    if (challenge.type === "rotationMatch" && challenge.initialRotation) {
+      setRotation(challenge.initialRotation)
+    } else {
+      setRotation(0)
     }
   }, [getRandomChallenge])
 
@@ -135,7 +187,6 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
   useEffect(() => {
     if (isOpen) {
       resetChallenge()
-      startTimer()
     } else {
       setCurrentChallenge(null)
       setSelectedAnswers([])
@@ -144,9 +195,14 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
       setFeedback(null)
       clearTimer()
     }
-  }, [isOpen, resetChallenge, clearTimer, startTimer])
+  }, [isOpen, resetChallenge, clearTimer])
 
-  useEffect(() => {}, [])
+  useEffect(() => {
+    if (currentChallenge?.timeLimit) {
+      startTimer()
+    }
+    return clearTimer
+  }, [currentChallenge, startTimer, clearTimer])
 
   const handleImageClick = useCallback(
     (index: number) => {
@@ -175,7 +231,7 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
     },
     [currentChallenge],
   )
-  
+
   const verifyAnswer = useCallback(() => {
     if (!currentChallenge) return
 
@@ -193,15 +249,14 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
           break
         }
 
-        // Convertir las selecciones del usuario a sus índices originales
         const userSequence = selectedAnswers
           .sort((a, b) => a.order - b.order)
-          .map(answer => shuffleIndices[answer.index])
+          .map((answer) => shuffleIndices[answer.index])
 
-        // Comparar con la secuencia correcta
-        isCorrect = Array.isArray(currentChallenge.correctAnswer) &&
+        isCorrect =
+          Array.isArray(currentChallenge.correctAnswer) &&
           userSequence.length === currentChallenge.correctAnswer.length &&
-          Array.isArray(currentChallenge.correctAnswer) && userSequence.every((value, index) => value === (currentChallenge.correctAnswer as number[])[index])
+          userSequence.every((value, index) => value === (currentChallenge.correctAnswer as number[])[index])
         break
       }
       case "rotationMatch":
@@ -244,15 +299,15 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[320px] p-3" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="space-y-1 pb-2">
+      <DialogContent className="max-w-[320px] px-6 py-5" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="space-y-1 pb-2 px-1">
           <DialogTitle className="flex items-center justify-between text-lg">
             Verificación de Seguridad
             {timeLeft !== null && (
               <span
                 className={`px-2 py-1 text-sm rounded-md ${timeLeft < 10 ? "bg-red-100 text-red-600" : "bg-gray-100"}`}
               >
-                {timeLeft}s
+                {timeLeft}s{" "}
               </span>
             )}
           </DialogTitle>
@@ -266,7 +321,7 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
             exit={{ opacity: 0, y: -20 }}
             className="space-y-2"
           >
-            <div className="rounded-lg bg-gray-50 p-3">
+            <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-600 mb-2">{currentChallenge?.question}</p>
 
               <motion.div className="relative mx-auto w-[140px] h-[140px] mb-2">
