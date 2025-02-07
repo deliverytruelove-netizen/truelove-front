@@ -1,70 +1,59 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ArrowLeft, Loader2, Camera, Upload } from 'lucide-react';
-import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { fetchDocumentInfo } from "@/utils/api";
-import { useToast } from "@/hooks/use-toast";
-import { WebcamModal } from "./WebcamModal";
-import { useMediaQuery } from "../hooks/use-media-query";
-import { VisualCaptcha } from "./VisualCapcha";
+import * as React from "react"
+import { useCallback } from "react"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronRight, ArrowLeft, Loader2, Camera, Upload } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
+import { fetchDocumentInfo } from "@/utils/api"
+import { useToast } from "@/hooks/use-toast"
+import { WebcamModal } from "./WebcamModal"
+import { useMediaQuery } from "../hooks/use-media-query"
+import { VisualCaptcha } from "./VisualCapcha"
+import { ValidationAlert } from "./validation-alert"
 
 interface FormData {
-  departamento: string;
-  vehiculo: string;
-  tipoDocumento: string;
-  nroDocumento: string;
-  nombres: string;
-  apellidos: string;
-  celular: string;
-  email: string;
-  mayorEdad: string;
-  aceptaPolitica: boolean;
-  documentoImagenFrente: string | null;
-  documentoImagenReverso: string | null;
+  departamento: string
+  vehiculo: string
+  tipoDocumento: string
+  nroDocumento: string
+  nombres: string
+  apellidos: string
+  celular: string
+  email: string
+  mayorEdad: string
+  aceptaPolitica: boolean
+  documentoImagenFrente: string | null
+  documentoImagenReverso: string | null
 }
 
 interface DocumentInfo {
-  nombres?: string;
-  apellidoPaterno?: string;
-  apellidoMaterno?: string;
-  razonSocial?: string;
-}
-
-interface ApiResponse {
-  message: string;
-  data: {
-    id: number;
-  };
+  nombres?: string
+  apellidoPaterno?: string
+  apellidoMaterno?: string
+  razonSocial?: string
 }
 
 const formVariants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
   exit: { opacity: 0, x: -20, transition: { duration: 0.3 } },
-};
+}
 
 export default function RegisterForm() {
-  const [step, setStep] = React.useState(1);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [showCaptcha, setShowCaptcha] = React.useState(false);
-  const { toast } = useToast();
-  const router = useRouter();
+  const [step, setStep] = React.useState(1)
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [showCaptcha, setShowCaptcha] = React.useState(false)
+  const { toast } = useToast()
+  const router = useRouter()
   const [formData, setFormData] = React.useState<FormData>({
     departamento: "",
     vehiculo: "",
@@ -78,50 +67,39 @@ export default function RegisterForm() {
     aceptaPolitica: false,
     documentoImagenFrente: null,
     documentoImagenReverso: null,
-  });
-  const [isCameraOpenFrente, setIsCameraOpenFrente] = React.useState(false);
-  const [isCameraOpenReverso, setIsCameraOpenReverso] = React.useState(false);
-  const [previewImageFrente, setPreviewImageFrente] = React.useState<string | null>(null);
-  const [previewImageReverso, setPreviewImageReverso] = React.useState<string | null>(null);
+  })
+  const [isCameraOpenFrente, setIsCameraOpenFrente] = React.useState(false)
+  const [isCameraOpenReverso, setIsCameraOpenReverso] = React.useState(false)
+  const [previewImageFrente, setPreviewImageFrente] = React.useState<string | null>(null)
+  const [previewImageReverso, setPreviewImageReverso] = React.useState<string | null>(null)
+  const [validationError, setValidationError] = React.useState<string | null>(null)
 
-  const fileInputRefFrente = React.useRef<HTMLInputElement>(null);
-  const fileInputRefReverso = React.useRef<HTMLInputElement>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const fileInputRefFrente = React.useRef<HTMLInputElement>(null)
+  const fileInputRefReverso = React.useRef<HTMLInputElement>(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
-  const updateFormData = (
-    field: keyof FormData,
-    value: FormData[keyof FormData]
-  ): void => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const updateFormData = (field: keyof FormData, value: FormData[keyof FormData]): void => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
 
   const handleNext = (): void => {
     if (step < 3) {
-      setStep(step + 1);
-    } else {
-      setShowCaptcha(true);
+      setStep(step + 1)
+    } else if (isStepComplete()) {
+      setShowCaptcha(true)
     }
-  };
+  }
+  const handleCaptchaClose = useCallback(() => {
+    setShowCaptcha(false)
+  }, [])
 
   const handleBack = (): void => {
-    if (step > 1) setStep(step - 1);
-  };
+    if (step > 1) setStep(step - 1)
+  }
 
-  const handleCaptchaVerify = async (success: boolean) => {
-    setShowCaptcha(false);
-    if (success) {
-      await handleSubmit();
-    } else {
-      toast({
-        title: "Error de verificación",
-        description: "Por favor, intenta la verificación nuevamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubmit = async (): Promise<void> => {
-    setIsLoading(true);
+  const handleSubmit = useCallback(async (): Promise<void> => {
+    setIsLoading(true)
+    setValidationError(null) // Clear any previous errors
     try {
       const requestData = {
         departamento: formData.departamento,
@@ -136,37 +114,35 @@ export default function RegisterForm() {
         acepta_politica: formData.aceptaPolitica,
         documento_imagen_frente: formData.documentoImagenFrente?.split(",")[1] || null,
         documento_imagen_reverso: formData.documentoImagenReverso?.split(",")[1] || null,
-      };
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData?.message ||
-            `Error ${response.status}: ${response.statusText}`
-        );
       }
 
-      const data = (await response.json()) as ApiResponse;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 422 && data.errors?.duplicate) {
+          setValidationError(data.errors.duplicate[0])
+          return
+        }
+        throw new Error(data?.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
       toast({
         title: "Registro exitoso",
         description: "Tus datos han sido guardados correctamente.",
-      });
+      })
 
-      sessionStorage.setItem("repartoRegistroId", data.data.id.toString());
-      router.push("/reparto/zonas");
+      sessionStorage.setItem("repartoRegistroId", data.data.id.toString())
+      router.push("/reparto/zonas")
     } catch (error) {
-      console.error("Detalles del error:", error);
+      console.error("Detalles del error:", error)
       toast({
         title: "Error",
         description:
@@ -174,110 +150,118 @@ export default function RegisterForm() {
             ? error.message
             : "Hubo un problema al enviar el formulario. Por favor, intenta de nuevo.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }, [formData, router, toast])
+
+  const handleCaptchaVerify = useCallback(
+    async (success: boolean) => {
+      if (success) {
+        setShowCaptcha(false) // Primero cerramos el captcha
+        await handleSubmit() // Luego ejecutamos el submit
+      } else {
+        toast({
+          title: "Error de verificación",
+          description: "Por favor, intenta la verificación nuevamente.",
+          variant: "destructive",
+        })
+        setShowCaptcha(false)
+      }
+    },
+    [handleSubmit, toast],
+  )
 
   const handleDocumentChange = async (value: string): Promise<void> => {
-    const numbersOnly = value.replace(/\D/g, "");
-    updateFormData("nroDocumento", numbersOnly);
+    const numbersOnly = value.replace(/\D/g, "")
+    updateFormData("nroDocumento", numbersOnly)
 
     if (
       (formData.tipoDocumento === "DNI" && numbersOnly.length === 8) ||
       (formData.tipoDocumento === "RUC" && numbersOnly.length === 11)
     ) {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
         const data = (await fetchDocumentInfo(
           formData.tipoDocumento.toLowerCase() as "dni" | "ruc",
-          numbersOnly
-        )) as DocumentInfo;
+          numbersOnly,
+        )) as DocumentInfo
 
         if ("nombres" in data) {
-          updateFormData("nombres", data.nombres || "");
-          updateFormData(
-            "apellidos",
-            `${data.apellidoPaterno || ""} ${data.apellidoMaterno || ""}`.trim()
-          );
+          updateFormData("nombres", data.nombres || "")
+          updateFormData("apellidos", `${data.apellidoPaterno || ""} ${data.apellidoMaterno || ""}`.trim())
         } else if ("razonSocial" in data) {
-          updateFormData("nombres", data.razonSocial || "");
-          updateFormData("apellidos", "");
+          updateFormData("nombres", data.razonSocial || "")
+          updateFormData("apellidos", "")
         }
       } catch (error) {
         toast({
           title: "Error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Error al consultar el documento",
+          description: error instanceof Error ? error.message : "Error al consultar el documento",
           variant: "destructive",
-        });
+        })
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     }
-  };
+  }
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    side: "frente" | "reverso"
+    side: "frente" | "reverso",
   ): Promise<void> => {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0]
     if (file) {
       try {
         const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
+          const reader = new FileReader()
           reader.onload = () => {
             if (typeof reader.result === "string") {
-              resolve(reader.result);
+              resolve(reader.result)
             } else {
-              reject(new Error("Failed to read file as base64"));
+              reject(new Error("Failed to read file as base64"))
             }
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
 
         if (side === "frente") {
-          setPreviewImageFrente(base64);
-          updateFormData("documentoImagenFrente", base64);
+          setPreviewImageFrente(base64)
+          updateFormData("documentoImagenFrente", base64)
         } else {
-          setPreviewImageReverso(base64);
-          updateFormData("documentoImagenReverso", base64);
+          setPreviewImageReverso(base64)
+          updateFormData("documentoImagenReverso", base64)
         }
       } catch (error) {
-        console.error("Error al procesar la imagen:", error);
+        console.error("Error al procesar la imagen:", error)
         toast({
           title: "Error",
           description: "No se pudo procesar la imagen",
           variant: "destructive",
-        });
+        })
       }
     }
-  };
+  }
 
-  const handleCameraCapture = (
-    imageData: { imageSrc: string; text: string },
-    side: "frente" | "reverso"
-  ): void => {
+  const handleCameraCapture = (imageData: { imageSrc: string; text: string }, side: "frente" | "reverso"): void => {
     if (side === "frente") {
-      setPreviewImageFrente(imageData.imageSrc);
-      updateFormData("documentoImagenFrente", imageData.imageSrc);
+      setPreviewImageFrente(imageData.imageSrc)
+      updateFormData("documentoImagenFrente", imageData.imageSrc)
     } else {
-      setPreviewImageReverso(imageData.imageSrc);
-      updateFormData("documentoImagenReverso", imageData.imageSrc);
+      setPreviewImageReverso(imageData.imageSrc)
+      updateFormData("documentoImagenReverso", imageData.imageSrc)
     }
-    console.log(`OCR Text (${side}):`, imageData.text);
-  };
+    console.log(`OCR Text (${side}):`, imageData.text)
+  }
 
   const isStepComplete = (): boolean => {
     switch (step) {
       case 1:
-        return !!formData.departamento;
+        return !!formData.departamento
       case 2:
-        return !!formData.vehiculo;
+        return !!formData.vehiculo
       case 3:
         return (
           formData.tipoDocumento !== "" &&
@@ -289,23 +273,19 @@ export default function RegisterForm() {
           formData.mayorEdad !== "" &&
           formData.aceptaPolitica &&
           (formData.tipoDocumento === "RUC" ||
-            (formData.documentoImagenFrente !== null &&
-              formData.documentoImagenReverso !== null))
-        );
+            (formData.documentoImagenFrente !== null && formData.documentoImagenReverso !== null))
+        )
       default:
-        return false;
+        return false
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex">
       <div className="w-full flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
           {step > 1 && (
-            <button
-              onClick={handleBack}
-              className="mb-4 text-gray-500 hover:text-gray-700 flex items-center gap-2"
-            >
+            <button onClick={handleBack} className="mb-4 text-gray-500 hover:text-gray-700 flex items-center gap-2">
               <ArrowLeft className="h-5 w-5" />
               <span>Volver</span>
             </button>
@@ -313,9 +293,7 @@ export default function RegisterForm() {
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Crea tu perfil</h2>
-            <p className="text-gray-500 mt-1">
-              Es rápido y sencillo. ¡Comencemos!
-            </p>
+            <p className="text-gray-500 mt-1">Es rápido y sencillo. ¡Comencemos!</p>
           </div>
 
           <div className="flex justify-between mb-8">
@@ -327,15 +305,13 @@ export default function RegisterForm() {
                     step === i
                       ? "bg-red-600 text-white"
                       : step > i
-                      ? "bg-red-400 text-white"
-                      : "bg-gray-100 text-gray-400"
+                        ? "bg-red-400 text-white"
+                        : "bg-gray-100 text-gray-400",
                   )}
                 >
                   {i}
                 </div>
-                <div className="text-xs text-gray-400">
-                  {i === 1 ? "Ciudad" : i === 2 ? "Vehículo" : "Datos"}
-                </div>
+                <div className="text-xs text-gray-400">{i === 1 ? "Ciudad" : i === 2 ? "Vehículo" : "Datos"}</div>
               </div>
             ))}
           </div>
@@ -351,14 +327,10 @@ export default function RegisterForm() {
             >
               {step === 1 && (
                 <div className="space-y-4">
-                  <Label className="text-lg font-medium text-gray-900">
-                    Selecciona tu ciudad
-                  </Label>
+                  <Label className="text-lg font-medium text-gray-900">Selecciona tu ciudad</Label>
                   <Select
                     value={formData.departamento}
-                    onValueChange={(value) =>
-                      updateFormData("departamento", value)
-                    }
+                    onValueChange={(value) => updateFormData("departamento", value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Elige ciudad/zona de reparto" />
@@ -374,13 +346,8 @@ export default function RegisterForm() {
 
               {step === 2 && (
                 <div className="space-y-4">
-                  <Label className="text-lg font-medium text-gray-900">
-                    Selecciona tu vehículo
-                  </Label>
-                  <Select
-                    value={formData.vehiculo}
-                    onValueChange={(value) => updateFormData("vehiculo", value)}
-                  >
+                  <Label className="text-lg font-medium text-gray-900">Selecciona tu vehículo</Label>
+                  <Select value={formData.vehiculo} onValueChange={(value) => updateFormData("vehiculo", value)}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Elige tu vehículo" />
                     </SelectTrigger>
@@ -399,14 +366,14 @@ export default function RegisterForm() {
                     <Select
                       value={formData.tipoDocumento}
                       onValueChange={(value) => {
-                        updateFormData("tipoDocumento", value);
-                        updateFormData("nroDocumento", "");
-                        updateFormData("nombres", "");
-                        updateFormData("apellidos", "");
-                        updateFormData("documentoImagenFrente", null);
-                        updateFormData("documentoImagenReverso", null);
-                        setPreviewImageFrente(null);
-                        setPreviewImageReverso(null);
+                        updateFormData("tipoDocumento", value)
+                        updateFormData("nroDocumento", "")
+                        updateFormData("nombres", "")
+                        updateFormData("apellidos", "")
+                        updateFormData("documentoImagenFrente", null)
+                        updateFormData("documentoImagenReverso", null)
+                        setPreviewImageFrente(null)
+                        setPreviewImageReverso(null)
                       }}
                     >
                       <SelectTrigger className="w-full">
@@ -445,17 +412,11 @@ export default function RegisterForm() {
                         <div>
                           <Label>Frente del documento</Label>
                           <div className="flex space-x-2 mt-2">
-                            <Button
-                              onClick={() => fileInputRefFrente.current?.click()}
-                              variant="outline"
-                            >
+                            <Button onClick={() => fileInputRefFrente.current?.click()} variant="outline">
                               <Upload className="mr-2 h-4 w-4" /> Subir imagen
                             </Button>
                             {isMobile && (
-                              <Button
-                                onClick={() => setIsCameraOpenFrente(true)}
-                                variant="outline"
-                              >
+                              <Button onClick={() => setIsCameraOpenFrente(true)} variant="outline">
                                 <Camera className="mr-2 h-4 w-4" /> Usar cámara
                               </Button>
                             )}
@@ -469,11 +430,9 @@ export default function RegisterForm() {
                           </div>
                           {previewImageFrente && (
                             <div className="mt-2">
-                              <p className="text-sm text-green-600 mb-2">
-                                Imagen del frente cargada
-                              </p>
+                              <p className="text-sm text-green-600 mb-2">Imagen del frente cargada</p>
                               <Image
-                                src={previewImageFrente}
+                                src={previewImageFrente || "/placeholder.svg"}
                                 alt="Vista previa del frente del documento"
                                 width={200}
                                 height={150}
@@ -487,17 +446,11 @@ export default function RegisterForm() {
                         <div>
                           <Label>Reverso del documento</Label>
                           <div className="flex space-x-2 mt-2">
-                            <Button
-                              onClick={() => fileInputRefReverso.current?.click()}
-                              variant="outline"
-                            >
+                            <Button onClick={() => fileInputRefReverso.current?.click()} variant="outline">
                               <Upload className="mr-2 h-4 w-4" /> Subir imagen
                             </Button>
                             {isMobile && (
-                              <Button
-                                onClick={() => setIsCameraOpenReverso(true)}
-                                variant="outline"
-                              >
+                              <Button onClick={() => setIsCameraOpenReverso(true)} variant="outline">
                                 <Camera className="mr-2 h-4 w-4" /> Usar cámara
                               </Button>
                             )}
@@ -511,11 +464,9 @@ export default function RegisterForm() {
                           </div>
                           {previewImageReverso && (
                             <div className="mt-2">
-                              <p className="text-sm text-green-600 mb-2">
-                                Imagen del reverso cargada
-                              </p>
+                              <p className="text-sm text-green-600 mb-2">Imagen del reverso cargada</p>
                               <Image
-                                src={previewImageReverso}
+                                src={previewImageReverso || "/placeholder.svg"}
                                 alt="Vista previa del reverso del documento"
                                 width={200}
                                 height={150}
@@ -530,9 +481,7 @@ export default function RegisterForm() {
                   )}
 
                   <div>
-                    <Label htmlFor="nombres">
-                      {formData.tipoDocumento === "RUC" ? "Razón Social" : "Nombres"}
-                    </Label>
+                    <Label htmlFor="nombres">{formData.tipoDocumento === "RUC" ? "Razón Social" : "Nombres"}</Label>
                     <Input
                       id="nombres"
                       value={formData.nombres}
@@ -612,22 +561,20 @@ export default function RegisterForm() {
 
                   <div className="flex items-start space-x-2 ">
                     <Checkbox
-                    
                       id="politica"
                       checked={formData.aceptaPolitica}
-                      onCheckedChange={(checked: boolean) =>
-                        updateFormData("aceptaPolitica", checked)
-                      }
+                      onCheckedChange={(checked: boolean) => updateFormData("aceptaPolitica", checked)}
                     />
                     <Label htmlFor="politica" className="text-sm text-gray-500">
-                      Estoy de acuerdo con la política de privacidad y acepto
-                      ser contactado por canales de terceros.
+                      Estoy de acuerdo con la política de privacidad y acepto ser contactado por canales de terceros.
                     </Label>
                   </div>
                 </div>
               )}
             </motion.div>
           </AnimatePresence>
+
+          {validationError && <ValidationAlert message={validationError} onClose={() => setValidationError(null)} />}
 
           <Button
             onClick={handleNext}
@@ -658,12 +605,8 @@ export default function RegisterForm() {
         onCapture={(imageData) => handleCameraCapture(imageData, "reverso")}
         title="Capturar reverso del DNI"
       />
-      <VisualCaptcha
-        isOpen={showCaptcha}
-        onVerify={handleCaptchaVerify}
-        onClose={() => setShowCaptcha(false)}
-      />
+      <VisualCaptcha isOpen={showCaptcha} onVerify={handleCaptchaVerify} onClose={handleCaptchaClose} />
     </div>
-  );
+  )
 }
 
