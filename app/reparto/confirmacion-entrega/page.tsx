@@ -86,7 +86,7 @@ export default function ConfirmacionEntrega() {
                 </p>
               </div>
               <Button asChild className="mt-8 bg-blue-500 hover:bg-blue-600 text-white">
-                <Link href="/reparto/dashboard">Ir al Dashboard</Link>
+                <Link href="/">Ir a pag Principal</Link>
               </Button>
             </div>
           )}
