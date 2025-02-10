@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -9,6 +9,7 @@ import { Clock } from 'lucide-react'
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -52,13 +53,38 @@ const horariosDisponibles = [
 
 export function FormularioEntrega() {
   const [enviando, setEnviando] = useState(false)
+  const [repartoRegistroId, setRepartoRegistroId] = useState<string | null>(null)
   const { toast } = useToast()
+  const router = useRouter()
+
+  useEffect(() => {
+    const id = sessionStorage.getItem('repartoRegistroId')
+    if (!id) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del registro",
+        variant: "destructive",
+      })
+      router.push('/reparto/registro')
+    } else {
+      setRepartoRegistroId(id)
+    }
+  }, [router, toast])
 
   const formulario = useForm<z.infer<typeof esquemaFormulario>>({
     resolver: zodResolver(esquemaFormulario),
   })
 
   async function alEnviar(valores: z.infer<typeof esquemaFormulario>) {
+    if (!repartoRegistroId) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del registro",
+        variant: "destructive",
+      })
+      return
+    }
+
     setEnviando(true)
     try {
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/agendar-entrega`, {
@@ -67,6 +93,7 @@ export function FormularioEntrega() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          reparto_registro_id: repartoRegistroId,
           fecha: format(valores.fecha, 'yyyy-MM-dd'),
           hora: valores.hora,
         }),
@@ -80,6 +107,10 @@ export function FormularioEntrega() {
         title: "Cita agendada",
         description: `Tu cita ha sido agendada para el ${format(valores.fecha, 'PPP', { locale: es })} a las ${valores.hora} horas.`,
       })
+
+      // Mantener el ID en sessionStorage para el siguiente paso si es necesario
+      sessionStorage.setItem('repartoRegistroId', repartoRegistroId)
+      router.push('/reparto/confirmacion-entrega')
     } catch (error) {
       console.error('Error:', error)
       toast({
@@ -91,6 +122,8 @@ export function FormularioEntrega() {
       setEnviando(false)
     }
   }
+
+  if (!repartoRegistroId) return null;
 
   return (
     <Form {...formulario}>
@@ -167,4 +200,3 @@ export function FormularioEntrega() {
     </Form>
   )
 }
-
