@@ -13,21 +13,20 @@ export const fetchUsers = async (): Promise<User[]> => {
   }
 
   // Realiza la solicitud fetch con el token en los encabezados
-  const response = await fetch(API_URL + '/admin/user', {
-    method: 'GET', // Método GET para obtener usuarios
+    // Cambiamos a axios para mejor manejo de errores
+  const response = await axios.get(API_URL + '/admin/user', {
     headers: {
-      'Authorization': `Bearer ${token}`,  // Agregar el token Bearer a los headers
-      'Content-Type': 'application/json',  // Establecer el tipo de contenido
-    },
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
   });
 
   // Verifica si la respuesta fue correcta
-  if (!response.ok) {
+  if (response.status !== 200) {
     throw new Error('Network response was not ok');
   }
 
-  // Retorna los datos como JSON
-  return response.json();
+  return response.data;
 };
 
 

@@ -1,3 +1,4 @@
+// aqui si se ve el logo del negocio y se puede subir uno nuevo
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -52,7 +53,7 @@ export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegoc
         return
       }
 
-      const respuesta = await fetch(`${API_URL}/negocio/perfil`, {
+      const respuesta = await fetch(`${API_URL}/negocio/logo`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",

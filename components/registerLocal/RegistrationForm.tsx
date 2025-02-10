@@ -1,10 +1,13 @@
+// socio formulario de registro de locales
 "use client"
 
-import React, { useState, useEffect } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2,  } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
+import { ValidationAlert } from "@/components/ValidationAlert"
 import { createRegistrationToken } from "@/services/registrationTokenService"
 
 export default function RegistrationForm() {
@@ -201,6 +204,8 @@ export default function RegistrationForm() {
       if (!response.ok) {
         if (data.error === "dni_registered") {
           setError("dni_registered")
+        } else if (data.error === "duplicate_in_reparto") {
+          setError(data.message)
         } else if (
           data.error &&
           typeof data.error === "string" &&
@@ -367,6 +372,8 @@ export default function RegistrationForm() {
             <EmailAlert onClose={() => setError(null)} />
           ) : error === "dni_registered" ? (
             <DocumentAlert onClose={() => setError(null)} />
+          ) : error.includes("registrado como repartidor") ? (
+            <ValidationAlert message={error} onClose={() => setError(null)} />
           ) : (
             <p className="text-red-600 text-sm">{error}</p>
           ))}

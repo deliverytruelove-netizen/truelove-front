@@ -9,7 +9,7 @@ interface Props {
 
 export const Header: React.FC<Props> = ({ setShowSidebar, openSidebarRef }) => {
   return (
-    <header className="bg-white z-20 rounded-md shadow-sm px-2 sm:px-4 py-2 flex gap-4 items-center justify-between">
+    <header className="bg-white fixed top-0 right-0 left-0 z-40 rounded-md shadow-sm px-2 sm:px-4 py-2 flex gap-4 items-center justify-between">
       <div className="lg:hidden flex items-center">
         <button
           ref={openSidebarRef}

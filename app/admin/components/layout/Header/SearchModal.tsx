@@ -1,3 +1,4 @@
+// app\admin\components\layout\Header\SearchModal.tsx
 import { motion } from 'framer-motion'
 import { RiSearchLine } from 'react-icons/ri'
 

@@ -28,9 +28,18 @@ const nextConfig = {
         source: '/storage/:path*',
         destination: 'https://magusemail.com/truelove-back/public/storage/:path*',
       },
+      {
+        source: '/logos-negocio/:path*',
+        destination: 'https://magusemail.com/truelove-back/public/logos-negocio/:path*',
+      },
+      {
+        source: '/fotos-perfil/:path*',
+        destination: 'https://magusemail.com/truelove-back/public/fotos-perfil/:path*',
+      },
     ];
   },
 };
+
 
 
 export default nextConfig;

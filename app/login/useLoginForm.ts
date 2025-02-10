@@ -15,13 +15,14 @@ interface LoginResponse {
         email: string;
         [key: string]: unknown;
     };
-    role: string; // Add the role property to the LoginResponse interface
+    role: string;
 }
 
 interface ApiError {
     status: number;
     data: {
         error: string;
+        type?: string;
     };
     message: string;
 }
@@ -30,7 +31,7 @@ export const useLoginForm = () => {
     const [formData, setFormData] = useState<LoginFormData>({ usuario: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [errors, setErrors] = useState<{ usuario?: string; password?: string; general?: string }>({});
     const router = useRouter();
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -38,12 +39,27 @@ export const useLoginForm = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        // Limpiar errores al escribir
+        setErrors(prev => ({ ...prev, [name]: undefined, general: undefined }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setErrorMessage(null);
+        setErrors({});
+
+        // Validaciones del lado del cliente
+        if (!formData.usuario.trim()) {
+            setErrors(prev => ({ ...prev, usuario: 'El usuario es requerido' }));
+            setIsLoading(false);
+            return;
+        }
+
+        if (!formData.password.trim()) {
+            setErrors(prev => ({ ...prev, password: 'La contraseña es requerida' }));
+            setIsLoading(false);
+            return;
+        }
     
         try {
             const formDataToSend = new FormData();
@@ -64,7 +80,6 @@ export const useLoginForm = () => {
     
             await new Promise(resolve => setTimeout(resolve, 100));
     
-            // Redirigir basado en el rol
             switch (response.role) {
                 case 'admin':
                     router.replace('/admin/dashboard');
@@ -76,17 +91,21 @@ export const useLoginForm = () => {
                     router.replace('/motorizado/admin');
                     break;
                 default:
-                    router.replace('/login'); // O una página de error
+                    router.replace('/login');
             }
             
         } catch (error) {
             console.error('Error en login:', error);
-            if ((error as ApiError).data?.error) {
-                setErrorMessage((error as ApiError).data.error);
+            const apiError = error as ApiError;
+            
+            if (apiError.data?.type === 'wrong_password') {
+                setErrors({ password: 'Contraseña incorrecta' });
+            } else if (apiError.data?.error) {
+                setErrors({ general: apiError.data.error });
             } else if (error instanceof Error) {
-                setErrorMessage(error.message);
+                setErrors({ general: error.message });
             } else {
-                setErrorMessage('Error al iniciar sesión. Por favor, intente nuevamente.');
+                setErrors({ general: 'Credenciales incorrectas' });
             }
         } finally {
             setIsLoading(false);
@@ -97,7 +116,7 @@ export const useLoginForm = () => {
         formData,
         showPassword,
         isLoading,
-        errorMessage,
+        errors,
         togglePasswordVisibility,
         handleChange,
         handleSubmit,

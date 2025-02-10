@@ -1,3 +1,4 @@
+// app\admin\components\layout\Header\SearchBox.tsx
 import { useEffect, useState } from 'react'
 import { RiSearchLine } from 'react-icons/ri'
 import SearchModal from './SearchModal'
