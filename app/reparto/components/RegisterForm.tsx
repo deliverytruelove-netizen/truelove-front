@@ -1,3 +1,4 @@
+// reparto
 "use client"
 
 import * as React from "react"
@@ -18,7 +19,8 @@ import { useToast } from "@/hooks/use-toast"
 import { WebcamModal } from "./WebcamModal"
 import { useMediaQuery } from "../hooks/use-media-query"
 import { VisualCaptcha } from "./VisualCapcha"
-import { ValidationAlert } from "./validation-alert"
+import { ValidationAlert } from "@/components/ValidationAlert"
+
 
 interface FormData {
   departamento: string
@@ -134,10 +136,10 @@ export default function RegisterForm() {
         throw new Error(data?.message || `Error ${response.status}: ${response.statusText}`)
       }
 
-      toast({
-        title: "Registro exitoso",
-        description: "Tus datos han sido guardados correctamente.",
-      })
+      // toast({
+      //   title: "Registro exitoso",
+      //   description: "Tus datos han sido guardados correctamente.",
+      // })
 
       sessionStorage.setItem("repartoRegistroId", data.data.id.toString())
       router.push("/reparto/zonas")

@@ -11,11 +11,13 @@ import { FaPlus } from 'react-icons/fa';
 import ConfirmationAlert from '@/components/ui/DataTable/ConfirmationAlert';
 import { showAlert } from '@/components/ui/DataTable/Alert';
 import UserModal from '@/components/ui/UserModal';
+import Image from 'next/image';
+import defaultUserIcon from '/public/img/icon-user.png';
 
 const UserList: React.FC = () => {
     const queryClient = useQueryClient();
     const [sorting, setSorting] = useState<ColumnSort[]>([]);
-    const [globalFilter, setGlobalFilter] = useState<string>(''); // Filtro global
+    const [globalFilter, setGlobalFilter] = useState<string>('');
     const [pagination, setPagination] = useState({
         pageSize: DEFAULT_PAGE_SIZE,
         pageIndex: 0,
@@ -73,30 +75,70 @@ const UserList: React.FC = () => {
         setNewUser({ ...newUser, [name]: value });
     };
 
+    const getUserProfileImage = (user: User) => {
+        if (user.role_id === 2 && user.businessRegistration?.perfilNegocio?.foto_perfil) {
+            return `${process.env.NEXT_PUBLIC_API_WEB}/storage/${user.businessRegistration.perfilNegocio.foto_perfil}`;
+        }
+        return defaultUserIcon;
+    };
+
     const columns: ColumnDef<User>[] = [
-        { accessorKey: 'usuario', header: () => <span className="m-auto">Usuario</span> },
+        {
+            accessorKey: 'usuario',
+            header: () => <span className="m-auto">Usuario</span>,
+            cell: ({ row }: { row: Row<User> }) => {
+                const user = row.original;
+                return (
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                                <Image
+                                    src={getUserProfileImage(user)}
+                                    alt={`Foto de perfil de ${user.usuario}`}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover w-full h-full"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = defaultUserIcon.src;
+                                    }}
+                                />
+                            </div>
+                            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${user.estado === 1 ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                        </div>
+                        <span>{user.usuario}</span>
+                    </div>
+                );
+            }
+        },
         { accessorKey: 'name', header: () => <span className="m-auto">Nombre</span> },
         { accessorKey: 'email', header: () => <span className="m-auto">Correo</span> },
         {
             accessorKey: 'created_at',
             header: () => <span className="m-auto">Fecha de Creación</span>,
-            cell: ({ row }: { row: Row<User> }) => formatDate(row.getValue('created_at') as string) // Formatear la fecha
+            cell: ({ row }: { row: Row<User> }) => formatDate(row.getValue('created_at'))
         },
         {
             accessorKey: 'estado',
             header: () => <span className="m-auto">Estado</span>,
             cell: ({ row }: { row: Row<User> }) => (
-                <span>{row.getValue('estado') === 1 ? 'Activo' : 'Inactivo'}</span>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    row.getValue('estado') === 1 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                    {row.getValue('estado') === 1 ? 'Activo' : 'Inactivo'}
+                </span>
             ),
         },
         {
-            accessorKey: 'action', // Columna para el botón de desactivar
+            accessorKey: 'action',
             header: () => <span className="m-auto">Acciones</span>,
             cell: ({ row }: { row: Row<User> }) => (
                 <ConfirmationAlert
                     title="¿Estás seguro?"
                     text="¡No podrás revertir esto!"
-                    onConfirm={() => handleDeactivate(row.original.id)} // Maneja la desactivación
+                    onConfirm={() => handleDeactivate(row.original.id)}
                 />
             ),
         },
@@ -104,25 +146,24 @@ const UserList: React.FC = () => {
 
     return (
         <Section title="Listado de Usuarios">
-            {/* Input de búsqueda */}
             <div className="flex md:justify-end items-center px-2 lg:px-5 py-4">
                 <DebounceInput
                     type="text"
                     placeholder="Buscar..."
-                    className="border rounded w-100 outline-primary-400 py-2 px-3 mr-2" // Añadido 'mr-2' para el margen a la derecha
+                    className="border rounded w-100 outline-primary-400 py-2 px-3 mr-2"
                     value={globalFilter}
-                    onChange={(value) => setGlobalFilter(value)} // Actualiza el filtro global
+                    onChange={(value) => setGlobalFilter(value)}
                 />
                 <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    title="Clic aquí para deshabilitar"
+                    title="Clic aquí para crear usuario"
                     className="bg-cyan-400 text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-cyan-500/90 transition-all s3-button">
                     <FaPlus style={{ color: 'white', fontSize: '24px' }} />
                     Crear Usuario
                 </button>
             </div>
-            {/* Modal para crear usuario */}
+
             <UserModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -132,7 +173,6 @@ const UserList: React.FC = () => {
             />
 
             <div className="items-center m-auto text-center">
-                {/* Componente DataTable que recibe las columnas, datos, filtro y estado de carga */}
                 <DataTable
                     columns={columns}
                     data={users}

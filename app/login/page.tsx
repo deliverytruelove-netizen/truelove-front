@@ -12,6 +12,7 @@ const LoginPage: React.FC = () => {
     formData,
     showPassword,
     isLoading,
+    errors,
     togglePasswordVisibility,
     handleChange,
     handleSubmit,
@@ -62,6 +63,13 @@ const LoginPage: React.FC = () => {
             <h3 className="text-2xl font-bold text-center mb-6 text-red-800">
               Inicia sesión con tu usuario
             </h3>
+
+            {errors.general && (
+              <div className="p-3 rounded-md bg-red-50 text-red-600 text-sm mb-4">
+                {errors.general}
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="usuario"
@@ -75,11 +83,16 @@ const LoginPage: React.FC = () => {
                 id="usuario"
                 value={formData.usuario}
                 onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-red-900 placeholder-red-300"
+                className={`w-full px-3 py-2 border ${
+                  errors.usuario ? 'border-red-500' : 'border-red-300'
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-red-900 placeholder-red-300`}
                 placeholder="usuario"
               />
+              {errors.usuario && (
+                <p className="mt-1 text-sm text-red-600">{errors.usuario}</p>
+              )}
             </div>
+
             <div className="relative">
               <label
                 htmlFor="password"
@@ -93,10 +106,14 @@ const LoginPage: React.FC = () => {
                 id="password"
                 value={formData.password}
                 onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-red-900 placeholder-red-300"
+                className={`w-full px-3 py-2 border ${
+                  errors.password ? 'border-red-500' : 'border-red-300'
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-red-900 placeholder-red-300`}
                 placeholder="Contraseña"
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
@@ -105,6 +122,7 @@ const LoginPage: React.FC = () => {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
+
             <div className="text-right">
               <a
                 href="/login/recuperar-contrasena"
@@ -125,6 +143,7 @@ const LoginPage: React.FC = () => {
                 "Iniciar Sesión"
               )}
             </button>
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-red-300"></div>
@@ -133,6 +152,7 @@ const LoginPage: React.FC = () => {
                 <span className="px-2 bg-white text-red-500">O</span>
               </div>
             </div>
+
             <button
               type="button"
               className="w-full bg-red-100 text-red-800 py-2 px-4 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200"

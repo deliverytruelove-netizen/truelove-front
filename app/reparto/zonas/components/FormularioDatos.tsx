@@ -1,21 +1,15 @@
-'use client'
+"use client"
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CapturarImagen } from "./CapturarImagen"
 import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
-import React from 'react';
+import React from "react"
 
 interface Ciudad {
   id: number
@@ -38,11 +32,16 @@ export function FormularioDatos() {
   const [genero, setGenero] = useState<string>("")
   const [fechaNacimiento, setFechaNacimiento] = useState<string>("")
   const [cargando, setCargando] = useState(false)
+  const [generoError, setGeneroError] = useState<string>("")
+  const [selfieError, setSelfieError] = useState<string>("")
+  const [fechaNacimientoError, setFechaNacimientoError] = useState<string>("")
+  const [ciudadError, setCiudadError] = useState<string>("")
+  const [distritoError, setDistritoError] = useState<string>("")
 
   React.useEffect(() => {
-    const id = sessionStorage.getItem('repartoRegistroId')
+    const id = sessionStorage.getItem("repartoRegistroId")
     if (!id) {
-      router.push('/reparto/registro')
+      router.push("/reparto/registro")
     } else {
       setRepartoRegistroId(id)
     }
@@ -51,24 +50,24 @@ export function FormularioDatos() {
   // Define obtenerDistritos first since it's used in manejarCambioCiudad
   const obtenerDistritos = useCallback(async (ciudadId: string) => {
     if (!ciudadId) return
-    
+
     try {
       setCargando(true)
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${ciudadId}`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
+          Accept: "application/json",
         },
       })
-      
+
       if (!respuesta.ok) {
         throw new Error(`Error al obtener distritos: ${respuesta.status}`)
       }
-      
+
       const datos = await respuesta.json()
       setDistritos(datos)
     } catch (error) {
-      console.error('Error al obtener distritos:', error)
+      console.error("Error al obtener distritos:", error)
       toast({
         title: "Error",
         description: "No se pudieron cargar los distritos. Por favor, intenta de nuevo.",
@@ -83,30 +82,33 @@ export function FormularioDatos() {
     setImagenCapturada(srcImagen)
   }, [])
 
-  const manejarCambioCiudad = useCallback((ciudadId: string) => {
-    setCiudadSeleccionada(ciudadId)
-    setDistritoSeleccionado("")
-    void obtenerDistritos(ciudadId)
-  }, [obtenerDistritos])
+  const manejarCambioCiudad = useCallback(
+    (ciudadId: string) => {
+      setCiudadSeleccionada(ciudadId)
+      setDistritoSeleccionado("")
+      void obtenerDistritos(ciudadId)
+    },
+    [obtenerDistritos],
+  )
 
   const obtenerCiudades = useCallback(async () => {
     try {
       setCargando(true)
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/ciudades`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
+          Accept: "application/json",
         },
       })
-      
+
       if (!respuesta.ok) {
         throw new Error(`Error al obtener ciudades: ${respuesta.status}`)
       }
-      
+
       const datos = await respuesta.json()
       setCiudades(datos)
     } catch (error) {
-      console.error('Error al obtener ciudades:', error)
+      console.error("Error al obtener ciudades:", error)
       toast({
         title: "Error",
         description: "No se pudieron cargar las ciudades. Por favor, intenta de nuevo.",
@@ -121,53 +123,80 @@ export function FormularioDatos() {
     void obtenerCiudades()
   }, [obtenerCiudades])
 
+  useEffect(() => {
+    if (genero) {
+      setGeneroError("")
+    }
+  }, [genero])
+
+  useEffect(() => {
+    if (imagenCapturada) {
+      setSelfieError("")
+    }
+  }, [imagenCapturada])
+
+  useEffect(() => {
+    if (fechaNacimiento) {
+      setFechaNacimientoError("")
+    }
+  }, [fechaNacimiento])
+
+  useEffect(() => {
+    if (ciudadSeleccionada) {
+      setCiudadError("")
+    }
+  }, [ciudadSeleccionada])
+
+  useEffect(() => {
+    if (distritoSeleccionado) {
+      setDistritoError("")
+    }
+  }, [distritoSeleccionado])
+
   const validarFormulario = useCallback(() => {
+    let esValido = true
+
     if (!fechaNacimiento) {
-      toast({
-        title: "Error",
-        description: "Por favor, ingresa tu fecha de nacimiento.",
-        variant: "destructive",
-      })
-      return false
+      setFechaNacimientoError("Por favor, ingresa tu fecha de nacimiento.")
+      esValido = false
+    } else {
+      setFechaNacimientoError("")
     }
+
     if (!genero) {
-      toast({
-        title: "Error",
-        description: "Por favor, selecciona tu género.",
-        variant: "destructive",
-      })
-      return false
+      setGeneroError("Por favor, selecciona tu género.")
+      esValido = false
+    } else {
+      setGeneroError("")
     }
+
     if (!imagenCapturada) {
-      toast({
-        title: "Error",
-        description: "Por favor, toma una selfie.",
-        variant: "destructive",
-      })
-      return false
+      setSelfieError("Por favor, toma una selfie.")
+      esValido = false
+    } else {
+      setSelfieError("")
     }
+
     if (!ciudadSeleccionada) {
-      toast({
-        title: "Error",
-        description: "Por favor, selecciona tu ciudad.",
-        variant: "destructive",
-      })
-      return false
+      setCiudadError("Por favor, selecciona tu ciudad.")
+      esValido = false
+    } else {
+      setCiudadError("")
     }
+
     if (!distritoSeleccionado) {
-      toast({
-        title: "Error",
-        description: "Por favor, selecciona tu distrito.",
-        variant: "destructive",
-      })
-      return false
+      setDistritoError("Por favor, selecciona tu distrito.")
+      esValido = false
+    } else {
+      setDistritoError("")
     }
-    return true
+
+    return esValido
   }, [fechaNacimiento, genero, imagenCapturada, ciudadSeleccionada, distritoSeleccionado])
 
   const manejarEnvio = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validarFormulario()) {
       return
     }
@@ -182,7 +211,7 @@ export function FormularioDatos() {
           const response = await fetch(imagenBase64)
           imagenComprimida = await response.blob()
         } catch (error) {
-          console.error('Error al comprimir la imagen:', error)
+          console.error("Error al comprimir la imagen:", error)
           toast({
             title: "Error",
             description: "Error al procesar la imagen. Por favor, intenta de nuevo.",
@@ -193,18 +222,18 @@ export function FormularioDatos() {
       }
 
       const datosFormulario = new FormData()
-      datosFormulario.append('reparto_registro_id', repartoRegistroId!)
-      datosFormulario.append('fecha_nacimiento', fechaNacimiento)
-      datosFormulario.append('genero', genero)
-      datosFormulario.append('ciudad_id', ciudadSeleccionada)
-      datosFormulario.append('distrito_id', distritoSeleccionado)
-      
+      datosFormulario.append("reparto_registro_id", repartoRegistroId!)
+      datosFormulario.append("fecha_nacimiento", fechaNacimiento)
+      datosFormulario.append("genero", genero)
+      datosFormulario.append("ciudad_id", ciudadSeleccionada)
+      datosFormulario.append("distrito_id", distritoSeleccionado)
+
       if (imagenComprimida) {
-        datosFormulario.append('selfie', imagenComprimida, 'selfie.jpg')
+        datosFormulario.append("selfie", imagenComprimida, "selfie.jpg")
       }
 
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-personales`, {
-        method: 'POST',
+        method: "POST",
         body: datosFormulario,
       })
 
@@ -212,25 +241,27 @@ export function FormularioDatos() {
         const contentType = respuesta.headers.get("content-type")
         if (contentType?.includes("application/json")) {
           const datosError = await respuesta.json()
-          throw new Error(datosError.message || 'Error al enviar el formulario')
+          throw new Error(datosError.message || "Error al enviar el formulario")
         }
-        throw new Error('Error al enviar el formulario')
+        throw new Error("Error al enviar el formulario")
       }
 
-      toast({
-        title: "Éxito",
-        description: "Datos personales guardados correctamente.",
-      })
+      // toast({
+      //   title: "Éxito",
+      //   description: "Datos personales guardados correctamente.",
+      // })
 
       // Mantener el ID en sessionStorage para la siguiente página
-      sessionStorage.setItem('repartoRegistroId', repartoRegistroId!)
-      router.push('/reparto/documentos')
-
+      sessionStorage.setItem("repartoRegistroId", repartoRegistroId!)
+      router.push("/reparto/documentos")
     } catch (error) {
-      console.error('Error al enviar el formulario:', error)
+      console.error("Error al enviar el formulario:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Hubo un problema al enviar el formulario. Por favor, intenta de nuevo.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Hubo un problema al enviar el formulario. Por favor, intenta de nuevo.",
         variant: "destructive",
       })
     } finally {
@@ -238,15 +269,10 @@ export function FormularioDatos() {
     }
   }
 
-  if (!repartoRegistroId) return null;
-
+  if (!repartoRegistroId) return null
 
   return (
-    <form 
-      className="space-y-6" 
-      onSubmit={manejarEnvio}
-      aria-label="Formulario de datos personales"
-    >
+    <form className="space-y-6" onSubmit={manejarEnvio} aria-label="Formulario de datos personales">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="fechaNacimiento">Fecha de Nacimiento</Label>
@@ -260,15 +286,12 @@ export function FormularioDatos() {
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             aria-required="true"
           />
+          {fechaNacimientoError && <p className="text-sm text-red-500 mt-1">{fechaNacimientoError}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="genero">Género</Label>
-          <Select 
-            value={genero} 
-            onValueChange={setGenero}
-            name="genero"
-          >
+          <Select value={genero} onValueChange={setGenero} name="genero">
             <SelectTrigger id="genero" aria-required="true">
               <SelectValue placeholder="Selecciona tu género" />
             </SelectTrigger>
@@ -278,37 +301,32 @@ export function FormularioDatos() {
               <SelectItem value="otro">Otro</SelectItem>
             </SelectContent>
           </Select>
+          {generoError && <p className="text-sm text-red-500 mt-1">{generoError}</p>}
         </div>
 
         <div className="space-y-2">
           <Label id="selfie-label">Tómate una selfie</Label>
-          <div 
-            className="border-2 border-dashed rounded-lg p-4 text-center space-y-4"
-            aria-labelledby="selfie-label"
-          >
+          <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4" aria-labelledby="selfie-label">
             <CapturarImagen onCapture={manejarCaptura} />
             {imagenCapturada && (
               <div className="mt-4">
                 <p className="text-xs md:text-sm text-gray-500 mb-2">Imagen capturada:</p>
-                <Image 
-                  src={imagenCapturada} 
-                  alt="Selfie capturada" 
+                <Image
+                  src={imagenCapturada || "/placeholder.svg"}
+                  alt="Selfie capturada"
                   width={200}
                   height={150}
-                  className="max-w-[200px] h-auto rounded-lg mx-auto" 
+                  className="max-w-[200px] h-auto rounded-lg mx-auto"
                 />
               </div>
             )}
+            {selfieError && <p className="text-sm text-red-500 mt-1">{selfieError}</p>}
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="ciudad">Ciudad</Label>
-          <Select 
-            value={ciudadSeleccionada} 
-            onValueChange={manejarCambioCiudad}
-            name="ciudad"
-          >
+          <Select value={ciudadSeleccionada} onValueChange={manejarCambioCiudad} name="ciudad">
             <SelectTrigger id="ciudad" aria-required="true">
               <SelectValue placeholder="Selecciona tu ciudad" />
             </SelectTrigger>
@@ -320,12 +338,13 @@ export function FormularioDatos() {
               ))}
             </SelectContent>
           </Select>
+          {ciudadError && <p className="text-sm text-red-500 mt-1">{ciudadError}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="distrito">Distrito</Label>
-          <Select 
-            value={distritoSeleccionado} 
+          <Select
+            value={distritoSeleccionado}
             onValueChange={setDistritoSeleccionado}
             disabled={!ciudadSeleccionada}
             name="distrito"
@@ -341,17 +360,18 @@ export function FormularioDatos() {
               ))}
             </SelectContent>
           </Select>
+          {distritoError && <p className="text-sm text-red-500 mt-1">{distritoError}</p>}
         </div>
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button 
+        <Button
           type="submit"
           className="bg-red-500 hover:bg-red-600 text-white"
           disabled={cargando}
           aria-busy={cargando}
         >
-          {cargando ? 'Guardando...' : 'Guardar y Continuar'}
+          {cargando ? "Guardando..." : "Guardar y Continuar"}
         </Button>
       </div>
     </form>

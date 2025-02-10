@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState, FormEvent, useEffect } from "react"
+import { useState, type FormEvent, useEffect } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { CapturarImagen } from "./CapturarImagen"
+import { FileText, ImageIcon } from "lucide-react"
+import { PdfPreview } from "./Pdf-preview"
 
 interface Banco {
   id: number
@@ -49,31 +51,31 @@ export function FormularioBancario() {
   const [bancos, setBancos] = useState<Banco[]>([])
   const [tiposCuenta, setTiposCuenta] = useState<TipoCuenta[]>([])
   const [isMobile, setIsMobile] = useState(false)
+  const [fileType, setFileType] = useState<"image" | "pdf">("image")
   const [formData, setFormData] = useState({
-    titular: '',
-    dni: '',
-    banco_id: '',
-    tipo_cuenta_id: '',
-    numero_cuenta: ''
+    titular: "",
+    dni: "",
+    banco_id: "",
+    tipo_cuenta_id: "",
+    numero_cuenta: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
     checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
   useEffect(() => {
-    const id = sessionStorage.getItem('repartoRegistroId')
+    const id = sessionStorage.getItem("repartoRegistroId")
     if (!id) {
-      toast.error('No se encontró el ID del registro')
-      router.push('/reparto/registro')
+      toast.error("No se encontró el ID del registro")
+      router.push("/reparto/registro")
     } else {
       setRepartoRegistroId(id)
     }
@@ -84,11 +86,11 @@ export function FormularioBancario() {
       try {
         const [bancosResponse, tiposCuentaResponse] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_WEB}/bancos`),
-          fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-cuenta`)
+          fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-cuenta`),
         ])
 
         if (!bancosResponse.ok || !tiposCuentaResponse.ok) {
-          throw new Error('Error al cargar datos')
+          throw new Error("Error al cargar datos")
         }
 
         const bancosData = await bancosResponse.json()
@@ -97,8 +99,8 @@ export function FormularioBancario() {
         setBancos(bancosData)
         setTiposCuenta(tiposCuentaData)
       } catch (error) {
-        console.error('Error fetching data:', error)
-        toast.error('Error al cargar los datos. Por favor, recarga la página.')
+        console.error("Error fetching data:", error)
+        toast.error("Error al cargar los datos. Por favor, recarga la página.")
       }
     }
 
@@ -109,21 +111,44 @@ export function FormularioBancario() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length <= 2) {
+      const files = Array.from(e.target.files)
+      const validFiles = files.every((file) => {
+        const fileType = file.type.toLowerCase()
+        if (fileType === "image") {
+          return fileType.includes("image")
+        } else {
+          return fileType === "application/pdf"
+        }
+      })
+
+      if (!validFiles) {
+        setErrors({
+          ...errors,
+          imagen: fileType === "image" ? "Solo se permiten archivos de imagen" : "Solo se permiten archivos PDF",
+        })
+        return
+      }
+
       setSelectedFiles(e.target.files)
       setCapturedImage(null)
-      setErrors({...errors, imagen: ''})
-      
+      setErrors({ ...errors, imagen: "" })
+
       const previews: string[] = []
-      Array.from(e.target.files).forEach(file => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          previews.push(reader.result as string)
+      files.forEach((file) => {
+        if (file.type.includes("image")) {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            previews.push(reader.result as string)
+            setFilePreview([...previews])
+          }
+          reader.readAsDataURL(file)
+        } else if (file.type === "application/pdf") {
+          previews.push("pdf")
           setFilePreview([...previews])
         }
-        reader.readAsDataURL(file)
       })
     } else {
-      setErrors({...errors, imagen: 'Puedes subir un máximo de 2 archivos'})
+      setErrors({ ...errors, imagen: "Puedes subir un máximo de 2 archivos" })
     }
   }
 
@@ -131,119 +156,119 @@ export function FormularioBancario() {
     setCapturedImage(imageSrc)
     setSelectedFiles(null)
     setFilePreview([])
-    setErrors({...errors, imagen: ''})
+    setErrors({ ...errors, imagen: "" })
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
-    if (id === 'dni') {
-      const numericValue = value.replace(/\D/g, '').slice(0, 8)
+    if (id === "dni") {
+      const numericValue = value.replace(/\D/g, "").slice(0, 8)
       setFormData({ ...formData, [id]: numericValue })
     } else {
       setFormData({ ...formData, [id]: value })
     }
-    setErrors({...errors, [id]: ''})
+    setErrors({ ...errors, [id]: "" })
   }
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     })
-    setErrors({...errors, [name]: ''})
+    setErrors({ ...errors, [name]: "" })
   }
 
   const validateForm = () => {
-    const newErrors: {[key: string]: string} = {}
-    if (!formData.titular) newErrors.titular = 'El titular es requerido'
-    if (!formData.dni) newErrors.dni = 'El DNI es requerido'
-    if (formData.dni.length !== 8) newErrors.dni = 'El DNI debe tener 8 dígitos'
-    if (!formData.banco_id) newErrors.banco_id = 'Selecciona un banco'
-    if (!formData.tipo_cuenta_id) newErrors.tipo_cuenta_id = 'Selecciona un tipo de cuenta'
-    if (!formData.numero_cuenta) newErrors.numero_cuenta = 'El número de cuenta es requerido'
-    if (!selectedFiles && !capturedImage) newErrors.imagen = 'La imagen de la cuenta es requerida'
-    
+    const newErrors: { [key: string]: string } = {}
+    if (!formData.titular) newErrors.titular = "El titular es requerido"
+    if (!formData.dni) newErrors.dni = "El DNI es requerido"
+    if (formData.dni.length !== 8) newErrors.dni = "El DNI debe tener 8 dígitos"
+    if (!formData.banco_id) newErrors.banco_id = "Selecciona un banco"
+    if (!formData.tipo_cuenta_id) newErrors.tipo_cuenta_id = "Selecciona un tipo de cuenta"
+    if (!formData.numero_cuenta) newErrors.numero_cuenta = "El número de cuenta es requerido"
+    if (!selectedFiles && !capturedImage) newErrors.imagen = "El documento bancario es requerido"
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
-      toast.error('Por favor, complete todos los campos obligatorios correctamente')
+      toast.error("Por favor, complete todos los campos obligatorios correctamente")
       return
     }
 
     if (!repartoRegistroId) {
-      toast.error('No se encontró el ID del registro')
+      toast.error("No se encontró el ID del registro")
       return
     }
-  
+
     setIsSubmitting(true)
-  
+
     try {
       const formDataToSend = new FormData()
-      formDataToSend.append('reparto_registro_id', repartoRegistroId)
-      formDataToSend.append('titular', formData.titular)
-      formDataToSend.append('dni', formData.dni)
-      formDataToSend.append('banco_id', formData.banco_id)
-      formDataToSend.append('tipo_cuenta_id', formData.tipo_cuenta_id)
-      formDataToSend.append('numero_cuenta', formData.numero_cuenta)
+      formDataToSend.append("reparto_registro_id", repartoRegistroId)
+      formDataToSend.append("titular", formData.titular)
+      formDataToSend.append("dni", formData.dni)
+      formDataToSend.append("banco_id", formData.banco_id)
+      formDataToSend.append("tipo_cuenta_id", formData.tipo_cuenta_id)
+      formDataToSend.append("numero_cuenta", formData.numero_cuenta)
 
       if (selectedFiles) {
-        Array.from(selectedFiles).forEach(file => {
-          formDataToSend.append('imagen_cuenta', file)
+        Array.from(selectedFiles).forEach((file) => {
+          formDataToSend.append("imagen_cuenta", file)
         })
       } else if (capturedImage) {
         const response = await fetch(capturedImage)
         const blob = await response.blob()
         const file = new File([blob], "imagen_capturada.jpg", { type: "image/jpeg" })
-        formDataToSend.append('imagen_cuenta', file)
+        formDataToSend.append("imagen_cuenta", file)
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/cuenta-bancaria`, {
-        method: 'POST',
-        body: formDataToSend
+        method: "POST",
+        body: formDataToSend,
       })
 
       const data: ApiResponse | ApiError = await response.json()
 
       if (!response.ok) {
-        throw new Error('mensaje' in data ? data.mensaje : 'Error al guardar la cuenta bancaria')
+        throw new Error("mensaje" in data ? data.mensaje : "Error al guardar la cuenta bancaria")
       }
 
-      toast.success('mensaje' in data ? data.mensaje : 'Cuenta bancaria guardada exitosamente')
-      
-      sessionStorage.setItem('repartoRegistroId', repartoRegistroId)
-      router.push('/reparto/documento-motorizado')
+      toast.success("mensaje" in data ? data.mensaje : "Cuenta bancaria guardada exitosamente")
+
+      sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
+      router.push("/reparto/documento-motorizado")
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message)
       } else {
-        toast.error('Ocurrió un error al guardar la cuenta bancaria. Por favor, intente nuevamente.')
+        toast.error("Ocurrió un error al guardar la cuenta bancaria. Por favor, intente nuevamente.")
       }
-      console.error('Error al guardar cuenta bancaria:', error)
+      console.error("Error al guardar cuenta bancaria:", error)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (!repartoRegistroId) return null;
+  if (!repartoRegistroId) return null
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
       <form onSubmit={handleSubmit} className="p-4 md:p-8 max-w-xl mx-auto space-y-6 md:space-y-8">
         <div className="hidden md:block">
           <h1 className="text-xl md:text-2xl font-bold">Imagen cuenta bancaria</h1>
-          <p className="text-sm md:text-base text-gray-500 mt-2">
-            Necesitamos verificar tu información.
-          </p>
+          <p className="text-sm md:text-base text-gray-500 mt-2">Necesitamos verificar tu información.</p>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="titular" className="text-sm md:text-base">Titular de Cuenta Bancaria *</Label>
+            <Label htmlFor="titular" className="text-sm md:text-base">
+              Titular de Cuenta Bancaria *
+            </Label>
             <Input
               id="titular"
               value={formData.titular}
@@ -256,7 +281,9 @@ export function FormularioBancario() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dni" className="text-sm md:text-base">DNI *</Label>
+            <Label htmlFor="dni" className="text-sm md:text-base">
+              DNI *
+            </Label>
             <Input
               id="dni"
               type="text"
@@ -273,12 +300,10 @@ export function FormularioBancario() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="banco_id" className="text-sm md:text-base">Nombre del banco *</Label>
-            <Select
-              value={formData.banco_id}
-              onValueChange={(value) => handleSelectChange('banco_id', value)}
-              required
-            >
+            <Label htmlFor="banco_id" className="text-sm md:text-base">
+              Nombre del banco *
+            </Label>
+            <Select value={formData.banco_id} onValueChange={(value) => handleSelectChange("banco_id", value)} required>
               <SelectTrigger className="text-sm md:text-base">
                 <SelectValue placeholder="Selecciona tu banco" />
               </SelectTrigger>
@@ -294,10 +319,12 @@ export function FormularioBancario() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tipo_cuenta_id" className="text-sm md:text-base">Tipo de Cuenta Bancaria *</Label>
+            <Label htmlFor="tipo_cuenta_id" className="text-sm md:text-base">
+              Tipo de Cuenta Bancaria *
+            </Label>
             <Select
               value={formData.tipo_cuenta_id}
-              onValueChange={(value) => handleSelectChange('tipo_cuenta_id', value)}
+              onValueChange={(value) => handleSelectChange("tipo_cuenta_id", value)}
               required
             >
               <SelectTrigger className="text-sm md:text-base">
@@ -315,7 +342,9 @@ export function FormularioBancario() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="numero_cuenta" className="text-sm md:text-base">Número de Cuenta Bancaria *</Label>
+            <Label htmlFor="numero_cuenta" className="text-sm md:text-base">
+              Número de Cuenta Bancaria *
+            </Label>
             <Input
               id="numero_cuenta"
               value={formData.numero_cuenta}
@@ -328,69 +357,118 @@ export function FormularioBancario() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm md:text-base">Imagen de cuenta bancaria *</Label>
+            <Label className="text-sm md:text-base">Documento bancario *</Label>
+
+            {/* Selector de tipo de archivo */}
+            <div className="flex gap-2 mb-4">
+              <Button
+                type="button"
+                variant={fileType === "image" ? "default" : "outline"}
+                onClick={() => {
+                  setFileType("image")
+                  setSelectedFiles(null)
+                  setFilePreview([])
+                  setCapturedImage(null)
+                }}
+                className="flex items-center gap-2"
+              >
+                <ImageIcon className="w-4 h-4" />
+                Imagen
+              </Button>
+              <Button
+                type="button"
+                variant={fileType === "pdf" ? "default" : "outline"}
+                onClick={() => {
+                  setFileType("pdf")
+                  setSelectedFiles(null)
+                  setFilePreview([])
+                  setCapturedImage(null)
+                }}
+                className="flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                PDF
+              </Button>
+            </div>
+
             <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
               <div className="flex flex-col items-center gap-2">
-                <p className="text-xs md:text-sm text-gray-500">
-                  Adjuntar en formato JPEG, PDF o PNG.
-                 
-                </p>
-                <Input
-                  type="file"
-                  onChange={handleFileSelect}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  multiple
-                  className="hidden"
-                  id="file-upload"
-                />
-                <Label
-                  htmlFor="file-upload"
-                  className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
-                >
-                  Seleccionar archivo
-                </Label>
-                {selectedFiles && (
-                  <div className="text-xs md:text-sm text-gray-500">
-                    {Array.from(selectedFiles).map((file, index) => (
-                      <p key={index}>{file.name}</p>
-                    ))}
-                  </div>
+                {(!selectedFiles || fileType === "image") && (
+                  <>
+                    <p className="text-xs md:text-sm text-gray-500">
+                      {fileType === "image" ? "Adjuntar en formato JPEG o PNG" : "Adjuntar en formato PDF"}
+                    </p>
+                    <Input
+                      type="file"
+                      onChange={handleFileSelect}
+                      accept={fileType === "image" ? ".jpg,.jpeg,.png" : ".pdf"}
+                      multiple={fileType === "image"}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <Label
+                      htmlFor="file-upload"
+                      className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
+                    >
+                      Seleccionar archivo
+                    </Label>
+                  </>
                 )}
               </div>
-              {isMobile && (
+
+              {/* Mostrar opción de cámara solo si está en modo imagen */}
+              {isMobile && fileType === "image" && (
                 <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs md:text-sm text-gray-500">
-                    O captura una imagen con tu cámara
-                  </p>
+                  <p className="text-xs md:text-sm text-gray-500">O captura una imagen con tu cámara</p>
                   <CapturarImagen onCapture={handleCapture} />
                 </div>
               )}
+
+              {/* Vista previa de archivos */}
               {filePreview.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-xs md:text-sm text-gray-500 mb-2">Imágenes seleccionadas:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {filePreview.map((preview, index) => (
-                      <Image 
-                        key={index}
-                        src={preview} 
-                        alt={`Preview ${index + 1}`} 
-                        width={300} 
-                        height={200} 
-                        className="max-w-full h-auto rounded-lg" 
-                      />
-                    ))}
-                  </div>
+                <div className="mt-4">
+                  {filePreview.map((preview, index) => {
+                    if (preview === "pdf" && selectedFiles) {
+                      const file = Array.from(selectedFiles)[index]
+                      return (
+                        <PdfPreview
+                          key={index}
+                          file={file}
+                          onDelete={() => {
+                            const updatedFiles = Array.from(selectedFiles).filter((_, i) => i !== index)
+                            const newFileList = new DataTransfer()
+                            updatedFiles.forEach((file) => newFileList.items.add(file))
+                            setSelectedFiles(updatedFiles.length > 0 ? newFileList.files : null)
+                            setFilePreview(filePreview.filter((_, i) => i !== index))
+                          }}
+                        />
+                      )
+                    } else {
+                      return (
+                        <Image
+                          key={index}
+                          src={preview || "/placeholder.svg"}
+                          alt={`Vista previa ${index + 1}`}
+                          width={300}
+                          height={200}
+                          className="max-w-full h-auto rounded-lg"
+                        />
+                      )
+                    }
+                  })}
                 </div>
               )}
+
+              {/* Vista previa de imagen capturada */}
               {capturedImage && (
                 <div className="mt-4">
                   <p className="text-xs md:text-sm text-gray-500 mb-2">Imagen capturada:</p>
-                  <Image 
-                    src={capturedImage} 
-                    alt="Captured" 
-                    width={300} 
-                    height={200} 
-                    className="max-w-full h-auto rounded-lg" 
+                  <Image
+                    src={capturedImage || "/placeholder.svg"}
+                    alt="Captured"
+                    width={300}
+                    height={200}
+                    className="max-w-full h-auto rounded-lg"
                   />
                 </div>
               )}
@@ -401,25 +479,22 @@ export function FormularioBancario() {
 
         <div className="bg-blue-50 p-3 md:p-4 rounded-lg space-y-2">
           <p className="text-xs md:text-sm text-blue-800">
-            El justificante bancario debe incluir los cinco datos anteriores. Consulte el
-            ejemplo siguiente como referencia.
+            El justificante bancario debe incluir los cinco datos anteriores. Consulte el ejemplo siguiente como
+            referencia.
           </p>
           <p className="text-xs md:text-sm text-blue-800">
-            Puede seleccionar y cargar varias imágenes o documentos si los cinco datos
-            están en páginas o pantallas separadas.
+            Puede seleccionar y cargar varias imágenes o documentos si los cinco datos están en páginas o pantallas
+            separadas.
           </p>
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button 
-            type="submit"
-            className="bg-[#f34739] text-white hover:bg-[#d63c30]"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Enviando...' : 'Enviar'}
+          <Button type="submit" className="bg-[#f34739] text-white hover:bg-[#d63c30]" disabled={isSubmitting}>
+            {isSubmitting ? "Enviando..." : "Enviar"}
           </Button>
         </div>
       </form>
     </ScrollArea>
   )
 }
+

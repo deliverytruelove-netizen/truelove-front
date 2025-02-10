@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { User, Settings, LogOut } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { useState, useEffect, useCallback } from "react"
+import { User, Settings, LogOut } from "lucide-react"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -14,64 +14,98 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import Link from 'next/link'
+import Link from "next/link"
+
+const API_URL = process.env.NEXT_PUBLIC_API_WEB
+const BASE_URL = API_URL?.replace("/api", "") // Remover /api para rutas de archivos
 
 const AvatarSettings = () => {
-  const [userInitials, setUserInitials] = useState<string>('')
-  const [fullName, setFullName] = useState<string>('')
-  const [email, setEmail] = useState<string>('')
-  const [avatarUrl, setAvatarUrl] = useState<string>('')
+  const [userInitials, setUserInitials] = useState<string>("")
+  const [fullName, setFullName] = useState<string>("")
+  const [email, setEmail] = useState<string>("")
+  const [avatarUrl, setAvatarUrl] = useState<string>("")
   const [imageError, setImageError] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser)
-        const firstName = user?.name || ''
-        const lastName = user?.lastName || ''
-        const fullName = `${firstName} ${lastName}`.trim()
-        const email = user?.email || ''
-        const profilePhoto = user?.profile_photo || user?.avatar || user?.photo_url
-        
-        // Configurar iniciales
-        const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-        setUserInitials(initials || email.charAt(0).toUpperCase())
-        setFullName(fullName || email)
-        setEmail(email)
-        
-        // Usar la foto de perfil del backend si existe
-        if (profilePhoto) {
-          // Usar la ruta relativa, Next.js se encargará de la redirección
-          setAvatarUrl(`/storage/${profilePhoto}`)
-        } else {
-          // Fallback a UI Avatars si no hay foto
-          setAvatarUrl(getUIAvatarUrl(fullName || email))
-        }
-      } catch (error) {
-        console.error('Error parsing user data:', error)
-        setImageError(true)
+  const getImageUrl = (path: string | null) => {
+    if (!path) return null
+    if (path.startsWith("http")) return path
+
+    // Remover /api/ si existe en la ruta
+    const cleanPath = path.replace("/api/", "")
+    return `${BASE_URL}/${cleanPath}`
+  }
+
+  const obtenerDatosUsuario = useCallback(async () => {
+    try {
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("authToken="))
+        ?.split("=")[1]
+
+      if (!token) {
+        throw new Error("No se encontró el token de autenticación")
       }
+
+      const [datosResponse, logoResponse] = await Promise.all([
+        fetch(`${API_URL}/negocio/datos`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }),
+        fetch(`${API_URL}/negocio/logo`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }),
+      ])
+
+      if (!datosResponse.ok || !logoResponse.ok) {
+        throw new Error("Error al obtener datos del usuario")
+      }
+
+      const datos = await datosResponse.json()
+      const logoData = await logoResponse.json()
+
+      const firstName = datos.nombre?.split(" ")[0] || ""
+      const lastName = datos.nombre?.split(" ")[1] || ""
+      const fullName = `${firstName} ${lastName}`.trim()
+
+      setFullName(fullName || datos.email)
+      setEmail(datos.email)
+      setUserInitials(
+        `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || datos.email.charAt(0).toUpperCase(),
+      )
+
+      if (logoData.foto_perfil) {
+        setAvatarUrl(logoData.foto_perfil)
+        setImageError(false)
+      }
+    } catch (error) {
+      console.error("Error al obtener datos del usuario:", error)
+      setImageError(true)
     }
   }, [])
 
-  const getUIAvatarUrl = (name: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&bold=true&format=svg`
-  }
+  useEffect(() => {
+    obtenerDatosUsuario()
+  }, [obtenerDatosUsuario])
 
   const handleImageError = () => {
     setImageError(true)
-    setAvatarUrl(getUIAvatarUrl(fullName || email))
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('user')
-    localStorage.removeItem('userRole')
-    document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-    document.cookie = 'userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-    router.push('/login')
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("user")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("userProfile")
+    localStorage.removeItem("lastProfileUpdate")
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+    router.push("/login")
   }
 
   return (
@@ -79,9 +113,9 @@ const AvatarSettings = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
           <Avatar>
-            {avatarUrl && !imageError && (
+            {avatarUrl && !imageError ? (
               <Image
-                src={avatarUrl || "/placeholder.svg"}
+                src={getImageUrl(avatarUrl) || "/placeholder.svg"}
                 alt={fullName}
                 width={32}
                 height={32}
@@ -89,8 +123,9 @@ const AvatarSettings = () => {
                 onError={handleImageError}
                 unoptimized
               />
+            ) : (
+              <AvatarFallback>{userInitials}</AvatarFallback>
             )}
-            <AvatarFallback>{userInitials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -98,9 +133,7 @@ const AvatarSettings = () => {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{fullName}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {email}
-            </p>
+            <p className="text-xs leading-none text-muted-foreground">{email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

@@ -1,3 +1,5 @@
+// app\admin\components\SidebarWrap.tsx
+
 'use client'
 import { useRef, useState } from 'react'
 import { Sidebar } from './Sidebar'
