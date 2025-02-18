@@ -1,3 +1,4 @@
+// app\admin\components\Sidebar.tsx
 'use client'
 import Logo from '@/public/logo.png';
 // import { links } from '@/config/constanst'
