@@ -1,6 +1,8 @@
-'use client'
+"use client"
 
-import { CircleSpinner, NoDataIcon } from '@/components/icons'
+import type React from "react"
+
+import { CircleSpinner, NoDataIcon } from "@/components/icons"
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -11,28 +13,24 @@ import {
   type SortingState,
   type PaginationState,
   type RowSelectionState,
-  type Row  // Agrega esta importación
-} from '@tanstack/react-table';
-import classNames from 'classnames'
-import { MainTable } from './MainTable'
-import Pagination from './Pagination'
-import { filterRecords } from './utils'
-import { useEffect, useState } from 'react'
+  type Row,
+  flexRender,
+} from "@tanstack/react-table"
+import { useEffect, useState } from "react"
 
 interface Props<T> {
-  columns: Array<ColumnDef<T, unknown>>;
-  data: T[];
-  globalFilter: string;
-  loading?: boolean;
-  setSorting: React.Dispatch<React.SetStateAction<SortingState>>;
-  setPagination: React.Dispatch<React.SetStateAction<PaginationState>>;
-  sorting: SortingState;
-  pagination: PaginationState;
-  getRowId?: (originalRow: T, index: number, parent?: Row<T> | undefined) => string;
-  setSelectedRowsParent?: React.Dispatch<React.SetStateAction<Array<T>>>;
-  height?: number;
+  columns: Array<ColumnDef<T, unknown>>
+  data: T[]
+  globalFilter: string
+  loading?: boolean
+  setSorting: React.Dispatch<React.SetStateAction<SortingState>>
+  setPagination: React.Dispatch<React.SetStateAction<PaginationState>>
+  sorting: SortingState
+  pagination: PaginationState
+  getRowId?: (originalRow: T, index: number, parent?: Row<T> | undefined) => string
+  setSelectedRowsParent?: React.Dispatch<React.SetStateAction<Array<T>>>
+  height?: number
 }
-
 
 const DataTable = <T,>({
   columns,
@@ -45,86 +43,132 @@ const DataTable = <T,>({
   setPagination,
   getRowId,
   setSelectedRowsParent,
-  height = undefined
+  height = undefined,
 }: Props<T>) => {
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
   const table = useReactTable({
     data,
     columns,
-    pageCount:
-      pagination.pageSize === data.length
-        ? pagination.pageIndex + 2
-        : pagination.pageIndex + 1,
+    pageCount: Math.ceil(data.length / pagination.pageSize),
     state: {
       globalFilter,
       sorting,
       pagination,
-      rowSelection
+      rowSelection,
     },
-    manualSorting: true,
+    enableSorting: true,
     manualPagination: true,
-    getRowId: getRowId
-      ? (originalRow, index, parent) => String(getRowId(originalRow, index, parent))
-      : undefined,
+    getRowId: getRowId ? (originalRow, index, parent) => String(getRowId(originalRow, index, parent)) : undefined,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    globalFilterFn: filterRecords,
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
     enableRowSelection: true,
-    onRowSelectionChange: setRowSelection
-  });
+    onRowSelectionChange: setRowSelection,
+  })
 
   useEffect(() => {
-    const handleSelectionState = (selections: RowSelectionState): void => {
-      if (setSelectedRowsParent) {
-        setSelectedRowsParent(
-          Object.keys(selections).map((key) =>
-            table.getSelectedRowModel().rowsById[key]?.original as T
-          )
-        );
-      }
-    };
+    if (setSelectedRowsParent) {
+      const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original)
+      setSelectedRowsParent(selectedRows as T[])
+    }
+  }, [setSelectedRowsParent, table]) // Removed rowSelection from dependencies
 
-    handleSelectionState(rowSelection);
-  }, [rowSelection, setSelectedRowsParent, table]);
+  const tableHeight = height ?? (data.length === 0 ? 210 : 500)
 
   return (
-    <div>
-      <div
-        className={classNames({
-          'overflow-x-auto relative': true,
-          'h-[210px]': data.length === 0 && height === undefined,
-          'h-[500px]': data.length > 0 && height === undefined,
-          [`h-[${height}px]`]: height !== undefined
-        })}
-      >
-        <MainTable table={table} />
+    <div className="relative bg-white rounded-md border">
+      <div className="relative" style={{ height: `${tableHeight}px` }}>
+        {/* Tabla con header fijo */}
+        <div className="overflow-auto h-full">
+          <table className="w-full border-collapse">
+            <thead className="sticky top-0 z-10 bg-white border-b">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="h-12 px-4 text-left align-middle font-medium text-muted-foreground bg-white"
+                      style={{
+                        width: header.getSize(),
+                        minWidth: header.getSize(),
+                      }}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="border-b transition-colors hover:bg-muted/50">
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="p-4 align-middle"
+                      style={{
+                        width: cell.column.getSize(),
+                        minWidth: cell.column.getSize(),
+                      }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Estados de carga y sin datos */}
         {loading && (
-          <div className="w-full sticky left-0 text-center text-color-main flex flex-col gap-4 items-center text-sm py-4">
-            <span className="text-xl text-color-main/50">
-              Cargando registros...
-            </span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+            <span className="text-xl text-color-main/50 mb-4">Cargando registros...</span>
             <CircleSpinner style={{ opacity: 0.5 }} />
           </div>
         )}
+
         {!loading && data.length === 0 && (
-          <div className="w-full sticky left-0 text-center text-color-main flex flex-col gap-4 items-center text-sm py-4">
-            <span className="text-xl text-color-main/50">
-              No se encontraron registros para mostrar
-            </span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white">
+            <span className="text-xl text-color-main/50 mb-4">No se encontraron registros para mostrar</span>
             <NoDataIcon className="text-7xl opacity-50" />
           </div>
         )}
       </div>
-      {(data.length > 0 || pagination.pageIndex > 0) && (
-        <Pagination table={table} />
+
+      {/* Paginación */}
+      {data.length > 0 && (
+        <div className="border-t p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+              Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Anterior
+            </button>
+            <button
+              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default DataTable;
+export default DataTable
+
