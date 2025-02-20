@@ -28,6 +28,40 @@ export async function middleware(req: NextRequest) {
   const esPaginaLogin = path === "/login";
   const esSocioAprobado = path === "/socio-aprobado";
 
+  if (path === "/") {
+    const documentNumber = req.nextUrl.searchParams.get("document")
+    const email = req.nextUrl.searchParams.get("email")
+
+    if (documentNumber || email) {
+      try {
+        // Verificar estado del registro
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register/check-status`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            documentNumber,
+            email,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok && data.status === "incomplete") {
+          // Solo redirigir si está incompleto
+          const registrationUrl = new URL("/registration-status", req.url)
+          registrationUrl.searchParams.set("registration_id", data.registration_id)
+          registrationUrl.searchParams.set("current_step", data.current_step)
+          registrationUrl.searchParams.set("last_step", data.last_completed_step)
+          return NextResponse.redirect(registrationUrl)
+        }
+      } catch (error) {
+        console.error("Error checking registration status:", error)
+      }
+    }
+  }
+
   // Manejo especial para la ruta /socio-aprobado
   if (esSocioAprobado) {
     const registrationId = req.nextUrl.searchParams.get("registration_id");
