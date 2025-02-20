@@ -1,3 +1,4 @@
+// app\admin\socios\types\Socios.types.ts
 export interface Socio {
   id: number;
   name: string;
@@ -30,6 +31,11 @@ export interface DatosNegocio {
   razon_social: string;
 }
 
+export interface DocumentosPdfExtranjero {
+  antecedentes_penales_pdf: string
+  antecedentes_policiales_pdf: string
+}
+
 export interface DetallesSocio {
   id: number;
   personal: {
@@ -39,13 +45,16 @@ export interface DetallesSocio {
     phone: string;
     businessType: string;
     created_at: string;
+    
   };
+  documentosPdfExtranjero: DocumentosPdfExtranjero | null;
   business: {
     nombre: string;
     total_sucursales: number;
     metodo_contacto: string;
     telefono: string;
   } | null;
+
   businessData: DatosNegocio | null;
   establishment: DatosEstablecimiento | null;
   bankData: DatosBancarios | null;
@@ -58,4 +67,13 @@ export interface DetallesSocio {
     imagenes_cuenta: string[];
   } | null;
   aprobado: boolean;
+  
+}
+export interface SocioCompleto extends Socio {
+  personal: boolean
+  business: boolean //negocio
+  businessData: boolean //datosClaves
+  establishment: boolean //establecimiento
+  bankData: boolean
+  cuentaBancaria: boolean
 }

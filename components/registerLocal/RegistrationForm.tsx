@@ -1,19 +1,23 @@
-// socio formulario de registro de locales
 "use client"
 
 import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, ArrowRight } from "lucide-react"
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
 import { ValidationAlert } from "@/components/ValidationAlert"
 import { createRegistrationToken } from "@/services/registrationTokenService"
+import type { FormData, BusinessType } from "./types"
+import { useFormHandlers } from "./useFormHandlers"
+import { FormFields } from "./FormFields"
 
 export default function RegistrationForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [currentStep, setCurrentStep] = useState(1)
+  const [formData, setFormData] = useState<FormData>({
     documentType: "DNI",
     documentNumber: "",
     name: "",
@@ -24,12 +28,15 @@ export default function RegistrationForm() {
   })
   const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
-  const [businessTypes, setBusinessTypes] = useState<
-    Array<{
-      id: number
-      nombre: string
-    }>
-  >([])
+  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([])
+
+  const { handleInputChange, handlePhoneChange } = useFormHandlers(
+    formData,
+    setFormData,
+    setIsFieldsLocked,
+    setError,
+    setIsLoading,
+  )
 
   useEffect(() => {
     const fetchBusinessTypes = async () => {
@@ -46,119 +53,24 @@ export default function RegistrationForm() {
     fetchBusinessTypes()
   }, [])
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.value
+  const handleNext = (e: React.FormEvent) => {
+    e.preventDefault()
 
-    if (!value.startsWith("+51")) {
+    // Validar campos requeridos del primer paso
+    if (
+      !formData.documentNumber ||
+      !formData.name ||
+      !formData.lastName ||
+      !formData.businessType ||
+      !formData.phone ||
+      !formData.email
+    ) {
+      setError("Todos los campos son obligatorios")
       return
     }
 
-    const numberPart = value.substring(3)
-    const numbersOnly = numberPart.replace(/\D/g, "")
-
-    if (numbersOnly.length <= 9) {
-      let formattedNumber = "+51"
-      if (numbersOnly.length > 0) {
-        formattedNumber += " " + numbersOnly.substring(0, 3)
-        if (numbersOnly.length > 3) {
-          formattedNumber += " " + numbersOnly.substring(3, 6)
-          if (numbersOnly.length > 6) {
-            formattedNumber += " " + numbersOnly.substring(6)
-          }
-        }
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        phone: formattedNumber,
-      }))
-    }
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-
-    if (name === "documentType") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        documentNumber: "",
-        name: "",
-        lastName: "",
-      }))
-      setIsFieldsLocked(false)
-      setError(null)
-      return
-    }
-
-    if (name === "phone") {
-      handlePhoneChange(e)
-      return
-    }
-
-    if (name === "documentNumber") {
-      const numbersOnly = value.replace(/\D/g, "")
-      setFormData((prev) => ({
-        ...prev,
-        [name]: numbersOnly,
-      }))
-
-      if (
-        (formData.documentType === "DNI" && numbersOnly.length === 8) ||
-        (formData.documentType === "RUC" && numbersOnly.length === 11)
-      ) {
-        fetchDocumentInfo(formData.documentType, numbersOnly)
-      }
-      return
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const fetchDocumentInfo = async (type: string, number: string) => {
-    setIsLoading(true)
+    setCurrentStep(2)
     setError(null)
-
-    try {
-      const url =
-        type === "DNI"
-          ? `https://dniruc.apisperu.com/api/v1/dni/${number}`
-          : `https://dniruc.apisperu.com/api/v1/ruc/${number}`
-
-      const response = await fetch(`${url}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`)
-      const data = await response.json()
-
-      if (type === "DNI") {
-        if (data.success) {
-          setFormData((prev) => ({
-            ...prev,
-            name: data.nombres,
-            lastName: `${data.apellidoPaterno} ${data.apellidoMaterno}`.trim(),
-          }))
-          setIsFieldsLocked(true)
-        } else {
-          setError("No se encontraron datos para el DNI proporcionado")
-        }
-      } else {
-        if (data.ruc) {
-          setFormData((prev) => ({
-            ...prev,
-            name: data.razonSocial,
-          }))
-          setIsFieldsLocked(true)
-        } else {
-          setError("No se encontraron datos para el RUC proporcionado")
-        }
-      }
-    } catch (error) {
-      setError("Error al conectar con el servicio de validación")
-      console.log(error)
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,75 +79,49 @@ export default function RegistrationForm() {
     setError(null)
 
     try {
-      if (
-        !formData.documentNumber ||
-        !formData.name ||
-        !formData.lastName ||
-        !formData.businessType ||
-        !formData.phone ||
-        !formData.email
-      ) {
-        setError("Todos los campos son obligatorios")
-        setIsLoading(false)
-        return
+      const formDataToSend = new FormData()
+
+      // Agregar campos básicos
+      formDataToSend.append("documentType", formData.documentType)
+      formDataToSend.append("documentNumber", formData.documentNumber)
+      formDataToSend.append("name", formData.name)
+      formDataToSend.append("lastName", formData.lastName)
+      formDataToSend.append("businessType", formData.businessType)
+      formDataToSend.append("phone", formData.phone.replace(/\D/g, ""))
+      formDataToSend.append("email", formData.email)
+
+      // Agregar documentos si es Carnet de Extranjería
+      if (formData.documentType === "CARNET_EXTRANJERIA") {
+        if (!formData.antecedentesPenales || !formData.antecedentesPoliciales) {
+          setError("Debe subir ambos documentos")
+          setIsLoading(false)
+          return
+        }
+
+        formDataToSend.append("antecedentesPenales", formData.antecedentesPenales)
+        formDataToSend.append("antecedentesPoliciales", formData.antecedentesPoliciales)
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          documentType: formData.documentType,
-          documentNumber: formData.documentNumber,
-          name: formData.name,
-          lastName: formData.lastName,
-          businessType: formData.businessType,
-          phone: formData.phone.replace(/\D/g, ""),
-          email: formData.email,
-        }),
+        body: formDataToSend,
       })
 
       const data = await response.json()
 
-      console.log("Server response:", data)
-
       if (!response.ok) {
-        if (data.error === "dni_registered") {
-          setError("dni_registered")
-        } else if (data.error === "duplicate_in_reparto") {
-          setError(data.message)
-        } else if (
-          data.error &&
-          typeof data.error === "string" &&
-          (data.error.toLowerCase().includes("email") ||
-            data.error.toLowerCase().includes("correo") ||
-            data.error.toLowerCase().includes("duplicado"))
-        ) {
-          setError("email_taken")
-        } else if (
-          data.message &&
-          typeof data.message === "string" &&
-          (data.message.toLowerCase().includes("email") ||
-            data.message.toLowerCase().includes("correo") ||
-            data.message.toLowerCase().includes("duplicado"))
-        ) {
-          setError("email_taken")
-        } else {
-          setError("Hubo un problema al registrar el negocio. Por favor, intente nuevamente.")
-        }
+        handleRegistrationError(data.error, data.message)
+        return
+      }
+
+      if (data.error === "incomplete_registration") {
+        router.push(`/registration-status?registration_id=${data.registration_id}`)
         return
       }
 
       if (data.registration_id) {
-        try {
-          await createRegistrationToken(data.registration_id.toString(), "/email")
-          router.push(`/email?email=${encodeURIComponent(formData.email)}`)
-        } catch (tokenError) {
-          console.error("Error al crear el token de registro:", tokenError)
-          setError("Hubo un problema al procesar su registro. Por favor, intente nuevamente.")
-        }
+        await createRegistrationToken(data.registration_id.toString(), "/email")
+        router.push(`/email?email=${encodeURIComponent(formData.email)}`)
       } else {
         setError("No se recibió un ID de registro válido del servidor.")
       }
@@ -247,125 +133,39 @@ export default function RegistrationForm() {
     }
   }
 
+  const handleRegistrationError = (error: string, message: string) => {
+    if (error === "dni_registered") {
+      setError("dni_registered")
+    } else if (error === "duplicate_in_reparto") {
+      setError(message)
+    } else if (
+      error?.toLowerCase().includes("email") ||
+      error?.toLowerCase().includes("correo") ||
+      error?.toLowerCase().includes("duplicado")
+    ) {
+      setError("email_taken")
+    } else {
+      setError("Hubo un problema al registrar el negocio. Por favor, intente nuevamente.")
+    }
+  }
+
   return (
     <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">¡Registra tu local ahora!</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Tipo de Documento *</label>
-          <select
-            name="documentType"
-            value={formData.documentType}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200"
-          >
-            <option value="DNI">DNI</option>
-            <option value="RUC">RUC</option>
-            <option value="CARNET_EXTRANJERIA">Carnet de Extranjería</option>
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Número de Documento *</label>
-          <input
-            type="text"
-            name="documentNumber"
-            value={formData.documentNumber}
-            onChange={handleInputChange}
-            required
-            maxLength={formData.documentType === "RUC" ? 11 : 8}
-            placeholder="Ingrese su número de documento"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Nombre *</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            required
-            disabled={isFieldsLocked}
-            placeholder="Ingrese su nombre"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Apellido *</label>
-          <input
-            type="text"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleInputChange}
-            required
-            disabled={isFieldsLocked}
-            placeholder="Ingrese su apellido"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
-          <select
-            name="businessType"
-            value={formData.businessType}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200"
-          >
-            <option value="">Seleccione tipo de negocio</option>
-            {businessTypes.map((type) => (
-              <option key={type.id} value={type.nombre}>
-                {type.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Teléfono *</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handlePhoneChange}
-            required
-            placeholder="Ingrese su número de teléfono"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Correo Electrónico *</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            placeholder="Ingrese su correo electrónico"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                     text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                     transition-colors duration-200"
-          />
-        </div>
+      <form
+        onSubmit={formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 1 ? handleNext : handleSubmit}
+        className="space-y-4"
+      >
+        <FormFields
+          formData={formData}
+          setFormData={setFormData}
+          businessTypes={businessTypes}
+          isFieldsLocked={isFieldsLocked}
+          handleInputChange={handleInputChange}
+          handlePhoneChange={handlePhoneChange}
+          currentStep={currentStep}
+        />
 
         {error &&
           (error === "email_taken" ? (
@@ -384,10 +184,34 @@ export default function RegistrationForm() {
           className="w-full px-4 py-2 rounded-lg bg-red-500 text-white font-semibold 
                    focus:ring-2 focus:ring-[#f34739] focus:ring-opacity-50 
                    hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
-                   transition-colors duration-200"
+                   transition-colors duration-200 flex items-center justify-center gap-2"
         >
-          {isLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : "Registrar"}
+          {isLoading ? (
+            <Loader2 className="animate-spin h-5 w-5" />
+          ) : (
+            <>
+              {formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 1 ? (
+                <>
+                  Siguiente
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              ) : (
+                "Registrar"
+              )}
+            </>
+          )}
         </button>
+
+        {formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 2 && (
+          <button
+            type="button"
+            onClick={() => setCurrentStep(1)}
+            className="w-full mt-2 px-4 py-2 rounded-lg border border-red-500 text-red-500 font-semibold 
+                     hover:bg-red-50 transition-colors duration-200"
+          >
+            Volver
+          </button>
+        )}
       </form>
     </div>
   )
