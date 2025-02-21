@@ -1,3 +1,4 @@
+// app\login\page.tsx
 
 "use client";
 
@@ -7,6 +8,7 @@ import { useLoginForm } from "./useLoginForm";
 import Image from "next/image";
 import { FaEye, FaEyeSlash, FaChartBar } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
+import { checkAuth } from "@/services/apiService";
 
 const LoginPage: React.FC = () => {
   const {
@@ -22,11 +24,40 @@ const LoginPage: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      router.replace("/admin/dashboard");
+    const verifyAuth = async () => {
+      const token = localStorage.getItem("authToken")
+      if (token) {
+        try {
+          const { authenticated, role } = await checkAuth()
+          if (authenticated) {
+            switch (role) {
+              case "admin":
+                router.replace("/admin/dashboard")
+                break
+              case "negocio":
+                router.replace("/socio/admin")
+                break
+              case "motorizado":
+                router.replace("/motorizado/admin")
+                break
+              default:
+                // Si el rol no es reconocido, no redirigimos
+                break
+            }
+          }
+        } catch (error) {
+          console.error("Error verificando autenticación:", error)
+        }
+      }
     }
-  }, [router]);
+
+    verifyAuth()
+  }, [router])
+  //   const token = localStorage.getItem("authToken");
+  //   if (token) {
+  //     router.push("/admin/dashboard");
+  //   }
+  // }, [router]);
 
   return (
     <div className="flex min-h-screen">

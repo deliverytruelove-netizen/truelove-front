@@ -30,6 +30,7 @@ const AvatarSettings: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    localStorage.removeItem("userRole");
     document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     router.push('/login');
   };
