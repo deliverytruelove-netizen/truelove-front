@@ -8,10 +8,12 @@ interface PostDataParams {
 }
 
 export const postData = async <T = Record<string, unknown>>({
+    
     endpoint,
     data,
     token,
 }: PostDataParams): Promise<T> => {
+
     try {
         const response = await fetch(`${API_URL}/${endpoint}`, {
             method: 'POST',
@@ -67,35 +69,39 @@ export const verifyEmail = async (email: string): Promise<{ exists: boolean; mes
 };
 
 
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    // Add other user properties here
+export interface User {
+  id: number
+  usuario: string
+  email: string
+  businessRegistration?: {
+    id: number
+    name: string
+    businessType: string
+  }
 }
 
 export const checkAuth = async (): Promise<{ authenticated: boolean; user?: User; role?: string }> => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken")
     if (!token) {
-        return { authenticated: false };
+      return { authenticated: false }
     }
-
+  
     try {
-        const response = await fetch(`${API_URL}/admin/check-auth`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error('Error en la verificación de autenticación');
-        }
-
-        const data = await response.json();
-        return data;
+      const response = await fetch(`${API_URL}/admin/check-auth`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+  
+      if (!response.ok) {
+        throw new Error("Error en la verificación de autenticación")
+      }
+  
+      const data = await response.json()
+      return data
     } catch (error) {
-        console.error('Error en la verificación de autenticación:', error);
-        return { authenticated: false };
+      console.error("Error en la verificación de autenticación:", error)
+      return { authenticated: false }
     }
-};
+  }
