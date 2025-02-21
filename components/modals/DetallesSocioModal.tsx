@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { User, Briefcase, MapPin, CreditCard, Mail, Phone, Calendar, Building, Image, FileText } from "lucide-react"
+import { User, Briefcase, MapPin, CreditCard, Mail, Phone, Calendar, Building, FileText } from "lucide-react"
 import NextImage from "next/image"
 import { PDFViewer } from "../PDFViewer"
 
@@ -298,7 +298,7 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               />
               <TabButton
                 isActive={activeTab === "cuenta_bancaria"}
-                icon={<Image className="w-5 h-5" />}
+                icon={<FileText className="w-5 h-5" />}
                 label="Cuenta Bancaria"
                 onClick={() => setActiveTab("cuenta_bancaria")}
               />
