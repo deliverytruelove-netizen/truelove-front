@@ -52,7 +52,8 @@ export default function DocumentInput({
     // Validar longitud del número de documento y buscar datos
     if (
       (documentType === 'DNI' && value.length === 8) ||
-      (documentType === 'RUC' && value.length === 11)
+      (documentType === 'RUC' && value.length === 11) ||
+      (documentType === 'CARNET_EXTRANJERIA' && value.length)
     ) {
       fetchDocumentData(value);
     }
@@ -145,7 +146,7 @@ export default function DocumentInput({
           value={documentNumber}
           onChange={handleDocumentNumberChange}
           required
-          maxLength={documentType === 'RUC' ? 11 : 8}
+          maxLength={documentType === 'RUC' ? 11 : 50}
           placeholder="Ingrese su número de documento"
           className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                      text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
