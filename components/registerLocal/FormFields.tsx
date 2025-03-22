@@ -157,7 +157,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           value={formData.documentNumber}
           onChange={handleInputChange}
           required
-          maxLength={formData.documentType === "RUC" ? 11 : 8}
+          maxLength={formData.documentType === "RUC" ? 11 : 20}
           placeholder="Ingrese su número de documento"
           className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
                    text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
