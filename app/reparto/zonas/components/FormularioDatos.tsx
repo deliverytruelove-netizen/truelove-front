@@ -11,13 +11,11 @@ import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
 import React from "react"
 
-interface Ciudad {
-  id: number
-  nombre: string
-}
-
-interface Distrito {
-  id: number
+interface Ubigeo {
+  id_ubigeo: number
+  departamento: string
+  provincia: string
+  distrito: string
   nombre: string
 }
 
@@ -25,9 +23,11 @@ export function FormularioDatos() {
   const router = useRouter()
   const [repartoRegistroId, setRepartoRegistroId] = React.useState<string | null>(null)
   const [imagenCapturada, setImagenCapturada] = useState<string | null>(null)
-  const [ciudades, setCiudades] = useState<Ciudad[]>([])
-  const [distritos, setDistritos] = useState<Distrito[]>([])
-  const [ciudadSeleccionada, setCiudadSeleccionada] = useState<string>("")
+  const [departamentos, setDepartamentos] = useState<Ubigeo[]>([])
+  const [provincias, setProvincias] = useState<Ubigeo[]>([])
+  const [distritos, setDistritos] = useState<Ubigeo[]>([])
+  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState<string>("")
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string>("")
   const [distritoSeleccionado, setDistritoSeleccionado] = useState<string>("")
   const [genero, setGenero] = useState<string>("")
   const [fechaNacimiento, setFechaNacimiento] = useState<string>("")
@@ -35,7 +35,8 @@ export function FormularioDatos() {
   const [generoError, setGeneroError] = useState<string>("")
   const [selfieError, setSelfieError] = useState<string>("")
   const [fechaNacimientoError, setFechaNacimientoError] = useState<string>("")
-  const [ciudadError, setCiudadError] = useState<string>("")
+  const [departamentoError, setDepartamentoError] = useState<string>("")
+  const [provinciaError, setProvinciaError] = useState<string>("")
   const [distritoError, setDistritoError] = useState<string>("")
 
   React.useEffect(() => {
@@ -47,13 +48,74 @@ export function FormularioDatos() {
     }
   }, [router])
 
-  // Define obtenerDistritos first since it's used in manejarCambioCiudad
-  const obtenerDistritos = useCallback(async (ciudadId: string) => {
-    if (!ciudadId) return
+  const manejarCaptura = useCallback((srcImagen: string) => {
+    setImagenCapturada(srcImagen)
+  }, [])
+
+  const obtenerDepartamentos = useCallback(async () => {
+    try {
+      setCargando(true)
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/departamentos`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      })
+
+      if (!respuesta.ok) {
+        throw new Error(`Error al obtener departamentos: ${respuesta.status}`)
+      }
+
+      const datos = await respuesta.json()
+      setDepartamentos(datos)
+    } catch (error) {
+      console.error("Error al obtener departamentos:", error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los departamentos. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  const obtenerProvincias = useCallback(async (departamentoId: string) => {
+    if (!departamentoId) return
 
     try {
       setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${ciudadId}`, {
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/provincias/${departamentoId}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      })
+
+      if (!respuesta.ok) {
+        throw new Error(`Error al obtener provincias: ${respuesta.status}`)
+      }
+
+      const datos = await respuesta.json()
+      setProvincias(datos)
+    } catch (error) {
+      console.error("Error al obtener provincias:", error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las provincias. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  const obtenerDistritos = useCallback(async (departamentoId: string, provinciaId: string) => {
+    if (!departamentoId || !provinciaId) return
+
+    try {
+      setCargando(true)
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${departamentoId}/${provinciaId}`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -78,50 +140,31 @@ export function FormularioDatos() {
     }
   }, [])
 
-  const manejarCaptura = useCallback((srcImagen: string) => {
-    setImagenCapturada(srcImagen)
-  }, [])
-
-  const manejarCambioCiudad = useCallback(
-    (ciudadId: string) => {
-      setCiudadSeleccionada(ciudadId)
+  const manejarCambioDepartamento = useCallback(
+    (departamentoId: string) => {
+      setDepartamentoSeleccionado(departamentoId)
+      setProvinciaSeleccionada("")
       setDistritoSeleccionado("")
-      void obtenerDistritos(ciudadId)
+      setProvincias([])
+      setDistritos([])
+      void obtenerProvincias(departamentoId)
     },
-    [obtenerDistritos],
+    [obtenerProvincias],
   )
 
-  const obtenerCiudades = useCallback(async () => {
-    try {
-      setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/ciudades`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      })
-
-      if (!respuesta.ok) {
-        throw new Error(`Error al obtener ciudades: ${respuesta.status}`)
-      }
-
-      const datos = await respuesta.json()
-      setCiudades(datos)
-    } catch (error) {
-      console.error("Error al obtener ciudades:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las ciudades. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
-    }
-  }, [])
+  const manejarCambioProvincia = useCallback(
+    (provinciaId: string) => {
+      setProvinciaSeleccionada(provinciaId)
+      setDistritoSeleccionado("")
+      setDistritos([])
+      void obtenerDistritos(departamentoSeleccionado, provinciaId)
+    },
+    [departamentoSeleccionado, obtenerDistritos],
+  )
 
   useEffect(() => {
-    void obtenerCiudades()
-  }, [obtenerCiudades])
+    void obtenerDepartamentos()
+  }, [obtenerDepartamentos])
 
   useEffect(() => {
     if (genero) {
@@ -142,10 +185,16 @@ export function FormularioDatos() {
   }, [fechaNacimiento])
 
   useEffect(() => {
-    if (ciudadSeleccionada) {
-      setCiudadError("")
+    if (departamentoSeleccionado) {
+      setDepartamentoError("")
     }
-  }, [ciudadSeleccionada])
+  }, [departamentoSeleccionado])
+
+  useEffect(() => {
+    if (provinciaSeleccionada) {
+      setProvinciaError("")
+    }
+  }, [provinciaSeleccionada])
 
   useEffect(() => {
     if (distritoSeleccionado) {
@@ -177,11 +226,18 @@ export function FormularioDatos() {
       setSelfieError("")
     }
 
-    if (!ciudadSeleccionada) {
-      setCiudadError("Por favor, selecciona tu ciudad.")
+    if (!departamentoSeleccionado) {
+      setDepartamentoError("Por favor, selecciona tu departamento.")
       esValido = false
     } else {
-      setCiudadError("")
+      setDepartamentoError("")
+    }
+
+    if (!provinciaSeleccionada) {
+      setProvinciaError("Por favor, selecciona tu provincia.")
+      esValido = false
+    } else {
+      setProvinciaError("")
     }
 
     if (!distritoSeleccionado) {
@@ -192,7 +248,7 @@ export function FormularioDatos() {
     }
 
     return esValido
-  }, [fechaNacimiento, genero, imagenCapturada, ciudadSeleccionada, distritoSeleccionado])
+  }, [fechaNacimiento, genero, imagenCapturada, departamentoSeleccionado, provinciaSeleccionada, distritoSeleccionado])
 
   const manejarEnvio = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -225,8 +281,7 @@ export function FormularioDatos() {
       datosFormulario.append("reparto_registro_id", repartoRegistroId!)
       datosFormulario.append("fecha_nacimiento", fechaNacimiento)
       datosFormulario.append("genero", genero)
-      datosFormulario.append("ciudad_id", ciudadSeleccionada)
-      datosFormulario.append("distrito_id", distritoSeleccionado)
+      datosFormulario.append("ubigeo_id", distritoSeleccionado)
 
       if (imagenComprimida) {
         datosFormulario.append("selfie", imagenComprimida, "selfie.jpg")
@@ -245,11 +300,6 @@ export function FormularioDatos() {
         }
         throw new Error("Error al enviar el formulario")
       }
-
-      // toast({
-      //   title: "Éxito",
-      //   description: "Datos personales guardados correctamente.",
-      // })
 
       // Mantener el ID en sessionStorage para la siguiente página
       sessionStorage.setItem("repartoRegistroId", repartoRegistroId!)
@@ -325,20 +375,42 @@ export function FormularioDatos() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="ciudad">Ciudad</Label>
-          <Select value={ciudadSeleccionada} onValueChange={manejarCambioCiudad} name="ciudad">
-            <SelectTrigger id="ciudad" aria-required="true">
-              <SelectValue placeholder="Selecciona tu ciudad" />
+          <Label htmlFor="departamento">Departamento</Label>
+          <Select value={departamentoSeleccionado} onValueChange={manejarCambioDepartamento} name="departamento">
+            <SelectTrigger id="departamento" aria-required="true">
+              <SelectValue placeholder="Selecciona tu departamento" />
             </SelectTrigger>
             <SelectContent>
-              {ciudades.map((ciudad) => (
-                <SelectItem key={ciudad.id} value={ciudad.id.toString()}>
-                  {ciudad.nombre}
+              {departamentos.map((departamento) => (
+                <SelectItem key={departamento.id_ubigeo} value={departamento.departamento}>
+                  {departamento.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {ciudadError && <p className="text-sm text-red-500 mt-1">{ciudadError}</p>}
+          {departamentoError && <p className="text-sm text-red-500 mt-1">{departamentoError}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="provincia">Provincia</Label>
+          <Select
+            value={provinciaSeleccionada}
+            onValueChange={manejarCambioProvincia}
+            disabled={!departamentoSeleccionado}
+            name="provincia"
+          >
+            <SelectTrigger id="provincia" aria-required="true">
+              <SelectValue placeholder="Selecciona tu provincia" />
+            </SelectTrigger>
+            <SelectContent>
+              {provincias.map((provincia) => (
+                <SelectItem key={provincia.id_ubigeo} value={provincia.provincia}>
+                  {provincia.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {provinciaError && <p className="text-sm text-red-500 mt-1">{provinciaError}</p>}
         </div>
 
         <div className="space-y-2">
@@ -346,7 +418,7 @@ export function FormularioDatos() {
           <Select
             value={distritoSeleccionado}
             onValueChange={setDistritoSeleccionado}
-            disabled={!ciudadSeleccionada}
+            disabled={!provinciaSeleccionada}
             name="distrito"
           >
             <SelectTrigger id="distrito" aria-required="true">
@@ -354,7 +426,7 @@ export function FormularioDatos() {
             </SelectTrigger>
             <SelectContent>
               {distritos.map((distrito) => (
-                <SelectItem key={distrito.id} value={distrito.id.toString()}>
+                <SelectItem key={distrito.id_ubigeo} value={distrito.id_ubigeo.toString()}>
                   {distrito.nombre}
                 </SelectItem>
               ))}
