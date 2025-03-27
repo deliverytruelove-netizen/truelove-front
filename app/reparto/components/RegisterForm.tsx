@@ -397,7 +397,7 @@ export default function RegisterForm() {
                         value={formData.nroDocumento}
                         onChange={(e) => handleDocumentChange(e.target.value)}
                         required
-                        maxLength={formData.tipoDocumento === "RUC" ? 11 : 8}
+                        maxLength={formData.tipoDocumento === "RUC" ? 11 : 20}
                         className={isLoading ? "pr-10" : ""}
                         disabled={isLoading}
                       />
