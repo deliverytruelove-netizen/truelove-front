@@ -3,7 +3,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -45,6 +45,63 @@ export function VehicleRegistrationForm() {
       tarjetaPropiedad: "",
     },
   })
+  const cargarDatosExistentes = useCallback(
+    async (id: string) => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/registro-vehiculo/${id}`)
+
+        if (!response.ok) {
+          // Si no hay datos, simplemente continuamos sin mostrar error
+          if (response.status === 404) {
+            setIsLoading(false)
+            return
+          }
+          throw new Error("Error al obtener datos del vehículo")
+        }
+
+        const data = await response.json()
+
+        // Si hay datos de vehículo, establecerlos
+        if (data.registro_vehiculo) {
+          const vehiculo = data.registro_vehiculo
+
+          // Establecer valores del formulario
+          form.setValue("placa", vehiculo.placa)
+          form.setValue("licenciaConducir", vehiculo.licencia_conducir)
+          form.setValue("seguro", vehiculo.seguro)
+          form.setValue("tarjetaPropiedad", vehiculo.tarjeta_propiedad)
+
+          // Establecer imágenes
+          const imagenesActualizadas: { [key: string]: string } = {}
+
+          if (vehiculo.imagenes.imagen_placa) {
+            imagenesActualizadas.placa = vehiculo.imagenes.imagen_placa
+          }
+
+          if (vehiculo.imagenes.imagen_licencia) {
+            imagenesActualizadas.licenciaConducir = vehiculo.imagenes.imagen_licencia
+          }
+
+          if (vehiculo.imagenes.imagen_seguro) {
+            imagenesActualizadas.seguro = vehiculo.imagenes.imagen_seguro
+          }
+
+          if (vehiculo.imagenes.imagen_tarjeta_propiedad) {
+            imagenesActualizadas.tarjetaPropiedad = vehiculo.imagenes.imagen_tarjeta_propiedad
+          }
+
+          setImages(imagenesActualizadas)
+        }
+      } catch (error) {
+        console.error("Error al cargar datos existentes:", error)
+        // No mostramos toast aquí porque podría ser un registro nuevo
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [form],
+  )
 
   useEffect(() => {
     const id = sessionStorage.getItem("repartoRegistroId")
@@ -60,63 +117,9 @@ export function VehicleRegistrationForm() {
       // Cargar datos existentes
       cargarDatosExistentes(id)
     }
-  }, [router, toast])
+  }, [router, toast, cargarDatosExistentes])
 
-  const cargarDatosExistentes = async (id: string) => {
-    try {
-      setIsLoading(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/registro-vehiculo/${id}`)
-
-      if (!response.ok) {
-        // Si no hay datos, simplemente continuamos sin mostrar error
-        if (response.status === 404) {
-          setIsLoading(false)
-          return
-        }
-        throw new Error("Error al obtener datos del vehículo")
-      }
-
-      const data = await response.json()
-
-      // Si hay datos de vehículo, establecerlos
-      if (data.registro_vehiculo) {
-        const vehiculo = data.registro_vehiculo
-
-        // Establecer valores del formulario
-        form.setValue("placa", vehiculo.placa)
-        form.setValue("licenciaConducir", vehiculo.licencia_conducir)
-        form.setValue("seguro", vehiculo.seguro)
-        form.setValue("tarjetaPropiedad", vehiculo.tarjeta_propiedad)
-
-        // Establecer imágenes
-        const imagenesActualizadas: { [key: string]: string } = {}
-
-        if (vehiculo.imagenes.imagen_placa) {
-          imagenesActualizadas.placa = vehiculo.imagenes.imagen_placa
-        }
-
-        if (vehiculo.imagenes.imagen_licencia) {
-          imagenesActualizadas.licenciaConducir = vehiculo.imagenes.imagen_licencia
-        }
-
-        if (vehiculo.imagenes.imagen_seguro) {
-          imagenesActualizadas.seguro = vehiculo.imagenes.imagen_seguro
-        }
-
-        if (vehiculo.imagenes.imagen_tarjeta_propiedad) {
-          imagenesActualizadas.tarjetaPropiedad = vehiculo.imagenes.imagen_tarjeta_propiedad
-        }
-
-        setImages(imagenesActualizadas)
-      }
-    } catch (error) {
-      console.error("Error al cargar datos existentes:", error)
-      // No mostramos toast aquí porque podría ser un registro nuevo
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+ 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!repartoRegistroId) {
       toast({

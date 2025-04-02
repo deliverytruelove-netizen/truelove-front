@@ -1,3 +1,4 @@
+// app\reparto\zonas\components\FormularioDatos.tsx
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -55,19 +56,36 @@ export function FormularioDatos() {
   const [provinciaError, setProvinciaError] = useState<string>("")
   const [distritoError, setDistritoError] = useState<string>("")
 
-  React.useEffect(() => {
-    const id = sessionStorage.getItem("repartoRegistroId")
-    if (!id) {
-      router.push("/reparto/registro")
-    } else {
-      setRepartoRegistroId(id)
-      // Cargar datos existentes
-      cargarDatosExistentes(id)
+  const obtenerDepartamentosFunc = async () => {
+    try {
+      setCargando(true)
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/departamentos`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      })
+
+      if (!respuesta.ok) {
+        throw new Error(`Error al obtener departamentos: ${respuesta.status}`)
+      }
+
+      const datos = await respuesta.json()
+      setDepartamentos(datos)
+    } catch (error) {
+      console.error("Error al obtener departamentos:", error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los departamentos. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setCargando(false)
     }
-  }, [router])
+  }
 
   // Modificar la función cargarDatosExistentes para manejar correctamente la carga de ubicación
-  const cargarDatosExistentes = async (id: string) => {
+  const cargarDatosExistentesFunc = async (id: string) => {
     try {
       setCargandoDatos(true)
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-personales/${id}`)
@@ -150,38 +168,24 @@ export function FormularioDatos() {
       setCargandoDatos(false)
     }
   }
+  const obtenerDepartamentos = useCallback(obtenerDepartamentosFunc, [])
+  const cargarDatosExistentes = useCallback(cargarDatosExistentesFunc, [obtenerDepartamentos])
+  React.useEffect(() => {
+    const id = sessionStorage.getItem("repartoRegistroId")
+    if (!id) {
+      router.push("/reparto/registro")
+    } else {
+      setRepartoRegistroId(id)
+      // Cargar datos existentes
+      cargarDatosExistentes(id)
+    }
+  }, [router, cargarDatosExistentes])
 
   const manejarCaptura = useCallback((srcImagen: string) => {
     setImagenCapturada(srcImagen)
   }, [])
 
-  const obtenerDepartamentos = useCallback(async () => {
-    try {
-      setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/departamentos`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      })
-
-      if (!respuesta.ok) {
-        throw new Error(`Error al obtener departamentos: ${respuesta.status}`)
-      }
-
-      const datos = await respuesta.json()
-      setDepartamentos(datos)
-    } catch (error) {
-      console.error("Error al obtener departamentos:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los departamentos. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
-    }
-  }, [])
+ 
 
   const obtenerProvincias = useCallback(async (departamentoId: string) => {
     if (!departamentoId) return
