@@ -1,10 +1,9 @@
-// reparto
 "use client"
 
 import * as React from "react"
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, ArrowLeft, Loader2, Camera, Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -20,7 +19,6 @@ import { WebcamModal } from "./WebcamModal"
 import { useMediaQuery } from "../hooks/use-media-query"
 import { VisualCaptcha } from "./VisualCapcha"
 import { ValidationAlert } from "@/components/ValidationAlert"
-
 
 interface FormData {
   departamento: string
@@ -53,9 +51,11 @@ const formVariants = {
 export default function RegisterForm() {
   const [step, setStep] = React.useState(1)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [isCheckingStatus, setIsCheckingStatus] = React.useState(false)
   const [showCaptcha, setShowCaptcha] = React.useState(false)
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = React.useState<FormData>({
     departamento: "",
     vehiculo: "",
@@ -80,11 +80,52 @@ export default function RegisterForm() {
   const fileInputRefReverso = React.useRef<HTMLInputElement>(null)
   const isMobile = useMediaQuery("(max-width: 768px)")
 
+  // Verificar si hay un registro existente al cargar el componente
+  useEffect(() => {
+    const checkExistingRegistration = async () => {
+      const document = searchParams.get("document")
+      const email = searchParams.get("email")
+
+      if (document || email) {
+        setIsCheckingStatus(true)
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/check-status`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              nroDocumento: document,
+              email: email,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error("Error al verificar el estado del registro")
+          }
+
+          const data = await response.json()
+
+          if (data.status === "incomplete" && data.registration_id) {
+            router.push(`/reparto/status?registration_id=${data.registration_id}`)
+            return
+          }
+        } catch (error) {
+          console.error("Error al verificar registro existente:", error)
+        } finally {
+          setIsCheckingStatus(false)
+        }
+      }
+    }
+
+    checkExistingRegistration()
+  }, [router, searchParams])
+
   const updateFormData = (field: keyof FormData, value: FormData[keyof FormData]): void => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleNext = (): void => {
+  const handleNextStep = (): void => {
     if (step < 3) {
       setStep(step + 1)
     } else if (isStepComplete()) {
@@ -133,6 +174,13 @@ export default function RegisterForm() {
           setValidationError(data.errors.duplicate[0])
           return
         }
+
+        // Si el registro está incompleto, redirigir a la página de estado
+        if (data.status === "incomplete" && data.registration_id) {
+          router.push(`/reparto/status?registration_id=${data.registration_id}`)
+          return
+        }
+
         throw new Error(data?.message || `Error ${response.status}: ${response.statusText}`)
       }
 
@@ -141,8 +189,22 @@ export default function RegisterForm() {
       //   description: "Tus datos han sido guardados correctamente.",
       // })
 
-      sessionStorage.setItem("repartoRegistroId", data.data.id.toString())
-      router.push("/reparto/zonas")
+      // Si es un registro incompleto, redirigir a la página de estado
+      if (data.status === "incomplete" && data.registration_id) {
+        router.push(`/reparto/status?registration_id=${data.registration_id}`)
+        return
+      }
+
+      // Si es un registro nuevo exitoso
+      if (data.data && data.data.id) {
+        sessionStorage.setItem("repartoRegistroId", data.data.id.toString())
+        router.push("/reparto/zonas")
+        return
+      }
+
+      // Si llegamos aquí, algo salió mal con la estructura de la respuesta
+      console.error("Estructura de respuesta inesperada:", data)
+      throw new Error("La respuesta del servidor no tiene el formato esperado")
     } catch (error) {
       console.error("Detalles del error:", error)
       toast({
@@ -280,6 +342,17 @@ export default function RegisterForm() {
       default:
         return false
     }
+  }
+
+  if (isCheckingStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-red-500" />
+          <p className="mt-4 text-gray-600">Verificando registro...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -579,7 +652,7 @@ export default function RegisterForm() {
           {validationError && <ValidationAlert message={validationError} onClose={() => setValidationError(null)} />}
 
           <Button
-            onClick={handleNext}
+            onClick={handleNextStep}
             disabled={!isStepComplete() || isLoading}
             className="w-full mt-6 bg-red-500 hover:bg-red-600 text-white"
           >

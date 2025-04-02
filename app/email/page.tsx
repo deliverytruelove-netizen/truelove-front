@@ -1,3 +1,4 @@
+//una ves completado el registro me lleva a esta vista donde  app\email\page.tsx
 'use client'
 
 import React, { useState, useEffect, Suspense } from 'react'

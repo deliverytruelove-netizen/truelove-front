@@ -1,3 +1,4 @@
+// app\admin\motorizado\services\motorizado.service.ts
 import { Motorizado, DetallesMotorizado } from '../types/motorizado.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;

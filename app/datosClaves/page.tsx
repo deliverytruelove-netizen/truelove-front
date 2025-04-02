@@ -1,3 +1,4 @@
+// app\datosClaves\page.tsx
 'use client'
 
 import { useState, useEffect } from "react"
@@ -26,6 +27,34 @@ export default function DatosClaveNegocio() {
 
   const isFormValid = formData.ruc.trim() !== '' && formData.razonSocial.trim() !== ''
 
+  // Función para cargar datos existentes
+const fetchExistingData = async (businessRegistrationId: string) => {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio/${businessRegistrationId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${getRegistrationToken()}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status !== 404) {
+        throw new Error("Error al obtener datos clave del negocio");
+      }
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("Datos clave existentes:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching business key data:", error);
+    return null;
+  }
+};
+
   useEffect(() => {
     const checkToken = async () => {
       const data = await getRegistrationData();
@@ -36,7 +65,18 @@ export default function DatosClaveNegocio() {
           variant: "destructive",
         });
         router.push('/');
+        return;
       }
+      if (data.registration_id) {
+        const existingData = await fetchExistingData(data.registration_id);
+        if (existingData){
+          setFormData({
+            ruc: existingData.ruc || '',
+            razonSocial: existingData.razon_social || ''
+          })
+        }
+      }
+
     };
 
     checkToken();
@@ -91,17 +131,27 @@ export default function DatosClaveNegocio() {
   }
 
   const handleNext = async () => {
-    if (!isFormValid) return
-
-    setIsSaving(true)
+    if (!isFormValid) return;
+  
+    setIsSaving(true);
     try {
       const registrationData = await getRegistrationData();
       if (!registrationData) {
         throw new Error('Datos de registro no encontrados');
       }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio`, {
-        method: 'POST',
+  
+      // Verificar si ya existen datos para este registro
+      const existingData = await fetchExistingData(registrationData.registration_id);
+      
+      // URL y método según si es actualización o creación
+      const url = existingData 
+        ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio/${existingData.id}` 
+        : `${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio`;
+      
+      const method = existingData ? 'PUT' : 'POST';
+  
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -112,34 +162,29 @@ export default function DatosClaveNegocio() {
           razon_social: formData.razonSocial,
           business_registration_id: registrationData.registration_id
         })
-      })
-
-      const data = await response.json()
+      });
+  
+      const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.mensaje || 'Error al guardar los datos')
+        throw new Error(data.mensaje || 'Error al guardar los datos');
       }
-
+  
       // Actualizar el paso del registro
       await updateRegistrationStep('/datosBancarios');
-
-      toast({
-        title: "Éxito",
-        description: "Los datos se han guardado correctamente"
-      })
       
-      router.push('/datosBancarios')
+      router.push('/datosBancarios');
     } catch (error: unknown) {
-      console.error('Error completo:', error)
+      console.error('Error completo:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
         variant: "destructive"
-      })
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleBack = async () => {
     try {

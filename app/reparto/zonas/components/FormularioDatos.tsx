@@ -19,6 +19,20 @@ interface Ubigeo {
   nombre: string
 }
 
+// interface DatosPersonales {
+//   id?: number
+//   fecha_nacimiento?: string
+//   genero?: string
+//   url_selfie?: string
+// }
+
+// interface Ubicacion {
+//   departamento?: string
+//   provincia?: string
+//   distrito?: string
+//   ubigeo_id?: string
+// }
+
 export function FormularioDatos() {
   const router = useRouter()
   const [repartoRegistroId, setRepartoRegistroId] = React.useState<string | null>(null)
@@ -32,6 +46,8 @@ export function FormularioDatos() {
   const [genero, setGenero] = useState<string>("")
   const [fechaNacimiento, setFechaNacimiento] = useState<string>("")
   const [cargando, setCargando] = useState(false)
+  const [cargandoDatos, setCargandoDatos] = useState(false)
+  const [datosPersonalesId, setDatosPersonalesId] = useState<number | null>(null)
   const [generoError, setGeneroError] = useState<string>("")
   const [selfieError, setSelfieError] = useState<string>("")
   const [fechaNacimientoError, setFechaNacimientoError] = useState<string>("")
@@ -45,8 +61,95 @@ export function FormularioDatos() {
       router.push("/reparto/registro")
     } else {
       setRepartoRegistroId(id)
+      // Cargar datos existentes
+      cargarDatosExistentes(id)
     }
   }, [router])
+
+  // Modificar la función cargarDatosExistentes para manejar correctamente la carga de ubicación
+  const cargarDatosExistentes = async (id: string) => {
+    try {
+      setCargandoDatos(true)
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-personales/${id}`)
+
+      if (!respuesta.ok) {
+        // Si no hay datos, simplemente continuamos sin mostrar error
+        if (respuesta.status === 404) {
+          return
+        }
+        throw new Error("Error al obtener datos personales")
+      }
+
+      const datos = await respuesta.json()
+      console.log("Datos personales obtenidos:", datos)
+
+      // Si hay datos personales, establecerlos
+      if (datos.datos_personales) {
+        const datosPersonales = datos.datos_personales
+        setDatosPersonalesId(datosPersonales.id)
+
+        // Establecer fecha de nacimiento
+        if (datosPersonales.fecha_nacimiento) {
+          setFechaNacimiento(datosPersonales.fecha_nacimiento)
+        }
+
+        // Establecer género
+        if (datosPersonales.genero) {
+          setGenero(datosPersonales.genero)
+        }
+
+        // Establecer selfie
+        if (datosPersonales.url_selfie) {
+          setImagenCapturada(datosPersonales.url_selfie)
+        }
+      }
+
+      // Si hay información de ubicación, establecerla
+      if (datos.ubicacion) {
+        const ubicacion = datos.ubicacion
+
+        // Primero cargar todos los departamentos
+        await obtenerDepartamentos()
+
+        // Cargar departamento seleccionado
+        if (ubicacion.departamento) {
+          setDepartamentoSeleccionado(ubicacion.departamento)
+
+          // Luego cargar provincias del departamento seleccionado
+          const provinciasData = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/provincias/${ubicacion.departamento}`)
+          if (provinciasData.ok) {
+            const provinciasResult = await provinciasData.json()
+            setProvincias(provinciasResult)
+
+            // Establecer provincia seleccionada
+            if (ubicacion.provincia) {
+              setProvinciaSeleccionada(ubicacion.provincia)
+
+              // Cargar distritos de la provincia seleccionada
+              const distritosData = await fetch(
+                `${process.env.NEXT_PUBLIC_API_WEB}/distritos/${ubicacion.departamento}/${ubicacion.provincia}`,
+              )
+
+              if (distritosData.ok) {
+                const distritosResult = await distritosData.json()
+                setDistritos(distritosResult)
+
+                // Finalmente establecer el distrito seleccionado (ubigeo_id)
+                if (ubicacion.ubigeo_id) {
+                  setDistritoSeleccionado(ubicacion.ubigeo_id.toString())
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error al cargar datos existentes:", error)
+      // No mostramos toast aquí porque podría ser un registro nuevo
+    } finally {
+      setCargandoDatos(false)
+    }
+  }
 
   const manejarCaptura = useCallback((srcImagen: string) => {
     setImagenCapturada(srcImagen)
@@ -261,7 +364,8 @@ export function FormularioDatos() {
       setCargando(true)
 
       let imagenComprimida = null
-      if (imagenCapturada) {
+      // Solo comprimir la imagen si es una captura nueva (base64) y no una URL
+      if (imagenCapturada && imagenCapturada.startsWith("data:")) {
         try {
           const imagenBase64 = await compressImage(imagenCapturada)
           const response = await fetch(imagenBase64)
@@ -287,7 +391,12 @@ export function FormularioDatos() {
         datosFormulario.append("selfie", imagenComprimida, "selfie.jpg")
       }
 
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-personales`, {
+      // Determinar si es una actualización o creación
+      const url = datosPersonalesId
+        ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-personales/${datosPersonalesId}`
+        : `${process.env.NEXT_PUBLIC_API_WEB}/datos-personales`
+
+      const respuesta = await fetch(url, {
         method: "POST",
         body: datosFormulario,
       })
@@ -320,6 +429,14 @@ export function FormularioDatos() {
   }
 
   if (!repartoRegistroId) return null
+
+  if (cargandoDatos) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+      </div>
+    )
+  }
 
   return (
     <form className="space-y-6" onSubmit={manejarEnvio} aria-label="Formulario de datos personales">

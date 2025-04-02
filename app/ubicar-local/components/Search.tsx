@@ -1,3 +1,4 @@
+// app\ubicar-local\components\Search.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'

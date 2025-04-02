@@ -5,21 +5,16 @@ import { useState } from "react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { fetchUsers, changeStateUser, createUser } from "../app/admin/usuarios/services/User.service"
-import DataTable from "@/components/ui/DataTable/DataTable"
-import { DebounceInput } from "@/components/ui/DataTable/DebounceInput"
 import type { User } from "../app/admin/usuarios/types/User.types"
-import type { ColumnSort, ColumnDef, Row } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
-import { FaPlus } from "react-icons/fa"
-import ConfirmationAlert from "@/components/ui/DataTable/ConfirmationAlert"
 import { showAlert } from "@/components/ui/DataTable/Alert"
 import UserModal from "@/components/ui/UserModal"
 import Image from "next/image"
 import defaultUserIcon from "/public/img/icon-user.png"
+import { Search, Plus, RefreshCw } from "lucide-react"
 
 const UserList: React.FC = () => {
   const queryClient = useQueryClient()
-  const [sorting, setSorting] = useState<ColumnSort[]>([])
   const [globalFilter, setGlobalFilter] = useState<string>("")
   const [pagination, setPagination] = useState({
     pageSize: DEFAULT_PAGE_SIZE,
@@ -28,7 +23,11 @@ const UserList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newUser, setNewUser] = useState({ name: "", email: "", usuario: "", password: "" })
 
-  const { data: users = [], isLoading } = useQuery<User[], Error>({
+  const {
+    data: users = [],
+    isLoading,
+    refetch,
+  } = useQuery<User[], Error>({
     queryKey: ["users"],
     queryFn: fetchUsers,
   })
@@ -37,7 +36,7 @@ const UserList: React.FC = () => {
     mutationFn: changeStateUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
-      showAlert({ title: "Éxito", text: "Se cambio el estado del usuario.", icon: "success" })
+      showAlert({ title: "Éxito", text: "Se cambió el estado del usuario.", icon: "success" })
     },
     onError: (error: unknown) => {
       if (error instanceof Error) {
@@ -56,6 +55,7 @@ const UserList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
       showAlert({ title: "Éxito", text: "Usuario creado exitosamente.", icon: "success" })
       setIsModalOpen(false)
+      setNewUser({ name: "", email: "", usuario: "", password: "" })
     },
     onError: (error: unknown) => {
       if (error instanceof Error) {
@@ -85,131 +85,204 @@ const UserList: React.FC = () => {
     return defaultUserIcon
   }
 
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: "index",
-      header: "#",
-      cell: ({ row }) => {
-        const pageSize = pagination.pageSize
-        const pageIndex = pagination.pageIndex
-        return <div className="text-start ">{pageSize * pageIndex + row.index + 1}</div>
-      },
-      size: 60,
-    },
-    {
-      accessorKey: "usuario",
-      header: "Usuario",
-      cell: ({ row }: { row: Row<User> }) => {
-        const user = row.original
-        return (
-          <div className="flex items-center space-x-4 py-2">
-            <div className="relative flex-shrink-0">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
-                <Image
-                  src={getUserProfileImage(user) || "/placeholder.svg"}
-                  alt={`Foto de perfil de ${user.usuario}`}
-                  width={40}
-                  height={40}
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.src = defaultUserIcon.src
-                  }}
-                />
-              </div>
-              <div
-                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${user.estado === 1 ? "bg-green-500" : "bg-gray-400"}`}
-              ></div>
-            </div>
-            <span className="font-medium truncate max-w-[150px]">{user.usuario}</span>
-          </div>
-        )
-      },
-      size: 200,
-    },
-    {
-      accessorKey: "name",
-      header: "Nombre",
-      cell: (info) => <div className="truncate max-w-[150px]">{info.getValue() as string}</div>,
-      size: 150,
-    },
-    {
-      accessorKey: "email",
-      header: "Correo",
-      cell: (info) => <div className="truncate max-w-[200px]">{info.getValue() as string}</div>,
-      size: 200,
-    },
-    {
-      accessorKey: "created_at",
-      header: "Fecha de Creación",
-      cell: ({ row }: { row: Row<User> }) => (
-        <div className="text-center">{formatDate(row.getValue("created_at"))}</div>
-      ),
-      size: 150,
-    },
-    {
-      accessorKey: "estado",
-      header: "Estado",
-      cell: ({ row }: { row: Row<User> }) => (
-        <div className="text-center">
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              row.getValue("estado") === 1 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {row.getValue("estado") === 1 ? "Activo" : "Inactivo"}
-          </span>
-        </div>
-      ),
-      size: 100,
-    },
-    {
-      accessorKey: "action",
-      header: "Acciones",
-      cell: ({ row }: { row: Row<User> }) => (
-        <div className="text-center">
-          <ConfirmationAlert
-            title="¿Estás seguro?"
-            text="¡No podrás revertir esto!"
-            onConfirm={() => handleDeactivate(row.original.id)}
-          />
-        </div>
-      ),
-      size: 100,
-    },
-  ]
-
   return (
     <Section title="Listado de Usuarios">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 py-4 bg-white rounded-t-lg border-b">
-        <DebounceInput
-          type="text"
-          placeholder="Buscar..."
-          className="w-full sm:w-64 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          value={globalFilter}
-          onChange={(value) => setGlobalFilter(value)}
-        />
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="w-full sm:w-auto bg-cyan-400 text-white flex items-center justify-center py-2 px-4 gap-2 rounded-lg hover:bg-cyan-500 transition-all"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Crear Usuario</span>
-        </button>
-      </div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
+          <div className="w-full sm:w-auto"></div>
 
-      <div className="bg-white rounded-b-lg shadow">
-        <DataTable
-          columns={columns}
-          data={users}
-          globalFilter={globalFilter}
-          loading={isLoading}
-          setSorting={setSorting}
-          setPagination={setPagination}
-          sorting={sorting}
-          pagination={pagination}
-        />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="w-full sm:w-64 pl-9 py-2 h-10 bg-white text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent"
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={() => refetch()}
+              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+              title="Actualizar"
+            >
+              <RefreshCw size={18} />
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#1abc9c] hover:bg-[#16a085] text-white flex items-center justify-center py-2 px-4 gap-2 rounded-md transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Crear Usuario</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="relative overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th scope="col" className="px-4 py-3 text-center w-12">
+                  #
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Usuario
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Nombre
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Correo
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Fecha de Creación
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Estado
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array(5)
+                  .fill(0)
+                  .map((_, index) => (
+                    <tr key={index} className="bg-white border-b hover:bg-gray-50">
+                      <td colSpan={7} className="px-4 py-3">
+                        <div className="animate-pulse flex items-center space-x-4">
+                          <div className="h-10 w-10 rounded-full bg-gray-200"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+              ) : users.length === 0 ? (
+                <tr className="bg-white">
+                  <td colSpan={7} className="px-4 py-12 text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <Search className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-800">No se encontraron usuarios</h3>
+                    <p className="text-gray-500 mt-2">
+                      {globalFilter
+                        ? "Intenta con otra búsqueda o elimina los filtros aplicados."
+                        : "No hay usuarios registrados en el sistema."}
+                    </p>
+                    {globalFilter && (
+                      <button
+                        className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                        onClick={() => setGlobalFilter("")}
+                      >
+                        Limpiar búsqueda
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                users.map((user, index) => {
+                  const pageSize = pagination.pageSize
+                  const pageIndex = pagination.pageIndex
+                  const rowNumber = pageSize * pageIndex + index + 1
+
+                  return (
+                    <tr key={user.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                              <Image
+                                src={getUserProfileImage(user) || "/placeholder.svg"}
+                                alt={`Foto de perfil de ${user.usuario}`}
+                                width={40}
+                                height={40}
+                                className="object-cover w-full h-full"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = defaultUserIcon.src
+                                }}
+                              />
+                            </div>
+                            <div
+                              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                                user.estado === 1 ? "bg-green-500" : "bg-gray-400"
+                              }`}
+                              title={user.estado === 1 ? "Activo" : "Inactivo"}
+                            ></div>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-800">{user.usuario}</span>
+                            <span className="text-xs text-gray-500">{user.role_id === 2 ? "Empresa" : "Usuario"}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-800 truncate max-w-[180px]">{user.name}</td>
+                      <td className="px-4 py-3 text-gray-600 truncate max-w-[220px]">{user.email}</td>
+                      <td className="px-4 py-3 text-center text-gray-600">{formatDate(user.created_at)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.estado === 1 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {user.estado === 1 ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => handleDeactivate(user.id)}
+                          className={`px-3 py-1 text-xs font-medium rounded-md ${
+                            user.estado === 1
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-green-100 text-green-700 hover:bg-green-200"
+                          } transition-colors`}
+                        >
+                          {user.estado === 1 ? "Desactivar" : "Activar"}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {users.length > 0 && (
+          <div className="flex items-center justify-between p-4 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              Página {pagination.pageIndex + 1} de {Math.ceil(users.length / pagination.pageSize)}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPagination({ ...pagination, pageIndex: Math.max(0, pagination.pageIndex - 1) })}
+                disabled={pagination.pageIndex === 0}
+                className="px-3 py-1 border border-gray-300 rounded-md text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() =>
+                  setPagination({
+                    ...pagination,
+                    pageIndex: Math.min(Math.ceil(users.length / pagination.pageSize) - 1, pagination.pageIndex + 1),
+                  })
+                }
+                disabled={pagination.pageIndex >= Math.ceil(users.length / pagination.pageSize) - 1}
+                className="px-3 py-1 bg-[#e74c3c] text-white rounded-md hover:bg-[#c0392b] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <UserModal
@@ -218,6 +291,7 @@ const UserList: React.FC = () => {
         newUser={newUser}
         onChange={handleInputChange}
         onCreateUser={handleCreateUser}
+        isLoading={createMutation.isPending}
       />
     </Section>
   )

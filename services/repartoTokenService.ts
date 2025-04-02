@@ -1,4 +1,3 @@
-// services\registrationTokenService.ts
 import { jwtVerify, SignJWT } from "jose"
 
 // Interfaz que define la estructura del token decodificado
@@ -19,25 +18,36 @@ const getSecretKey = () => {
 }
 
 // Guarda el token en una cookie del navegador
-export const setRegistrationToken = (token: string) => {
-  document.cookie = `registrationToken=${token}; path=/; max-age=3600; SameSite=Strict; Secure`
+export const setRepartoToken = (token: string) => {
+  // Asegurarse de que estamos en el cliente
+  if (typeof document !== "undefined") {
+    document.cookie = `repartoToken=${token}; path=/; max-age=3600; SameSite=Strict; ${location.protocol === "https:" ? "Secure;" : ""}`
+    console.log("Token guardado en cookie:", token.substring(0, 20) + "...")
+  }
 }
 
 // Obtiene el token almacenado en las cookies
-export const getRegistrationToken = (): string | null => {
+export const getRepartoToken = (): string | null => {
+  // Asegurarse de que estamos en el cliente
+  if (typeof document === "undefined") return null
+
   const cookies = document.cookie.split(";")
-  const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith("registrationToken="))
+  const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith("repartoToken="))
   return tokenCookie ? tokenCookie.split("=")[1] : null
 }
 
 // Elimina el token de las cookies
-export const removeRegistrationToken = () => {
-  document.cookie = "registrationToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure"
+export const removeRepartoToken = () => {
+  // Asegurarse de que estamos en el cliente
+  if (typeof document !== "undefined") {
+    document.cookie = "repartoToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure"
+    console.log("Token de reparto eliminado")
+  }
 }
 
 // Verifica si el token es válido
-export const isRegistrationTokenValid = async (): Promise<boolean> => {
-  const token = getRegistrationToken()
+export const isRepartoTokenValid = async (): Promise<boolean> => {
+  const token = getRepartoToken()
   if (!token) return false
 
   try {
@@ -49,8 +59,8 @@ export const isRegistrationTokenValid = async (): Promise<boolean> => {
 }
 
 // Obtiene los datos decodificados del token
-export const getRegistrationData = async (): Promise<DecodedToken | null> => {
-  const token = getRegistrationToken()
+export const getRepartoData = async (): Promise<DecodedToken | null> => {
+  const token = getRepartoToken()
   if (!token) return null
 
   try {
@@ -70,14 +80,17 @@ export const getRegistrationData = async (): Promise<DecodedToken | null> => {
       }
     }
     return null
-  } catch {
+  } catch (error) {
+    console.error("Error al decodificar el token:", error)
     return null
   }
 }
 
 // Crea un nuevo token de registro
-export const createRegistrationToken = async (registration_id: string, current_step: string): Promise<string> => {
+export const createRepartoToken = async (registration_id: string, current_step: string): Promise<string> => {
   try {
+    console.log("Creando token para:", { registration_id, current_step })
+
     // Creamos un nuevo token con los datos proporcionados
     const token = await new SignJWT({
       registration_id,
@@ -88,7 +101,7 @@ export const createRegistrationToken = async (registration_id: string, current_s
       .sign(getSecretKey())
 
     // Guardamos el token en las cookies
-    setRegistrationToken(token)
+    setRepartoToken(token)
     return token
   } catch (error) {
     console.error("Error al crear el token de registro:", error)
@@ -97,14 +110,14 @@ export const createRegistrationToken = async (registration_id: string, current_s
 }
 
 // Actualiza el paso actual en el token
-export const updateRegistrationStep = async (current_step: string): Promise<string | null> => {
+export const updateRepartoStep = async (current_step: string): Promise<string | null> => {
   // Obtenemos los datos actuales del token
-  const data = await getRegistrationData()
+  const data = await getRepartoData()
   if (!data) return null
 
   // Creamos un nuevo token con el paso actualizado
-  const newToken = await createRegistrationToken(data.registration_id, current_step)
-  setRegistrationToken(newToken)
+  const newToken = await createRepartoToken(data.registration_id, current_step)
+  setRepartoToken(newToken)
   return newToken
 }
 

@@ -1,3 +1,4 @@
+// app\reparto\documento-motorizado\page.tsx
 'use client'
 
 import Image from "next/image"

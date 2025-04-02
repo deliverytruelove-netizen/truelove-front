@@ -1,3 +1,5 @@
+
+// este si funciona no lo modifiques app\socio\admin\components\AvatarSettings.tsx
 "use client"
 
 import { useState, useEffect, useCallback } from "react"

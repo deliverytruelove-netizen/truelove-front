@@ -1,3 +1,4 @@
+// app\socio\admin\components\category-dialog.tsx este da error al crear la categoria ya te pase los errores anteriormente
 "use client"
 
 import { useState, useEffect } from "react"

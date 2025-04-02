@@ -5,7 +5,6 @@ import { Search, LayoutGrid, ListPlus, Plus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { CreateMenuModal } from "../components/create-menu-modal"
 import { menuService, type Category, type MenuItem } from "../services/menu.service"
@@ -21,41 +20,32 @@ export default function Page() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
-  const empresa_id = "1" // Este ID debería venir de tu sistema de autenticación
 
   const loadData = useCallback(async () => {
     try {
-      setLoading(true)
-      const [categoriesData, menusData] = await Promise.all([
-        menuService.getCategories(empresa_id),
-        menuService.getMenus(empresa_id),
-      ])
-
-      // Debug the data structure
-      console.log("Categorías cargadas:", categoriesData)
-      console.log(
-        "IDs de categorías:",
-        categoriesData.map((c: Category) => c.id),
-      )
-      console.log("Menús cargados:", menusData)
-      console.log(
-        "IDs de categoría en menús:",
-        menusData.map((m: MenuItem) => m.categoria_id),
-      )
-
-      setCategories(categoriesData)
-      setMenuItems(Array.isArray(menusData) ? menusData : [])
+      setLoading(true);
+      const categoriesResponse = await menuService.getCategories();
+      
+      if (categoriesResponse.success) {
+        setCategories(categoriesResponse.data || []);
+      } else {
+        throw new Error(categoriesResponse.message || "Error al cargar categorías");
+      }
+  
+      const menusData = await menuService.getMenus();
+      setMenuItems(Array.isArray(menusData) ? menusData : []);
     } catch (error: unknown) {
-      console.error("Error al cargar datos:", error)
+      console.error("Error al cargar datos:", error);
       toast({
         title: "Error",
-        description: (error as Error).message || "No se pudo cargar la información del menú",
+        description: error instanceof Error ? error.message : "Error al cargar datos",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [empresa_id, toast])
+  }, [toast]);
+  
 
   useEffect(() => {
     loadData()
@@ -64,7 +54,7 @@ export default function Page() {
   const handleCreateMenu = async (formData: FormData) => {
     try {
       await menuService.createMenu(formData)
-      await loadData() // Recargar datos después de crear
+      await loadData()
       toast({
         title: "Éxito",
         description: "Menú creado correctamente",
@@ -81,7 +71,7 @@ export default function Page() {
 
   const handleCreateCategory = async (nombre: string) => {
     try {
-      await menuService.createCategory({ nombre, empresa_id })
+      await menuService.createCategory({ nombre })
       await loadData()
       toast({
         title: "Éxito",
@@ -98,7 +88,7 @@ export default function Page() {
 
   const handleEditCategory = async (id: number, nombre: string) => {
     try {
-      await menuService.updateCategory(id.toString(), { nombre, empresa_id })
+      await menuService.updateCategory(id.toString(), { nombre })
       await loadData()
       toast({
         title: "Éxito",
@@ -130,20 +120,11 @@ export default function Page() {
     }
   }
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Menú</h1>
-          <Select defaultValue={empresa_id}>
-            <SelectTrigger className="w-full sm:w-[280px]">
-              <SelectValue placeholder="Seleccionar local" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={empresa_id}>Mi Restaurante</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -196,7 +177,7 @@ export default function Page() {
                           </Button>
                         }
                       />
-                      <CreateMenuModal categories={categories} onSubmit={handleCreateMenu} empresa_id={empresa_id} />
+                      <CreateMenuModal categories={categories} onSubmit={handleCreateMenu} />
                     </>
                   )}
                 </div>
@@ -224,15 +205,9 @@ export default function Page() {
                     ) : (
                       <div className="space-y-4">
                         {categories.map((category) => {
-                          const categoryMenuItems = menuItems.filter((item) => {
-                            // Debug the comparison
-                            console.log(
-                              `Comparando menu.categoria_id: ${item.categoria_id} con category.id: ${category.id}`,
-                            )
-                            return Number(item.categoria_id) === Number(category.id)
-                          })
-
-                          console.log(`Menús filtrados para categoría ${category.id}:`, categoryMenuItems)
+                          const categoryMenuItems = menuItems.filter(
+                            (item) => Number(item.categoria_id) === Number(category.id),
+                          )
 
                           return (
                             <CategorySection
