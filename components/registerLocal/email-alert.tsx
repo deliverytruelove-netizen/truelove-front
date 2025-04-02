@@ -1,3 +1,4 @@
+// components\registerLocal\email-alert.tsx
 import { AlertCircle, X } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 

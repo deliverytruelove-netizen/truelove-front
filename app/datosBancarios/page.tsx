@@ -1,9 +1,12 @@
-'use client'
+// app\datosBancarios\page.tsx
+"use client"
+
+import type React from "react"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { CircleHelp, Loader2 } from 'lucide-react'
+import { CircleHelp, Loader2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,11 +14,11 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import Navbar from "@/components/ui/navbar"
-import StepNavigation from '@/components/ui/StepNavigation'
+import StepNavigation from "@/components/ui/StepNavigation"
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
-import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
 
 interface EstablecimientoDireccion {
   calle: string
@@ -38,100 +41,163 @@ export default function DatosBancarios() {
   const [establecimientoDireccion, setEstablecimientoDireccion] = useState<EstablecimientoDireccion | null>(null)
   const [establecimientoId, setEstablecimientoId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
-    accountHolder: '',
-    accountNumber: '',
-    bankName: '',
-    accountType: '',
-    documentNumber: '',
-    cci: '',
-    useBusinessAddress: true
+    accountHolder: "",
+    accountNumber: "",
+    bankName: "",
+    accountType: "",
+    documentNumber: "",
+    cci: "",
+    useBusinessAddress: true,
   })
   const [isFormValid, setIsFormValid] = useState(false)
 
   useEffect(() => {
-    const isValid = Object.values(formData).every(value => 
-      typeof value === 'boolean' ? true : value.trim() !== ''
-    )
+    const isValid = Object.values(formData).every((value) => (typeof value === "boolean" ? true : value.trim() !== ""))
     setIsFormValid(isValid)
   }, [formData])
 
   useEffect(() => {
     const checkToken = async () => {
-      const data = await getRegistrationData();
-      if (!data || data.current_step !== '/datosBancarios') {
+      const data = await getRegistrationData()
+      if (!data || data.current_step !== "/datosBancarios") {
         toast({
           title: "Error",
           description: "Por favor complete los pasos anteriores",
           variant: "destructive",
-        });
-        router.push('/');
+        })
+        router.push("/")
       }
-    };
+    }
 
-    checkToken();
-  }, [router, toast]);
+    checkToken()
+  }, [router, toast])
+
+  useEffect(() => {
+    const loadExistingData = async () => {
+      try {
+        setIsLoading(true)
+        const registrationData = await getRegistrationData()
+        if (!registrationData) {
+          throw new Error("Datos de registro no encontrados")
+        }
+
+        // Cargar los datos bancarios existentes
+        const existingData = await fetchExistingData(registrationData.registration_id)
+        if (existingData) {
+          setFormData({
+            accountHolder: existingData.titular_cuenta,
+            accountNumber: existingData.numero_cuenta,
+            bankName: existingData.nombre_banco,
+            accountType: existingData.tipo_cuenta,
+            documentNumber: existingData.documento_titular,
+            cci: existingData.codigo_cci,
+            useBusinessAddress: existingData.usar_direccion_negocio,
+          })
+          setEstablecimientoId(existingData.establecimiento_id.toString())
+        }
+      } catch (error) {
+        console.error("Error al cargar datos existentes:", error)
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "No se pudieron cargar los datos bancarios existentes",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadExistingData()
+  }, [toast])
 
   const fetchEstablecimientoDireccion = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const registrationData = await getRegistrationData();
+      setIsLoading(true)
+      const registrationData = await getRegistrationData()
       if (!registrationData) {
-        throw new Error('Datos de registro no encontrados');
+        throw new Error("Datos de registro no encontrados")
       }
 
-      console.log('ID de registro:', registrationData.registration_id); // Para depuración
+      console.log("ID de registro:", registrationData.registration_id) // Para depuración
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${registrationData.registration_id}/direccion`, {
-        headers: {
-          'Authorization': `Bearer ${getRegistrationToken()}`
-        }
-      });
-      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${registrationData.registration_id}/direccion`,
+        {
+          headers: {
+            Authorization: `Bearer ${getRegistrationToken()}`,
+          },
+        },
+      )
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.mensaje || `Error del servidor: ${response.status}`);
+        const errorData = await response.json()
+        throw new Error(errorData.mensaje || `Error del servidor: ${response.status}`)
       }
 
-      const data = await response.json();
+      const data = await response.json()
       if (data && data.direccion) {
-        setEstablecimientoDireccion(data.direccion);
-        setEstablecimientoId(data.establecimiento_id); // Asegúrate de que esto esté presente
-        console.log('Establecimiento ID:', data.establecimiento_id); // Para depuración
+        setEstablecimientoDireccion(data.direccion)
+        setEstablecimientoId(data.establecimiento_id) // Asegúrate de que esto esté presente
+        console.log("Establecimiento ID:", data.establecimiento_id) // Para depuración
       } else {
-        throw new Error('La respuesta del servidor no contiene la dirección esperada');
+        throw new Error("La respuesta del servidor no contiene la dirección esperada")
       }
     } catch (error) {
-      console.error('Error al obtener la dirección:', error);
+      console.error("Error al obtener la dirección:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "No se pudo obtener la dirección del establecimiento",
-        variant: "destructive"
-      });
-      setEstablecimientoDireccion(null);
+        variant: "destructive",
+      })
+      setEstablecimientoDireccion(null)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [toast]);
+  }, [toast])
+
+  const fetchExistingData = async (businessRegistrationId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios/${businessRegistrationId}`, {
+        headers: {
+          Authorization: `Bearer ${getRegistrationToken()}`,
+        },
+      })
+
+      if (!response.ok) {
+        if (response.status !== 404) {
+          throw new Error("Error al obtener datos bancarios del negocio")
+        }
+        return null
+      }
+
+      const data = await response.json()
+      console.log("Datos Bancarios existentes:", data)
+      return data
+    } catch (error) {
+      console.error("Error fetching business key data:", error)
+      return null
+    }
+  }
 
   useEffect(() => {
     if (formData.useBusinessAddress) {
-      fetchEstablecimientoDireccion();
+      fetchEstablecimientoDireccion()
     } else {
-      setEstablecimientoDireccion(null);
+      setEstablecimientoDireccion(null)
     }
-  }, [formData.useBusinessAddress, fetchEstablecimientoDireccion]);
+  }, [formData.useBusinessAddress, fetchEstablecimientoDireccion])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
-    setFormData(prev => ({ ...prev, [id]: value }))
+    setFormData((prev) => ({ ...prev, [id]: value }))
   }
 
   const handleSelectChange = (id: string, value: string) => {
-    setFormData(prev => ({ ...prev, [id]: value }))
+    setFormData((prev) => ({ ...prev, [id]: value }))
   }
 
   const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, useBusinessAddress: checked }))
+    setFormData((prev) => ({ ...prev, useBusinessAddress: checked }))
   }
 
   const handleNext = async () => {
@@ -139,18 +205,25 @@ export default function DatosBancarios() {
 
     setIsSaving(true)
     try {
-      const registrationData = await getRegistrationData();
+      const registrationData = await getRegistrationData()
       if (!registrationData) {
-        throw new Error('Datos de registro no encontrados');
+        throw new Error("Datos de registro no encontrados")
       }
 
-      console.log('Establecimiento ID antes de enviar:', establecimientoId); // Para depuración
+      // Verificar si ya existen datos bancarios
+      const existingData = await fetchExistingData(registrationData.registration_id)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios`, {
-        method: 'POST',
+      const url = existingData
+        ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios/${existingData.id}`
+        : `${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios`
+
+      const method = existingData ? "PUT" : "POST"
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getRegistrationToken()}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getRegistrationToken()}`,
         },
         body: JSON.stringify({
           titular_cuenta: formData.accountHolder,
@@ -160,44 +233,50 @@ export default function DatosBancarios() {
           documento_titular: formData.documentNumber,
           codigo_cci: formData.cci,
           usar_direccion_negocio: formData.useBusinessAddress,
-          establecimiento_id: establecimientoId, // Asegúrate de que esto se esté enviando
-          business_registration_id: registrationData.registration_id
-        })
+          establecimiento_id: establecimientoId,
+          business_registration_id: registrationData.registration_id,
+        }),
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.mensaje || 'Error al guardar los datos bancarios')
+        throw new Error(errorData.mensaje || "Error al guardar los datos bancarios")
       }
 
       const result = await response.json()
-      console.log('Respuesta del servidor:', result)
-      
-      // Actualizar el paso del registro
-      await updateRegistrationStep('/planes');
+      console.log("Respuesta del servidor:", result)
 
-      toast({
-        title: "Éxito",
-        description: "Los datos bancarios se han guardado correctamente"
-      })
-      
+      // Actualizar el paso del registro
+      await updateRegistrationStep("/planes")
+
       setTimeout(() => {
-        router.push('/planes')
+        router.push("/planes")
       }, 1000)
     } catch (error) {
-      console.error('Error:', error)
+      console.error("Error:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Hubo un error al guardar los datos bancarios",
-        variant: "destructive"
+        variant: "destructive",
       })
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleBack = () => {
-    router.back()
+  const handleBack = async () => {
+    try {
+      await updateRegistrationStep("/datosClaves")
+      router.push('/datosClaves')
+    } catch (error) {
+      console.error("Error al volver hacia atrás:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al volver hacia atrás",
+        variant: "destructive",
+      })
+      
+    }
   }
 
   return (
@@ -209,7 +288,7 @@ export default function DatosBancarios() {
             alt="Business person working on a laptop"
             className="absolute inset-0 h-full w-full object-cover"
             height={1080}
-            src={Persona}
+            src={Persona || "/placeholder.svg"}
             style={{
               aspectRatio: "16/9",
               objectFit: "cover",
@@ -265,9 +344,11 @@ export default function DatosBancarios() {
                     <Label htmlFor="bankName">
                       Nombre del banco <span className="text-destructive">*</span>
                     </Label>
-                    <Select 
-                      onValueChange={(value) => handleSelectChange('bankName', value)}
+                    <Select
+                      onValueChange={(value) => handleSelectChange("bankName", value)}
                       disabled={isLoading || isSaving}
+                      value={formData.bankName}
+                      defaultValue={formData.bankName}
                     >
                       <SelectTrigger id="bankName">
                         <SelectValue placeholder="Seleccionar banco" />
@@ -285,9 +366,11 @@ export default function DatosBancarios() {
                     <Label htmlFor="accountType">
                       Tipo de Cuenta Bancaria <span className="text-destructive">*</span>
                     </Label>
-                    <Select 
-                      onValueChange={(value) => handleSelectChange('accountType', value)}
+                    <Select
+                      onValueChange={(value) => handleSelectChange("accountType", value)}
                       disabled={isLoading || isSaving}
+                      value={formData.accountType}
+                      defaultValue={formData.accountType}
                     >
                       <SelectTrigger id="accountType">
                         <SelectValue placeholder="Seleccionar tipo de cuenta" />
@@ -361,9 +444,7 @@ export default function DatosBancarios() {
                               Cargando dirección...
                             </div>
                           ) : (
-                            <p className="text-sm text-muted-foreground">
-                              No se pudo cargar la dirección
-                            </p>
+                            <p className="text-sm text-muted-foreground">No se pudo cargar la dirección</p>
                           )}
                         </>
                       )}

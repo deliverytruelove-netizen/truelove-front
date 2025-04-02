@@ -1,3 +1,4 @@
+// app\ubicar-local\page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -22,6 +23,8 @@ type MapboxFeature = {
   center: [number, number]
   text: string
   context?: { id: string; text: string }[]
+  address?: string // Added the address property
+  businessName?: string // Added the business name property
 }
 
 type FormData = {
@@ -43,22 +46,86 @@ export default function BusinessLocation() {
   const [formData, setFormData] = useState<FormData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Efecto para verificar el token de registro al cargar el componente
-  useEffect(() => {
-    const checkToken = async () => {
-      const data = await getRegistrationData();
-      if (!data || data.current_step !== '/ubicar-local') {
-        toast({
-          title: "Error",
-          description: "Por favor complete los pasos anteriores",
-          variant: "destructive",
-        });
-        router.push('/');
+  const fetchEstablecimientoData = async (businessRegistrationId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_WEB}/establecimientos/${businessRegistrationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getRegistrationToken()}`,
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        if (response.status !== 404) {
+          throw new Error("Error al obtener datos del establecimiento");
+        }
+        return null;
       }
-    };
+  
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching establishment data:", error);
+      return null;
+    }
+  };
+  
+  // Efecto para verificar el token de registro al cargar el componente
+useEffect(() => {
+  const checkToken = async () => {
+    const data = await getRegistrationData();
+    if (!data || (data.current_step !== '/ubicar-local' && data.current_step !== '/datosClaves')) {
+      toast({
+        title: "Error",
+        description: "Por favor complete los pasos anteriores",
+        variant: "destructive",
+      });
+      router.push('/');
+      return;
+    }
 
-    checkToken();
-  }, [router, toast]);
+    // Cargar datos del establecimiento si existen
+  // Cargar datos del establecimiento si existen
+if (data.registration_id) {
+  const establecimientoData = await fetchEstablecimientoData(data.registration_id);
+  if (establecimientoData) {
+    console.log("Datos del establecimiento:", establecimientoData);
+    
+    // Actualizar el estado del componente con los datos existentes
+    setSelectedLocation({
+      id: 'existing-location',
+      place_name: establecimientoData.direccion_completa,
+      center: [parseFloat(establecimientoData.longitud), parseFloat(establecimientoData.latitud)],
+      text: establecimientoData.calle,
+      context: [
+        { id: 'region.123', text: establecimientoData.provincia },
+        { id: 'place.123', text: establecimientoData.ciudad },
+        { id: 'postcode.123', text: establecimientoData.codigo_postal }
+      ],
+      address: establecimientoData.numero,
+      businessName: establecimientoData.nombre_establecimiento
+    });
+
+    // Actualizar el formulario con los datos existentes
+    setFormData({
+      businessName: establecimientoData.nombre_establecimiento,
+      street: establecimientoData.calle,
+      number: establecimientoData.numero,
+      postalCode: establecimientoData.codigo_postal,
+      province: establecimientoData.provincia,
+      city: establecimientoData.ciudad,
+      reference: establecimientoData.referencia || '',
+    });
+
+    setShowForm(true);
+  }
+}
+  };
+
+  checkToken();
+}, [router, toast]);
 
   const handleLocationSelect = (location: MapboxFeature) => {
     console.log("Location selected:", location)
@@ -125,8 +192,22 @@ export default function BusinessLocation() {
     }
   }
 
-  const handleBack = () => {
-    router.back()
+  //funciom para manejar el botón de volver
+
+
+  const handleBack = async () => {
+    try {
+      await updateRegistrationStep('/acercaNegocio')
+      //vavegar al paso anterior 
+      router.push('/acercaNegocio')
+    } catch (error) {
+      console.error('Error al volver hacia atras:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al volver hacia atras",
+        variant: "destructive",
+      })
+    }
   }
 
   return (

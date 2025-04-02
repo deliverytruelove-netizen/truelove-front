@@ -1,52 +1,55 @@
 // src/components/ConfirmationAlert.tsx
+"use client"
 
-import Swal, { SweetAlertIcon } from 'sweetalert2';
-import { FaRegTrashAlt } from 'react-icons/fa'
+import type React from "react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+
 interface ConfirmationAlertProps {
-    title: string;
-    text: string;
-    icon?: SweetAlertIcon;
-    confirmButtonText?: string;
-    cancelButtonText?: string;
-    onConfirm: () => void; // Función que se ejecutará al confirmar
+  title: string
+  text: string
+  onConfirm: () => void
+  btnText?: string
+  btnStyle?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
 }
 
 const ConfirmationAlert: React.FC<ConfirmationAlertProps> = ({
-    title,
-    text,
-    icon = 'warning',
-    confirmButtonText = 'Sí',
-    cancelButtonText = 'Cancelar',
-    onConfirm,
+  title,
+  text,
+  onConfirm,
+  btnText = "Cambiar estado",
+  btnStyle = "default",
 }) => {
-    const showAlert = () => {
-        Swal.fire({
-            title,
-            text,
-            icon,
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText,
-            cancelButtonText,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                onConfirm(); // Ejecuta la función onConfirm si el usuario confirma
-            }
-        });
-    };
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant={btnStyle} size="sm" className="h-8 px-3 text-xs">
+          {btnText}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{text}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Confirmar</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
-    return (
-        <button
-            onClick={showAlert}
-            type="button"
-            title="Clic aquí para deshabilitar"
-            className="m-auto bg-rose-400 self-end md:self-auto text-white flex items-center py-2 px-3 gap-2 rounded hover:bg-rose-500/90 transition-all s3-button"
-        >
-            <FaRegTrashAlt style={{ color: 'white', fontSize: '24px' }} />
+export default ConfirmationAlert
 
-        </button>
-    );
-};
-
-export default ConfirmationAlert;

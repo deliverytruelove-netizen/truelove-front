@@ -1,8 +1,7 @@
-// app\registration-status\page.tsx
 import { Suspense } from "react"
-import RegistrationStatusForm from "./RegistroForm"
+import RepartoStatusForm from "./RepartoStatusForm"
 
-export default function RegistrationStatusPage() {
+export default function RepartoStatusPage() {
   return (
     <Suspense
       fallback={
@@ -11,7 +10,7 @@ export default function RegistrationStatusPage() {
         </div>
       }
     >
-      <RegistrationStatusForm />
+      <RepartoStatusForm />
     </Suspense>
   )
 }

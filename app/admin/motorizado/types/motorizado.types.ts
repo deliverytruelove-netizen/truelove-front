@@ -1,3 +1,4 @@
+// app\admin\motorizado\types\motorizado.types.ts
 export interface Motorizado {
   id: number;
   nombres: string;
@@ -29,8 +30,9 @@ export interface DetallesMotorizado {
     fecha_nacimiento: string;
     genero: string;
     url_selfie: string;
-    ciudad: string;
+    departamento?:string;
     distrito: string;
+    provincia: string;
   } | null;
   datosBancarios: {
     titular: string;

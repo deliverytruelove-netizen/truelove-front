@@ -1,67 +1,50 @@
 // app\admin\components\layout\Header\SearchBox.tsx
-import { useEffect, useState } from 'react'
-import { RiSearchLine } from 'react-icons/ri'
-import SearchModal from './SearchModal'
+"use client"
+
+import type React from "react"
+
+import { useEffect } from "react"
+import { Search } from "lucide-react"
 
 const SearchBox: React.FC = () => {
-  const [openSearchDialog, setOpenSearchDialog] = useState(false)
-
-  // open search dialog when the user press Ctrl + / and state was true.
-  // close when the user press Esc
+  // Atajo de teclado para enfocar el campo de búsqueda
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === '/' && e.ctrlKey) {
-        setOpenSearchDialog(true)
-      }
-
-      if (e.key === 'Escape') {
-        setOpenSearchDialog(false)
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        const searchInput = document.getElementById("search-input")
+        if (searchInput) {
+          searchInput.focus()
+        }
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown)
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener("keydown", handleKeyDown)
     }
   }, [])
 
-  useEffect(() => {
-    document.body.style.overflow = openSearchDialog ? 'hidden' : 'auto'
-  }, [openSearchDialog])
-
   return (
-    <>
-      {openSearchDialog && (
-        <SearchModal open={openSearchDialog} setOpen={setOpenSearchDialog} />
-      )}
-      <div className="flex-1 items-center justify-center lg:max-w-2xl">
-        <div
-          className="relative"
-          onClick={() => {
-            setOpenSearchDialog(true)
-          }}
-        >
-          <RiSearchLine className="text-color-main/70 absolute top-[50%] left-2 -translate-y-[50%]" />
-          <input
-            type="text"
-            placeholder="Buscar"
-            className="border pl-8 rounded-xl text-color-main/70 w-full py-[5px] cursor-pointer"
-            readOnly
-            disabled
-          />
-          <span className="absolute text-sm flex gap-2 top-[50%] right-2 -translate-y-[50%]">
-            <span className="bg-secondary-400/60 text-white px-2 rounded">
-              Ctrl
-            </span>
-            <span className="bg-secondary-400/60 text-white px-2 rounded">
-              /
-            </span>
-          </span>
+    <div className="flex-1 items-center justify-center lg:max-w-md">
+      <div className="relative">
+        <Search className="h-4 w-4 text-gray-500 absolute top-[50%] left-3 -translate-y-[50%]" />
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Buscar o escribir comando..."
+          className="border border-gray-200 pl-10 pr-16 rounded-full text-gray-700 w-full py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+        />
+        <div className="absolute top-[50%] right-3 -translate-y-[50%] flex items-center">
+          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-xs text-gray-500 font-mono">
+            ⌘K
+          </kbd>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
 export default SearchBox
+

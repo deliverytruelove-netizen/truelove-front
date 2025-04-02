@@ -1,182 +1,347 @@
-'use client'
+"use client"
 
-import { useState } from 'react';
-import { Eye, Check } from 'lucide-react'
-import Section from '@/components/layout/Section';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchMotorizados, changeStateMotorizado, fetchMotorizadoDetails, aprobarMotorizado } from '@/app/admin/motorizado/services/motorizado.service';
-import DataTable from '@/components/ui/DataTable/DataTable';
-import { DebounceInput } from '@/components/ui/DataTable/DebounceInput';
-import { Button } from "@/components/ui/button"
-import { Motorizado, DetallesMotorizado } from '@/app/admin/motorizado/types/motorizado.types';
-import { ColumnSort, ColumnDef, Row } from '@tanstack/react-table';
-import { DEFAULT_PAGE_SIZE } from '@/config/constanst';
-import ConfirmationAlert from '@/components/ui/DataTable/ConfirmationAlert';
-import { DetallesMotorizadoModal } from './modals/DetallesMotorizadoModal';
+import type React from "react"
+
+import { useState } from "react"
+import { Eye, Check, Search, RefreshCw, X } from "lucide-react"
+import Section from "@/components/layout/Section"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  fetchMotorizados,
+//   changeStateMotorizado,
+  fetchMotorizadoDetails,
+  aprobarMotorizado,
+} from "@/app/admin/motorizado/services/motorizado.service"
+import type { Motorizado, DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
+// import type { ColumnSort } from "@tanstack/react-table"
+import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
+import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal"
 
 const MotorizadoList: React.FC = () => {
-    const queryClient = useQueryClient();
-    const [sorting, setSorting] = useState<ColumnSort[]>([]);
-    const [globalFilter, setGlobalFilter] = useState<string>('');
-    const [selectedMotorizadoId, setSelectedMotorizadoId] = useState<number | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [pagination, setPagination] = useState({
-        pageSize: DEFAULT_PAGE_SIZE,
-        pageIndex: 0,
-    });
+  const queryClient = useQueryClient()
+//   const [sorting, setSorting] = useState<ColumnSort[]>([])
+  const [globalFilter, setGlobalFilter] = useState<string>("")
+  const [selectedMotorizadoId, setSelectedMotorizadoId] = useState<number | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [pagination, setPagination] = useState({
+    pageSize: DEFAULT_PAGE_SIZE,
+    pageIndex: 0,
+  })
 
-    const { data: motorizados = [], isLoading } = useQuery<Motorizado[], Error>({
-        queryKey: ['motorizados'],
-        queryFn: fetchMotorizados,
-    });
+  const {
+    data: motorizados = [],
+    isLoading,
+    refetch,
+  } = useQuery<Motorizado[], Error>({
+    queryKey: ["motorizados"],
+    queryFn: fetchMotorizados,
+  })
 
-    const { data: detallesMotorizado } = useQuery<DetallesMotorizado | null>({
-        queryKey: ['motorizado-details', selectedMotorizadoId],
-        queryFn: async () => {
-            if (!selectedMotorizadoId) return null;
-            const data = await fetchMotorizadoDetails(selectedMotorizadoId);
-            return data;
-        },
-        enabled: !!selectedMotorizadoId,
-    });
+  const { data: detallesMotorizado } = useQuery<DetallesMotorizado | null>({
+    queryKey: ["motorizado-details", selectedMotorizadoId],
+    queryFn: async () => {
+      if (!selectedMotorizadoId) return null
+      const data = await fetchMotorizadoDetails(selectedMotorizadoId)
+      return data
+    },
+    enabled: !!selectedMotorizadoId,
+  })
 
-    const mutationChangeState = useMutation({
-        mutationFn: changeStateMotorizado,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['motorizados'] });
-        },
-    });
+//   const mutationChangeState = useMutation({
+//     mutationFn: changeStateMotorizado,
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["motorizados"] })
+//     },
+//   })
 
-    const mutationAprobar = useMutation({
-        mutationFn: aprobarMotorizado,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['motorizados'] });
-        },
-    });
+  const mutationAprobar = useMutation({
+    mutationFn: aprobarMotorizado,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["motorizados"] })
+    },
+  })
 
-    const handleDeactivate = (id: number) => {
-        mutationChangeState.mutate(id);
-    };
+//   const handleDeactivate = (id: number) => {
+//     mutationChangeState.mutate(id)
+//   }
 
-    const handleAprobar = (id: number) => {
-        mutationAprobar.mutate(id);
-    };
+  const handleAprobar = (id: number) => {
+    mutationAprobar.mutate(id)
+  }
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}/${month}/${year} ${hours}:${minutes}`;
-    };
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, "0")
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = String(date.getHours()).padStart(2, "0")
+    const minutes = String(date.getMinutes()).padStart(2, "0")
+    return `${day}/${month}/${year} ${hours}:${minutes}`
+  }
 
-    const columns: ColumnDef<Motorizado>[] = [
-        { 
-            accessorKey: 'nombres', 
-            header: () => <span className="m-auto">Nombre</span> 
-        },
-        { 
-            accessorKey: 'apellidos', 
-            header: () => <span className="m-auto">Apellidos</span> 
-        },
-        { 
-            accessorKey: 'celular', 
-            header: () => <span className="m-auto">Teléfono</span> 
-        },
-        { 
-            accessorKey: 'email', 
-            header: () => <span className="m-auto">Correo</span> 
-        },
-        {
-            accessorKey: 'documento',
-            header: () => <span className="m-auto">Documento</span>,
-            cell: ({ row }) => `${row.original.tipo_documento}: ${row.original.nro_documento}`
-        },
-        {
-            accessorKey: 'created_at',
-            header: () => <span className="m-auto">Fecha de Registro</span>,
-            cell: ({ row }) => formatDate(row.getValue('created_at'))
-        },
-        {
-            accessorKey: 'estado',
-            header: () => <span className="m-auto">Estado</span>,
-            cell: ({ row }) => (
-                <span>{row.original.estado ? 'Activo' : 'Inactivo'}</span>
-            ),
-        },
-        {
-            accessorKey: 'aprobado',
-            header: () => <span className="m-auto">Aprobado</span>,
-            cell: ({ row }) => (
-                <span>{row.original.aprobado ? 
-                    <Check className="text-green-500 mx-auto" /> : 
-                    <span className="text-red-500">Pendiente</span>
-                }</span>
-            ),
-        },
-        {
-            accessorKey: 'action',
-            header: () => <span className="m-auto">Acciones</span>,
-            cell: ({ row }: { row: Row<Motorizado> }) => (
-                <div className="flex gap-2 justify-center">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                            setSelectedMotorizadoId(row.original.id);
-                            setIsModalOpen(true);
-                        }}
-                    >
-                        <Eye className="h-4 w-4" />
-                    </Button>
-                    <ConfirmationAlert
-                        title="¿Estás seguro?"
-                        text="¡No podrás revertir esto!"
-                        onConfirm={() => handleDeactivate(row.original.id)}
-                    />
-                </div>
-            ),
-        },
-    ];
+  const filteredMotorizados = globalFilter
+    ? motorizados.filter((motorizado) => {
+        const searchTerm = globalFilter.toLowerCase()
+        return (
+          motorizado.nombres?.toLowerCase().includes(searchTerm) ||
+          motorizado.apellidos?.toLowerCase().includes(searchTerm) ||
+          motorizado.celular?.toLowerCase().includes(searchTerm) ||
+          motorizado.email?.toLowerCase().includes(searchTerm) ||
+          motorizado.nro_documento?.toLowerCase().includes(searchTerm)
+        )
+      })
+    : motorizados
 
-    return (
-        <Section title="Listado de Motorizados">
-            <div className="flex md:justify-end items-center px-2 lg:px-5 py-4">
-                <DebounceInput
-                    type="text"
-                    placeholder="Buscar..."
-                    className="border rounded w-100 outline-primary-400 py-2 px-3 mr-2"
-                    value={globalFilter}
-                    onChange={(value) => setGlobalFilter(value)}
-                />
+  const paginatedMotorizados = filteredMotorizados.slice(
+    pagination.pageIndex * pagination.pageSize,
+    (pagination.pageIndex + 1) * pagination.pageSize,
+  )
+
+  return (
+    <Section title="Listado de Motorizados">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
+          <div className="w-full sm:w-auto"></div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="w-full sm:w-64 pl-9 py-2 h-10 bg-white text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+              />
+              {globalFilter && (
+                <button
+                  onClick={() => setGlobalFilter("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
+            <button
+              onClick={() => refetch()}
+              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+              title="Actualizar"
+            >
+              <RefreshCw size={18} />
+            </button>
+          </div>
+        </div>
 
-            <div className="items-center m-auto text-center">
-                <DataTable
-                    columns={columns}
-                    data={motorizados}
-                    globalFilter={globalFilter}
-                    loading={isLoading}
-                    setSorting={setSorting}
-                    setPagination={setPagination}
-                    sorting={sorting}
-                    pagination={pagination}
-                />
+        <div className="relative overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th scope="col" className="px-4 py-3 text-center w-12">
+                  #
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Nombre
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Apellidos
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Teléfono
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Correo
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Documento
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Fecha de Registro
+                </th>
+                {/* <th scope="col" className="px-4 py-3 text-center">Estado</th> */}
+                <th scope="col" className="px-4 py-3 text-center">
+                  Aprobado
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array(5)
+                  .fill(0)
+                  .map((_, index) => (
+                    <tr key={index} className="bg-white border-b hover:bg-gray-50">
+                      <td colSpan={9} className="px-4 py-3">
+                        <div className="animate-pulse flex items-center space-x-4">
+                          <div className="h-10 w-10 rounded-full bg-gray-200"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+              ) : filteredMotorizados.length === 0 ? (
+                <tr className="bg-white">
+                  <td colSpan={9} className="px-4 py-12 text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                      <Search className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-800">No se encontraron motorizados</h3>
+                    <p className="text-gray-500 mt-2">
+                      {globalFilter
+                        ? "Intenta con otra búsqueda o elimina los filtros aplicados."
+                        : "No hay motorizados registrados en el sistema."}
+                    </p>
+                    {globalFilter && (
+                      <button
+                        className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                        onClick={() => setGlobalFilter("")}
+                      >
+                        Limpiar búsqueda
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                paginatedMotorizados.map((motorizado, index) => {
+                  const pageSize = pagination.pageSize
+                  const pageIndex = pagination.pageIndex
+                  const rowNumber = pageSize * pageIndex + index + 1
+
+                  return (
+                    <tr key={motorizado.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
+                      <td className="px-4 py-3 font-medium text-gray-800">{motorizado.nombres}</td>
+                      <td className="px-4 py-3 text-gray-600">{motorizado.apellidos}</td>
+                      <td className="px-4 py-3 text-gray-600">{motorizado.celular}</td>
+                      <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">{motorizado.email}</td>
+                      <td className="px-4 py-3 text-gray-600">{`${motorizado.tipo_documento}: ${motorizado.nro_documento}`}</td>
+                      <td className="px-4 py-3 text-center text-gray-600">{formatDate(motorizado.created_at)}</td>
+                      {/* <td className="px-4 py-3 text-center">
+                        <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                motorizado.estado ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                            }`}
+                        >
+                            {motorizado.estado ? "Activo" : "Inactivo"}
+                        </span>
+                    </td> */}
+                      <td className="px-4 py-3 text-center">
+                        {motorizado.aprobado ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <Check className="w-3 h-3 mr-1" />
+                            Aprobado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Pendiente
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        {/* Estructura de tabla con dos columnas para alineación consistente */}
+                        <table className="w-full">
+                          <tbody>
+                            <tr>
+                              {/* Columna 1: Siempre contiene el icono del ojo */}
+                              <td className="w-10 text-center">
+                                <button
+                                  onClick={() => {
+                                    setSelectedMotorizadoId(motorizado.id)
+                                    setIsModalOpen(true)
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Ver detalles"
+                                >
+                                  <Eye className="w-5 h-5" />
+                                </button>
+                              </td>
+
+                              {/* Columna 2: Contiene el botón Aprobar (o nada) */}
+                              <td>
+                                {!motorizado.aprobado && (
+                                  <button
+                                  onClick={() => handleAprobar(motorizado.id)}
+                                  className="ml-2 px-4 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                                >
+                                  Aprobar
+                                </button>
+                                )}
+
+                                {/* Botón de Activar/Desactivar - Comentado */}
+                                {/* {motorizado.estado !== undefined && (
+                                  <button
+                                    onClick={() => handleDeactivate(motorizado.id)}
+                                    className={`px-3 py-1 text-xs font-medium rounded-md ${
+                                      motorizado.estado
+                                        ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                        : "bg-green-100 text-green-700 hover:bg-green-200"
+                                    } transition-colors`}
+                                  >
+                                    {motorizado.estado ? "Desactivar" : "Activar"}
+                                  </button>
+                                )} */}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredMotorizados.length > 0 && (
+          <div className="flex items-center justify-between p-4 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              Página {pagination.pageIndex + 1} de {Math.ceil(filteredMotorizados.length / pagination.pageSize)}
             </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPagination({ ...pagination, pageIndex: Math.max(0, pagination.pageIndex - 1) })}
+                disabled={pagination.pageIndex === 0}
+                className="px-3 py-1 border border-gray-300 rounded-md text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() =>
+                  setPagination({
+                    ...pagination,
+                    pageIndex: Math.min(
+                      Math.ceil(filteredMotorizados.length / pagination.pageSize) - 1,
+                      pagination.pageIndex + 1,
+                    ),
+                  })
+                }
+                disabled={pagination.pageIndex >= Math.ceil(filteredMotorizados.length / pagination.pageSize) - 1}
+                className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
-            <DetallesMotorizadoModal
-                isOpen={isModalOpen}
-                onClose={() => {
-                    setIsModalOpen(false);
-                    setSelectedMotorizadoId(null);
-                }}
-                data={detallesMotorizado}
-                onAprobar={handleAprobar}
-            />
-        </Section>
-    );
-};
+      <DetallesMotorizadoModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedMotorizadoId(null)
+        }}
+        data={detallesMotorizado}
+        onAprobar={handleAprobar}
+      />
+    </Section>
+  )
+}
 
-export default MotorizadoList;
+export default MotorizadoList
+

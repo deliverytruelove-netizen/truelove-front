@@ -1,3 +1,4 @@
+// app\ubicar-local\components\BussinessForm.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -35,6 +36,7 @@ interface SelectedLocation {
   address?: string
   text?: string
   context?: LocationContext[]
+  businessName?: string
 }
 
 interface BusinessFormProps {
@@ -66,9 +68,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
       const postalCode = context.find((item) => item.id.startsWith('postcode'))?.text || ''
       const city = context.find((item) => item.id.startsWith('place'))?.text || ''
       const province = context.find((item) => item.id.startsWith('region'))?.text || ''
-
+      const businessName = selectedLocation.businessName || ''  // Modificar esta línea
+  
       const newValues = {
-        businessName: form.getValues('businessName') || '',
+        businessName: businessName || form.getValues('businessName') || '',
         street: streetName || form.getValues('street') || '',
         number: address || form.getValues('number') || '',
         postalCode: postalCode || form.getValues('postalCode') || '',
@@ -76,7 +79,7 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
         province: province || form.getValues('province') || '',
         reference: form.getValues('reference') || '',
       }
-
+  
       setFormData(newValues)
       form.reset(newValues)
     }

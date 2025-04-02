@@ -1,3 +1,4 @@
+// app\ubicar-local\components\BusinessMap.tsx
 'use client';
 
 import { useEffect, useRef, useCallback, useMemo } from 'react';

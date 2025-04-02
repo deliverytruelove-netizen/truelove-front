@@ -1,3 +1,4 @@
+// app\acercaNegocio\page.tsx 
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";

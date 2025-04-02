@@ -1,3 +1,4 @@
+// components\modals\DetallesMotorizadoModal.tsx
 "use client";
 
 import { useState } from "react";
@@ -319,15 +320,25 @@ export function DetallesMotorizadoModal({
                     label="Género"
                     value={data.datosPersonales.genero}
                   />
+                  {/* departamento */}
                   <InfoItem
                     icon={<MapPin className="w-5 h-5" />}
-                    label="Ciudad"
-                    value={data.datosPersonales.ciudad}
+                    label="Departamento"
+                    value={
+                      data.datosPersonales.departamento || "No especificado"
+                    }
                   />
+                  {/* ciudad */}
                   <InfoItem
                     icon={<MapPin className="w-5 h-5" />}
                     label="Distrito"
                     value={data.datosPersonales.distrito}
+                  />
+                  {/* distrito */}
+                  <InfoItem
+                    icon={<MapPin className="w-5 h-5" />}
+                    label="Provincia"
+                    value={data.datosPersonales.provincia}
                   />
                 </div>
                 <div className="w-full max-w-md mx-auto">

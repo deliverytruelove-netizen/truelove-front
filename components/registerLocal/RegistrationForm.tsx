@@ -1,10 +1,11 @@
+// components\registerLocal\RegistrationForm.tsx
 "use client"
 
 import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowRight } from "lucide-react"
+import { Loader2, ArrowRight } from 'lucide-react'
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
 import { ValidationAlert } from "@/components/ValidationAlert"
@@ -12,6 +13,7 @@ import { createRegistrationToken } from "@/services/registrationTokenService"
 import type { FormData, BusinessType } from "./types"
 import { useFormHandlers } from "./useFormHandlers"
 import { FormFields } from "./FormFields"
+import { EmailChangeAlert } from "./email-change-alert"
 
 export default function RegistrationForm() {
   const router = useRouter()
@@ -29,6 +31,9 @@ export default function RegistrationForm() {
   const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([])
+  const [originalEmail, setOriginalEmail] = useState<string | null>(null)
+  const [registrationId, setRegistrationId] = useState<string | null>(null)
+  const [showEmailChangeModal, setShowEmailChangeModal] = useState(false)
 
   const { handleInputChange, handlePhoneChange } = useFormHandlers(
     formData,
@@ -109,8 +114,17 @@ export default function RegistrationForm() {
 
       const data = await response.json()
 
-      if (!response.ok) {
+      if (!response.ok && data.error !== "different_email") {
         handleRegistrationError(data.error, data.message)
+        return
+      }
+
+      // Manejar el caso de correo diferente
+      if (data.error === "different_email") {
+        setOriginalEmail(data.original_email)
+        setRegistrationId(data.registration_id)
+        setShowEmailChangeModal(true)
+        setIsLoading(false)
         return
       }
 
@@ -133,6 +147,43 @@ export default function RegistrationForm() {
     }
   }
 
+  const handleEmailChange = async (useNewEmail: boolean) => {
+    if (!registrationId) return;
+    
+    setIsLoading(true);
+    setShowEmailChangeModal(false);
+    
+    try {
+      if (useNewEmail) {
+        // Actualizar el correo en el registro existente
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register/${registrationId}/update-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: formData.email }),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          setError(data.message || "Error al actualizar el correo electrónico");
+          setOriginalEmail(null);
+          return;
+        }
+      }
+      
+      // Redirigir a la página de estado de registro
+      router.push(`/registration-status?registration_id=${registrationId}`);
+    } catch (error) {
+      console.error("Error al procesar el cambio de correo:", error);
+      setError("Hubo un problema al procesar tu solicitud. Por favor, intenta nuevamente.");
+    } finally {
+      setIsLoading(false);
+      setOriginalEmail(null);
+    }
+  };
+
   const handleRegistrationError = (error: string, message: string) => {
     if (error === "dni_registered") {
       setError("dni_registered")
@@ -152,6 +203,16 @@ export default function RegistrationForm() {
   return (
     <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">¡Registra tu local ahora!</h2>
+
+      {/* Modal de cambio de correo */}
+      {originalEmail && (
+        <EmailChangeAlert 
+          originalEmail={originalEmail}
+          isOpen={showEmailChangeModal}
+          onConfirm={() => handleEmailChange(true)}
+          onCancel={() => handleEmailChange(false)}
+        />
+      )}
 
       <form
         onSubmit={formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 1 ? handleNext : handleSubmit}
@@ -216,4 +277,3 @@ export default function RegistrationForm() {
     </div>
   )
 }
-

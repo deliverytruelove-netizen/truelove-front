@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UserCircle, ArrowRight, RefreshCw } from "lucide-react"
-import { createRegistrationToken } from "@/services/registrationTokenService"
+import { createRepartoToken, removeRepartoToken } from "@/services/repartoTokenService"
 
-export default function RegistrationStatusForm() {
+export default function RepartoStatusForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const registrationId = searchParams.get("registration_id")
@@ -15,6 +15,7 @@ export default function RegistrationStatusForm() {
   const [error, setError] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<string | null>(null)
   const [lastStep, setLastStep] = useState<string | null>(null)
+  const [isStartingNew, setIsStartingNew] = useState(false)
 
   // Obtener el estado del registro cuando el componente se monta
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function RegistrationStatusForm() {
 
       try {
         // Llamada directa a la API sin pasar por el middleware
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register/${registrationId}/status`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/${registrationId}/status`, {
           headers: {
             "Content-Type": "application/json",
           },
@@ -39,8 +40,8 @@ export default function RegistrationStatusForm() {
         const data = await response.json()
         console.log("Estado del registro:", data)
 
-        setCurrentStep(data.current_step || "/email")
-        setLastStep(data.last_completed_step || "/")
+        setCurrentStep(data.current_step || "/reparto/zonas")
+        setLastStep(data.last_completed_step || "/reparto")
       } catch (error) {
         console.error("Error al obtener el estado del registro:", error)
         setError("No se pudo obtener la información del registro")
@@ -62,8 +63,11 @@ export default function RegistrationStatusForm() {
         return
       }
 
+      // Guardar el ID en sessionStorage para usarlo en las siguientes páginas
+      sessionStorage.setItem("repartoRegistroId", registrationId)
+
       // Crear token con el paso actual
-      const token = await createRegistrationToken(registrationId, currentStep)
+      const token = await createRepartoToken(registrationId, currentStep)
       console.log("Token creado:", token)
       console.log("Redirigiendo a:", currentStep)
 
@@ -79,8 +83,35 @@ export default function RegistrationStatusForm() {
     }
   }
 
-  const handleNewRegistration = () => {
-    router.push("/")
+  const handleNewRegistration = async () => {
+    setIsStartingNew(true)
+    try {
+      // Eliminar el token de registro actual
+      removeRepartoToken()
+
+      // Opcional: Notificar al backend que el usuario está iniciando un nuevo registro
+      if (registrationId) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/${registrationId}/abandon`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+        } catch (error) {
+          // No bloqueamos el flujo si esta llamada falla
+          console.error("Error al notificar abandono de registro:", error)
+        }
+      }
+
+      // Redirigir al usuario a la página principal de registro
+      router.push("/reparto")
+    } catch (error) {
+      console.error("Error al iniciar nuevo registro:", error)
+      setError("Hubo un problema al iniciar un nuevo registro")
+    } finally {
+      setIsStartingNew(false)
+    }
   }
 
   // Mostrar pantalla de carga mientras se obtiene el estado
@@ -106,7 +137,7 @@ export default function RegistrationStatusForm() {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-red-500 mb-4">Error</h1>
             <p className="text-gray-600 mb-6">No se encontró la información necesaria para continuar el registro</p>
-            <Button onClick={() => router.push("/")} className="w-full bg-red-500 hover:bg-red-600">
+            <Button onClick={() => router.push("/reparto")} className="w-full bg-red-500 hover:bg-red-600">
               Volver al inicio
             </Button>
           </div>
@@ -131,7 +162,7 @@ export default function RegistrationStatusForm() {
           <div className="space-y-3">
             <h1 className="text-3xl font-bold">¡Bienvenido nuevamente!</h1>
             <p className="text-gray-700 text-lg">Notamos que ya tienes un registro en proceso</p>
-            {lastStep && lastStep !== "/" && (
+            {lastStep && lastStep !== "/reparto" && (
               <div className="mt-4 p-4 rounded-lg border border-white/10">
                 <p className="text-sm text-gray-800">
                   Tu último paso completado fue: <span className="text-[#f34739] font-semibold">{lastStep}</span>
@@ -150,7 +181,7 @@ export default function RegistrationStatusForm() {
           <Button
             className="w-full h-12 bg-[#f34739] hover:bg-[#d33729] text-white font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 rounded-lg"
             onClick={handleContinueRegistration}
-            disabled={isLoading}
+            disabled={isLoading || isStartingNew}
           >
             {isLoading ? (
               <>
@@ -167,11 +198,18 @@ export default function RegistrationStatusForm() {
 
           <Button
             variant="ghost"
-            className="w-full h-12 border-2 shadow-md bg-slate-200 border-white/10 hover:bg-white/5 font-medium text-lg transition-all duration-300"
+            className="w-full h-12 border-2 shadow-md bg-slate-200 border-white/10 hover:bg-white/5 font-medium text-lg transition-all duration-300 flex items-center justify-center gap-2"
             onClick={handleNewRegistration}
-            disabled={isLoading}
+            disabled={isLoading || isStartingNew}
           >
-            Empezar otro registro
+            {isStartingNew ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              "Empezar otro registro"
+            )}
           </Button>
         </div>
       </Card>

@@ -65,8 +65,18 @@ function PlanPrecios() {
     }
   }
 
-  const handleBack = () => {
-    router.back()
+  const handleBack = async () => {
+    try {
+      await updateRegistrationStep('/datosBancarios');
+      router.push('/datosBancarios');
+    } catch (error) {
+      console.error('Error al volver hacia atras:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo volver al paso anterior",
+        variant: "destructive"
+      });
+    }
   }
 
   if (loading) {

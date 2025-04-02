@@ -1,4 +1,4 @@
-// src/pages/Usuarios.tsx
+// app\admin\motorizado\page.tsx
 
 'use client';
 
