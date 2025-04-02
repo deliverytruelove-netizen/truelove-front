@@ -1,6 +1,6 @@
 // app\reparto\page.tsx
 'use client'
-import React from 'react'
+import React , {Suspense}from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import RegistrationForm from './components/RegisterForm'
@@ -8,6 +8,13 @@ import PromotionalSection from './components/SeccionHome'
 import Footer from '@/components/Footer'
 import Repart from "@/src/assets/img/image.png"
 
+function Loading() {
+  return (
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+    </div>
+  )
+}
 export default function Page() {
   return (
     <div className="min-h-screen bg-white">
@@ -52,13 +59,19 @@ export default function Page() {
               animate={{ opacity: 1, y: 0 }} 
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
             >
+              <Suspense fallback={<Loading />}>
+
               <RegistrationForm />
+              </Suspense>
             </motion.div>
           </div>
         </div>
 
         <div className="hidden lg:block mt-20">
+          <Suspense fallback={<Loading/>}>
           <PromotionalSection />
+
+          </Suspense>
         </div>
         
         <Footer />
