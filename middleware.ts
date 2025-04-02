@@ -39,6 +39,32 @@ export async function middleware(req: NextRequest) {
   const esSocioAprobado = path === "/socio-aprobado"
   const esRutaReparto = RUTAS_REPARTO_PROTEGIDAS.some((ruta) => path === ruta)
 
+// Interceptar las solicitudes a /registration-status con parámetro registration_id
+if (path === "/registration-status" && req.nextUrl.searchParams.has("registration_id")) {
+  const registrationId = req.nextUrl.searchParams.get("registration_id")
+  
+  try {
+    // Crear un token JWT con el ID de registro
+    const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || "")
+    const token = await new SignJWT({
+      registration_id: registrationId,
+      current_step: "/registration-status"
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("1h")
+      .sign(secretKey)
+    
+    // Codificar el token en base64 para usarlo en la URL
+    const encodedToken = Buffer.from(token).toString('base64')
+    
+    // Redirigir a la página de estado con el token como parámetro de búsqueda
+    return NextResponse.redirect(new URL(`/registration-status/secure?t=${encodedToken}`, req.url))
+  } catch (error) {
+    console.error("Error al generar token para redirección:", error)
+    // Si hay un error, continuar con la solicitud original
+    return NextResponse.next()
+  }
+}
   // Verificar estado de registro en la página principal
   if (path === "/") {
     const documentNumber = req.nextUrl.searchParams.get("document")
