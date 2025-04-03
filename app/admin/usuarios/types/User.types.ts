@@ -1,3 +1,4 @@
+// app\admin\usuarios\types\User.types.ts
 export interface User {
   id: number;
   usuario: string;
