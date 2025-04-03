@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify, SignJWT } from "jose"
@@ -39,32 +38,38 @@ export async function middleware(req: NextRequest) {
   const esSocioAprobado = path === "/socio-aprobado"
   const esRutaReparto = RUTAS_REPARTO_PROTEGIDAS.some((ruta) => path === ruta)
 
-// Interceptar las solicitudes a /registration-status con parámetro registration_id
-if (path === "/registration-status" && req.nextUrl.searchParams.has("registration_id")) {
-  const registrationId = req.nextUrl.searchParams.get("registration_id")
-  
-  try {
-    // Crear un token JWT con el ID de registro
-    const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || "")
-    const token = await new SignJWT({
-      registration_id: registrationId,
-      current_step: "/registration-status"
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("1h")
-      .sign(secretKey)
-    
-    // Codificar el token en base64 para usarlo en la URL
-    const encodedToken = Buffer.from(token).toString('base64')
-    
-    // Redirigir a la página de estado con el token como parámetro de búsqueda
-    return NextResponse.redirect(new URL(`/registration-status/secure?t=${encodedToken}`, req.url))
-  } catch (error) {
-    console.error("Error al generar token para redirección:", error)
-    // Si hay un error, continuar con la solicitud original
+  // Verificar si la solicitud tiene el encabezado de bypass del middleware
+  if (req.headers.get("x-middleware-bypass") === "true") {
     return NextResponse.next()
   }
-}
+
+  // Interceptar las solicitudes a /registration-status con parámetro registration_id
+  if (path === "/registration-status" && req.nextUrl.searchParams.has("registration_id")) {
+    const registrationId = req.nextUrl.searchParams.get("registration_id")
+
+    try {
+      // Crear un token JWT con el ID de registro
+      const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || "")
+      const token = await new SignJWT({
+        registration_id: registrationId,
+        current_step: "/registration-status",
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1h")
+        .sign(secretKey)
+
+      // Codificar el token en base64 para usarlo en la URL
+      const encodedToken = Buffer.from(token).toString("base64")
+
+      // Redirigir a la página de estado con el token como parámetro de búsqueda
+      return NextResponse.redirect(new URL(`/registration-status/secure?t=${encodedToken}`, req.url))
+    } catch (error) {
+      console.error("Error al generar token para redirección:", error)
+      // Si hay un error, continuar con la solicitud original
+      return NextResponse.next()
+    }
+  }
+
   // Verificar estado de registro en la página principal
   if (path === "/") {
     const documentNumber = req.nextUrl.searchParams.get("document")
@@ -223,8 +228,26 @@ if (path === "/registration-status" && req.nextUrl.searchParams.has("registratio
     }
   }
 
+  // IMPORTANTE: Excepción especial para la página de email con parámetro bypass
+  if (path === "/email" && req.nextUrl.searchParams.has("bypass")) {
+    console.log("Permitiendo acceso directo a /email con bypass")
+    return NextResponse.next()
+  }
+
+  // Excepción especial para la página de email con parámetro registration_id
+  if (path === "/email" && req.nextUrl.searchParams.has("registration_id")) {
+    console.log("Permitiendo acceso directo a /email con registration_id")
+    return NextResponse.next()
+  }
+
   // Lógica para las rutas protegidas del proceso de registro
   if (RUTAS_PROTEGIDAS.includes(path) && path !== "/socio-aprobado") {
+    // Excepción especial para la página de email cuando viene de un reinicio de registro
+    if (path === "/email" && req.nextUrl.searchParams.has("email")) {
+      console.log("Permitiendo acceso directo a /email con email")
+      return NextResponse.next()
+    }
+
     if (!registrationToken) {
       console.log("No se encontró token de registro, redirigiendo al inicio")
       return NextResponse.redirect(new URL("/", req.url))

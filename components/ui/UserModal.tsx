@@ -1,125 +1,120 @@
 "use client"
 
 import type React from "react"
-import { X } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
 
 interface UserModalProps {
   isOpen: boolean
   onClose: () => void
-  newUser: { name: string; email: string; usuario: string; password: string }
+  newUser: {
+    name: string
+    email: string
+    usuario: string
+    password: string
+    role_id?: number
+  }
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onCreateUser: () => void
-  isLoading?: boolean
+  isLoading: boolean
 }
 
-const UserModal: React.FC<UserModalProps> = ({
-  isOpen,
-  onClose,
-  newUser,
-  onChange,
-  onCreateUser,
-  isLoading = false,
-}) => {
-  if (!isOpen) return null
+const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, newUser, onChange, onCreateUser, isLoading }) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onCreateUser()
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-      <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-md relative overflow-hidden animate-in fade-in zoom-in duration-300"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">Crear Usuario</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors rounded-full p-1 hover:bg-gray-100"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-4 space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Nombre
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Crear Usuario Administrador</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="name" className="text-sm font-medium">
+              Nombre completo
             </label>
             <input
-              id="name"
               type="text"
+              id="name"
               name="name"
-              placeholder="Ingrese nombre completo"
               value={newUser.name}
               onChange={onChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent text-gray-900"
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent"
+              placeholder="Ingrese nombre completo"
+              required
             />
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="email" className="text-sm font-medium">
               Correo electrónico
             </label>
             <input
-              id="email"
               type="email"
+              id="email"
               name="email"
-              placeholder="ejemplo@correo.com"
               value={newUser.email}
               onChange={onChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent text-gray-900"
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent"
+              placeholder="ejemplo@correo.com"
+              required
             />
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="usuario" className="block text-sm font-medium text-gray-700">
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="usuario" className="text-sm font-medium">
               Nombre de usuario
             </label>
             <input
-              id="usuario"
               type="text"
+              id="usuario"
               name="usuario"
-              placeholder="Ingrese nombre de usuario"
               value={newUser.usuario}
               onChange={onChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent text-gray-900"
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent"
+              placeholder="Ingrese nombre de usuario"
+              required
             />
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="password" className="text-sm font-medium">
               Contraseña
             </label>
             <input
-              id="password"
               type="password"
+              id="password"
               name="password"
-              placeholder="Ingrese contraseña"
               value={newUser.password}
               onChange={onChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent text-gray-900"
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e74c3c] focus:border-transparent"
+              placeholder="Ingrese contraseña"
+              required
             />
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onCreateUser}
-            disabled={isLoading}
-            className="px-4 py-2 bg-[#1abc9c] text-white rounded-md hover:bg-[#16a085] focus:outline-none focus:ring-2 focus:ring-[#1abc9c] focus:ring-offset-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Creando..." : "Crear Usuario"}
-          </button>
-        </div>
-      </div>
-    </div>
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="outline" onClick={onClose} className="mr-2" disabled={isLoading}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="bg-[#1abc9c] hover:bg-[#16a085]"
+              disabled={isLoading || !newUser.name || !newUser.email || !newUser.usuario || !newUser.password}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                "Crear Usuario"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

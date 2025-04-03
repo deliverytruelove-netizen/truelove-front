@@ -1,4 +1,3 @@
-// app\registration-status\RegistroForm.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -6,8 +5,16 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UserCircle, ArrowRight, RefreshCw, CheckCircle, Calendar } from "lucide-react"
-import { createRegistrationToken, getRegistrationData } from "@/services/registrationTokenService"
+import { createRegistrationToken, getRegistrationData, setLocalStorageData } from "@/services/registrationTokenService"
 import { motion } from "framer-motion"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 // Definir interfaces para los tipos de datos
 interface RegistrationStatus {
@@ -33,6 +40,8 @@ export default function RegistrationStatusForm() {
   const [lastStep, setLastStep] = useState<string | null>(null)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [registrationId, setRegistrationId] = useState<string | null>(null)
+  const [showNewRegistrationDialog, setShowNewRegistrationDialog] = useState(false)
+  const [isResettingRegistration, setIsResettingRegistration] = useState(false)
 
   // Obtener el estado del registro y los datos del usuario cuando el componente se monta
   useEffect(() => {
@@ -151,7 +160,61 @@ export default function RegistrationStatusForm() {
   }
 
   const handleNewRegistration = () => {
-    router.push("/")
+    setShowNewRegistrationDialog(true)
+  }
+
+  const confirmNewRegistration = async () => {
+    if (!registrationId || !userData) return
+
+    setIsResettingRegistration(true)
+
+    try {
+      // Llamar al endpoint para resetear el registro
+      const resetResponse = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register/${registrationId}/reset`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          documentNumber: userData.documentNumber,
+        }),
+      })
+
+      if (!resetResponse.ok) {
+        const errorData = await resetResponse.json()
+        throw new Error(errorData.message || "Error al reiniciar el registro")
+      }
+
+      const responseData = await resetResponse.json()
+
+      // Eliminar el token de registro actual de las cookies
+      document.cookie = "registrationToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure"
+
+      // Crear un nuevo token para la página de email y guardarlo en las cookies
+      const token = await createRegistrationToken(responseData.registration_id, "/email")
+
+      // Guardar el token en localStorage también para asegurar que esté disponible
+      setLocalStorageData(responseData.registration_id, "/email")
+
+      console.log("Nuevo token creado:", token)
+      console.log("ID de registro:", responseData.registration_id)
+
+      // Añadir el registration_id como parámetro en la URL
+      const emailUrl = `/email?email=${encodeURIComponent(userData.email)}&registration_id=${responseData.registration_id}&bypass=true&timestamp=${Date.now()}`
+      console.log("Redirigiendo a:", emailUrl)
+
+      // Pequeña pausa para asegurar que las cookies se guarden correctamente
+      setTimeout(() => {
+        window.location.replace(emailUrl)
+      }, 100)
+    } catch (error) {
+      console.error("Error al reiniciar el registro:", error)
+      setError("Hubo un problema al iniciar un nuevo registro. Por favor, intente nuevamente.")
+      setShowNewRegistrationDialog(false)
+    } finally {
+      setIsResettingRegistration(false)
+    }
   }
 
   // Mostrar pantalla de carga mientras se obtiene el estado
@@ -316,6 +379,51 @@ export default function RegistrationStatusForm() {
           )}
         </Card>
       </motion.div>
+
+      {/* Modal de confirmación para nuevo registro */}
+      <Dialog open={showNewRegistrationDialog} onOpenChange={setShowNewRegistrationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>¿Iniciar un nuevo registro?</DialogTitle>
+            <DialogDescription>
+              Ya tienes un registro en proceso. Si inicias uno nuevo, se eliminarán todos los datos ingresados hasta
+              ahora y tendrás que volver a verificar tu correo electrónico.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500">
+              Se mantendrán tus datos básicos (nombre, documento, correo), pero se eliminarán todos los demás datos
+              ingresados en el proceso de registro.
+            </p>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowNewRegistrationDialog(false)}
+              className="sm:w-auto w-full"
+              disabled={isResettingRegistration}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmNewRegistration}
+              className="bg-[#f34739] hover:bg-[#d33729] sm:w-auto w-full"
+              disabled={isResettingRegistration}
+            >
+              {isResettingRegistration ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Procesando...
+                </>
+              ) : (
+                "Iniciar nuevo registro"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
