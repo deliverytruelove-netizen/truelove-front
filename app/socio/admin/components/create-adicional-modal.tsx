@@ -1,4 +1,3 @@
-// app\socio\admin\components\create-menu-modal.tsx
 "use client"
 
 import type React from "react"
@@ -11,31 +10,31 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Plus, Upload, DollarSign, Tag, FileText, X, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { Plus, Upload, DollarSign, Tag, FileText, X, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Category } from "../services/menu.service"
+import type { CategoriaAdicional } from "../services/adicional.service"
 import Image from "next/image"
 
-interface CreateMenuModalProps {
-  categories: Category[]
+interface CreateAdicionalModalProps {
+  categorias: CategoriaAdicional[]
   onSubmit: (formData: FormData) => Promise<void>
   trigger?: React.ReactNode
-  defaultCategoryId?: string
+  defaultCategoriaId?: string
 }
 
-export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategoryId }: CreateMenuModalProps) {
+export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCategoriaId }: CreateAdicionalModalProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategoryId || "")
+  const [selectedCategoria, setSelectedCategoria] = useState<string>(defaultCategoriaId || "")
   const [status, setStatus] = useState<string>("active") // Valor predeterminado: active
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (defaultCategoryId) {
-      setSelectedCategory(defaultCategoryId)
+    if (defaultCategoriaId) {
+      setSelectedCategoria(defaultCategoriaId)
     }
-  }, [defaultCategoryId])
+  }, [defaultCategoriaId])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -48,14 +47,9 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
       formData.append("status", status)
 
       // Si hay una categoría seleccionada por defecto, usarla
-      if (selectedCategory) {
-        formData.set("categoria_id", selectedCategory)
+      if (selectedCategoria) {
+        formData.set("categoria_adicional_id", selectedCategoria)
       }
-
-      // Añadir el empresa_id (asumiendo que lo obtienes de algún lugar)
-      // Si no tienes acceso al empresa_id en el frontend, deberías obtenerlo del backend
-      const empresaId = "22" // Reemplaza esto con la forma correcta de obtener el ID de la empresa
-      formData.append("empresa_id", empresaId)
 
       await onSubmit(formData)
       setOpen(false)
@@ -63,7 +57,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
       e.currentTarget.reset()
       setStatus("active") // Resetear el estado
     } catch (error) {
-      console.error("Error al crear producto:", error)
+      console.error("Error al crear adicional:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -102,7 +96,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
         {trigger || (
           <Button className="bg-red-600 hover:bg-red-700 text-white transition-colors gap-2">
             <Plus className="h-4 w-4" />
-            Nuevo producto
+            Nuevo adicional
           </Button>
         )}
       </DialogTrigger>
@@ -110,7 +104,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <Plus className="h-5 w-5 text-red-600" />
-            Crear nuevo producto
+            Crear nuevo adicional
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="mt-4 space-y-5">
@@ -118,32 +112,37 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             <div className="space-y-2">
               <Label htmlFor="titulo" className="text-sm font-medium flex items-center gap-1">
                 <FileText className="h-4 w-4 text-gray-500" />
-                Nombre del producto
+                Nombre del adicional
               </Label>
               <Input
                 id="titulo"
                 name="titulo"
-                placeholder="Ej: Hamburguesa clásica"
+                placeholder="Ej: Papas fritas, Ensalada"
                 className="border-gray-300 focus:border-red-500 focus:ring-red-500"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="categoria_id" className="text-sm font-medium flex items-center gap-1">
+              <Label htmlFor="categoria_adicional_id" className="text-sm font-medium flex items-center gap-1">
                 <Tag className="h-4 w-4 text-gray-500" />
                 Categoría
               </Label>
-              <Select name="categoria_id" required value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                name="categoria_adicional_id"
+                required
+                value={selectedCategoria}
+                onValueChange={setSelectedCategoria}
+              >
                 <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.length === 0 ? (
+                  {categorias.length === 0 ? (
                     <div className="p-2 text-sm text-gray-500">No hay categorías disponibles</div>
                   ) : (
-                    categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.nombre}
+                    categorias.map((categoria) => (
+                      <SelectItem key={categoria.id} value={categoria.id.toString()}>
+                        {categoria.nombre}
                       </SelectItem>
                     ))
                   )}
@@ -159,7 +158,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             <Textarea
               id="descripcion"
               name="descripcion"
-              placeholder="Describe los ingredientes o características del producto"
+              placeholder="Describe las características del adicional"
               className="min-h-[80px] border-gray-300 focus:border-red-500 focus:ring-red-500"
             />
           </div>
@@ -188,7 +187,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             <div className="space-y-2">
               <Label htmlFor="foto" className="text-sm font-medium flex items-center gap-1">
                 <Upload className="h-4 w-4 text-gray-500" />
-                Foto del producto
+                Foto del adicional
               </Label>
               <div className="relative">
                 <Input
@@ -221,9 +220,9 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             </div>
           </div>
 
-          {/* Estado del producto */}
+          {/* Estado del adicional */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Estado del producto</Label>
+            <Label className="text-sm font-medium">Estado del adicional</Label>
             <RadioGroup value={status} onValueChange={setStatus} className="flex flex-col space-y-1">
               <div className="flex items-center space-x-2 rounded-md border p-2 hover:bg-gray-50">
                 <RadioGroupItem value="active" id="active" />
@@ -239,14 +238,6 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                   <XCircle className="h-4 w-4 text-gray-500 mr-2" />
                   <span>Inactivo</span>
                   <span className="text-xs text-gray-500 ml-2">(No visible para clientes)</span>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 rounded-md border p-2 hover:bg-gray-50">
-                <RadioGroupItem value="out-of-stock" id="out-of-stock" />
-                <Label htmlFor="out-of-stock" className="flex items-center cursor-pointer">
-                  <Clock className="h-4 w-4 text-amber-500 mr-2" />
-                  <span>Agotado</span>
-                  <span className="text-xs text-gray-500 ml-2">(Visible pero no disponible)</span>
                 </Label>
               </div>
             </RadioGroup>
@@ -294,7 +285,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
               ) : (
                 <span className="flex items-center">
                   <Plus className="mr-2 h-4 w-4" />
-                  Crear producto
+                  Crear adicional
                 </span>
               )}
             </Button>
@@ -305,4 +296,6 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
   )
 }
 
+// Añadir el icono Plus como una propiedad estática
+CreateAdicionalModal.PlusIcon = Plus
 

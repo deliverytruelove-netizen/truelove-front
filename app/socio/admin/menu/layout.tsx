@@ -1,3 +1,4 @@
+// app\socio\admin\menu\layout.tsx
 export default function MenuLayout({
     children,
   }: {
