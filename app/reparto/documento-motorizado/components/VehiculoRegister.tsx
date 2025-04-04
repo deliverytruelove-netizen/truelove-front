@@ -259,7 +259,7 @@ export function VehicleRegistrationForm() {
             <FormItem>
               <FormLabel>Licencia de Conducir</FormLabel>
               <FormControl>
-                <Input placeholder="Número de licencia" {...field} maxLength={8} />
+                <Input placeholder="Número de licencia" {...field} maxLength={20} />
               </FormControl>
               <FormDescription>Ingrese el número de su licencia de conducir</FormDescription>
               <FormMessage />

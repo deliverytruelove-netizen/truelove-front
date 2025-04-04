@@ -21,8 +21,7 @@ const RUTAS_PROTEGIDAS = [
 const RUTAS_REPARTO_PROTEGIDAS = [
   "/reparto/zonas",
   "/reparto/documentos",
-  "/reparto/entrega-material",
-  "/reparto/confirmacion-entrega",
+  
 ]
 
 export async function middleware(req: NextRequest) {
