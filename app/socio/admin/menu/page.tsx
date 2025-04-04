@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Search, LayoutGrid, ListPlus, Plus } from "lucide-react"
+import { useState, useEffect, useCallback, Suspense } from "react"
+import { Search, LayoutGrid, ListPlus, Loader2, Plus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,46 +10,82 @@ import { CreateMenuModal } from "../components/create-menu-modal"
 import { menuService, type Category, type MenuItem } from "../services/menu.service"
 import { useToast } from "@/hooks/use-toast"
 import { CategoryDialog } from "../components/category-dialog"
-import { CategorySection } from "../components/category-section"
-import { OptionsView } from "../components/options-view"
+import { CategoriesList } from "../components/categories-list"
+import { Separator } from "@/components/ui/separator"
+import { useRouter } from "next/navigation"
 
-export default function Page() {
+// Componente de carga para Suspense
+function LoadingCategories() {
+  return (
+    <div className="text-center py-12">
+      <div className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+      </div>
+      <p className="text-gray-600">Cargando categorías...</p>
+    </div>
+  )
+}
+
+// Componente principal que maneja la lógica de datos
+function MenuContent() {
   const [activeView, setActiveView] = useState<"menu" | "options">("menu")
   const [categories, setCategories] = useState<Category[]>([])
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
+  const router = useRouter()
 
+  // Modificar la función loadData para mostrar más información de depuración
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
-      const categoriesResponse = await menuService.getCategories();
-      
+      setLoading(true)
+
+      // Cargar categorías
+      const categoriesResponse = await menuService.getCategories()
+
       if (categoriesResponse.success) {
-        setCategories(categoriesResponse.data || []);
+        setCategories(categoriesResponse.data || [])
+        console.log("Categorías cargadas:", categoriesResponse.data)
       } else {
-        throw new Error(categoriesResponse.message || "Error al cargar categorías");
+        throw new Error(categoriesResponse.message || "Error al cargar categorías")
       }
-  
-      const menusData = await menuService.getMenus();
-      setMenuItems(Array.isArray(menusData) ? menusData : []);
+
+      // Cargar menús
+      const menusResponse = await menuService.getMenus()
+      console.log("Respuesta completa de menús:", menusResponse)
+
+      // Los menús ya vienen procesados del servicio
+      setMenuItems(menusResponse)
     } catch (error: unknown) {
-      console.error("Error al cargar datos:", error);
+      console.error("Error al cargar datos:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al cargar datos",
         variant: "destructive",
-      });
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [toast]);
-  
+  }, [toast])
 
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // Efecto para redirigir a la página de adicionales cuando se selecciona esa vista
+  useEffect(() => {
+    if (activeView === "options") {
+      router.push("/socio/admin/menu/adicionales")
+    }
+  }, [activeView, router])
 
   const handleCreateMenu = async (formData: FormData) => {
     try {
@@ -57,13 +93,14 @@ export default function Page() {
       await loadData()
       toast({
         title: "Éxito",
-        description: "Menú creado correctamente",
+        description: "Producto creado correctamente",
+        variant: "default",
       })
     } catch (error: unknown) {
-      console.error("Error al crear menú:", error)
+      console.error("Error al crear producto:", error)
       toast({
         title: "Error",
-        description: (error as Error).message || "No se pudo crear el menú",
+        description: error instanceof Error ? error.message : "No se pudo crear el producto",
         variant: "destructive",
       })
     }
@@ -76,11 +113,12 @@ export default function Page() {
       toast({
         title: "Éxito",
         description: "Categoría creada correctamente",
+        variant: "default",
       })
     } catch (error: unknown) {
       toast({
         title: "Error",
-        description: (error as Error).message || "No se pudo crear la categoría",
+        description: error instanceof Error ? error.message : "No se pudo crear la categoría",
         variant: "destructive",
       })
     }
@@ -93,67 +131,114 @@ export default function Page() {
       toast({
         title: "Éxito",
         description: "Categoría actualizada correctamente",
+        variant: "default",
       })
     } catch (error: unknown) {
       toast({
         title: "Error",
-        description: (error as Error).message || "No se pudo actualizar la categoría",
+        description: error instanceof Error ? error.message : "No se pudo actualizar la categoría",
         variant: "destructive",
       })
     }
   }
 
-  const handleStatusChange = async (id: number, newStatus: string) => {
+  const handleDeleteCategory = async (id: number) => {
     try {
-      await menuService.updateMenuStatus(id.toString(), newStatus)
+      await menuService.deleteCategory(id.toString())
       await loadData()
       toast({
         title: "Éxito",
-        description: "Estado actualizado correctamente",
+        description: "Categoría eliminada correctamente",
+        variant: "default",
       })
     } catch (error: unknown) {
       toast({
         title: "Error",
-        description: (error as Error).message || "No se pudo actualizar el estado",
+        description: error instanceof Error ? error.message : "No se pudo eliminar la categoría",
         variant: "destructive",
       })
     }
   }
+
+  // Calcular el número de productos por categoría
+  const productCounts: Record<number, number> = {}
+  categories.forEach((category) => {
+    productCounts[category.id] = menuItems.filter((item) => Number(item.categoria_id) === Number(category.id)).length
+  })
+
+  // Filtrar categorías según el término de búsqueda
+  const filteredCategories = categories.filter((category) => {
+    // Si no hay término de búsqueda, mostrar todas las categorías
+    if (!searchTerm.trim()) return true
+
+    // Buscar en el nombre de la categoría
+    if (category.nombre.toLowerCase().includes(searchTerm.toLowerCase())) return true
+
+    // Buscar en los productos de la categoría
+    const categoryMenuItems = menuItems.filter((item) => {
+      // Convertir ambos a número para comparación segura
+      return Number(item.categoria_id) === Number(category.id)
+    })
+
+    return categoryMenuItems.some(
+      (item) =>
+        item.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm.toLowerCase())),
+    )
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Menú</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                console.log("Datos actuales:")
+                console.log("Categorías:", categories)
+                console.log("Menús:", menuItems)
+                loadData()
+              }}
+            >
+              <Loader2 className="mr-2 h-4 w-4" />
+              Recargar datos
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <nav className="flex lg:flex-col gap-2">
+            <Card className="border border-gray-200 shadow-sm sticky top-6">
+              <CardHeader className="py-3 px-4 border-b border-gray-100">
+                <CardTitle className="text-lg font-medium">Navegación</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2">
+                <nav className="flex flex-col gap-1">
                   <Button
                     variant={activeView === "menu" ? "default" : "ghost"}
                     className={cn(
-                      "flex-1 lg:w-full justify-start",
-                      activeView === "menu" && "bg-red-600 hover:bg-red-600/90",
+                      "w-full justify-start",
+                      activeView === "menu" && "bg-red-600 hover:bg-red-700 text-white",
                     )}
                     onClick={() => setActiveView("menu")}
                   >
                     <LayoutGrid className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Secciones y productos</span>
+                    Secciones y productos
                   </Button>
                   <Button
                     variant={activeView === "options" ? "default" : "ghost"}
                     className={cn(
-                      "flex-1 lg:w-full justify-start",
-                      activeView === "options" && "bg-red-600 hover:bg-red-600/90",
+                      "w-full justify-start",
+                      activeView === "options" && "bg-red-600 hover:bg-red-700 text-white",
                     )}
                     onClick={() => setActiveView("options")}
                   >
                     <ListPlus className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Opciones y adicionales</span>
+                    Opciones y adicionales
                   </Button>
                 </nav>
               </CardContent>
@@ -162,16 +247,18 @@ export default function Page() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
-                <CardTitle>{activeView === "menu" ? "Secciones y productos" : "Opciones y adicionales"}</CardTitle>
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100">
+                <CardTitle className="text-xl font-semibold text-gray-800">
+                  {activeView === "menu" ? "Secciones y productos" : "Opciones y adicionales"}
+                </CardTitle>
                 <div className="flex gap-2">
                   {activeView === "menu" && (
                     <>
                       <CategoryDialog
                         onSubmit={handleCreateCategory}
                         trigger={
-                          <Button variant="outline" className="gap-2">
+                          <Button variant="outline" className="gap-2 border-gray-300">
                             <Plus className="h-4 w-4" />
                             Nueva categoría
                           </Button>
@@ -182,48 +269,31 @@ export default function Page() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent>
-                {activeView === "menu" ? (
-                  <div className="space-y-4">
+              <CardContent className="p-5">
+                {activeView === "menu" && (
+                  <div className="space-y-6">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                       <Input
-                        className="pl-10"
-                        placeholder="Búsqueda"
+                        className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                        placeholder="Buscar por nombre de categoría o producto..."
                         type="search"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    {loading ? (
-                      <div className="text-center py-4">Cargando...</div>
-                    ) : categories.length === 0 ? (
-                      <div className="text-center py-4">
-                        <p>No hay categorías creadas.</p>
-                        <CategoryDialog onSubmit={handleCreateCategory} />
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {categories.map((category) => {
-                          const categoryMenuItems = menuItems.filter(
-                            (item) => Number(item.categoria_id) === Number(category.id),
-                          )
 
-                          return (
-                            <CategorySection
-                              key={category.id}
-                              category={category}
-                              menuItems={categoryMenuItems}
-                              onEditCategory={handleEditCategory}
-                              onStatusChange={handleStatusChange}
-                            />
-                          )
-                        })}
-                      </div>
-                    )}
+                    <Separator className="my-6" />
+
+                    <CategoriesList
+                      categories={filteredCategories}
+                      productCounts={productCounts}
+                      onEditCategory={handleEditCategory}
+                      onDeleteCategory={handleDeleteCategory}
+                      onCreateCategory={handleCreateCategory}
+                      isLoading={loading}
+                    />
                   </div>
-                ) : (
-                  <OptionsView />
                 )}
               </CardContent>
             </Card>
@@ -231,6 +301,15 @@ export default function Page() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Página principal que usa Suspense
+export default function Page() {
+  return (
+    <Suspense fallback={<LoadingCategories />}>
+      <MenuContent />
+    </Suspense>
   )
 }
 

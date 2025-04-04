@@ -19,28 +19,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import type { Category } from "../services/menu.service"
+import type { CategoriaAdicional } from "../services/adicional.service"
 
-interface CategoryDialogProps {
-  category?: Category
+interface CategoriaAdicionalDialogProps {
+  categoria?: CategoriaAdicional
   onSubmit: (nombre: string) => Promise<void>
   onDelete?: (id: number) => Promise<void>
   trigger?: React.ReactNode
 }
 
-export function CategoryDialog({ category, onSubmit, onDelete, trigger }: CategoryDialogProps) {
+export function CategoriaAdicionalDialog({ categoria, onSubmit, onDelete, trigger }: CategoriaAdicionalDialogProps) {
   const [open, setOpen] = useState(false)
   const [nombre, setNombre] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    if (category) {
-      setNombre(category.nombre)
+    if (categoria) {
+      setNombre(categoria.nombre)
     } else {
       setNombre("")
     }
-  }, [category, open])
+  }, [categoria, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,21 +51,21 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
       await onSubmit(nombre)
       setOpen(false)
     } catch (error) {
-      console.error("Error al guardar categoría:", error)
+      console.error("Error al guardar categoría de adicional:", error)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!category || !onDelete) return
+    if (!categoria || !onDelete) return
 
     setIsDeleting(true)
     try {
-      await onDelete(category.id)
+      await onDelete(categoria.id)
       setOpen(false)
     } catch (error) {
-      console.error("Error al eliminar categoría:", error)
+      console.error("Error al eliminar categoría de adicional:", error)
     } finally {
       setIsDeleting(false)
     }
@@ -77,34 +77,34 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
         {trigger || (
           <Button className="mt-2 bg-red-600 hover:bg-red-700 text-white transition-colors">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Crear categoría
+            Crear categoría de adicional
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-800">
-            {category ? "Editar" : "Crear nueva"} categoría
+            {categoria ? "Editar" : "Crear nueva"} categoría de adicional
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="mt-4">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="nombre" className="text-sm font-medium">
-                Nombre de la categoría
+                Nombre de la categoría de adicional
               </Label>
               <Input
                 id="nombre"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej: Entradas, Platos principales, Postres"
+                placeholder="Ej: Bebidas, Salsas, Complementos"
                 className="border-gray-300 focus:border-red-500 focus:ring-red-500"
                 required
               />
             </div>
             <DialogFooter className="flex justify-between items-center pt-2">
               <div>
-                {category && onDelete && (
+                {categoria && onDelete && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button type="button" variant="destructive" size="sm" className="flex items-center">
@@ -118,11 +118,11 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
                         <AlertDialogDescription>
                           <div className="flex flex-col gap-2">
                             <div>Esta acción no se puede deshacer. Se eliminará permanentemente la categoría:</div>
-                            <div className="font-semibold text-red-600">{category.nombre}</div>
+                            <div className="font-semibold text-red-600">{categoria.nombre}</div>
                             <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md mt-2">
                               <AlertTriangle className="h-5 w-5 text-amber-500" />
                               <div className="text-sm text-amber-800">
-                                Si hay productos en esta categoría, también podrían verse afectados.
+                                Si hay adicionales en esta categoría, también podrían verse afectados.
                               </div>
                             </div>
                           </div>
@@ -178,7 +178,7 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
                   ) : (
                     <span className="flex items-center">
                       <Save className="mr-2 h-4 w-4" />
-                      {category ? "Guardar cambios" : "Crear categoría"}
+                      {categoria ? "Guardar cambios" : "Crear categoría"}
                     </span>
                   )}
                 </Button>
@@ -191,6 +191,6 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
   )
 }
 
-// Añadir el icono Plus como una propiedad estática para CategoryDialog
-CategoryDialog.PlusIcon = Plus
+// Añadir el icono Plus como una propiedad estática
+CategoriaAdicionalDialog.PlusIcon = Plus
 
