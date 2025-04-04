@@ -210,7 +210,7 @@ export function FormularioBancario() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
     if (id === "dni") {
-      const numericValue = value.replace(/\D/g, "").slice(0, 8)
+      const numericValue = value.replace(/\D/g, "").slice(0, 18)
       setFormData({ ...formData, [id]: numericValue })
     } else {
       setFormData({ ...formData, [id]: value })
@@ -230,7 +230,6 @@ export function FormularioBancario() {
     const newErrors: { [key: string]: string } = {}
     if (!formData.titular) newErrors.titular = "El titular es requerido"
     if (!formData.dni) newErrors.dni = "El DNI es requerido"
-    if (formData.dni.length !== 8) newErrors.dni = "El DNI debe tener 8 dígitos"
     if (!formData.banco_id) newErrors.banco_id = "Selecciona un banco"
     if (!formData.tipo_cuenta_id) newErrors.tipo_cuenta_id = "Selecciona un tipo de cuenta"
     if (!formData.numero_cuenta) newErrors.numero_cuenta = "El número de cuenta es requerido"
@@ -369,7 +368,7 @@ export function FormularioBancario() {
               placeholder="Ingresa el número de DNI (8 dígitos)"
               className="text-sm md:text-base"
               required
-              maxLength={8}
+              maxLength={20}
             />
             {errors.dni && <p className="text-red-500 text-xs mt-1">{errors.dni}</p>}
           </div>
