@@ -1,3 +1,4 @@
+// app\socio\admin\components\category-section.tsx
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
