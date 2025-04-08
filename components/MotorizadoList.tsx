@@ -1,25 +1,25 @@
+// components\MotorizadoList.tsx
 "use client"
 
 import type React from "react"
 
 import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X } from "lucide-react"
+import { Eye, Check, Search, RefreshCw, X, Filter } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   fetchMotorizados,
-//   changeStateMotorizado,
   fetchMotorizadoDetails,
   aprobarMotorizado,
 } from "@/app/admin/motorizado/services/motorizado.service"
 import type { Motorizado, DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
-// import type { ColumnSort } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal"
+import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const MotorizadoList: React.FC = () => {
   const queryClient = useQueryClient()
-//   const [sorting, setSorting] = useState<ColumnSort[]>([])
   const [globalFilter, setGlobalFilter] = useState<string>("")
   const [selectedMotorizadoId, setSelectedMotorizadoId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -27,6 +27,7 @@ const MotorizadoList: React.FC = () => {
     pageSize: DEFAULT_PAGE_SIZE,
     pageIndex: 0,
   })
+  const [statusFilter, setStatusFilter] = useState<"todos" | "aprobados" | "pendientes">("todos")
 
   const {
     data: motorizados = [],
@@ -47,26 +48,37 @@ const MotorizadoList: React.FC = () => {
     enabled: !!selectedMotorizadoId,
   })
 
-//   const mutationChangeState = useMutation({
-//     mutationFn: changeStateMotorizado,
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["motorizados"] })
-//     },
-//   })
-
   const mutationAprobar = useMutation({
     mutationFn: aprobarMotorizado,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motorizados"] })
     },
+    onError: (error: Error) => {
+      console.error("Error al aprobar motorizado:", error)
+
+      // Verificar si es un error de correo duplicado
+      if (error.message && error.message.includes("Duplicate entry") && error.message.includes("email_unique")) {
+        toast.error("Error al aprobar motorizado", {
+          description: "El correo electrónico ya está registrado en el sistema.",
+        })
+      } else {
+        toast.error("Error al aprobar motorizado", {
+          description: error.message || "No se pudo aprobar el motorizado o enviar las credenciales.",
+        })
+      }
+    },
   })
 
-//   const handleDeactivate = (id: number) => {
-//     mutationChangeState.mutate(id)
-//   }
-
-  const handleAprobar = (id: number) => {
-    mutationAprobar.mutate(id)
+  const handleAprobar = async (id: number) => {
+    try {
+      await mutationAprobar.mutateAsync(id)
+      toast.success("Motorizado aprobado correctamente", {
+        description: "Se han enviado las credenciales por correo electrónico.",
+      })
+    } catch (error) {
+      console.error("Error al aprobar motorizado:", error)
+      // El error ya se maneja en onError del mutation
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -79,18 +91,27 @@ const MotorizadoList: React.FC = () => {
     return `${day}/${month}/${year} ${hours}:${minutes}`
   }
 
-  const filteredMotorizados = globalFilter
-    ? motorizados.filter((motorizado) => {
-        const searchTerm = globalFilter.toLowerCase()
-        return (
-          motorizado.nombres?.toLowerCase().includes(searchTerm) ||
-          motorizado.apellidos?.toLowerCase().includes(searchTerm) ||
-          motorizado.celular?.toLowerCase().includes(searchTerm) ||
-          motorizado.email?.toLowerCase().includes(searchTerm) ||
-          motorizado.nro_documento?.toLowerCase().includes(searchTerm)
-        )
-      })
-    : motorizados
+  // Aplicar filtros de estado y búsqueda
+  const filteredMotorizados = motorizados
+    .filter((motorizado) => {
+      // Filtrar por estado
+      if (statusFilter === "aprobados") return motorizado.aprobado
+      if (statusFilter === "pendientes") return !motorizado.aprobado
+      return true // "todos"
+    })
+    .filter((motorizado) => {
+      // Filtrar por término de búsqueda
+      if (!globalFilter) return true
+
+      const searchTerm = globalFilter.toLowerCase()
+      return (
+        motorizado.nombres?.toLowerCase().includes(searchTerm) ||
+        motorizado.apellidos?.toLowerCase().includes(searchTerm) ||
+        motorizado.celular?.toLowerCase().includes(searchTerm) ||
+        motorizado.email?.toLowerCase().includes(searchTerm) ||
+        motorizado.nro_documento?.toLowerCase().includes(searchTerm)
+      )
+    })
 
   const paginatedMotorizados = filteredMotorizados.slice(
     pagination.pageIndex * pagination.pageSize,
@@ -101,7 +122,25 @@ const MotorizadoList: React.FC = () => {
     <Section title="Listado de Motorizados">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
-          <div className="w-full sm:w-auto"></div>
+          <div className="w-full sm:w-auto flex items-center gap-2">
+            <Filter className="h-5 w-5 text-gray-500" />
+            <Select
+              value={statusFilter}
+              onValueChange={(value: "todos" | "aprobados" | "pendientes") => {
+                setStatusFilter(value)
+                setPagination({ ...pagination, pageIndex: 0 }) // Resetear a la primera página
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="aprobados">Aprobados</SelectItem>
+                <SelectItem value="pendientes">Pendientes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative">
@@ -157,7 +196,6 @@ const MotorizadoList: React.FC = () => {
                 <th scope="col" className="px-4 py-3 text-center">
                   Fecha de Registro
                 </th>
-                {/* <th scope="col" className="px-4 py-3 text-center">Estado</th> */}
                 <th scope="col" className="px-4 py-3 text-center">
                   Aprobado
                 </th>
@@ -191,16 +229,19 @@ const MotorizadoList: React.FC = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-800">No se encontraron motorizados</h3>
                     <p className="text-gray-500 mt-2">
-                      {globalFilter
+                      {globalFilter || statusFilter !== "todos"
                         ? "Intenta con otra búsqueda o elimina los filtros aplicados."
                         : "No hay motorizados registrados en el sistema."}
                     </p>
-                    {globalFilter && (
+                    {(globalFilter || statusFilter !== "todos") && (
                       <button
                         className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                        onClick={() => setGlobalFilter("")}
+                        onClick={() => {
+                          setGlobalFilter("")
+                          setStatusFilter("todos")
+                        }}
                       >
-                        Limpiar búsqueda
+                        Limpiar filtros
                       </button>
                     )}
                   </td>
@@ -220,15 +261,6 @@ const MotorizadoList: React.FC = () => {
                       <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">{motorizado.email}</td>
                       <td className="px-4 py-3 text-gray-600">{`${motorizado.tipo_documento}: ${motorizado.nro_documento}`}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{formatDate(motorizado.created_at)}</td>
-                      {/* <td className="px-4 py-3 text-center">
-                        <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                motorizado.estado ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                            }`}
-                        >
-                            {motorizado.estado ? "Activo" : "Inactivo"}
-                        </span>
-                    </td> */}
                       <td className="px-4 py-3 text-center">
                         {motorizado.aprobado ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -264,26 +296,12 @@ const MotorizadoList: React.FC = () => {
                               <td>
                                 {!motorizado.aprobado && (
                                   <button
-                                  onClick={() => handleAprobar(motorizado.id)}
-                                  className="ml-2 px-4 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                                >
-                                  Aprobar
-                                </button>
-                                )}
-
-                                {/* Botón de Activar/Desactivar - Comentado */}
-                                {/* {motorizado.estado !== undefined && (
-                                  <button
-                                    onClick={() => handleDeactivate(motorizado.id)}
-                                    className={`px-3 py-1 text-xs font-medium rounded-md ${
-                                      motorizado.estado
-                                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                                    } transition-colors`}
+                                    onClick={() => handleAprobar(motorizado.id)}
+                                    className="ml-2 px-4 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                                   >
-                                    {motorizado.estado ? "Desactivar" : "Activar"}
+                                    Aprobar
                                   </button>
-                                )} */}
+                                )}
                               </td>
                             </tr>
                           </tbody>
