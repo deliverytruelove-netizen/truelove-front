@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Plus, Upload, DollarSign, Tag, FileText, X, CheckCircle2, XCircle, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Category } from "../services/menu.service"
+import { menuService, type Category } from "../services/menu.service"
 import Image from "next/image"
 
 interface CreateMenuModalProps {
@@ -36,27 +36,25 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
       setSelectedCategory(defaultCategoryId)
     }
   }, [defaultCategoryId])
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
-
+  
     try {
       const formData = new FormData(e.currentTarget)
-
+  
       // Añadir el status al FormData
       formData.append("status", status)
-
+  
       // Si hay una categoría seleccionada por defecto, usarla
       if (selectedCategory) {
         formData.set("categoria_id", selectedCategory)
       }
-
-      // Añadir el empresa_id (asumiendo que lo obtienes de algún lugar)
-      // Si no tienes acceso al empresa_id en el frontend, deberías obtenerlo del backend
-      const empresaId = "22" // Reemplaza esto con la forma correcta de obtener el ID de la empresa
+  
+      // Obtener el ID de empresa dinámicamente
+      const empresaId = await menuService.getEmpresaId()
       formData.append("empresa_id", empresaId)
-
+  
       await onSubmit(formData)
       setOpen(false)
       setPreviewImage(null)

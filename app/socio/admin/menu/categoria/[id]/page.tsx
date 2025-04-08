@@ -44,52 +44,57 @@ function CategoryContent() {
 
   const categoryId = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : ""
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true)
 
-      // Cargar categorías
-      const categoriesResponse = await menuService.getCategories()
 
-      if (categoriesResponse.success && categoriesResponse.data) {
-        setAllCategories(categoriesResponse.data)
+const loadData = useCallback(async () => {
+  try {
+    setLoading(true);
 
-        // Encontrar la categoría actual
-        const currentCategory = categoriesResponse.data.find((cat) => cat.id.toString() === categoryId)
+    // Cargar categorías
+    const categoriesResponse = await menuService.getCategories();
 
-        if (currentCategory) {
-          setCategory(currentCategory)
-        } else {
-          toast({
-            title: "Error",
-            description: "Categoría no encontrada",
-            variant: "destructive",
-          })
-          router.push("/socio/admin/menu")
-          return
-        }
+    if (categoriesResponse.success && categoriesResponse.data) {
+      setAllCategories(categoriesResponse.data);
+      console.log("Categorías cargadas:", categoriesResponse.data);
+
+      // Encontrar la categoría actual
+      const currentCategory = categoriesResponse.data.find(
+        (cat) => cat.id.toString() === categoryId
+      );
+
+      if (currentCategory) {
+        setCategory(currentCategory);
+        console.log("Categoría actual:", currentCategory);
       } else {
-        throw new Error(categoriesResponse.message || "Error al cargar categorías")
+        console.error("Categoría no encontrada con ID:", categoryId);
+        toast({
+          title: "Error",
+          description: "Categoría no encontrada",
+          variant: "destructive",
+        });
+        router.push("/socio/admin/menu");
+        return;
       }
-
-      // Cargar menús
-      const menusResponse = await menuService.getMenus()
-
-      // Filtrar solo los productos de esta categoría
-      const categoryProducts = menusResponse.filter((item) => Number(item.categoria_id) === Number(categoryId))
-
-      setMenuItems(categoryProducts)
-    } catch (error: unknown) {
-      console.error("Error al cargar datos:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al cargar datos",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+    } else {
+      throw new Error(categoriesResponse.message || "Error al cargar categorías");
     }
-  }, [categoryId, router, toast])
+
+    // Usar el nuevo método para cargar menús por categoría
+    const categoryProducts = await menuService.getMenusByCategory(categoryId);
+    console.log("Productos de esta categoría:", categoryProducts);
+    
+    setMenuItems(categoryProducts);
+  } catch (error: unknown) {
+    console.error("Error al cargar datos:", error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Error al cargar datos",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [categoryId, router, toast]);
 
   useEffect(() => {
     loadData()

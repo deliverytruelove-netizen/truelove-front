@@ -134,6 +134,7 @@ export const menuService = {
     }
   },
 
+
   createCategory: async (data: { nombre: string }): Promise<ApiResponse<Category>> => {
     try {
       const empresaId = await menuService.getEmpresaId()
@@ -435,4 +436,32 @@ export const menuService = {
       throw error
     }
   },
+  getMenusByCategory: async (categoryId: string): Promise<MenuItem[]> => {
+    try {
+      const token = getAuthToken();
+      
+      console.log(`Obteniendo menús para la categoría ID: ${categoryId}`);
+      console.log(`URL de la API: ${API_URL}/menus/categoria/${categoryId}`);
+  
+      const response = await fetch(`${API_URL}/menus/categoria/${categoryId}`, {
+        headers: {
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string };
+        throw new Error(errorData.message || "Error al obtener menús por categoría");
+      }
+  
+      const menuItems = await response.json();
+      console.log("Menús obtenidos por categoría:", menuItems);
+      
+      return Array.isArray(menuItems) ? menuItems : [];
+    } catch (error) {
+      console.error("Error en getMenusByCategory:", error);
+      return [];
+    }
+  }
 }
