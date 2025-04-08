@@ -93,8 +93,8 @@ export const adicionalService = {
     } catch (error) {
       console.error("Error al obtener ID de empresa:", error)
       // Valor por defecto para desarrollo
-      console.warn("Usando ID de empresa por defecto: 22")
-      return "22"
+
+      return ""
     }
   },
 
