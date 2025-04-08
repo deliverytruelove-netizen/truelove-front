@@ -1,3 +1,4 @@
+// app\socio\admin\menu\categoria\[id]\page.tsx
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
