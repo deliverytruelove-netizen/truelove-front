@@ -1,3 +1,4 @@
+// app\socio\admin\layout.tsx
 'use client'
 
 import { useState } from 'react'

@@ -15,22 +15,25 @@ interface Props {
 export const Header: React.FC<Props> = ({ setShowSidebar, openSidebarRef, collapsed }) => {
   return (
     <header
-      className={`bg-white fixed ${collapsed ? "lg:left-20" : "lg:left-64"} top-0 right-0 z-10 px-4 py-3 flex gap-4 items-center justify-between shadow-sm border-b border-gray-100 transition-all duration-300`}
+      className={`bg-white fixed ${
+        collapsed ? "lg:left-20" : "lg:left-64"
+      } left-0 top-0 right-0 z-10 px-2 sm:px-4 py-2 sm:py-3 flex items-center shadow-sm border-b border-gray-100 transition-all duration-300`}
     >
-      <div className="lg:hidden flex items-center">
-        <button
-          ref={openSidebarRef}
-          onClick={() => {
-            setShowSidebar(true)
-          }}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <Menu className="h-5 w-5 text-gray-700" />
-        </button>
+      <button
+        ref={openSidebarRef}
+        onClick={() => setShowSidebar(true)}
+        className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors mr-2"
+      >
+        <Menu className="h-5 w-5 text-gray-700" />
+      </button>
+      
+      <div className="flex-1 min-w-0 px-0 sm:px-2">
+        <SearchBox />
       </div>
-      <SearchBox />
-      <AvatarSettings />
+      
+      <div className="ml-2 sm:ml-4">
+        <AvatarSettings />
+      </div>
     </header>
   )
 }
-

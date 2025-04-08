@@ -1,9 +1,9 @@
+// app\reparto\documentos\components\formulario-bancario.tsx
 "use client"
 
 import type React from "react"
 
 import { useState, type FormEvent, useEffect } from "react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { CapturarImagen } from "./CapturarImagen"
-import { FileText, ImageIcon, Loader2 } from "lucide-react"
+import { FileText, ImageIcon, Loader2, Info, CheckCircle2 } from "lucide-react"
 import { PdfPreview } from "./Pdf-preview"
+import { ImagePreview } from "./ImagePreview"
 
 interface Banco {
   id: number
@@ -67,6 +68,7 @@ export function FormularioBancario() {
   const [isLoading, setIsLoading] = useState(true)
   const [cuentaBancariaId, setCuentaBancariaId] = useState<number | null>(null)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [showFileSelector, setShowFileSelector] = useState(true)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -143,9 +145,11 @@ export function FormularioBancario() {
           if (cuenta.url_imagen_cuenta.toLowerCase().endsWith(".pdf")) {
             setFileType("pdf")
             setFilePreview(["pdf"])
+            setShowFileSelector(false)
           } else {
             setFileType("image")
             setCapturedImage(cuenta.url_imagen_cuenta)
+            setShowFileSelector(false)
           }
         }
       }
@@ -180,6 +184,7 @@ export function FormularioBancario() {
       setSelectedFiles(e.target.files)
       setCapturedImage(null)
       setErrors({ ...errors, imagen: "" })
+      setShowFileSelector(false)
 
       const previews: string[] = []
       files.forEach((file) => {
@@ -205,6 +210,14 @@ export function FormularioBancario() {
     setSelectedFiles(null)
     setFilePreview([])
     setErrors({ ...errors, imagen: "" })
+    setShowFileSelector(false)
+  }
+
+  const handleRemoveImage = () => {
+    setCapturedImage(null)
+    setSelectedFiles(null)
+    setFilePreview([])
+    setShowFileSelector(true)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -443,8 +456,9 @@ export function FormularioBancario() {
                   setSelectedFiles(null)
                   setFilePreview([])
                   setCapturedImage(null)
+                  setShowFileSelector(true)
                 }}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${fileType === "image" ? "bg-[#f34739] hover:bg-[#d63c30]" : ""}`}
               >
                 <ImageIcon className="w-4 h-4" />
                 Imagen
@@ -457,8 +471,9 @@ export function FormularioBancario() {
                   setSelectedFiles(null)
                   setFilePreview([])
                   setCapturedImage(null)
+                  setShowFileSelector(true)
                 }}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${fileType === "pdf" ? "bg-[#f34739] hover:bg-[#d63c30]" : ""}`}
               >
                 <FileText className="w-4 h-4" />
                 PDF
@@ -466,45 +481,44 @@ export function FormularioBancario() {
             </div>
 
             <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
-              <div className="flex flex-col items-center gap-2">
-                {(!selectedFiles || fileType === "image") && (
-                  <>
-                    <p className="text-xs md:text-sm text-gray-500">
-                      {fileType === "image" ? "Adjuntar en formato JPEG o PNG" : "Adjuntar en formato PDF"}
-                    </p>
+              {/* Mostrar selector de archivos solo si no hay archivos seleccionados */}
+              {showFileSelector && (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-xs md:text-sm text-gray-500">
+                    {fileType === "image" ? "Adjuntar en formato JPEG o PNG" : "Adjuntar en formato PDF"}
+                  </p>
 
-                    <Input
-                      type="file"
-                      onChange={handleFileSelect}
-                      accept={fileType === "image" ? ".jpg,.jpeg,.png,image/jpeg,image/png" : "application/pdf"}
-                      multiple={fileType === "image"}
-                      className="hidden"
-                      id="file-upload"
-                    />
+                  <Input
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept={fileType === "image" ? ".jpg,.jpeg,.png,image/jpeg,image/png" : "application/pdf"}
+                    multiple={fileType === "image"}
+                    className="hidden"
+                    id="file-upload"
+                  />
 
-                    <Label
-                      htmlFor="file-upload"
-                      className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
-                    >
-                      Seleccionar archivo
-                    </Label>
-                  </>
-                )}
-              </div>
+                  <Label
+                    htmlFor="file-upload"
+                    className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
+                  >
+                    Seleccionar archivo
+                  </Label>
+                </div>
+              )}
 
-              {/* Mostrar opción de cámara solo si está en modo imagen */}
-              {isMobile && fileType === "image" && (
+              {/* Mostrar opción de cámara solo si está en modo imagen y no hay archivos seleccionados */}
+              {isMobile && fileType === "image" && showFileSelector && (
                 <div className="flex flex-col items-center gap-2">
                   <p className="text-xs md:text-sm text-gray-500">O captura una imagen con tu cámara</p>
                   <CapturarImagen onCapture={handleCapture} />
                 </div>
               )}
 
-              {/* Vista previa de archivos */}
-              {filePreview.length > 0 && (
+              {/* Vista previa de archivos PDF */}
+              {filePreview.length > 0 && fileType === "pdf" && selectedFiles && (
                 <div className="mt-4">
                   {filePreview.map((preview, index) => {
-                    if (preview === "pdf" && selectedFiles) {
+                    if (preview === "pdf") {
                       const file = Array.from(selectedFiles)[index]
                       return (
                         <PdfPreview
@@ -516,35 +530,50 @@ export function FormularioBancario() {
                             updatedFiles.forEach((file) => newFileList.items.add(file))
                             setSelectedFiles(updatedFiles.length > 0 ? newFileList.files : null)
                             setFilePreview(filePreview.filter((_, i) => i !== index))
+                            if (updatedFiles.length === 0) {
+                              setShowFileSelector(true)
+                            }
                           }}
                         />
                       )
-                    } else {
-                      return (
-                        <Image
-                          key={index}
-                          src={preview || "/placeholder.svg"}
-                          alt={`Vista previa ${index + 1}`}
-                          width={300}
-                          height={200}
-                          className="max-w-full h-auto rounded-lg"
-                        />
-                      )
                     }
+                    return null
                   })}
+                </div>
+              )}
+
+              {/* Vista previa de imágenes */}
+              {filePreview.length > 0 && fileType === "image" && (
+                <div className="mt-4">
+                  {filePreview.map((preview, index) => (
+                    <ImagePreview
+                      key={index}
+                      src={preview || "/placeholder.svg"}
+                      alt={`Vista previa ${index + 1}`}
+                      onDelete={() => {
+                        if (selectedFiles) {
+                          const updatedFiles = Array.from(selectedFiles).filter((_, i) => i !== index)
+                          const newFileList = new DataTransfer()
+                          updatedFiles.forEach((file) => newFileList.items.add(file))
+                          setSelectedFiles(updatedFiles.length > 0 ? newFileList.files : null)
+                          setFilePreview(filePreview.filter((_, i) => i !== index))
+                          if (updatedFiles.length === 0) {
+                            setShowFileSelector(true)
+                          }
+                        }
+                      }}
+                    />
+                  ))}
                 </div>
               )}
 
               {/* Vista previa de imagen capturada */}
               {capturedImage && (
                 <div className="mt-4">
-                  <p className="text-xs md:text-sm text-gray-500 mb-2">Imagen capturada:</p>
-                  <Image
+                  <ImagePreview
                     src={capturedImage || "/placeholder.svg"}
-                    alt="Captured"
-                    width={300}
-                    height={200}
-                    className="max-w-full h-auto rounded-lg"
+                    alt="Imagen capturada"
+                    onDelete={handleRemoveImage}
                   />
                 </div>
               )}
@@ -553,20 +582,40 @@ export function FormularioBancario() {
           </div>
         </div>
 
-        <div className="bg-blue-50 p-3 md:p-4 rounded-lg space-y-2">
-          <p className="text-xs md:text-sm text-blue-800">
-            El justificante bancario debe incluir los cinco datos anteriores. Consulte el ejemplo siguiente como
-            referencia.
-          </p>
-          <p className="text-xs md:text-sm text-blue-800">
-            Puede seleccionar y cargar varias imágenes o documentos si los cinco datos están en páginas o pantallas
-            separadas.
-          </p>
+        <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                <p className="text-xs md:text-sm text-blue-800 font-medium">
+                  El justificante bancario debe incluir los cinco datos anteriores
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                <p className="text-xs md:text-sm text-blue-800">
+                  Puede cargar varias imágenes si los datos están en pantallas separadas
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                <p className="text-xs md:text-sm text-blue-800">Asegúrese que la información sea claramente legible</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end pt-4">
           <Button type="submit" className="bg-[#f34739] text-white hover:bg-[#d63c30]" disabled={isSubmitting}>
-            {isSubmitting ? "Enviando..." : "Enviar"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              "Enviar"
+            )}
           </Button>
         </div>
       </form>

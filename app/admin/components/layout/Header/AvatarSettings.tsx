@@ -81,18 +81,19 @@ const AvatarSettings: React.FC = () => {
     const rect = buttonRef.current.getBoundingClientRect()
     return {
       top: rect.bottom + 8,
-      right: window.innerWidth - rect.right,
+      right: Math.min(window.innerWidth - rect.right, 20), // Limitar el valor máximo a 20px
     }
   }
 
   const { top, right } = getMenuPosition()
 
   return (
-    <div className="relative">
+    <div className="relative z-30">
       <button
         ref={buttonRef}
         onClick={() => setShowMenu(!showMenu)}
         className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+        aria-label="Configuración de usuario"
       >
         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center font-medium shadow-sm">
           {userInitials}
@@ -168,4 +169,3 @@ const AvatarSettings: React.FC = () => {
 }
 
 export default AvatarSettings
-

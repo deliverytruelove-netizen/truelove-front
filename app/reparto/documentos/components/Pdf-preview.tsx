@@ -1,3 +1,4 @@
+// app\reparto\documentos\components\Pdf-preview.tsx
 import { FileText, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 

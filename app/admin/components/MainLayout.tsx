@@ -29,6 +29,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     // Verificar inicialmente
     checkSidebarState()
 
+    // Escuchar el evento personalizado de cambio de estado del sidebar
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.collapsed)
+    }
+
+    window.addEventListener("sidebarStateChange", handleSidebarStateChange as EventListener)
+
     // Configurar un observador de mutación para detectar cambios en las clases del sidebar
     const observer = new MutationObserver(checkSidebarState)
     const sidebar = document.querySelector("[data-sidebar]")
@@ -39,15 +46,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     return () => {
       observer.disconnect()
+      window.removeEventListener("sidebarStateChange", handleSidebarStateChange as EventListener)
     }
   }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen w-full bg-gray-50">
+        <SidebarWrap />
         <main className={`${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"} min-h-screen transition-all duration-300`}>
-          <SidebarWrap />
-          <div className="pt-24 px-6 pb-6">
+          <div className="pt-24 px-4 sm:px-6 pb-6">
             <Breadcrumbs />
             <div>{children}</div>
           </div>
@@ -58,4 +66,3 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 }
 
 export default MainLayout
-

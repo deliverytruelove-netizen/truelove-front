@@ -1,3 +1,4 @@
+// app\reparto\documentos\components\CapturarImagen.tsx
 'use client'
 
 import React, { useCallback, useRef, useState, useEffect } from 'react'

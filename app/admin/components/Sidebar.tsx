@@ -38,6 +38,8 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed)
+    // Disparar un evento personalizado para notificar el cambio de estado del sidebar
+    window.dispatchEvent(new CustomEvent("sidebarStateChange", { detail: { collapsed: !collapsed } }))
   }
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
         {!collapsed && (
           <span className="flex gap-3 items-center">
             <Image
-              src={Logo || "/placeholder.svg"}
+              src={Logo }
               alt="Logo of the app"
               width={40}
               height={40}
@@ -155,4 +157,3 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
     </div>
   )
 }
-
