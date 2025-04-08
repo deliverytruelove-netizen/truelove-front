@@ -1,3 +1,4 @@
+// app\socio\admin\components\products-list.tsx
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
