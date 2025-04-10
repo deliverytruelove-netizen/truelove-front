@@ -76,25 +76,26 @@ const SocioList: React.FC = () => {
   const { data: detallesSocio } = useQuery<DetallesSocio | null>({
     queryKey: ["socio-details", selectedSocioId],
     queryFn: async () => {
-      if (!selectedSocioId) return null
-      const detalle = await fetchSocioDetails(selectedSocioId)
-
-      // Buscar el socio original para obtener documentType y documentNumber
-      const socios = await fetchSocios()
-      const socioOriginal = socios.find((s) => s.id === selectedSocioId)
-
+      if (!selectedSocioId) return null;
+      const detalle = await fetchSocioDetails(selectedSocioId);
+      
+      // Buscar el socio original para obtener el estado de aprobación
+      const socios = await fetchSocios();
+      const socioOriginal = socios.find((s) => s.id === selectedSocioId);
+  
       if (socioOriginal && detalle) {
         return {
           ...detalle,
           documentType: socioOriginal.documentType,
           documentNumber: socioOriginal.documentNumber,
-        }
+          aprobado: socioOriginal.aprobado // Asegurarse de incluir el estado de aprobación
+        };
       }
-
-      return detalle
+  
+      return detalle;
     },
     enabled: !!selectedSocioId,
-  })
+  });
 
   // const mutationChangeState = useMutation({
   //   mutationFn: changeStateSocio,
