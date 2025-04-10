@@ -1,7 +1,8 @@
+// app\reparto\components\RegisterForm.tsx
 "use client"
 
 import * as React from "react"
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, ArrowLeft, Loader2 } from "lucide-react"
@@ -18,7 +19,8 @@ import { StepThree } from "./form-steps/StepThree"
 import { fetchDocumentInfo } from "@/utils/api"
 import { EstadoVerificacion } from "./EstadoVerificacion"
 import { IndicadorPasos } from "./IndicadorPasos"
-
+import { EmailChangeDialog } from "./EmailChangeDialog"
+import { createRepartoToken } from "@/services/repartoTokenService"
 const formVariants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
@@ -56,6 +58,10 @@ export default function RegisterForm() {
   const fileInputRefFrente = React.useRef<HTMLInputElement>(null)
   const fileInputRefReverso = React.useRef<HTMLInputElement>(null)
   const isMobile = useMediaQuery("(max-width: 768px)")
+
+  // Volver a agregar el estado para el diálogo de correo electrónico
+  const [showEmailDialog, setShowEmailDialog] = useState(false)
+  const [originalEmail, setOriginalEmail] = useState("")
 
   // Verificar si hay un registro existente al cargar el componente
   useEffect(() => {
@@ -136,7 +142,9 @@ export default function RegisterForm() {
         documento_imagen_frente: formData.documentoImagenFrente?.split(",")[1] || null,
         documento_imagen_reverso: formData.documentoImagenReverso?.split(",")[1] || null,
       }
-
+  
+      console.log("Enviando datos de registro:", requestData)
+  
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro`, {
         method: "POST",
         headers: {
@@ -144,37 +152,57 @@ export default function RegisterForm() {
         },
         body: JSON.stringify(requestData),
       })
-
+  
       const data = await response.json()
-
+      console.log("Respuesta del servidor:", data) // Añadir log para depuración
+  
       if (!response.ok) {
+        // Verificar si es un error de correo diferente
+        if (response.status === 422 && data.error === "different_email" && data.original_email) {
+          setOriginalEmail(data.original_email)
+          setShowEmailDialog(true)
+          setIsLoading(false)
+          return
+        }
+  
+        // Otros errores de validación
         if (response.status === 422 && data.errors?.duplicate) {
           setValidationError(data.errors.duplicate[0])
+          setIsLoading(false)
           return
         }
-
-        // Si el registro está incompleto, redirigir a la página de estado
-        if (data.status === "incomplete" && data.registration_id) {
-          router.push(`/reparto/status?registration_id=${data.registration_id}`)
-          return
-        }
-
+  
         throw new Error(data?.message || `Error ${response.status}: ${response.statusText}`)
       }
-
+  
       // Si es un registro incompleto, redirigir a la página de estado
       if (data.status === "incomplete" && data.registration_id) {
         router.push(`/reparto/status?registration_id=${data.registration_id}`)
         return
       }
-
+  
       // Si es un registro nuevo exitoso
       if (data.data && data.data.id) {
-        sessionStorage.setItem("repartoRegistroId", data.data.id.toString())
-        router.push("/reparto/zonas")
+        // Verificar si es un registro nuevo
+        if (data.status === "new_registration") {
+          console.log("Registro nuevo, redirigiendo directamente a zonas")
+          
+          // Crear token para la sesión
+          try {
+            await createRepartoToken(data.data.id, "/reparto/zonas")
+            router.push("/reparto/zonas")
+            return
+          } catch (tokenError) {
+            console.error("Error al crear token:", tokenError)
+            // Si hay error al crear el token, continuar con el flujo normal
+          }
+        }
+        
+        // Si no es un registro nuevo o hubo error al crear el token, ir a la página de estado
+        router.push(`/reparto/status?registration_id=${data.data.id}`)
         return
       }
-
+  
       // Si llegamos aquí, algo salió mal con la estructura de la respuesta
       console.error("Estructura de respuesta inesperada:", data)
       throw new Error("La respuesta del servidor no tiene el formato esperado")
@@ -192,6 +220,136 @@ export default function RegisterForm() {
       setIsLoading(false)
     }
   }, [formData, router, toast])
+
+  // Agregar las funciones para manejar los botones del diálogo
+  const handleUseOriginalEmail = async () => {
+    setShowEmailDialog(false)
+    setIsLoading(true)
+
+    try {
+      // Actualizar el formulario con el correo original
+      updateFormData("email", originalEmail)
+
+      // Esperar un momento para que se actualice el estado
+      setTimeout(async () => {
+        // Volver a intentar el envío con el correo original
+        const requestData = {
+          departamento: formData.departamento,
+          vehiculo: formData.vehiculo,
+          tipo_documento: formData.tipoDocumento,
+          nro_documento: formData.nroDocumento,
+          nombres: formData.nombres,
+          apellidos: formData.apellidos,
+          celular: formData.celular,
+          email: originalEmail, // Usar el correo original directamente
+          mayor_edad: formData.mayorEdad === "si",
+          acepta_politica: formData.aceptaPolitica,
+          documento_imagen_frente: formData.documentoImagenFrente?.split(",")[1] || null,
+          documento_imagen_reverso: formData.documentoImagenReverso?.split(",")[1] || null,
+        }
+
+        console.log("Enviando datos con correo original:", requestData)
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        })
+
+        const data = await response.json()
+        console.log("Respuesta del servidor (correo original):", data)
+
+        if (!response.ok) {
+          throw new Error(data?.message || `Error ${response.status}: ${response.statusText}`)
+        }
+
+        // Redirigir a la página de estado
+        if (data.registration_id || (data.data && data.data.id)) {
+          const registrationId = data.registration_id || data.data.id
+          router.push(`/reparto/status?registration_id=${registrationId}`)
+        } else {
+          throw new Error("No se recibió ID de registro en la respuesta")
+        }
+      }, 100)
+    } catch (error) {
+      console.error("Error al usar el correo original:", error)
+      toast({
+        title: "Error",
+        description: "Hubo un problema al procesar tu solicitud. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+    }
+  }
+
+  const handleUseNewEmail = async () => {
+    setShowEmailDialog(false)
+    setIsLoading(true)
+
+    try {
+      // Buscar el registro existente por correo
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/check-status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: originalEmail,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Error al verificar el registro existente")
+      }
+
+      const data = await response.json()
+      console.log("Datos del registro existente:", data)
+
+      if (data.status === "incomplete" && data.registration_id) {
+        // Actualizar el correo en el registro existente
+        const updateResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_WEB}/reparto/${data.registration_id}/update-email`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: formData.email,
+            }),
+          },
+        )
+
+        const updateData = await updateResponse.json()
+        console.log("Respuesta de actualización de correo:", updateData)
+
+        if (!updateResponse.ok) {
+          if (updateData.error === "email_registered") {
+            setValidationError("Este correo electrónico ya está registrado como repartidor.")
+            setIsLoading(false)
+            return
+          }
+          throw new Error("Error al actualizar el correo electrónico")
+        }
+
+        // Redirigir a la página de estado
+        router.push(`/reparto/status?registration_id=${data.registration_id}`)
+      } else {
+        // Si no hay un registro incompleto, continuar con el registro normal
+        handleSubmit()
+      }
+    } catch (error) {
+      console.error("Error al usar el nuevo correo:", error)
+      toast({
+        title: "Error",
+        description: "Hubo un problema al procesar tu solicitud. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+    }
+  }
 
   const handleCaptchaVerify = useCallback(
     async (success: boolean) => {
@@ -321,6 +479,7 @@ export default function RegisterForm() {
     return <EstadoVerificacion />
   }
 
+  // Agregar el componente EmailChangeDialog al final del componente
   return (
     <div className="min-h-screen flex">
       <div className="w-full flex items-center justify-center p-4">
@@ -410,7 +569,13 @@ export default function RegisterForm() {
         title="Capturar reverso del DNI"
       />
       <VisualCaptcha isOpen={showCaptcha} onVerify={handleCaptchaVerify} onClose={handleCaptchaClose} />
+      <EmailChangeDialog
+        isOpen={showEmailDialog}
+        onClose={() => setShowEmailDialog(false)}
+        onUseOriginal={handleUseOriginalEmail}
+        onUseNew={handleUseNewEmail}
+        originalEmail={originalEmail}
+      />
     </div>
   )
 }
-

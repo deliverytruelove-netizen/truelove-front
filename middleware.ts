@@ -21,7 +21,10 @@ const RUTAS_PROTEGIDAS = [
 const RUTAS_REPARTO_PROTEGIDAS = [
   "/reparto/zonas",
   "/reparto/documentos",
-  
+  "/reparto/documento-motorizado",
+  "/reparto/registro-exitoso",
+  "/reparto/entrega-material",
+  "/reparto/confirmacion-entrega",
 ]
 
 export async function middleware(req: NextRequest) {
@@ -62,6 +65,33 @@ export async function middleware(req: NextRequest) {
 
       // Redirigir a la página de estado con el token como parámetro de búsqueda
       return NextResponse.redirect(new URL(`/registration-status/secure?t=${encodedToken}`, req.url))
+    } catch (error) {
+      console.error("Error al generar token para redirección:", error)
+      // Si hay un error, continuar con la solicitud original
+      return NextResponse.next()
+    }
+  }
+
+  // Interceptar las solicitudes a /reparto/status con parámetro registration_id
+  if (path === "/reparto/status" && req.nextUrl.searchParams.has("registration_id")) {
+    const registrationId = req.nextUrl.searchParams.get("registration_id")
+
+    try {
+      // Crear un token JWT con el ID de registro
+      const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || "")
+      const token = await new SignJWT({
+        registration_id: registrationId,
+        current_step: "/reparto/status",
+      })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1h")
+        .sign(secretKey)
+
+      // Codificar el token en base64 para usarlo en la URL
+      const encodedToken = Buffer.from(token).toString("base64")
+
+      // Redirigir a la página de estado con el token como parámetro de búsqueda
+      return NextResponse.redirect(new URL(`/reparto/status/secure?t=${encodedToken}`, req.url))
     } catch (error) {
       console.error("Error al generar token para redirección:", error)
       // Si hay un error, continuar con la solicitud original
@@ -388,4 +418,3 @@ export const config = {
     "/reparto/status",
   ],
 }
-

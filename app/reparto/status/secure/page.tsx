@@ -1,10 +1,10 @@
-// app\registration-status\secure\page.tsx
+//app\reparto\status\secure\page.tsx
 import { Suspense } from "react"
 import { Card } from "@/components/ui/card"
 import { RefreshCw } from "lucide-react"
-import { SecureRegistrationContent } from "./SecureRegistrationContent"
+import { SecureRepartoContent } from "./SecureRepartoContent"
 
-// Componente de carga para el Suspense.
+// Componente de carga para el Suspense
 function LoadingFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-white to-gray-100">
@@ -20,11 +20,10 @@ function LoadingFallback() {
 }
 
 // Componente de página principal (Server Component)
-export default function SecureRegistrationStatusPage() {
+export default function SecureRepartoStatusPage() {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <SecureRegistrationContent />
+      <SecureRepartoContent />
     </Suspense>
   )
 }
-

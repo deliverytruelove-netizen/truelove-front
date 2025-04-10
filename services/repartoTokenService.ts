@@ -1,5 +1,5 @@
+// services\repartoTokenService.ts
 import { jwtVerify, SignJWT } from "jose"
-
 // Interfaz que define la estructura del token decodificado
 interface DecodedToken {
   exp: number // Tiempo de expiración del token
@@ -121,3 +121,38 @@ export const updateRepartoStep = async (current_step: string): Promise<string | 
   return newToken
 }
 
+// Procesa un token codificado en base64 desde la URL
+export const processEncodedToken = async (encodedToken: string): Promise<DecodedToken | null> => {
+  try {
+    // Decodificar el token de la URL (está codificado en base64)
+    const decodedToken = Buffer.from(encodedToken, "base64").toString()
+
+    // Guardar el token en las cookies
+    setRepartoToken(decodedToken)
+
+    // Verificar y obtener los datos del token
+    const tokenData = await getRepartoData()
+
+    if (!tokenData || !tokenData.registration_id) {
+      console.error("Token inválido o expirado")
+      return null
+    }
+
+    return tokenData
+  } catch (error) {
+    console.error("Error al procesar el token codificado:", error)
+    return null
+  }
+}
+
+// Función para guardar datos en localStorage como respaldo
+export function setLocalStorageData(registrationId: string, currentStep: string): void {
+  localStorage.setItem(
+    "repartoData",
+    JSON.stringify({
+      registration_id: registrationId,
+      current_step: currentStep,
+      timestamp: Date.now(),
+    }),
+  )
+}

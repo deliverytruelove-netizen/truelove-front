@@ -1,34 +1,40 @@
 // app\admin\socios\types\Socios.types.ts
 export interface Socio {
-  id: number;
-  name: string;
-  lastName: string;
-  businessType: string;
-  phone: string;
-  email: string;
-  verification_code: string | null;
-  email_verified_at: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+  id: number
+  name: string
+  lastName: string
+  businessType: string
+  phone: string
+  email: string
+  verification_code: string | null
+  email_verified_at: string | null
+  created_at: string | null
+  updated_at: string | null
+  aprobado?: boolean
+  estado?: number
+  user_id?: number
+  documentType?: string
+  documentNumber?: string
+ 
 }
 
 export interface DatosBancarios {
-  titular_cuenta: string;
-  numero_cuenta: string;
-  nombre_banco: string;
-  tipo_cuenta: string;
+  titular_cuenta: string
+  numero_cuenta: string
+  nombre_banco: string
+  tipo_cuenta: string
 }
 
 export interface DatosEstablecimiento {
-  nombre_establecimiento: string;
-  direccion_completa: string;
-  ciudad: string;
-  codigo_postal: string;
+  nombre_establecimiento: string
+  direccion_completa: string
+  ciudad: string
+  codigo_postal: string
 }
 
 export interface DatosNegocio {
-  ruc: string;
-  razon_social: string;
+  ruc: string
+  razon_social: string
 }
 
 export interface DocumentosPdfExtranjero {
@@ -37,38 +43,39 @@ export interface DocumentosPdfExtranjero {
 }
 
 export interface DetallesSocio {
-  id: number;
+  id: number
   personal: {
-    name: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    businessType: string;
-    created_at: string;
-    
-  };
-  documentosPdfExtranjero: DocumentosPdfExtranjero | null;
+    name: string
+    lastName: string
+    email: string
+    phone: string
+    businessType: string
+    created_at: string
+  }
+  documentosPdfExtranjero: DocumentosPdfExtranjero | null
   business: {
-    nombre: string;
-    total_sucursales: number;
-    metodo_contacto: string;
-    telefono: string;
-  } | null;
+    nombre: string
+    total_sucursales: number
+    metodo_contacto: string
+    telefono: string
+  } | null
 
-  businessData: DatosNegocio | null;
-  establishment: DatosEstablecimiento | null;
-  bankData: DatosBancarios | null;
+  businessData: DatosNegocio | null
+  establishment: DatosEstablecimiento | null
+  bankData: DatosBancarios | null
   cuentaBancaria: {
-    titular_cuenta: string;
-    dni: string;
-    banco: string;
-    tipo_cuenta: string;
-    numero_cuenta: string;
-    imagenes_cuenta: string[];
-  } | null;
-  aprobado: boolean;
-  
+    titular_cuenta: string
+    dni: string
+    banco: string
+    tipo_cuenta: string
+    numero_cuenta: string
+    imagenes_cuenta: string[]
+  } | null
+  aprobado?: boolean
+  documentType?: string
+  documentNumber?: string
 }
+
 export interface SocioCompleto extends Socio {
   personal: boolean
   business: boolean //negocio

@@ -1,3 +1,4 @@
+// app\reparto\status\page.tsx
 import { Suspense } from "react"
 import RepartoStatusForm from "./RepartoStatusForm"
 
@@ -14,4 +15,3 @@ export default function RepartoStatusPage() {
     </Suspense>
   )
 }
-
