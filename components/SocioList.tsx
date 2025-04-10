@@ -12,7 +12,7 @@ import {
   fetchSocioDetails,
   aprobarSocio,
 } from "@/app/admin/socios/services/Socios.service"
-import type { DetallesSocio } from "@/app/admin/socios/types/Socios.types"
+import type { DetallesSocio, Socio } from "@/app/admin/socios/types/Socios.types"
 // import type { ColumnSort } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { showAlert } from "@/components/ui/DataTable/Alert"
@@ -38,9 +38,31 @@ const SocioList: React.FC = () => {
     queryKey: ["socios-detalles"],
     queryFn: async () => {
       const socios = await fetchSocios()
+      console.log("Socios (antes de detalles):", socios)
+
       const detallesPromises = socios.map((socio) => fetchSocioDetails(socio.id))
       const detalles = await Promise.all(detallesPromises)
-      return detalles.filter(
+      console.log("Socios con detalles (antes del filtro):", detalles)
+
+      // Mapear los valores de aprobado desde los socios originales a los detalles
+      const detallesConAprobado = detalles.map((detalle, index) => {
+        // Asegurarse de que el detalle tenga la propiedad aprobado del socio original
+        if (detalle && socios[index]) {
+          const socioOriginal = socios[index] as Socio
+          return {
+            ...detalle,
+            aprobado: socioOriginal.aprobado,
+            // Añadir documentType y documentNumber a los detalles
+            documentType: socioOriginal.documentType,
+            documentNumber: socioOriginal.documentNumber,
+          }
+        }
+        return detalle
+      })
+
+      console.log("Detalles con aprobado mapeado:", detallesConAprobado)
+
+      return detallesConAprobado.filter(
         (detalle) =>
           detalle.business !== null &&
           detalle.businessData !== null &&
@@ -55,7 +77,21 @@ const SocioList: React.FC = () => {
     queryKey: ["socio-details", selectedSocioId],
     queryFn: async () => {
       if (!selectedSocioId) return null
-      return await fetchSocioDetails(selectedSocioId)
+      const detalle = await fetchSocioDetails(selectedSocioId)
+
+      // Buscar el socio original para obtener documentType y documentNumber
+      const socios = await fetchSocios()
+      const socioOriginal = socios.find((s) => s.id === selectedSocioId)
+
+      if (socioOriginal && detalle) {
+        return {
+          ...detalle,
+          documentType: socioOriginal.documentType,
+          documentNumber: socioOriginal.documentNumber,
+        }
+      }
+
+      return detalle
     },
     enabled: !!selectedSocioId,
   })
@@ -75,6 +111,7 @@ const SocioList: React.FC = () => {
     mutationFn: aprobarSocio,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["socios-detalles"] })
+      queryClient.invalidateQueries({ queryKey: ["socio-details", selectedSocioId] })
       showAlert({ title: "Éxito", text: "Se aprobó el socio.", icon: "success" })
     },
     onError: (error: Error) => {
@@ -87,6 +124,7 @@ const SocioList: React.FC = () => {
   // }
 
   const handleAprobar = (id: number) => {
+    setSelectedSocioId(id)
     mutationAprobar.mutate(id)
   }
 
@@ -242,7 +280,7 @@ const SocioList: React.FC = () => {
                       <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">{socio.personal?.email}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{formatDate(socio.personal?.created_at)}</td>
                       <td className="px-4 py-3 text-center">
-                        {socio.aprobado ? (
+                        {socio.aprobado === true ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             <Check className="w-3 h-3 mr-1" />
                             Aprobado
@@ -282,14 +320,6 @@ const SocioList: React.FC = () => {
                                     Aprobar
                                   </button>
                                 )}
-
-                                {/* Botón de Activar/Desactivar - Comentado */}
-                                {/* <button
-                                  onClick={() => handleDeactivate(socio.id)}
-                                  className="px-3 py-1 text-xs font-medium rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
-                                >
-                                  Desactivar
-                                </button> */}
                               </td>
                             </tr>
                           </tbody>
@@ -350,4 +380,3 @@ const SocioList: React.FC = () => {
 }
 
 export default SocioList
-

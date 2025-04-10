@@ -2,19 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { DetallesSocio, DocumentosPdfExtranjero } from "@/app/admin/socios/types/Socios.types"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { User, Briefcase, MapPin, CreditCard, Mail, Phone, Calendar, Building, FileText } from "lucide-react"
+import { User, Briefcase, MapPin, CreditCard, Mail, Phone, Calendar, Building, FileText, FileCheck } from "lucide-react"
 import NextImage from "next/image"
 import { PDFViewer } from "../PDFViewer"
 
@@ -66,6 +57,25 @@ const TabButton = ({
   </button>
 )
 
+// Función para determinar si un archivo es un PDF basado en su extensión
+const isPdfFile = (url: string): boolean => {
+  return url.toLowerCase().endsWith(".pdf")
+}
+
+// Función para formatear el tipo de documento
+const formatDocumentType = (type: string): string => {
+  switch (type) {
+    case "DNI":
+      return "DNI"
+    case "CARNET_EXTRANJERIA":
+      return "Carnet de Extranjería"
+    case "PASAPORTE":
+      return "Pasaporte"
+    default:
+      return type
+  }
+}
+
 export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: DetallesSocioModalProps) {
   const [activeTab, setActiveTab] = useState<
     "personal" | "negocio" | "establecimiento" | "bancarios" | "cuenta_bancaria" | "documentos"
@@ -74,7 +84,27 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
   const [showImageModal, setShowImageModal] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  if (!data) return null
+  // Resetear el tab activo cuando cambia el socio
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab("personal")
+    }
+  }, [isOpen, data?.id])
+
+  // Bloquear el scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "auto"
+    }
+
+    return () => {
+      document.body.style.overflow = "auto"
+    }
+  }, [isOpen])
+
+  if (!data || !isOpen) return null
 
   const handleAprobar = () => {
     if (!data.id) {
@@ -90,15 +120,28 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
   }
 
   const handleImageClick = (imageSrc: string) => {
-    setSelectedImage(imageSrc)
-    setShowImageModal(true)
+    // Solo permitir ampliar imágenes, no PDFs
+    if (!isPdfFile(imageSrc)) {
+      setSelectedImage(imageSrc)
+      setShowImageModal(true)
+    }
   }
+
+  // Verificar si el socio tiene carnet de extranjería para mostrar la pestaña de documentos
+  const isExtranjero = data.documentType === "CARNET_EXTRANJERIA"
 
   const renderContent = () => {
     switch (activeTab) {
       case "personal":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.documentType && data.documentNumber && (
+              <InfoItem
+                icon={<FileCheck className="w-5 h-5" />}
+                label="Documento"
+                value={`${formatDocumentType(data.documentType)}: ${data.documentNumber}`}
+              />
+            )}
             <InfoItem
               icon={<User className="w-5 h-5" />}
               label="Nombre Completo"
@@ -216,23 +259,34 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               />
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-2">Imágenes de la Cuenta</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {data.cuentaBancaria.imagenes_cuenta.map((imagen, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-square cursor-pointer"
-                    onClick={() => handleImageClick(imagen)}
-                  >
-                    <NextImage
-                      src={`/storage/${imagen}`}
-                      alt={`Imagen de cuenta bancaria ${index + 1}`}
-                      layout="fill"
-                      objectFit="cover"
-                      className="rounded-lg"
-                    />
-                  </div>
-                ))}
+              <h3 className="text-lg font-semibold mb-4 text-center">Imágenes de la Cuenta</h3>
+              <div className="flex flex-col items-center">
+                {data.cuentaBancaria.imagenes_cuenta.map((imagen, index) => {
+                  // Verificar si es un PDF o una imagen
+                  if (isPdfFile(imagen)) {
+                    return (
+                      <div key={index} className="w-full max-w-3xl mx-auto">
+                        <PDFViewer url={`/storage/${imagen}`} title="Documento Bancario" />
+                      </div>
+                    )
+                  } else {
+                    return (
+                      <div
+                        key={index}
+                        className="relative aspect-square w-full max-w-md mx-auto cursor-pointer mb-4"
+                        onClick={() => handleImageClick(imagen)}
+                      >
+                        <NextImage
+                          src={`/storage/${imagen}`}
+                          alt={`Imagen de cuenta bancaria ${index + 1}`}
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-lg"
+                        />
+                      </div>
+                    )
+                  }
+                })}
               </div>
             </div>
           </div>
@@ -264,99 +318,112 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-          <DialogHeader className="p-6 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-t-lg">
-            <DialogTitle className="text-2xl font-bold">Detalles del Socio</DialogTitle>
-          </DialogHeader>
-
-          <div className="p-6">
-            <div className="flex flex-wrap gap-2 p-2 bg-gray-100 rounded-lg mb-6">
-              <TabButton
-                isActive={activeTab === "personal"}
-                icon={<User className="w-5 h-5" />}
-                label="Personal"
-                onClick={() => setActiveTab("personal")}
-              />
-              <TabButton
-                isActive={activeTab === "negocio"}
-                icon={<Briefcase className="w-5 h-5" />}
-                label="Negocio"
-                onClick={() => setActiveTab("negocio")}
-              />
-              <TabButton
-                isActive={activeTab === "establecimiento"}
-                icon={<MapPin className="w-5 h-5" />}
-                label="Establecimiento"
-                onClick={() => setActiveTab("establecimiento")}
-              />
-              <TabButton
-                isActive={activeTab === "bancarios"}
-                icon={<CreditCard className="w-5 h-5" />}
-                label="Datos Bancarios"
-                onClick={() => setActiveTab("bancarios")}
-              />
-              <TabButton
-                isActive={activeTab === "cuenta_bancaria"}
-                icon={<FileText className="w-5 h-5" />}
-                label="Cuenta Bancaria"
-                onClick={() => setActiveTab("cuenta_bancaria")}
-              />
-              <TabButton
-                isActive={activeTab === "documentos"}
-                icon={<FileText className="w-5 h-5" />}
-                label="Documentos"
-                onClick={() => setActiveTab("documentos")}
-              />
+      {/* Modal principal */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            {/* Encabezado fijo */}
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white p-6 rounded-t-lg">
+              <h2 className="text-2xl font-bold">Detalles del Socio</h2>
             </div>
 
-            <div className="mt-6">{renderContent()}</div>
+            {/* Contenido con scroll */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6">
+                {/* Pestañas de navegación */}
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-2 bg-gray-100 rounded-lg mb-6">
+                  <TabButton
+                    isActive={activeTab === "personal"}
+                    icon={<User className="w-5 h-5" />}
+                    label="Personal"
+                    onClick={() => setActiveTab("personal")}
+                  />
+                  <TabButton
+                    isActive={activeTab === "negocio"}
+                    icon={<Briefcase className="w-5 h-5" />}
+                    label="Negocio"
+                    onClick={() => setActiveTab("negocio")}
+                  />
+                  <TabButton
+                    isActive={activeTab === "establecimiento"}
+                    icon={<MapPin className="w-5 h-5" />}
+                    label="Establecimiento"
+                    onClick={() => setActiveTab("establecimiento")}
+                  />
+                  <TabButton
+                    isActive={activeTab === "bancarios"}
+                    icon={<CreditCard className="w-5 h-5" />}
+                    label="Datos Bancarios"
+                    onClick={() => setActiveTab("bancarios")}
+                  />
+                  <TabButton
+                    isActive={activeTab === "cuenta_bancaria"}
+                    icon={<FileText className="w-5 h-5" />}
+                    label="Cuenta Bancaria"
+                    onClick={() => setActiveTab("cuenta_bancaria")}
+                  />
+                  {/* Solo mostrar la pestaña de documentos para extranjeros */}
+                  {isExtranjero && (
+                    <TabButton
+                      isActive={activeTab === "documentos"}
+                      icon={<FileText className="w-5 h-5" />}
+                      label="Documentos"
+                      onClick={() => setActiveTab("documentos")}
+                    />
+                  )}
+                </div>
+
+                <div className="mt-6">{renderContent()}</div>
+              </div>
+            </div>
+
+            {/* Pie fijo */}
+            <div className="bg-gray-50 border-t p-6 flex justify-end gap-3 rounded-b-lg">
+              <Button variant="outline" onClick={onClose}>
+                Cerrar
+              </Button>
+              {!data.aprobado && (
+                <Button onClick={handleAprobar} className="bg-red-500 hover:bg-red-600 text-white">
+                  Aprobar Socio
+                </Button>
+              )}
+            </div>
           </div>
+        </div>
+      )}
 
-          <DialogFooter className="p-6 bg-gray-50 border-t">
-            <Button onClick={onClose} variant="outline">
-              Cerrar
-            </Button>
-            <Button
-              onClick={handleAprobar}
-              disabled={data.aprobado}
-              className={`${data.aprobado ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white transition-colors duration-200`}
-            >
-              {data.aprobado ? "Aprobado" : "Aprobar Socio"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={!!error} onOpenChange={handleCloseError}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Error</AlertDialogTitle>
-            <AlertDialogDescription>{error}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button onClick={handleCloseError} variant="outline">
-              OK
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {showImageModal && selectedImage && (
-        <Dialog open={showImageModal} onOpenChange={() => setShowImageModal(false)}>
-          <DialogContent className="max-w-3xl">
-            <div className="relative aspect-square">
-              <NextImage
-                src={`/storage/${selectedImage}`}
-                alt="Imagen de cuenta bancaria ampliada"
-                layout="fill"
-                objectFit="contain"
-              />
+      {/* Modal de error */}
+      {error && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-2">Error</h3>
+            <p className="text-gray-700 mb-4">{error}</p>
+            <div className="flex justify-end">
+              <Button onClick={handleCloseError} variant="outline">
+                OK
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de imagen ampliada */}
+      {showImageModal && selectedImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh]">
+            <NextImage
+              src={`/storage/${selectedImage}`}
+              alt="Imagen de cuenta bancaria ampliada"
+              width={800}
+              height={600}
+              className="object-contain"
+            />
+          </div>
+        </div>
       )}
     </>
   )
 }
-

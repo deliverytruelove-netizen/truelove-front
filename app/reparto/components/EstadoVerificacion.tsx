@@ -1,3 +1,4 @@
+// app\reparto\components\EstadoVerificacion.tsx
 import { Loader2 } from "lucide-react"
 
 export function EstadoVerificacion() {

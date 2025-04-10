@@ -1,3 +1,4 @@
+// app\registration-status\RegistroForm.tsx
 "use client"
 
 import { useState, useEffect } from "react"

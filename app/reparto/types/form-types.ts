@@ -1,3 +1,4 @@
+// app\reparto\types\form-types.ts
 export interface FormData {
   departamento: string
   vehiculo: string

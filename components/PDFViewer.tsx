@@ -1,10 +1,13 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Download } from "lucide-react"
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js`
+// Cambia la ruta para usar el archivo local en la carpeta public
+pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`
 
 interface PDFViewerProps {
   url: string | null
@@ -40,9 +43,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
       const response = await fetch(url)
       const blob = await response.blob()
       const downloadUrl = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
+      const link = document.createElement("a")
       link.href = downloadUrl
-      link.download = `${title.toLowerCase().replace(/ /g, '_')}.pdf`
+      link.download = `${title.toLowerCase().replace(/ /g, "_")}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -57,12 +60,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
     <div className="border rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-lg font-semibold">{title}</h4>
-        <Button
-          onClick={handleDownload}
-          variant="outline"
-          size="sm"
-          className="text-blue-600 hover:text-blue-700"
-        >
+        <Button onClick={handleDownload} variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
           <Download className="w-4 h-4 mr-2" />
           Descargar PDF
         </Button>
@@ -82,7 +80,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
             }
             className="max-w-full"
             options={{
-              cMapUrl: "https://unpkg.com/pdfjs-dist@2.16.105/cmaps/",
+              cMapUrl: "",
               cMapPacked: true,
             }}
           >

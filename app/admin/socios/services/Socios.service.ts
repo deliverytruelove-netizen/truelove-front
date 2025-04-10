@@ -1,4 +1,4 @@
-// Importar los tipos Socio y DetallesSocio
+// app\admin\socios\services\Socios.service.ts Importar los tipos Socio y DetallesSocio
 import { Socio, DetallesSocio } from '../types/Socios.types';
 
 // Definir la URL de la API
