@@ -1,10 +1,12 @@
+// components\PDFViewer.tsx
 "use client"
 
 import type React from "react"
 import { useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { ChevronLeft, ChevronRight, Download, Eye } from "lucide-react"
+import { PDFModal } from "./PDFModal"
 
 // Cambia la ruta para usar el archivo local en la carpeta public
 pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`
@@ -18,6 +20,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
   const [numPages, setNumPages] = useState<number | null>(null)
   const [pageNumber, setPageNumber] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   if (!url) {
     return (
@@ -56,14 +59,28 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
     }
   }
 
+  const openModal = () => {
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+  }
+
   return (
     <div className="border rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-lg font-semibold">{title}</h4>
-        <Button onClick={handleDownload} variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
-          <Download className="w-4 h-4 mr-2" />
-          Descargar PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={openModal} variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
+            <Eye className="w-4 h-4 mr-2" />
+            Ver PDF
+          </Button>
+          <Button onClick={handleDownload} variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
+            <Download className="w-4 h-4 mr-2" />
+            Descargar PDF
+          </Button>
+        </div>
       </div>
       <div className="flex flex-col items-center">
         {error ? (
@@ -112,6 +129,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
           </div>
         )}
       </div>
+
+      {/* Modal para ver el PDF */}
+      <PDFModal isOpen={isModalOpen} onClose={closeModal} url={url} title={title} />
     </div>
   )
 }

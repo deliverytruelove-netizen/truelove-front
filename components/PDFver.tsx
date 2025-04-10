@@ -1,3 +1,4 @@
+// components\PDFver.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -40,4 +41,3 @@ export function PdfViewer({ url }: PdfViewerProps) {
     </div>
   )
 }
-

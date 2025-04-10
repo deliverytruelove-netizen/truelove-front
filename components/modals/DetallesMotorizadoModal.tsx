@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
 import { Button } from "@/components/ui/button"
-import { User, MapPin, CreditCard, Mail, Phone, Calendar, Car, FileText, X } from "lucide-react"
+import { User, MapPin, CreditCard, Mail, Phone, Calendar, Car, FileText, X, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
-import { PdfViewer } from "../PDFver"
+import { PDFViewer } from "../PDFViewer"
 
 // Interfaces para las props de los componentes
 interface DetallesMotorizadoModalProps {
@@ -66,6 +66,33 @@ const InfoItem = ({ icon, label, value }: InfoItemProps) => (
   </div>
 )
 
+// Función para determinar si un archivo es un PDF basado en su extensión
+const isPdfFile = (url: string): boolean => {
+  return url.toLowerCase().endsWith(".pdf")
+}
+
+// Función para normalizar la ruta del archivo
+const normalizeFilePath = (src: string): string => {
+  // Si ya es una ruta relativa que comienza con /storage, la dejamos como está
+  if (src.startsWith("/storage/")) {
+    return src
+  }
+
+  // Si es una URL completa, extraemos solo la parte de la ruta después de /storage/
+  if (src.includes("/storage/")) {
+    const storageIndex = src.indexOf("/storage/")
+    return src.substring(storageIndex)
+  }
+
+  // Si no tiene el prefijo /storage/, lo añadimos
+  if (!src.startsWith("/")) {
+    return `/storage/${src}`
+  }
+
+  // En cualquier otro caso, asumimos que es una ruta relativa válida
+  return src
+}
+
 // Componente para mostrar archivos (imágenes o PDFs)
 const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
   const [showFullSize, setShowFullSize] = useState(false)
@@ -73,27 +100,26 @@ const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
   if (!src) return <p className="text-gray-500">Archivo no disponible</p>
 
   try {
-    const fullUrl = src.startsWith("http") ? src : `/storage/${src.replace(/^\/?(storage\/)?/, "")}`
+    // Normalizar la ruta del archivo para asegurar que sea una ruta relativa
+    const normalizedPath = normalizeFilePath(src)
 
-    // Determinar si es un PDF basado en la extensión o el tipo de contenido
-    const isPdf = fullUrl.toLowerCase().endsWith(".pdf")
+    // Determinar si es un PDF basado en la extensión
+    const isPdf = isPdfFile(normalizedPath)
 
     return (
       <>
         <div className="flex flex-col items-center w-full">
           {isPdf ? (
-            // Mostrar PDF directamente incrustado
-            <div className="w-full aspect-[4/3] rounded-lg overflow-hidden border border-gray-200">
-              <PdfViewer url={fullUrl} />
-            </div>
+            // Usar el componente PDFViewer para PDFs con la ruta normalizada
+            <PDFViewer url={normalizedPath} title={title} />
           ) : (
-            // Mostrar vista previa de imagen
+            // Mostrar vista previa de imagen con la ruta normalizada
             <div
               className="relative w-full aspect-[4/3] cursor-pointer transition-transform hover:scale-[1.02]"
               onClick={() => setShowFullSize(true)}
             >
               <Image
-                src={fullUrl || "/placeholder.svg"}
+                src={normalizedPath || "/placeholder.svg"}
                 alt={alt}
                 fill
                 className="object-cover rounded-lg"
@@ -114,7 +140,7 @@ const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
 
               <div className="relative" style={{ width: "80vw", height: "70vh" }}>
                 <Image
-                  src={fullUrl || "/placeholder.svg"}
+                  src={normalizedPath || "/placeholder.svg"}
                   alt={alt}
                   fill
                   className="object-contain rounded-lg"
@@ -162,10 +188,58 @@ const ImageTitle = ({ children }: { children: React.ReactNode }) => (
   </h4>
 )
 
+// Hook personalizado para animaciones de montaje/desmontaje
+const useAnimatedUnmount = (show: boolean, duration = 300) => {
+  const [shouldRender, setShouldRender] = useState(show)
+  const [isLeaving, setIsLeaving] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (show) {
+      setShouldRender(true)
+      setIsLeaving(false)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+    } else {
+      setIsLeaving(true)
+      timeoutRef.current = setTimeout(() => {
+        setShouldRender(false)
+        timeoutRef.current = null
+      }, duration)
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [show, duration])
+
+  return { shouldRender, isLeaving }
+}
+
 // Componente principal del modal
 export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: DetallesMotorizadoModalProps) {
   const [activeTab, setActiveTab] = useState("registros")
   const { toast } = useToast()
+  const [isAprobado, setIsAprobado] = useState<boolean>(false)
+  const [showNotification, setShowNotification] = useState<boolean>(false)
+  const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } = useAnimatedUnmount(
+    showNotification,
+    300,
+  )
+
+  // Actualizar el estado local de aprobación cuando cambian los datos
+  useEffect(() => {
+    if (data) {
+      console.log("Estado de aprobación del motorizado:", data.aprobado)
+      const aprobadoStatus = Boolean(data.aprobado)
+      setIsAprobado(aprobadoStatus)
+      setShowNotification(aprobadoStatus)
+    }
+  }, [data])
 
   // Bloquear el scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -180,12 +254,18 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
     }
   }, [isOpen])
 
+  const handleCloseNotification = () => {
+    setShowNotification(false)
+  }
+
   if (!data || !isOpen) return null
 
   // Manejador para aprobar al motorizado
   const handleAprobar = async () => {
     try {
       await onAprobar(data.id)
+      setIsAprobado(true)
+      setShowNotification(true)
       toast({
         title: "Éxito",
         description: "Se aprobó el motorizado y se enviaron las credenciales por correo electrónico.",
@@ -207,11 +287,33 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative">
         {/* Encabezado fijo */}
         <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white p-6 rounded-t-lg">
           <h2 className="text-2xl font-bold">Detalles del Motorizado</h2>
         </div>
+
+        {/* Notificación de motorizado aprobado - Posicionada en la esquina superior derecha con animaciones */}
+        {isAprobado && renderNotification && (
+          <div
+            className={`absolute z-[60] top-4 right-6 max-w-md w-auto bg-green-50 border border-green-200 shadow-lg rounded-md p-3 flex items-center transition-all duration-300 ${
+              isNotificationLeaving ? "opacity-0 translate-y-[-10px]" : "opacity-100 translate-y-0"
+            }`}
+          >
+            <div className="bg-green-100 rounded-full p-2 mr-3">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-green-800 font-medium">Este motorizado ya ha sido aprobado</p>
+            </div>
+            <button
+              onClick={handleCloseNotification}
+              className="ml-3 text-green-600 hover:text-green-800 focus:outline-none transition-transform hover:scale-110"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        )}
 
         {/* Contenido con scroll */}
         <div className="flex-1 overflow-y-auto">
@@ -445,7 +547,7 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
           <Button variant="outline" onClick={onClose}>
             Cerrar
           </Button>
-          {!data.aprobado && (
+          {!isAprobado && (
             <Button onClick={handleAprobar} className="bg-red-500 hover:bg-red-600 text-white">
               Aprobar Motorizado
             </Button>
@@ -455,4 +557,3 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
     </div>
   )
 }
-
