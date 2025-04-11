@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X } from "lucide-react"
+import { Eye, Check, Search, RefreshCw, X, Filter } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -18,12 +18,16 @@ import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { showAlert } from "@/components/ui/DataTable/Alert"
 import { DetallesSocioModal } from "./modals/DetallesSocioModal"
 
+// Definir los tipos de filtro
+type FilterType = "todos" | "completos" | "incompletos" | "aprobados" | "pendientes"
+
 const SocioList: React.FC = () => {
   const queryClient = useQueryClient()
   // const [sorting, setSorting] = useState<ColumnSort[]>([])
   const [globalFilter, setGlobalFilter] = useState<string>("")
   const [selectedSocioId, setSelectedSocioId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [filterType, setFilterType] = useState<FilterType>("todos")
   const [pagination, setPagination] = useState({
     pageSize: DEFAULT_PAGE_SIZE,
     pageIndex: 0,
@@ -62,40 +66,34 @@ const SocioList: React.FC = () => {
 
       console.log("Detalles con aprobado mapeado:", detallesConAprobado)
 
-      return detallesConAprobado.filter(
-        (detalle) =>
-          detalle.business !== null &&
-          detalle.businessData !== null &&
-          detalle.establishment !== null &&
-          detalle.bankData !== null &&
-          detalle.cuentaBancaria !== null,
-      )
+      // Mostrar todos los registros, no solo los completos
+      return detallesConAprobado
     },
   })
 
   const { data: detallesSocio } = useQuery<DetallesSocio | null>({
     queryKey: ["socio-details", selectedSocioId],
     queryFn: async () => {
-      if (!selectedSocioId) return null;
-      const detalle = await fetchSocioDetails(selectedSocioId);
-      
+      if (!selectedSocioId) return null
+      const detalle = await fetchSocioDetails(selectedSocioId)
+
       // Buscar el socio original para obtener el estado de aprobación
-      const socios = await fetchSocios();
-      const socioOriginal = socios.find((s) => s.id === selectedSocioId);
-  
+      const socios = await fetchSocios()
+      const socioOriginal = socios.find((s) => s.id === selectedSocioId)
+
       if (socioOriginal && detalle) {
         return {
           ...detalle,
           documentType: socioOriginal.documentType,
           documentNumber: socioOriginal.documentNumber,
-          aprobado: socioOriginal.aprobado // Asegurarse de incluir el estado de aprobación
-        };
+          aprobado: socioOriginal.aprobado, // Asegurarse de incluir el estado de aprobación
+        }
       }
-  
-      return detalle;
+
+      return detalle
     },
     enabled: !!selectedSocioId,
-  });
+  })
 
   // const mutationChangeState = useMutation({
   //   mutationFn: changeStateSocio,
@@ -140,18 +138,38 @@ const SocioList: React.FC = () => {
     return `${day}/${month}/${year} ${hours}:${minutes}`
   }
 
-  const filteredSocios = globalFilter
-    ? sociosConDetalles.filter((socio) => {
-        const searchTerm = globalFilter.toLowerCase()
-        return (
-          socio.personal?.name?.toLowerCase().includes(searchTerm) ||
-          socio.personal?.lastName?.toLowerCase().includes(searchTerm) ||
-          socio.personal?.businessType?.toLowerCase().includes(searchTerm) ||
-          socio.personal?.phone?.toLowerCase().includes(searchTerm) ||
-          socio.personal?.email?.toLowerCase().includes(searchTerm)
-        )
-      })
-    : sociosConDetalles
+  // Verificar si un socio tiene todos los datos completos
+  const isSocioCompleto = (socio: DetallesSocio): boolean => {
+    return !!(socio.business && socio.businessData && socio.establishment && socio.bankData && socio.cuentaBancaria)
+  }
+
+  // Aplicar filtros a los socios
+  const filteredSocios = sociosConDetalles.filter((socio) => {
+    // Primero aplicar el filtro de búsqueda global
+    const searchTerm = globalFilter.toLowerCase()
+    const matchesSearch =
+      !globalFilter ||
+      socio.personal?.name?.toLowerCase().includes(searchTerm) ||
+      socio.personal?.lastName?.toLowerCase().includes(searchTerm) ||
+      socio.personal?.businessType?.toLowerCase().includes(searchTerm) ||
+      socio.personal?.phone?.toLowerCase().includes(searchTerm) ||
+      socio.personal?.email?.toLowerCase().includes(searchTerm)
+
+    // Luego aplicar el filtro de tipo
+    switch (filterType) {
+      case "completos":
+        return matchesSearch && isSocioCompleto(socio)
+      case "incompletos":
+        return matchesSearch && !isSocioCompleto(socio)
+      case "aprobados":
+        return matchesSearch && socio.aprobado === true
+      case "pendientes":
+        return matchesSearch && socio.aprobado !== true
+      case "todos":
+      default:
+        return matchesSearch
+    }
+  })
 
   const paginatedSocios = filteredSocios.slice(
     pagination.pageIndex * pagination.pageSize,
@@ -162,7 +180,58 @@ const SocioList: React.FC = () => {
     <Section title="Listado de Socios">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
-          <div className="w-full sm:w-auto"></div>
+          <div className="w-full sm:w-auto">
+            {/* Filtro personalizado con mejor diseño */}
+            <div className="relative inline-block">
+              <button
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none"
+                onClick={() => {
+                  const dropdown = document.getElementById("filter-dropdown")
+                  if (dropdown) {
+                    dropdown.classList.toggle("hidden")
+                  }
+                }}
+              >
+                <Filter className="h-4 w-4" />
+                <span>
+                  {filterType === "todos" && "Todos los registros"}
+                  {filterType === "completos" && "Registros completos"}
+                  {filterType === "incompletos" && "Registros incompletos"}
+                  {filterType === "aprobados" && "Aprobados"}
+                  {filterType === "pendientes" && "Pendientes"}
+                </span>
+              </button>
+              <div
+                id="filter-dropdown"
+                className="hidden absolute z-10 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg"
+              >
+                <div className="py-1">
+                  {[
+                    { value: "todos", label: "Todos los registros" },
+                    { value: "completos", label: "Registros completos" },
+                    { value: "incompletos", label: "Registros incompletos" },
+                    { value: "aprobados", label: "Aprobados" },
+                    { value: "pendientes", label: "Pendientes" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      className={`block w-full text-left px-4 py-2 text-sm ${
+                        filterType === option.value
+                          ? "bg-gray-100 text-gray-900 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                      onClick={() => {
+                        setFilterType(option.value as FilterType)
+                        document.getElementById("filter-dropdown")?.classList.add("hidden")
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative">
@@ -251,16 +320,19 @@ const SocioList: React.FC = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-800">No se encontraron socios</h3>
                     <p className="text-gray-500 mt-2">
-                      {globalFilter
+                      {globalFilter || filterType !== "todos"
                         ? "Intenta con otra búsqueda o elimina los filtros aplicados."
                         : "No hay socios registrados en el sistema."}
                     </p>
-                    {globalFilter && (
+                    {(globalFilter || filterType !== "todos") && (
                       <button
                         className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                        onClick={() => setGlobalFilter("")}
+                        onClick={() => {
+                          setGlobalFilter("")
+                          setFilterType("todos")
+                        }}
                       >
-                        Limpiar búsqueda
+                        Limpiar filtros
                       </button>
                     )}
                   </td>
@@ -274,11 +346,15 @@ const SocioList: React.FC = () => {
                   return (
                     <tr key={socio.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
-                      <td className="px-4 py-3 font-medium text-gray-800">{socio.personal?.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{socio.personal?.lastName}</td>
-                      <td className="px-4 py-3 text-gray-600">{socio.personal?.businessType}</td>
-                      <td className="px-4 py-3 text-gray-600">{socio.personal?.phone}</td>
-                      <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">{socio.personal?.email}</td>
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        {socio.personal?.name || "No especificado"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{socio.personal?.lastName || "No especificado"}</td>
+                      <td className="px-4 py-3 text-gray-600">{socio.personal?.businessType || "No especificado"}</td>
+                      <td className="px-4 py-3 text-gray-600">{socio.personal?.phone || "No especificado"}</td>
+                      <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">
+                        {socio.personal?.email || "No especificado"}
+                      </td>
                       <td className="px-4 py-3 text-center text-gray-600">{formatDate(socio.personal?.created_at)}</td>
                       <td className="px-4 py-3 text-center">
                         {socio.aprobado === true ? (
@@ -375,6 +451,24 @@ const SocioList: React.FC = () => {
         }}
         data={detallesSocio}
         onAprobar={handleAprobar}
+      />
+
+      {/* Script para cerrar el dropdown cuando se hace clic fuera de él */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            document.addEventListener('click', function(event) {
+              const dropdown = document.getElementById('filter-dropdown');
+              const filterButton = event.target.closest('button');
+              
+              if (dropdown && !dropdown.classList.contains('hidden') && 
+                  !dropdown.contains(event.target) && 
+                  (!filterButton || !filterButton.contains(document.querySelector('.filter-icon')))) {
+                dropdown.classList.add('hidden');
+              }
+            });
+          `,
+        }}
       />
     </Section>
   )

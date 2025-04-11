@@ -1,5 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react'
-import Webcam from 'react-webcam'
+"use client"
+
+import type React from "react"
+import { useCallback, useRef, useState } from "react"
+import Webcam from "react-webcam"
 import { Button } from "@/components/ui/button"
 
 interface CameraCaptureProps {
@@ -20,7 +23,7 @@ export const CapturarImagen: React.FC<CameraCaptureProps> = ({ onCapture }) => {
 
   if (!isCameraOpen) {
     return (
-      <Button onClick={() => setIsCameraOpen(true)} className="w-full bg-red-500 hover:bg-red-600" >
+      <Button id="camera-button" onClick={() => setIsCameraOpen(true)} className="w-full bg-red-500 hover:bg-red-600">
         Abrir cámara
       </Button>
     )
@@ -39,9 +42,10 @@ export const CapturarImagen: React.FC<CameraCaptureProps> = ({ onCapture }) => {
         <Button onClick={() => setIsCameraOpen(false)} variant="outline">
           Cancelar
         </Button>
-        <Button onClick={capture} className='bg-red-500 hover:bg-red-600' >Capturar foto</Button>
+        <Button onClick={capture} className="bg-red-500 hover:bg-red-600">
+          Capturar foto
+        </Button>
       </div>
     </div>
   )
 }
-

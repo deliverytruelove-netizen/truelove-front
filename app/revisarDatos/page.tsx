@@ -1,23 +1,24 @@
-// app\revisarDatos\page.tsx
-'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+// app\revisarDatos\page.tsx
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle } from "lucide-react"
 import Navbar from "@/components/ui/navbar"
-import StepNavigation from '@/components/ui/StepNavigation'
-import { DatosSeccion } from './components/DatosSeccion'
-import { useReviewData } from './hooks/vista-datos'
+import StepNavigation from "@/components/ui/StepNavigation"
+import { DatosSeccion } from "./components/DatosSeccion"
+import { useReviewData } from "./hooks/vista-datos"
 import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import DeliveryImage from "@/public/img/negocio.jpg"
-import { updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
+import { updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
 
 export default function ReviewData() {
   useBodyScrollLock()
@@ -31,34 +32,55 @@ export default function ReviewData() {
 
   useEffect(() => {
     const checkTokenAndFetchData = async () => {
-      const registrationData = await getRegistrationData();
-      if (!registrationData || registrationData.current_step !== '/revisarDatos') {
+      try {
+        const registrationData = await getRegistrationData()
+
+        // Permitir acceso si viene de planes o si ya está en revisarDatos
+        if (
+          !registrationData ||
+          (registrationData.current_step !== "/revisarDatos" && registrationData.current_step !== "/planes")
+        ) {
+          toast({
+            title: "Error",
+            description: "Por favor complete los pasos anteriores",
+            variant: "destructive",
+          })
+          router.push("/")
+          return
+        }
+
+        // Si viene de planes, actualizar el paso actual
+        if (registrationData.current_step === "/planes") {
+          await updateRegistrationStep("/revisarDatos")
+        }
+
+        fetchData()
+      } catch (error) {
+        console.error("Error al verificar token:", error)
         toast({
           title: "Error",
-          description: "Por favor complete los pasos anteriores",
+          description: "Error al verificar los datos de registro",
           variant: "destructive",
-        });
-        router.push('/');
-        return;
+        })
+        router.push("/")
       }
-      fetchData();
-    };
+    }
 
-    checkTokenAndFetchData();
-  }, [fetchData, router, toast]);
+    checkTokenAndFetchData()
+  }, [fetchData, router, toast])
 
   const handleEdit = (section: string) => {
     const routes = {
-      business: '/datos-negocio',
-      address: '/direccion-negocio',
-      legal: '/datos-legales',
-      bank: '/datos-bancarios',
-      commercial: '/relacion-comercial'
+      business: "/acercaNegocio",
+      address: "/ubicar-local",
+      legal: "/datosClaves",
+      bank: "/datosBancarios",
+      commercial: "/planes",
     }
-    
+
     const route = routes[section as keyof typeof routes]
     if (route) {
-      router.push(`${route}?edit=true`)
+      router.push(route)
     }
   }
 
@@ -67,7 +89,7 @@ export default function ReviewData() {
       toast({
         title: "Error",
         description: "Debes aceptar los términos y condiciones para continuar",
-        variant: "destructive"
+        variant: "destructive",
       })
       return
     }
@@ -77,14 +99,14 @@ export default function ReviewData() {
     setIsSubmitting(true)
 
     try {
-      await updateRegistrationStep('/firmar-contrato');
-      router.push('/firmar-contrato')
+      await updateRegistrationStep("/firmar-contrato")
+      router.push("/firmar-contrato")
     } catch (error) {
-      console.error('Error en handleNext:', error)
+      console.error("Error en handleNext:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'Error al guardar la revisión',
-        variant: "destructive"
+        description: error instanceof Error ? error.message : "Error al guardar la revisión",
+        variant: "destructive",
       })
     } finally {
       setIsSubmitting(false)
@@ -101,10 +123,7 @@ export default function ReviewData() {
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <p className="text-sm text-muted-foreground text-center">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
-              className="w-full max-w-[200px]"
-            >
+            <Button onClick={() => window.location.reload()} className="w-full max-w-[200px]">
               Intentar de nuevo
             </Button>
           </CardContent>
@@ -112,7 +131,7 @@ export default function ReviewData() {
       </div>
     )
   }
-  
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -129,10 +148,7 @@ export default function ReviewData() {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">No se encontraron datos</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="mt-4"
-          >
+          <Button onClick={() => window.location.reload()} className="mt-4">
             Intentar de nuevo
           </Button>
         </div>
@@ -147,7 +163,7 @@ export default function ReviewData() {
         <div className="relative hidden h-full min-h-[600px] lg:block">
           <Image
             alt="Delivery service illustration"
-            src={DeliveryImage}
+            src={DeliveryImage || "/placeholder.svg"}
             layout="fill"
             objectFit="cover"
           />
@@ -156,40 +172,30 @@ export default function ReviewData() {
           <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="text-2xl font-bold">Revisa tus datos</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Por favor verifica que la información sea correcta.
-              </p>
+              <p className="text-sm text-muted-foreground">Por favor verifica que la información sea correcta.</p>
             </CardHeader>
             <ScrollArea className="h-[60vh]">
               <CardContent className="space-y-6">
                 <DatosSeccion
                   title="Datos del negocio"
-                  onEdit={() => handleEdit('business')}
+                  onEdit={() => handleEdit("business")}
                   data={data.datos_negocio}
                 />
                 <DatosSeccion
                   title="Dirección del Negocio"
-                  onEdit={() => handleEdit('address')}
+                  onEdit={() => handleEdit("address")}
                   data={data.direccion_negocio}
                 />
-                <DatosSeccion
-                  title="Datos legales"
-                  onEdit={() => handleEdit('legal')}
-                  data={data.datos_legales}
-                />
-                <DatosSeccion
-                  title="Datos bancarios"
-                  onEdit={() => handleEdit('bank')}
-                  data={data.datos_bancarios}
-                />
+                <DatosSeccion title="Datos legales" onEdit={() => handleEdit("legal")} data={data.datos_legales} />
+                <DatosSeccion title="Datos bancarios" onEdit={() => handleEdit("bank")} data={data.datos_bancarios} />
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Relación comercial</h3>
-                    <Button 
-                      variant="link" 
+                    <Button
+                      variant="link"
                       className="text-pink-600 hover:text-pink-700"
-                      onClick={() => handleEdit('commercial')}
+                      onClick={() => handleEdit("commercial")}
                     >
                       Cambiar
                     </Button>
@@ -203,11 +209,11 @@ export default function ReviewData() {
                         onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
                       />
                       <Label htmlFor="terms" className="text-sm">
-                        Para finalizar el registro, te pedimos que leas y aceptes los{' '}
+                        Para finalizar el registro, te pedimos que leas y aceptes los{" "}
                         <a href="#" className="text-pink-600 hover:text-pink-700 underline">
                           términos y condiciones
-                        </a>
-                        {' '}con los que trabajaremos juntos.
+                        </a>{" "}
+                        con los que trabajaremos juntos.
                       </Label>
                     </div>
                   </div>
@@ -227,4 +233,3 @@ export default function ReviewData() {
     </section>
   )
 }
-

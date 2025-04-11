@@ -1,3 +1,4 @@
+// app\planes\components\FormularioPlanes.tsx
 'use client'
 
 import { useState } from "react"
