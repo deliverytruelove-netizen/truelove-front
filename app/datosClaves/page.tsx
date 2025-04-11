@@ -1,19 +1,19 @@
 // app\datosClaves\page.tsx
-'use client'
+"use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Loader2 } from 'lucide-react'
+import { SkipForward, Info } from "lucide-react"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
-import StepNavigation from '@/components/ui/StepNavigation'
+import StepNavigation from "@/components/ui/StepNavigation"
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "@/hooks/use-toast"
-import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
+import { updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
+import { saveBusinessKeyData, fetchExistingBusinessData } from "./services/serviciosDatosNegocio"
+import FormularioDatosClave from "./components/FormularioDatosClave"
 
 export default function DatosClaveNegocio() {
   const router = useRouter()
@@ -21,171 +21,69 @@ export default function DatosClaveNegocio() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
-    ruc: '',
-    razonSocial: '',
+    ruc: "",
+    razonSocial: "",
   })
 
-  const isFormValid = formData.ruc.trim() !== '' && formData.razonSocial.trim() !== ''
+  const isFormValid = formData.ruc.trim() !== "" && formData.razonSocial.trim() !== ""
 
-  // Función para cargar datos existentes
-const fetchExistingData = async (businessRegistrationId: string) => {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio/${businessRegistrationId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${getRegistrationToken()}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status !== 404) {
-        throw new Error("Error al obtener datos clave del negocio");
-      }
-      return null;
-    }
-
-    const data = await response.json();
-    console.log("Datos clave existentes:", data);
-    return data;
-  } catch (error) {
-    console.error("Error fetching business key data:", error);
-    return null;
-  }
-};
-
+  // Cargar datos existentes al iniciar
   useEffect(() => {
     const checkToken = async () => {
-      const data = await getRegistrationData();
-      if (!data || (data.current_step !== '/datosClaves' && data.current_step !== '/ubicar-local')) {
+      const data = await getRegistrationData()
+      if (!data || (data.current_step !== "/datosClaves" && data.current_step !== "/ubicar-local")) {
         toast({
           title: "Error",
           description: "Por favor complete los pasos anteriores",
           variant: "destructive",
-        });
-        router.push('/');
-        return;
+        })
+        router.push("/")
+        return
       }
       if (data.registration_id) {
-        const existingData = await fetchExistingData(data.registration_id);
-        if (existingData){
+        const existingData = await fetchExistingBusinessData(data.registration_id)
+        if (existingData) {
           setFormData({
-            ruc: existingData.ruc || '',
-            razonSocial: existingData.razon_social || ''
+            ruc: existingData.ruc || "",
+            razonSocial: existingData.razon_social || "",
           })
         }
       }
-
-    };
-
-    checkToken();
-  }, [router, toast]);
-
-  const fetchRucData = async (ruc: string) => {
-    if (ruc.length !== 11) return
-
-    setIsLoading(true)
-    try {
-      const response = await fetch(
-        `https://dniruc.apisperu.com/api/v1/ruc/${ruc}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`
-      )
-      
-      if (!response.ok) {
-        throw new Error('Error al consultar el RUC')
-      }
-
-      const data = await response.json()
-      
-      if (data.razonSocial) {
-        setFormData(prev => ({
-          ...prev,
-          razonSocial: data.razonSocial
-        }))
-      } else {
-        toast({
-          title: "RUC no encontrado",
-          description: "No se encontró información para el RUC ingresado",
-          variant: "destructive"
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Hubo un error al consultar el RUC",
-        variant: "destructive"
-      })
-      console.error('Error:', error)
-    } finally {
-      setIsLoading(false)
     }
-  }
 
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFormData(prev => ({ ...prev, [id]: value }))
+    checkToken()
+  }, [router, toast])
 
-    if (id === 'ruc' && value.length === 11) {
-      await fetchRucData(value)
-    }
-  }
-
+  // Guardar datos y avanzar al siguiente paso
   const handleNext = async () => {
-    if (!isFormValid) return;
-  
-    setIsSaving(true);
+    if (!isFormValid) return
+
+    setIsSaving(true)
     try {
-      const registrationData = await getRegistrationData();
+      const registrationData = await getRegistrationData()
       if (!registrationData) {
-        throw new Error('Datos de registro no encontrados');
+        throw new Error("Datos de registro no encontrados")
       }
-  
-      // Verificar si ya existen datos para este registro
-      const existingData = await fetchExistingData(registrationData.registration_id);
-      
-      // URL y método según si es actualización o creación
-      const url = existingData 
-        ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio/${existingData.id}` 
-        : `${process.env.NEXT_PUBLIC_API_WEB}/datos-clave-negocio`;
-      
-      const method = existingData ? 'PUT' : 'POST';
-  
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${getRegistrationToken()}`
-        },
-        body: JSON.stringify({
-          ruc: formData.ruc,
-          razon_social: formData.razonSocial,
-          business_registration_id: registrationData.registration_id
-        })
-      });
-  
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.mensaje || 'Error al guardar los datos');
-      }
-  
+
+      await saveBusinessKeyData(registrationData.registration_id, formData.ruc, formData.razonSocial)
+
       // Actualizar el paso del registro
-      await updateRegistrationStep('/datosBancarios');
-      
-      router.push('/datosBancarios');
+      await updateRegistrationStep("/datosBancarios")
+
+      router.push("/datosBancarios")
     } catch (error: unknown) {
-      console.error('Error completo:', error);
+      console.error("Error completo:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
-        variant: "destructive"
-      });
+        variant: "destructive",
+      })
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
+  // Volver al paso anterior
   const handleBack = async () => {
     try {
       await updateRegistrationStep("/ubicar-local")
@@ -200,6 +98,21 @@ const fetchExistingData = async (businessRegistrationId: string) => {
     }
   }
 
+  // Omitir este paso
+  const handleSkip = async () => {
+    try {
+      await updateRegistrationStep("/datosBancarios")
+      router.push("/datosBancarios")
+    } catch (error) {
+      console.error("Error al omitir paso:", error)
+      toast({
+        title: "Error",
+        description: "Error al omitir este paso",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <section className="min-h-screen w-full bg-gray-50">
       <Navbar />
@@ -209,7 +122,7 @@ const fetchExistingData = async (businessRegistrationId: string) => {
             alt="Persona de negocios trabajando en una laptop"
             className="absolute inset-0 h-full w-full object-cover"
             height={1080}
-            src={Persona}
+            src={Persona || "/placeholder.svg"}
             style={{
               aspectRatio: "16/9",
               objectFit: "cover",
@@ -217,51 +130,39 @@ const fetchExistingData = async (businessRegistrationId: string) => {
             width={1920}
           />
         </div>
-        <div className="flex items-center justify-center p-6 lg:p-8">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold">Algunos datos clave</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={(e) => {
-                e.preventDefault()
-                handleNext()
-              }}>
-                <div className="space-y-2">
-                  <Label htmlFor="ruc">RUC</Label>
-                  <div className="relative">
-                    <Input 
-                      id="ruc" 
-                      placeholder="Ingrese su RUC" 
-                      required 
-                      type="text"
-                      maxLength={11}
-                      value={formData.ruc}
-                      onChange={handleInputChange}
-                      className={isLoading ? "pr-10" : ""}
-                      disabled={isLoading || isSaving}
-                    />
-                    {isLoading && (
-                      <Loader2 className="absolute right-3 top-2.5 h-5 w-5 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="razonSocial">Razón Social</Label>
-                  <Input 
-                    id="razonSocial" 
-                    placeholder="Ingrese su Razón Social" 
-                    required 
-                    type="text"
-                    value={formData.razonSocial}
-                    onChange={handleInputChange}
-                    readOnly={isLoading}
-                    disabled={isLoading || isSaving}
-                  />
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+        <div className="flex flex-col items-center justify-center p-6 lg:p-8 relative">
+          {/* Botón de omitir fuera del formulario */}
+          <div className="absolute top-8 right-8 flex flex-col items-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSkip}
+              className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+            >
+              <SkipForward className="h-4 w-4" />
+              <span>Omitir</span>
+            </Button>
+            <p className="text-xs text-gray-400 mt-1 max-w-[150px] text-right">
+              Puede omitir este paso y completarlo más tarde
+            </p>
+          </div>
+
+          <FormularioDatosClave
+            formData={formData}
+            setFormData={setFormData}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+            isSaving={isSaving}
+          />
+
+          {/* Texto informativo fuera del formulario */}
+          <div className="mt-4 flex items-start gap-2 max-w-md text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-100">
+            <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <p>
+              Puede ingresar algunos datos clave de su negocio en este paso. Esta información nos ayudará a personalizar
+              su experiencia, pero puede completarla más adelante si lo prefiere.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -275,4 +176,3 @@ const fetchExistingData = async (businessRegistrationId: string) => {
     </section>
   )
 }
-

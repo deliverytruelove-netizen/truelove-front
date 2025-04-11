@@ -1,3 +1,4 @@
+// app\revisarDatos\types\review-data.ts
 export interface ReviewData {
     datos_negocio: {
       nombre: string

@@ -2,23 +2,25 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { CircleHelp, Loader2 } from "lucide-react"
+import { SkipForward, Info } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+
+import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from "@/components/ui/StepNavigation"
 import Persona from "@/public/img/person.jpg"
 import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
-import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
+import {
+  updateRegistrationStep,
+  getRegistrationData,
+  createRegistrationToken,
+} from "@/services/registrationTokenService"
+import { fetchExistingData, fetchEstablecimientoDireccion, saveBankData } from "./services/serviciosDatosBancarios"
+import FormularioDatosBancarios from "./components/FormularioDatosBancarios"
 
 interface EstablecimientoDireccion {
   calle: string
@@ -110,7 +112,7 @@ export default function DatosBancarios() {
     loadExistingData()
   }, [toast])
 
-  const fetchEstablecimientoDireccion = useCallback(async () => {
+  const loadEstablecimientoDireccion = useCallback(async () => {
     try {
       setIsLoading(true)
       const registrationData = await getRegistrationData()
@@ -120,28 +122,10 @@ export default function DatosBancarios() {
 
       console.log("ID de registro:", registrationData.registration_id) // Para depuración
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/establecimiento/${registrationData.registration_id}/direccion`,
-        {
-          headers: {
-            Authorization: `Bearer ${getRegistrationToken()}`,
-          },
-        },
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.mensaje || `Error del servidor: ${response.status}`)
-      }
-
-      const data = await response.json()
-      if (data && data.direccion) {
-        setEstablecimientoDireccion(data.direccion)
-        setEstablecimientoId(data.establecimiento_id) // Asegúrate de que esto esté presente
-        console.log("Establecimiento ID:", data.establecimiento_id) // Para depuración
-      } else {
-        throw new Error("La respuesta del servidor no contiene la dirección esperada")
-      }
+      const result = await fetchEstablecimientoDireccion(registrationData.registration_id)
+      setEstablecimientoDireccion(result.direccion)
+      setEstablecimientoId(result.establecimiento_id)
+      console.log("Establecimiento ID:", result.establecimiento_id) // Para depuración
     } catch (error) {
       console.error("Error al obtener la dirección:", error)
       toast({
@@ -155,37 +139,13 @@ export default function DatosBancarios() {
     }
   }, [toast])
 
-  const fetchExistingData = async (businessRegistrationId: string) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios/${businessRegistrationId}`, {
-        headers: {
-          Authorization: `Bearer ${getRegistrationToken()}`,
-        },
-      })
-
-      if (!response.ok) {
-        if (response.status !== 404) {
-          throw new Error("Error al obtener datos bancarios del negocio")
-        }
-        return null
-      }
-
-      const data = await response.json()
-      console.log("Datos Bancarios existentes:", data)
-      return data
-    } catch (error) {
-      console.error("Error fetching business key data:", error)
-      return null
-    }
-  }
-
   useEffect(() => {
     if (formData.useBusinessAddress) {
-      fetchEstablecimientoDireccion()
+      loadEstablecimientoDireccion()
     } else {
       setEstablecimientoDireccion(null)
     }
-  }, [formData.useBusinessAddress, fetchEstablecimientoDireccion])
+  }, [formData.useBusinessAddress, loadEstablecimientoDireccion])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -213,37 +173,9 @@ export default function DatosBancarios() {
       // Verificar si ya existen datos bancarios
       const existingData = await fetchExistingData(registrationData.registration_id)
 
-      const url = existingData
-        ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios/${existingData.id}`
-        : `${process.env.NEXT_PUBLIC_API_WEB}/datos-bancarios`
+      // Guardar datos bancarios
+      const result = await saveBankData(registrationData.registration_id, formData, establecimientoId, existingData)
 
-      const method = existingData ? "PUT" : "POST"
-
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getRegistrationToken()}`,
-        },
-        body: JSON.stringify({
-          titular_cuenta: formData.accountHolder,
-          numero_cuenta: formData.accountNumber,
-          nombre_banco: formData.bankName,
-          tipo_cuenta: formData.accountType,
-          documento_titular: formData.documentNumber,
-          codigo_cci: formData.cci,
-          usar_direccion_negocio: formData.useBusinessAddress,
-          establecimiento_id: establecimientoId,
-          business_registration_id: registrationData.registration_id,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.mensaje || "Error al guardar los datos bancarios")
-      }
-
-      const result = await response.json()
       console.log("Respuesta del servidor:", result)
 
       // Actualizar el paso del registro
@@ -267,7 +199,7 @@ export default function DatosBancarios() {
   const handleBack = async () => {
     try {
       await updateRegistrationStep("/datosClaves")
-      router.push('/datosClaves')
+      router.push("/datosClaves")
     } catch (error) {
       console.error("Error al volver hacia atrás:", error)
       toast({
@@ -275,7 +207,37 @@ export default function DatosBancarios() {
         description: error instanceof Error ? error.message : "Error al volver hacia atrás",
         variant: "destructive",
       })
-      
+    }
+  }
+
+  // Función para omitir este paso
+  const handleSkip = async () => {
+    try {
+      setIsLoading(true)
+
+      // Obtener los datos de registro actuales
+      const registrationData = await getRegistrationData()
+      if (!registrationData) {
+        throw new Error("Datos de registro no encontrados")
+      }
+
+      // Crear un nuevo token directamente con el paso actualizado
+      await createRegistrationToken(registrationData.registration_id, "/planes")
+
+      // Esperar un momento para asegurar que el token se actualice correctamente
+      setTimeout(() => {
+        setIsLoading(false)
+        // Redirigir a la página de planes
+        router.push("/planes")
+      }, 500)
+    } catch (error) {
+      setIsLoading(false)
+      console.error("Error al omitir paso:", error)
+      toast({
+        title: "Error",
+        description: "Error al omitir este paso",
+        variant: "destructive",
+      })
     }
   }
 
@@ -296,164 +258,54 @@ export default function DatosBancarios() {
             width={1920}
           />
         </div>
-        <div className="flex items-center justify-center p-6 lg:p-8">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold">Datos Bancarios</CardTitle>
-            </CardHeader>
-            <ScrollArea className="h-[60vh]">
-              <CardContent>
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                  <div className="space-y-2">
-                    <Label htmlFor="accountHolder">
-                      Titular de Cuenta bancaria <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="accountHolder"
-                        placeholder="Nombre del titular"
-                        required
-                        value={formData.accountHolder}
-                        onChange={handleInputChange}
-                        className="pr-10"
-                        disabled={isLoading || isSaving}
-                      />
-                      <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
+        <div className="flex flex-col items-center justify-center p-6 lg:p-8 relative">
+          {/* Botón de omitir fuera del formulario */}
+          <div className="absolute top-8 right-8 flex flex-col items-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSkip}
+              className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent"></span>
+                  <span>Procesando...</span>
+                </>
+              ) : (
+                <>
+                  <SkipForward className="h-4 w-4" />
+                  <span>Omitir</span>
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-gray-400 mt-1 max-w-[150px] text-right">
+              Puede omitir este paso y completarlo más tarde
+            </p>
+          </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="accountNumber">
-                      Número de cuenta bancaria <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="accountNumber"
-                        placeholder="Número de cuenta"
-                        required
-                        value={formData.accountNumber}
-                        onChange={handleInputChange}
-                        className="pr-10"
-                        disabled={isLoading || isSaving}
-                      />
-                      <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
+          {/* ScrollArea directamente en el div contenedor */}
+          <ScrollArea className="h-[60vh] w-full max-w-md">
+            <FormularioDatosBancarios
+              formData={formData}
+              handleInputChange={handleInputChange}
+              handleSelectChange={handleSelectChange}
+              handleCheckboxChange={handleCheckboxChange}
+              isLoading={isLoading}
+              isSaving={isSaving}
+              establecimientoDireccion={establecimientoDireccion}
+            />
+          </ScrollArea>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="bankName">
-                      Nombre del banco <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      onValueChange={(value) => handleSelectChange("bankName", value)}
-                      disabled={isLoading || isSaving}
-                      value={formData.bankName}
-                      defaultValue={formData.bankName}
-                    >
-                      <SelectTrigger id="bankName">
-                        <SelectValue placeholder="Seleccionar banco" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="bcp">BCP</SelectItem>
-                        <SelectItem value="bbva">BBVA</SelectItem>
-                        <SelectItem value="interbank">Interbank</SelectItem>
-                        <SelectItem value="scotiabank">Scotiabank</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="accountType">
-                      Tipo de Cuenta Bancaria <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      onValueChange={(value) => handleSelectChange("accountType", value)}
-                      disabled={isLoading || isSaving}
-                      value={formData.accountType}
-                      defaultValue={formData.accountType}
-                    >
-                      <SelectTrigger id="accountType">
-                        <SelectValue placeholder="Seleccionar tipo de cuenta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Ahorros">Cuenta de Ahorros</SelectItem>
-                        <SelectItem value="Corriente">Cuenta Corriente</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="documentNumber">
-                      Documento del titular (RUC) <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="documentNumber"
-                        placeholder="Número de RUC"
-                        required
-                        value={formData.documentNumber}
-                        onChange={handleInputChange}
-                        className="pr-10"
-                        disabled={isLoading || isSaving}
-                      />
-                      <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cci">
-                      Código de Cuenta Interbancaria (CCI) <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="cci"
-                        placeholder="Número de CCI"
-                        required
-                        value={formData.cci}
-                        onChange={handleInputChange}
-                        className="pr-10"
-                        disabled={isLoading || isSaving}
-                      />
-                      <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3 pt-4">
-                    <Checkbox
-                      id="useBusinessAddress"
-                      checked={formData.useBusinessAddress}
-                      onCheckedChange={handleCheckboxChange}
-                      disabled={isLoading || isSaving}
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="useBusinessAddress"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Mi dirección de facturación es la misma que la dirección del negocio
-                      </label>
-                      {formData.useBusinessAddress && (
-                        <>
-                          {establecimientoDireccion ? (
-                            <p className="text-sm text-muted-foreground">
-                              {establecimientoDireccion.direccion_completa}
-                            </p>
-                          ) : isLoading ? (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Cargando dirección...
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">No se pudo cargar la dirección</p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </form>
-              </CardContent>
-            </ScrollArea>
-          </Card>
+          {/* Texto informativo fuera del formulario */}
+          <div className="mt-4 flex items-start gap-2 max-w-md text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-100">
+            <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <p>
+              Puede ingresar sus datos bancarios para recibir pagos. Esta información puede ser completada más tarde si
+              lo prefiere.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -467,4 +319,3 @@ export default function DatosBancarios() {
     </section>
   )
 }
-

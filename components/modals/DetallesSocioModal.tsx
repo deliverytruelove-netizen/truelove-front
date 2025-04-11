@@ -1,3 +1,4 @@
+// components\modals\DetallesSocioModal.tsx
 "use client"
 
 import type React from "react"
