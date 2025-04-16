@@ -1,4 +1,4 @@
-// app\reparto\components\RegisterForm.tsx
+// app\reparto\components\RegisterForm.tsx este es el registro principal
 "use client"
 
 import * as React from "react"

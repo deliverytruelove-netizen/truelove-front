@@ -9,7 +9,7 @@ import { SkipForward, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from "@/components/ui/StepNavigation"
-import Persona from "@/public/img/person.jpg"
+import Persona from "@/public/img/datosClaves.jpg"
 import { useToast } from "@/hooks/use-toast"
 import { updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
 import { saveBusinessKeyData, fetchExistingBusinessData } from "./services/serviciosDatosNegocio"
@@ -116,34 +116,33 @@ export default function DatosClaveNegocio() {
   return (
     <section className="min-h-screen w-full bg-gray-50">
       <Navbar />
-      <div className="grid lg:grid-cols-2">
-        <div className="relative hidden h-full min-h-[600px] lg:block">
+      <div className="grid lg:grid-cols-2 h-[calc(100vh-140px)]">
+        <div className="relative hidden h-full lg:block overflow-hidden">
           <Image
             alt="Persona de negocios trabajando en una laptop"
             className="absolute inset-0 h-full w-full object-cover"
             height={1080}
             src={Persona || "/placeholder.svg"}
             style={{
-              aspectRatio: "16/9",
               objectFit: "cover",
             }}
             width={1920}
           />
         </div>
         <div className="flex flex-col items-center justify-center p-6 lg:p-8 relative">
-          {/* Botón de omitir fuera del formulario */}
+          {/* Botón de saltar paso mejorado */}
           <div className="absolute top-8 right-8 flex flex-col items-end">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleSkip}
-              className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-100 rounded-full px-4 py-2 transition-all shadow-sm"
             >
               <SkipForward className="h-4 w-4" />
-              <span>Omitir</span>
+              <span>Saltar este paso</span>
             </Button>
-            <p className="text-xs text-gray-400 mt-1 max-w-[150px] text-right">
-              Puede omitir este paso y completarlo más tarde
+            <p className="text-xs text-gray-500 mt-2 max-w-[180px] text-right">
+              Puede saltar este paso y completarlo más tarde
             </p>
           </div>
 
@@ -155,8 +154,8 @@ export default function DatosClaveNegocio() {
             isSaving={isSaving}
           />
 
-          {/* Texto informativo fuera del formulario */}
-          <div className="mt-4 flex items-start gap-2 max-w-md text-sm text-gray-600 bg-blue-50 p-3 rounded-md border border-blue-100">
+          {/* Texto informativo mejorado */}
+          <div className="mt-6 flex items-start gap-3 max-w-md text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
             <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
             <p>
               Puede ingresar algunos datos clave de su negocio en este paso. Esta información nos ayudará a personalizar
