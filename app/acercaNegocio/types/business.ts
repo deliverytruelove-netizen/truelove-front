@@ -1,3 +1,4 @@
+// app\acercaNegocio\types\business.ts
 export interface TipoNegocio {
     id: number;
     nombre: string;

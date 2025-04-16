@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import { FormularioBancario } from "./components/formulario-bancario"
-import Moto from "@/src/assets/img/moto1.jpg"
+import Moto from "@/src/assets/img/documentos.jpg"
 
 export default function RepartoDocumento() {
   return (

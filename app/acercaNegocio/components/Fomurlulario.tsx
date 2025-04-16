@@ -1,4 +1,4 @@
-
+// app\acercaNegocio\components\Fomurlulario.tsx
 "use client";
 
 import {
@@ -21,6 +21,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { type BusinessFormValues } from "../schemas/business-form";
 import type { TipoNegocio, Categoria } from "../types/business";
 import { UseFormReturn } from "react-hook-form";
+import { PhoneInput } from "./phone-input"
 
 interface BusinessFormProps {
   form: UseFormReturn<BusinessFormValues>;
@@ -185,22 +186,26 @@ export function BusinessForm({ form, tiposNegocio, categorias, fetchCategorias }
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Número de Teléfono del Negocio *</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="+51123456789" />
-              </FormControl>
-              <FormMessage />
-              <p className="text-sm text-muted-foreground">
-                El número debe comenzar con +51 seguido de 9 dígitos
-              </p>
-            </FormItem>
-          )}
+<FormField
+  control={form.control}
+  name="phoneNumber"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Número de Teléfono del Negocio *</FormLabel>
+      <FormControl>
+        <PhoneInput 
+          value={field.value} 
+          onChange={field.onChange}
+          placeholder="+51 999-999-999" 
         />
+      </FormControl>
+      <FormMessage />
+      <p className="text-sm text-muted-foreground">
+        El número debe comenzar con +51 seguido de 9 dígitos
+      </p>
+    </FormItem>
+  )}
+/>
       </form>
     </Form>
   );

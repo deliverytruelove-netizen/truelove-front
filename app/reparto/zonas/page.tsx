@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import Moto from "@/src/assets/img/moto1.jpg"
+import Moto from "@/src/assets/img/zonas.jpg"
 import { FormularioDatos } from "./components/FormularioDatos"
 
 export default function RepartoDocumento() {

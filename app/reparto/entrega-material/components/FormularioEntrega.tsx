@@ -1,33 +1,21 @@
-'use client'
+// app\reparto\entrega-material\components\FormularioEntrega.tsx
+"use client"
 
 import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Calendar } from "@/components/ui/calendar"
-import { Clock } from 'lucide-react'
+import { Clock } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { createRepartoToken } from "@/services/repartoTokenService"
 
 import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 
 const esquemaFormulario = z.object({
@@ -39,17 +27,7 @@ const esquemaFormulario = z.object({
   }),
 })
 
-const horariosDisponibles = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-]
+const horariosDisponibles = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"]
 
 export function FormularioEntrega() {
   const [enviando, setEnviando] = useState(false)
@@ -58,14 +36,14 @@ export function FormularioEntrega() {
   const router = useRouter()
 
   useEffect(() => {
-    const id = sessionStorage.getItem('repartoRegistroId')
+    const id = sessionStorage.getItem("repartoRegistroId")
     if (!id) {
       toast({
         title: "Error",
         description: "No se encontró el ID del registro",
         variant: "destructive",
       })
-      router.push('/reparto/registro')
+      router.push("/reparto/registro")
     } else {
       setRepartoRegistroId(id)
     }
@@ -88,31 +66,64 @@ export function FormularioEntrega() {
     setEnviando(true)
     try {
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/agendar-entrega`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           reparto_registro_id: repartoRegistroId,
-          fecha: format(valores.fecha, 'yyyy-MM-dd'),
+          fecha: format(valores.fecha, "yyyy-MM-dd"),
           hora: valores.hora,
         }),
       })
 
       if (!respuesta.ok) {
-        throw new Error('Error al agendar la cita')
+        throw new Error("Error al agendar la cita")
       }
 
       toast({
         title: "Cita agendada",
-        description: `Tu cita ha sido agendada para el ${format(valores.fecha, 'PPP', { locale: es })} a las ${valores.hora} horas.`,
+        description: `Tu cita ha sido agendada para el ${format(valores.fecha, "PPP", { locale: es })} a las ${valores.hora} horas.`,
       })
 
-      // Mantener el ID en sessionStorage para el siguiente paso si es necesario
-      sessionStorage.setItem('repartoRegistroId', repartoRegistroId)
-      router.push('/reparto/confirmacion-entrega')
+      // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
+      try {
+        console.log("Actualizando token para avanzar a confirmacion-entrega")
+
+        // Crear un nuevo token directamente
+        if (repartoRegistroId) {
+          const newToken = await createRepartoToken(repartoRegistroId, "/reparto/confirmacion-entrega")
+
+          if (newToken) {
+            console.log("Token creado correctamente para confirmacion-entrega")
+
+            // Asegurar que el paso actual se actualice en sessionStorage
+            sessionStorage.setItem("repartoCurrentStep", "/reparto/confirmacion-entrega")
+
+            // Mantener el ID en sessionStorage para la siguiente página
+            sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
+
+            // Añadir un pequeño retraso para asegurar que todo se guarde
+            setTimeout(() => {
+              // Usar un enfoque diferente para la redirección
+              window.location.href = "/reparto/confirmacion-entrega"
+            }, 300)
+          } else {
+            console.error("Error al crear el token")
+            // Intentar redirección directa en caso de error
+            router.push("/reparto/confirmacion-entrega")
+          }
+        } else {
+          console.error("No se encontró ID de registro")
+          router.push("/reparto/confirmacion-entrega")
+        }
+      } catch (tokenError) {
+        console.error("Error al crear el token:", tokenError)
+        // Intentar redirección directa en caso de error
+        router.push("/reparto/confirmacion-entrega")
+      }
     } catch (error) {
-      console.error('Error:', error)
+      console.error("Error:", error)
       toast({
         title: "Error",
         description: "Hubo un problema al agendar la cita. Por favor, intenta de nuevo.",
@@ -123,7 +134,7 @@ export function FormularioEntrega() {
     }
   }
 
-  if (!repartoRegistroId) return null;
+  if (!repartoRegistroId) return null
 
   return (
     <Form {...formulario}>
@@ -150,9 +161,7 @@ export function FormularioEntrega() {
                   />
                 </CardContent>
               </Card>
-              <FormDescription>
-                Selecciona una fecha para la entrega del material (Lunes a Viernes)
-              </FormDescription>
+              <FormDescription>Selecciona una fecha para la entrega del material (Lunes a Viernes)</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -181,20 +190,14 @@ export function FormularioEntrega() {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>
-                Elige el horario que mejor se ajuste a tu disponibilidad
-              </FormDescription>
+              <FormDescription>Elige el horario que mejor se ajuste a tu disponibilidad</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button 
-          type="submit" 
-          className="w-full bg-[#f34739] hover:bg-[#d63c30] text-white"
-          disabled={enviando}
-        >
-          {enviando ? 'Agendando...' : 'Agendar entrega'}
+        <Button type="submit" className="w-full bg-[#f34739] hover:bg-[#d63c30] text-white" disabled={enviando}>
+          {enviando ? "Agendando..." : "Agendar entrega"}
         </Button>
       </form>
     </Form>

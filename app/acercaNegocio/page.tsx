@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Navbar from "@/components/ui/navbar";
-import Negocio from "@/public/img/negocio.jpg";
+import Negocio from "@/public/img/imagen2.png";
 import { toast } from "@/hooks/use-toast";
 import StepNavigation from '@/components/ui/StepNavigation'
 import Loading from "./components/Loading";

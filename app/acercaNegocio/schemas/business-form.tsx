@@ -1,3 +1,4 @@
+// app\acercaNegocio\schemas\business-form.tsx
 import * as z from "zod";
 
 export const formSchema = z.object({

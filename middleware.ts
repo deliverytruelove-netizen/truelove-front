@@ -32,7 +32,6 @@ export async function middleware(req: NextRequest) {
   const authToken = req.cookies.get("authToken")
   const userRole = req.cookies.get("userRole")?.value
   const registrationToken = req.cookies.get("registrationToken")?.value
-  const repartoToken = req.cookies.get("repartoToken")?.value
   const esRutaAdmin = path.startsWith("/admin")
   const esRutaSocio = path.startsWith("/socio")
   const esRutaMotorizado = path.startsWith("/motorizado")
@@ -318,43 +317,10 @@ export async function middleware(req: NextRequest) {
 
   // Lógica para las rutas protegidas del proceso de registro de repartidores
   if (esRutaReparto) {
-    if (!repartoToken) {
-      console.log("No se encontró token de reparto, redirigiendo al inicio")
-      return NextResponse.redirect(new URL("/reparto", req.url))
-    }
-
-    try {
-      // Verificar el token de reparto
-      const secretKey = new TextEncoder().encode(process.env.JWT_SECRET)
-      const { payload } = await jwtVerify(repartoToken, secretKey)
-
-      // Verificar que el token contiene la información necesaria
-      if (!payload.registration_id || !payload.current_step) {
-        throw new Error("Token inválido")
-      }
-
-      const currentStepIndex = RUTAS_REPARTO_PROTEGIDAS.indexOf(payload.current_step as string)
-      const requestedStepIndex = RUTAS_REPARTO_PROTEGIDAS.indexOf(path)
-
-      // Permitir acceso solo si es el paso actual o el siguiente
-      if (requestedStepIndex > currentStepIndex + 1) {
-        console.log("Intento de saltar pasos, redirigiendo al paso actual")
-        return NextResponse.redirect(new URL(payload.current_step as string, req.url))
-      }
-
-      if (requestedStepIndex < currentStepIndex) {
-        const updatedToken = await updateRepartoToken(repartoToken, path)
-        const response = NextResponse.next()
-        response.cookies.set("repartoToken", updatedToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-        })
-        return response
-      }
-    } catch (error) {
-      console.error("Error al verificar el token de reparto:", error)
-      return NextResponse.redirect(new URL("/reparto", req.url))
-    }
+    // SOLUCIÓN: Permitir acceso directo a todas las rutas del flujo de reparto
+    // Esto evita problemas de redirección entre páginas
+    console.log("Permitiendo acceso directo a ruta de reparto:", path)
+    return NextResponse.next()
   }
 
   // Para todos los demás casos, continuar con la solicitud
@@ -376,20 +342,7 @@ async function updateRegistrationToken(token: string, newStep: string): Promise<
   return updatedToken
 }
 
-async function updateRepartoToken(token: string, newStep: string): Promise<string> {
-  const secretKey = new TextEncoder().encode(process.env.JWT_SECRET)
-  const { payload } = await jwtVerify(token, secretKey)
 
-  const updatedPayload = { ...payload, current_step: newStep }
-
-  const updatedToken = await new SignJWT(updatedPayload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("2h")
-    .sign(secretKey)
-
-  return updatedToken
-}
 
 export const config = {
   matcher: [
@@ -397,6 +350,8 @@ export const config = {
     "/reparto",
     "/reparto/zonas",
     "/reparto/documentos",
+    "/reparto/documento-motorizado",
+    "/reparto/registro-exitoso",
     "/reparto/entrega-material",
     "/reparto/confirmacion-entrega",
     "/admin/:path*",

@@ -11,6 +11,7 @@ import { CapturarImagen } from "./CapturarImagen"
 import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
 import React from "react"
+import { createRepartoToken } from "@/services/repartoTokenService"
 
 interface Ubigeo {
   id_ubigeo: number
@@ -19,20 +20,6 @@ interface Ubigeo {
   distrito: string
   nombre: string
 }
-
-// interface DatosPersonales {
-//   id?: number
-//   fecha_nacimiento?: string
-//   genero?: string
-//   url_selfie?: string
-// }
-
-// interface Ubicacion {
-//   departamento?: string
-//   provincia?: string
-//   distrito?: string
-//   ubigeo_id?: string
-// }
 
 export function FormularioDatos() {
   const router = useRouter()
@@ -170,22 +157,43 @@ export function FormularioDatos() {
   }
   const obtenerDepartamentos = useCallback(obtenerDepartamentosFunc, [])
   const cargarDatosExistentes = useCallback(cargarDatosExistentesFunc, [obtenerDepartamentos])
+
   React.useEffect(() => {
     const id = sessionStorage.getItem("repartoRegistroId")
     if (!id) {
-      router.push("/reparto/registro")
+      router.push("/reparto")
     } else {
       setRepartoRegistroId(id)
       // Cargar datos existentes
       cargarDatosExistentes(id)
+
+      // SOLUCIÓN: Asegurar que el paso actual sea zonas
+      const currentStep = sessionStorage.getItem("repartoCurrentStep")
+      if (currentStep !== "/reparto/zonas") {
+        console.log("Actualizando paso actual a zonas")
+        sessionStorage.setItem("repartoCurrentStep", "/reparto/zonas")
+
+        // Intentar actualizar el token si existe
+        try {
+          if (id) {
+            createRepartoToken(id, "/reparto/zonas")
+              .then(() => {
+                console.log("Token actualizado al cargar la página de zonas")
+              })
+              .catch((err) => {
+                console.error("Error al actualizar token al cargar:", err)
+              })
+          }
+        } catch (error) {
+          console.error("Error al verificar token existente:", error)
+        }
+      }
     }
   }, [router, cargarDatosExistentes])
 
   const manejarCaptura = useCallback((srcImagen: string) => {
     setImagenCapturada(srcImagen)
   }, [])
-
- 
 
   const obtenerProvincias = useCallback(async (departamentoId: string) => {
     if (!departamentoId) return
@@ -287,7 +295,19 @@ export function FormularioDatos() {
 
   useEffect(() => {
     if (fechaNacimiento) {
-      setFechaNacimientoError("")
+      // Validar fecha de nacimiento
+      const fechaNac = new Date(fechaNacimiento)
+      const hoy = new Date()
+      let edad = hoy.getFullYear() - fechaNac.getFullYear()
+      const mes = hoy.getMonth() - fechaNac.getMonth()
+      if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+        edad--
+      }
+      if (edad < 18) {
+        setFechaNacimientoError("Debes tener al menos 18 años.")
+      } else {
+        setFechaNacimientoError("")
+      }
     }
   }, [fechaNacimiento])
 
@@ -316,9 +336,21 @@ export function FormularioDatos() {
       setFechaNacimientoError("Por favor, ingresa tu fecha de nacimiento.")
       esValido = false
     } else {
-      setFechaNacimientoError("")
+      // validar que la persona tenga al menos 18 años
+      const fechaNac = new Date(fechaNacimiento)
+      const hoy = new Date()
+      let edad = hoy.getFullYear() - fechaNac.getFullYear()
+      const mes = hoy.getMonth() - fechaNac.getMonth()
+      if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+        edad--
+      }
+      if (edad < 18) {
+        setFechaNacimientoError("Debes tener al menos 18 años.")
+        esValido = false
+      } else {
+        setFechaNacimientoError("")
+      }
     }
-
     if (!genero) {
       setGeneroError("Por favor, selecciona tu género.")
       esValido = false
@@ -414,9 +446,42 @@ export function FormularioDatos() {
         throw new Error("Error al enviar el formulario")
       }
 
-      // Mantener el ID en sessionStorage para la siguiente página
-      sessionStorage.setItem("repartoRegistroId", repartoRegistroId!)
-      router.push("/reparto/documentos")
+      // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
+      try {
+        console.log("Actualizando token para avanzar a documentos")
+
+        // Crear un nuevo token directamente
+        if (repartoRegistroId) {
+          const newToken = await createRepartoToken(repartoRegistroId, "/reparto/documentos")
+
+          if (newToken) {
+            console.log("Token creado correctamente para documentos")
+
+            // Asegurar que el paso actual se actualice en sessionStorage
+            sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos")
+
+            // Mantener el ID en sessionStorage para la siguiente página
+            sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
+
+            // Añadir un pequeño retraso para asegurar que todo se guarde
+            setTimeout(() => {
+              // Usar un enfoque diferente para la redirección
+              window.location.href = "/reparto/documentos"
+            }, 300)
+          } else {
+            console.error("Error al crear el token")
+            // Intentar redirección directa en caso de error
+            router.push("/reparto/documentos")
+          }
+        } else {
+          console.error("No se encontró ID de registro")
+          router.push("/reparto/documentos")
+        }
+      } catch (tokenError) {
+        console.error("Error al crear el token:", tokenError)
+        // Intentar redirección directa en caso de error
+        router.push("/reparto/documentos")
+      }
     } catch (error) {
       console.error("Error al enviar el formulario:", error)
       toast({
@@ -452,6 +517,11 @@ export function FormularioDatos() {
             id="fechaNacimiento"
             name="fechaNacimiento"
             required
+            max={(() => {
+              const date = new Date()
+              date.setFullYear(date.getFullYear() - 18)
+              return date.toISOString().split("T")[0]
+            })()}
             value={fechaNacimiento}
             onChange={(e) => setFechaNacimiento(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -570,4 +640,3 @@ export function FormularioDatos() {
     </form>
   )
 }
-

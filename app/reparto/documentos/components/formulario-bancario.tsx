@@ -15,6 +15,7 @@ import { CapturarImagen } from "./CapturarImagen"
 import { FileText, ImageIcon, Loader2, Info, CheckCircle2 } from "lucide-react"
 import { PdfPreview } from "./Pdf-preview"
 import { ImagePreview } from "./ImagePreview"
+import { createRepartoToken } from "@/services/repartoTokenService"
 
 interface Banco {
   id: number
@@ -316,8 +317,31 @@ export function FormularioBancario() {
 
       toast.success("mensaje" in data ? data.mensaje : "Cuenta bancaria guardada exitosamente")
 
-      sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
-      router.push("/reparto/documento-motorizado")
+      // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
+      try {
+      // Crear un nuevo token directamente
+      if (repartoRegistroId) {
+        const newToken = await createRepartoToken(repartoRegistroId, "/reparto/documento-motorizado")
+
+        if (newToken) {
+          // Actualizar el paso actual en sessionStorage
+          sessionStorage.setItem("repartoCurrentStep", "/reparto/documento-motorizado")
+          sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
+
+          // Usar window.location para forzar la recarga completa
+          window.location.href = "/reparto/documento-motorizado"
+        } else {
+          throw new Error("Error al crear el token")
+        }
+      } else {
+        throw new Error("No se encontró ID de registro")
+      }
+    } catch (tokenError) {
+      console.error("Error al crear el token:", tokenError)
+      // En caso de error, intentar redirección directa
+      window.location.href = "/reparto/documento-motorizado"
+    }
+      
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message)
@@ -622,4 +646,3 @@ export function FormularioBancario() {
     </ScrollArea>
   )
 }
-

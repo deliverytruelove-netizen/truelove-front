@@ -48,10 +48,10 @@ export default function FormularioDatosBancarios({
   establecimientoDireccion,
 }: FormularioDatosBancariosProps) {
   return (
-    <Card className="w-full max-w-md shadow-lg border-0">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Datos Bancarios</CardTitle>
-      </CardHeader>
+    <Card className="w-full shadow-sm border border-gray-200 bg-white">
+    <CardHeader className="pb-4">
+      <CardTitle className="text-2xl font-bold text-gray-900">Datos Bancarios</CardTitle>
+    </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
           <div className="space-y-2">

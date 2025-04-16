@@ -1,14 +1,13 @@
 // services\repartoTokenService.ts
 import { jwtVerify, SignJWT } from "jose"
-// Interfaz que define la estructura del token decodificado
+
 interface DecodedToken {
-  exp: number // Tiempo de expiración del token
-  registration_id: string // ID único del registro
-  current_step: string // Paso actual del proceso de registro
-  token?: string // Token de autorización
+  exp: number
+  registration_id: string
+  current_step: string
+  token?: string
 }
 
-// Función para obtener la clave secreta
 const getSecretKey = () => {
   const secret = process.env.JWT_SECRET
   if (!secret || secret.length === 0) {
@@ -17,35 +16,63 @@ const getSecretKey = () => {
   return new TextEncoder().encode(secret)
 }
 
-// Guarda el token en una cookie del navegador
 export const setRepartoToken = (token: string) => {
-  // Asegurarse de que estamos en el cliente
-  if (typeof document !== "undefined") {
-    document.cookie = `repartoToken=${token}; path=/; max-age=3600; SameSite=Strict; ${location.protocol === "https:" ? "Secure;" : ""}`
-    console.log("Token guardado en cookie:", token.substring(0, 20) + "...")
+  if (typeof window !== "undefined") {
+    try {
+      const currentToken = localStorage.getItem("repartoToken")
+      if (currentToken === token) {
+        return
+      }
+
+      localStorage.setItem("repartoToken", token)
+      sessionStorage.setItem("repartoToken", token)
+      document.cookie = `repartoToken=${token}; path=/; max-age=3600; SameSite=Lax`
+
+      window.dispatchEvent(new CustomEvent("repartoTokenUpdate", { detail: token }))
+    } catch (error) {
+      console.error("Error al guardar el token:", error)
+    }
   }
 }
 
-// Obtiene el token almacenado en las cookies
 export const getRepartoToken = (): string | null => {
-  // Asegurarse de que estamos en el cliente
-  if (typeof document === "undefined") return null
+  if (typeof window === "undefined") return null
 
-  const cookies = document.cookie.split(";")
-  const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith("repartoToken="))
-  return tokenCookie ? tokenCookie.split("=")[1] : null
-}
+  try {
+    const cookieToken = document.cookie
+      .split(";")
+      .find((cookie) => cookie.trim().startsWith("repartoToken="))
+      ?.split("=")[1]
 
-// Elimina el token de las cookies
-export const removeRepartoToken = () => {
-  // Asegurarse de que estamos en el cliente
-  if (typeof document !== "undefined") {
-    document.cookie = "repartoToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure"
-    console.log("Token de reparto eliminado")
+    const localToken = localStorage.getItem("repartoToken")
+    const sessionToken = sessionStorage.getItem("repartoToken")
+
+    const token = cookieToken || localToken || sessionToken
+
+    if (token) {
+      setRepartoToken(token)
+    }
+
+    return token
+  } catch (error) {
+    console.error("Error al obtener el token:", error)
+    return null
   }
 }
 
-// Verifica si el token es válido
+export const removeRepartoToken = () => {
+  if (typeof window !== "undefined") {
+    try {
+      document.cookie = "repartoToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax"
+      localStorage.removeItem("repartoToken")
+      sessionStorage.removeItem("repartoToken")
+      window.dispatchEvent(new CustomEvent("repartoTokenRemove"))
+    } catch (error) {
+      console.error("Error al eliminar el token:", error)
+    }
+  }
+}
+
 export const isRepartoTokenValid = async (): Promise<boolean> => {
   const token = getRepartoToken()
   if (!token) return false
@@ -53,12 +80,13 @@ export const isRepartoTokenValid = async (): Promise<boolean> => {
   try {
     await jwtVerify(token, getSecretKey())
     return true
-  } catch {
+  } catch (error) {
+    console.error("Error al verificar el token:", error)
+    removeRepartoToken()
     return false
   }
 }
 
-// Obtiene los datos decodificados del token
 export const getRepartoData = async (): Promise<DecodedToken | null> => {
   const token = getRepartoToken()
   if (!token) return null
@@ -66,7 +94,6 @@ export const getRepartoData = async (): Promise<DecodedToken | null> => {
   try {
     const { payload } = await jwtVerify(token, getSecretKey())
 
-    // Verificamos que todos los campos necesarios existan y sean del tipo correcto
     if (
       typeof payload.exp === "number" &&
       typeof payload.registration_id === "string" &&
@@ -82,16 +109,15 @@ export const getRepartoData = async (): Promise<DecodedToken | null> => {
     return null
   } catch (error) {
     console.error("Error al decodificar el token:", error)
+    removeRepartoToken()
     return null
   }
 }
 
-// Crea un nuevo token de registro
 export const createRepartoToken = async (registration_id: string, current_step: string): Promise<string> => {
   try {
     console.log("Creando token para:", { registration_id, current_step })
 
-    // Creamos un nuevo token con los datos proporcionados
     const token = await new SignJWT({
       registration_id,
       current_step,
@@ -100,8 +126,15 @@ export const createRepartoToken = async (registration_id: string, current_step: 
       .setExpirationTime("1h")
       .sign(getSecretKey())
 
-    // Guardamos el token en las cookies
-    setRepartoToken(token)
+    // Guardar el token en todas las ubicaciones
+    localStorage.setItem("repartoToken", token)
+    sessionStorage.setItem("repartoToken", token)
+    document.cookie = `repartoToken=${token}; path=/; max-age=3600; SameSite=Lax`
+
+    // Guardar también el ID y el paso actual en sessionStorage
+    sessionStorage.setItem("repartoRegistroId", registration_id)
+    sessionStorage.setItem("repartoCurrentStep", current_step)
+
     return token
   } catch (error) {
     console.error("Error al crear el token de registro:", error)
@@ -109,43 +142,48 @@ export const createRepartoToken = async (registration_id: string, current_step: 
   }
 }
 
-// Actualiza el paso actual en el token
 export const updateRepartoStep = async (current_step: string): Promise<string | null> => {
-  // Obtenemos los datos actuales del token
-  const data = await getRepartoData()
-  if (!data) return null
-
-  // Creamos un nuevo token con el paso actualizado
-  const newToken = await createRepartoToken(data.registration_id, current_step)
-  setRepartoToken(newToken)
-  return newToken
-}
-
-// Procesa un token codificado en base64 desde la URL
-export const processEncodedToken = async (encodedToken: string): Promise<DecodedToken | null> => {
   try {
-    // Decodificar el token de la URL (está codificado en base64)
-    const decodedToken = Buffer.from(encodedToken, "base64").toString()
+    const data = await getRepartoData()
+    if (!data) {
+      // Si no hay datos en el token, intentar obtener el ID de registro de sessionStorage
+      const registrationId = sessionStorage.getItem("repartoRegistroId")
+      if (!registrationId) {
+        console.error("No se encontró ID de registro ni en el token ni en sessionStorage")
+        return null
+      }
 
-    // Guardar el token en las cookies
-    setRepartoToken(decodedToken)
-
-    // Verificar y obtener los datos del token
-    const tokenData = await getRepartoData()
-
-    if (!tokenData || !tokenData.registration_id) {
-      console.error("Token inválido o expirado")
-      return null
+      // Crear un nuevo token con el ID de registro y el paso actual
+      console.log("Creando nuevo token con ID de sessionStorage:", registrationId)
+      return await createRepartoToken(registrationId, current_step)
     }
 
-    return tokenData
+    // Si hay datos en el token, actualizar el paso actual
+    console.log("Actualizando token existente:", data.registration_id, "al paso:", current_step)
+    const newToken = await createRepartoToken(data.registration_id, current_step)
+    setRepartoToken(newToken)
+
+    // Asegurar que el paso actual se actualice en sessionStorage
+    sessionStorage.setItem("repartoCurrentStep", current_step)
+
+    return newToken
+  } catch (error) {
+    console.error("Error al actualizar el paso:", error)
+    return null
+  }
+}
+
+export const processEncodedToken = async (encodedToken: string): Promise<DecodedToken | null> => {
+  try {
+    const decodedToken = Buffer.from(encodedToken, "base64").toString()
+    setRepartoToken(decodedToken)
+    return await getRepartoData()
   } catch (error) {
     console.error("Error al procesar el token codificado:", error)
     return null
   }
 }
 
-// Función para guardar datos en localStorage como respaldo
 export function setLocalStorageData(registrationId: string, currentStep: string): void {
   localStorage.setItem(
     "repartoData",
@@ -155,4 +193,21 @@ export function setLocalStorageData(registrationId: string, currentStep: string)
       timestamp: Date.now(),
     }),
   )
+}
+
+export const initTokenSyncListener = () => {
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", (event) => {
+      if (event.key === "repartoToken" && event.newValue) {
+        setRepartoToken(event.newValue)
+      }
+    })
+
+    window.addEventListener("repartoTokenUpdate", (event) => {
+      const customEvent = event as CustomEvent<string>
+      if (customEvent.detail) {
+        setRepartoToken(customEvent.detail)
+      }
+    })
+  }
 }
