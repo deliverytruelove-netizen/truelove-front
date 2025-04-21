@@ -7,14 +7,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useCallback, useEffect, useRef } from "react"
-import {
-  RiDashboardLine,
-  RiMenu3Line,
-  RiShieldUserLine,
-  RiRidingFill,
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
-} from "react-icons/ri"
+import { RiArrowLeftSLine, RiArrowRightSLine, RiMenu3Line } from "react-icons/ri"
+import { navigationItems } from "../context/navigation-context"
 
 interface Props {
   showSidebar: boolean
@@ -70,6 +64,10 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
       : `flex items-center ${collapsed ? "justify-center" : "gap-3"} rounded-lg p-3 text-gray-600 hover:bg-gray-100 hover:text-red-600 transition-all duration-200`
   }
 
+  // Filtrar los elementos de navegación por sección
+  const mainNavItems = navigationItems.filter((item) => item.path === "/admin/dashboard")
+  const userNavItems = navigationItems.filter((item) => item.path !== "/admin/dashboard")
+
   return (
     <div
       data-sidebar
@@ -83,7 +81,7 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
         {!collapsed && (
           <span className="flex gap-3 items-center">
             <Image
-              src={Logo }
+              src={Logo || "/placeholder.svg"}
               alt="Logo of the app"
               width={40}
               height={40}
@@ -120,30 +118,26 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
       <nav className={`${collapsed ? "px-2" : "px-4"} flex flex-col gap-2 flex-1 overflow-y-auto`}>
         {!collapsed && <div className="mb-2 px-2 text-xs font-semibold uppercase text-gray-400">Principal</div>}
 
-        <Link href={"/admin/dashboard"} className={navItemClass("/admin/dashboard")} title="Dashboard">
-          <RiDashboardLine className="text-xl" />
-          {!collapsed && <span>Dashboard</span>}
-        </Link>
+        {/* Renderizar elementos de navegación principal */}
+        {mainNavItems.map((item) => (
+          <Link key={item.path} href={item.path} className={navItemClass(item.path)} title={item.title}>
+            <item.icon className="text-xl" />
+            {!collapsed && <span>{item.title}</span>}
+          </Link>
+        ))}
 
         {!collapsed && (
           <div className="mt-6 mb-2 px-2 text-xs font-semibold uppercase text-gray-400">Gestión de usuarios</div>
         )}
         {collapsed && <div className="my-6 border-t border-gray-100"></div>}
 
-        <Link href={"/admin/usuarios"} className={navItemClass("/admin/usuarios")} title="Usuarios">
-          <RiShieldUserLine className="text-xl" />
-          {!collapsed && <span>Usuarios</span>}
-        </Link>
-
-        <Link href={"/admin/socios"} className={navItemClass("/admin/socios")} title="Socios">
-          <RiShieldUserLine className="text-xl" />
-          {!collapsed && <span>Socios</span>}
-        </Link>
-
-        <Link href={"/admin/motorizado"} className={navItemClass("/admin/motorizado")} title="Motorizados">
-          <RiRidingFill className="text-xl" />
-          {!collapsed && <span>Motorizados</span>}
-        </Link>
+        {/* Renderizar elementos de navegación de usuarios */}
+        {userNavItems.map((item) => (
+          <Link key={item.path} href={item.path} className={navItemClass(item.path)} title={item.title}>
+            <item.icon className="text-xl" />
+            {!collapsed && <span>{item.title}</span>}
+          </Link>
+        ))}
       </nav>
 
       {/* Footer */}

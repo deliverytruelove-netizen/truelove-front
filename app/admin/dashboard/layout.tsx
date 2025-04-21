@@ -1,3 +1,4 @@
+// app\admin\dashboard\layout.tsx
 "use client"
 
 import type React from "react"

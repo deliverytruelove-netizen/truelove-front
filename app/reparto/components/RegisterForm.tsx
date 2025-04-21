@@ -16,11 +16,13 @@ import type { FormData, DocumentInfo } from "../types/form-types"
 import { StepOne } from "./form-steps/StepOne"
 import { StepTwo } from "./form-steps/StepTwo"
 import { StepThree } from "./form-steps/StepThree"
+import { StepFour } from "./form-steps/StepFour"
 import { fetchDocumentInfo } from "@/utils/api"
 import { EstadoVerificacion } from "./EstadoVerificacion"
 import { IndicadorPasos } from "./IndicadorPasos"
 import { EmailChangeDialog } from "./EmailChangeDialog"
 import { createRepartoToken } from "@/services/repartoTokenService"
+
 const formVariants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
@@ -59,7 +61,7 @@ export default function RegisterForm() {
   const fileInputRefReverso = React.useRef<HTMLInputElement>(null)
   const isMobile = useMediaQuery("(max-width: 768px)")
 
-  // Volver a agregar el estado para el diálogo de correo electrónico
+  // Estado para el diálogo de correo electrónico
   const [showEmailDialog, setShowEmailDialog] = useState(false)
   const [originalEmail, setOriginalEmail] = useState("")
 
@@ -109,8 +111,10 @@ export default function RegisterForm() {
   }
 
   const handleNextStep = (): void => {
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1)
+      // Scroll al inicio del formulario cuando cambia de paso
+      window.scrollTo({ top: 0, behavior: "smooth" })
     } else if (isStepComplete()) {
       setShowCaptcha(true)
     }
@@ -121,7 +125,11 @@ export default function RegisterForm() {
   }, [])
 
   const handleBack = (): void => {
-    if (step > 1) setStep(step - 1)
+    if (step > 1) {
+      setStep(step - 1)
+      // Scroll al inicio del formulario cuando vuelve atrás
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
   }
 
   const handleSubmit = useCallback(async (): Promise<void> => {
@@ -142,9 +150,9 @@ export default function RegisterForm() {
         documento_imagen_frente: formData.documentoImagenFrente?.split(",")[1] || null,
         documento_imagen_reverso: formData.documentoImagenReverso?.split(",")[1] || null,
       }
-  
+
       console.log("Enviando datos de registro:", requestData)
-  
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro`, {
         method: "POST",
         headers: {
@@ -152,10 +160,10 @@ export default function RegisterForm() {
         },
         body: JSON.stringify(requestData),
       })
-  
+
       const data = await response.json()
-      console.log("Respuesta del servidor:", data) // Añadir log para depuración
-  
+      console.log("Respuesta del servidor:", data)
+
       if (!response.ok) {
         // Verificar si es un error de correo diferente
         if (response.status === 422 && data.error === "different_email" && data.original_email) {
@@ -164,29 +172,29 @@ export default function RegisterForm() {
           setIsLoading(false)
           return
         }
-  
+
         // Otros errores de validación
         if (response.status === 422 && data.errors?.duplicate) {
           setValidationError(data.errors.duplicate[0])
           setIsLoading(false)
           return
         }
-  
+
         throw new Error(data?.message || `Error ${response.status}: ${response.statusText}`)
       }
-  
+
       // Si es un registro incompleto, redirigir a la página de estado
       if (data.status === "incomplete" && data.registration_id) {
         router.push(`/reparto/status?registration_id=${data.registration_id}`)
         return
       }
-  
+
       // Si es un registro nuevo exitoso
       if (data.data && data.data.id) {
         // Verificar si es un registro nuevo
         if (data.status === "new_registration") {
           console.log("Registro nuevo, redirigiendo directamente a zonas")
-          
+
           // Crear token para la sesión
           try {
             await createRepartoToken(data.data.id, "/reparto/zonas")
@@ -197,12 +205,12 @@ export default function RegisterForm() {
             // Si hay error al crear el token, continuar con el flujo normal
           }
         }
-        
+
         // Si no es un registro nuevo o hubo error al crear el token, ir a la página de estado
         router.push(`/reparto/status?registration_id=${data.data.id}`)
         return
       }
-  
+
       // Si llegamos aquí, algo salió mal con la estructura de la respuesta
       console.error("Estructura de respuesta inesperada:", data)
       throw new Error("La respuesta del servidor no tiene el formato esperado")
@@ -221,7 +229,7 @@ export default function RegisterForm() {
     }
   }, [formData, router, toast])
 
-  // Agregar las funciones para manejar los botones del diálogo
+  // Funciones para manejar los botones del diálogo
   const handleUseOriginalEmail = async () => {
     setShowEmailDialog(false)
     setIsLoading(true)
@@ -463,13 +471,11 @@ export default function RegisterForm() {
           formData.nroDocumento !== "" &&
           formData.nombres !== "" &&
           (formData.tipoDocumento === "RUC" || formData.apellidos !== "") &&
-          formData.celular !== "" &&
-          formData.email !== "" &&
-          formData.mayorEdad !== "" &&
-          formData.aceptaPolitica &&
           (formData.tipoDocumento === "RUC" ||
             (formData.documentoImagenFrente !== null && formData.documentoImagenReverso !== null))
         )
+      case 4:
+        return formData.celular !== "" && formData.email !== "" && formData.mayorEdad !== "" && formData.aceptaPolitica
       default:
         return false
     }
@@ -479,81 +485,80 @@ export default function RegisterForm() {
     return <EstadoVerificacion />
   }
 
-  // Agregar el componente EmailChangeDialog al final del componente
   return (
-    <div className="min-h-screen flex">
-      <div className="w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-          {step > 1 && (
-            <button onClick={handleBack} className="mb-4 text-gray-500 hover:text-gray-700 flex items-center gap-2">
-              <ArrowLeft className="h-5 w-5" />
-              <span>Volver</span>
-            </button>
-          )}
+    <div className="w-full">
+      <div className="w-full bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+        {step > 1 && (
+          <button onClick={handleBack} className="mb-4 text-gray-500 hover:text-gray-700 flex items-center gap-2">
+            <ArrowLeft className="h-5 w-5" />
+            <span>Volver</span>
+          </button>
+        )}
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Crea tu perfil</h2>
-            <p className="text-gray-500 mt-1">Es rápido y sencillo. ¡Comencemos!</p>
-          </div>
-
-          <IndicadorPasos pasoActual={step} />
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              variants={formVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="space-y-4"
-            >
-              {step === 1 && (
-                <StepOne
-                  departamento={formData.departamento}
-                  onDepartamentoChange={(value) => updateFormData("departamento", value)}
-                />
-              )}
-
-              {step === 2 && (
-                <StepTwo vehiculo={formData.vehiculo} onVehiculoChange={(value) => updateFormData("vehiculo", value)} />
-              )}
-
-              {step === 3 && (
-                <StepThree
-                  formData={formData}
-                  updateFormData={updateFormData}
-                  isLoading={isLoading}
-                  handleDocumentChange={handleDocumentChange}
-                  handleFileUpload={handleFileUpload}
-                  previewImageFrente={previewImageFrente}
-                  previewImageReverso={previewImageReverso}
-                  fileInputRefFrente={fileInputRefFrente}
-                  fileInputRefReverso={fileInputRefReverso}
-                  isMobile={isMobile}
-                  setIsCameraOpenFrente={setIsCameraOpenFrente}
-                  setIsCameraOpenReverso={setIsCameraOpenReverso}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          {validationError && <ValidationAlert message={validationError} onClose={() => setValidationError(null)} />}
-
-          <Button
-            onClick={handleNextStep}
-            disabled={!isStepComplete() || isLoading}
-            className="w-full mt-6 bg-red-500 hover:bg-red-600 text-white"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                {step === 3 ? "Enviar" : "Siguiente"}
-                <ChevronRight className="ml-2" />
-              </>
-            )}
-          </Button>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900">Crea tu perfil</h2>
+          <p className="text-gray-500 mt-1">Es rápido y sencillo. ¡Comencemos!</p>
         </div>
+
+        <IndicadorPasos pasoActual={step} />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            variants={formVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="space-y-4"
+          >
+            {step === 1 && (
+              <StepOne
+                departamento={formData.departamento}
+                onDepartamentoChange={(value) => updateFormData("departamento", value)}
+              />
+            )}
+
+            {step === 2 && (
+              <StepTwo vehiculo={formData.vehiculo} onVehiculoChange={(value) => updateFormData("vehiculo", value)} />
+            )}
+
+            {step === 3 && (
+              <StepThree
+                formData={formData}
+                updateFormData={updateFormData}
+                isLoading={isLoading}
+                handleDocumentChange={handleDocumentChange}
+                handleFileUpload={handleFileUpload}
+                previewImageFrente={previewImageFrente}
+                previewImageReverso={previewImageReverso}
+                fileInputRefFrente={fileInputRefFrente}
+                fileInputRefReverso={fileInputRefReverso}
+                isMobile={isMobile}
+                setIsCameraOpenFrente={setIsCameraOpenFrente}
+                setIsCameraOpenReverso={setIsCameraOpenReverso}
+              />
+            )}
+
+            {step === 4 && <StepFour formData={formData} updateFormData={updateFormData} />}
+          </motion.div>
+        </AnimatePresence>
+
+        {validationError && <ValidationAlert message={validationError} onClose={() => setValidationError(null)} />}
+
+        <Button
+          onClick={handleNextStep}
+          disabled={!isStepComplete() || isLoading}
+          className="w-full mt-6 bg-red-500 hover:bg-red-600 text-white"
+        >
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              {step === 4 ? "Enviar" : "Siguiente"}
+              <ChevronRight className="ml-2" />
+            </>
+          )}
+        </Button>
       </div>
 
       <WebcamModal

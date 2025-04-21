@@ -1,3 +1,4 @@
+// app\admin\dashboard\components\stat-card.tsx
 import type { ReactNode } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"

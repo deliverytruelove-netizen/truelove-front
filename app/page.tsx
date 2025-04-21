@@ -1,3 +1,4 @@
+// app\page.tsx
 "use client"
 import { motion, useScroll } from "framer-motion"; // Importar Framer Motion
 import HomePage from "@/components/HomePage";

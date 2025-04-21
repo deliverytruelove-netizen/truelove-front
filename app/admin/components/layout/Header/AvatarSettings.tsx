@@ -123,9 +123,7 @@ const AvatarSettings: React.FC = () => {
           >
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center font-medium shadow-sm">
-                  {userInitials}
-                </div>
+                
                 <div>
                   <p className="font-medium text-gray-900">{userName}</p>
                   <p className="text-sm text-gray-500 truncate">{email}</p>

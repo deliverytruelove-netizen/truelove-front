@@ -1,3 +1,4 @@
+// app\admin\dashboard\components\recent-registrations.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { User, Truck, Store } from "lucide-react"

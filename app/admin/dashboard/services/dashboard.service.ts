@@ -65,7 +65,7 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
       tiposNegocio[tipo] = (tiposNegocio[tipo] || 0) + 1
     })
 
-    // Usamos tipos explícitos para evitar el uso de 'any'
+   
     interface SocioWithApproval extends Socio {
       aprobado?: boolean
     }
