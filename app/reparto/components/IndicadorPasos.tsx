@@ -7,7 +7,7 @@ interface IndicadorPasosProps {
 export function IndicadorPasos({ pasoActual }: IndicadorPasosProps) {
   return (
     <div className="flex justify-between mb-8">
-      {[1, 2, 3].map((i) => (
+      {[1, 2, 3, 4].map((i) => (
         <div key={i} className="flex flex-col items-center flex-1">
           <div
             className={cn(
@@ -21,10 +21,11 @@ export function IndicadorPasos({ pasoActual }: IndicadorPasosProps) {
           >
             {i}
           </div>
-          <div className="text-xs text-gray-400">{i === 1 ? "Ciudad" : i === 2 ? "Vehículo" : "Datos"}</div>
+          <div className="text-xs text-gray-400">
+            {i === 1 ? "Ciudad" : i === 2 ? "Vehículo" : i === 3 ? "Documento" : "Contacto"}
+          </div>
         </div>
       ))}
     </div>
   )
 }
-

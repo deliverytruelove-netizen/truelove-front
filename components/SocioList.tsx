@@ -17,7 +17,7 @@ import type { DetallesSocio, Socio } from "@/app/admin/socios/types/Socios.types
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { showAlert } from "@/components/ui/DataTable/Alert"
 import { DetallesSocioModal } from "./modals/DetallesSocioModal"
-
+import {Input} from "@/components/ui/input"
 // Definir los tipos de filtro
 type FilterType = "todos" | "completos" | "incompletos" | "aprobados" | "pendientes"
 
@@ -235,11 +235,11 @@ const SocioList: React.FC = () => {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none z-10" />
+              <Input
                 type="text"
                 placeholder="Buscar..."
-                className="w-full sm:w-64 pl-9 py-2 h-10 bg-white text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full sm:w-64 pl-9 h-10"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
               />

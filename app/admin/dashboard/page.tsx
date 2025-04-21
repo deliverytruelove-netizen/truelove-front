@@ -1,15 +1,17 @@
-"use client"
+// app\admin\dashboard\page.tsx
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import MainLayout from "../components/MainLayout"
-import { StatCard } from "./components/stat-card"
-import { ApprovalChart } from "./components/approval-chart"
-import { BusinessTypesChart } from "./components/business-types-chart"
-import { RecentRegistrations } from "./components/recent-registrations"
-import { ActivitySummary } from "./components/activity-summary"
-import { fetchDashboardStats } from "./services/dashboard.service"
-import { Users, Truck, Store, UserCheck } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useQuery } from "@tanstack/react-query";
+import MainLayout from "../components/MainLayout";
+import { StatCard } from "./components/stat-card";
+import { ApprovalChart } from "./components/approval-chart";
+import { BusinessTypesChart } from "./components/business-types-chart";
+import { RecentRegistrations } from "./components/recent-registrations";
+import { ActivitySummary } from "./components/activity-summary";
+import { fetchDashboardStats } from "./services/dashboard.service";
+import { Users, Truck, Store, UserCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 const Dashboard = () => {
   const { data, isLoading, error } = useQuery({
@@ -18,28 +20,44 @@ const Dashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     staleTime: 30000,
-  })
+  });
+  const [currentTime, setCurrentTime] = useState("--:--:--");
+  const [lastLoginTime, setLastLoginTime] = useState("");
 
   if (error) {
-    console.error("Error fetching dashboard data:", error)
+    console.error("Error fetching dashboard data:", error);
   }
 
   // Calcular el total de aprobaciones pendientes
-  const totalPendingApprovals = (data?.motorizados.pendientes || 0) + (data?.socios.pendientes || 0)
+  const totalPendingApprovals =
+    (data?.motorizados.pendientes || 0) + (data?.socios.pendientes || 0);
 
   // Calcular registros recientes (últimas 24 horas)
   const recentActivity =
     data?.registrosRecientes.filter((reg) => {
       try {
-        const regDate = new Date(reg.fecha)
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        return regDate >= yesterday
+        const regDate = new Date(reg.fecha);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return regDate >= yesterday;
       } catch {
-        return false
+        return false;
       }
-    }).length || 0
+    }).length || 0;
+  useEffect(() => {
+    // Actualizar la hora solo en el cliente
+    setCurrentTime(new Date().toLocaleTimeString());
 
+    // Opcional: actualizar cada segundo
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(()=>{
+    setLastLoginTime(new Date().toISOString());
+  },[])
   return (
     <MainLayout>
       <div className="grid gap-4 sm:gap-6">
@@ -48,11 +66,13 @@ const Dashboard = () => {
             {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
               Dashboard
             </h1> */}
-            <p className="text-sm text-muted-foreground">Resumen general de la plataforma TrueLove</p>
+            <p className="text-sm text-muted-foreground">
+              Resumen general de la plataforma TrueLove
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-              Última actualización: {new Date().toLocaleTimeString()}
+              Última actualización: {currentTime}
             </span>
           </div>
         </div>
@@ -78,21 +98,29 @@ const Dashboard = () => {
                 title="Motorizados"
                 value={data?.motorizados.total || 0}
                 icon={<Truck />}
-                description={`${data?.motorizados.pendientes || 0} pendientes de aprobación`}
+                description={`${
+                  data?.motorizados.pendientes || 0
+                } pendientes de aprobación`}
                 className="border-yellow-200 dark:border-yellow-900"
               />
               <StatCard
                 title="Socios Comerciales"
                 value={data?.socios.total || 0}
                 icon={<Store />}
-                description={`${data?.socios.pendientes || 0} pendientes de aprobación`}
+                description={`${
+                  data?.socios.pendientes || 0
+                } pendientes de aprobación`}
                 className="border-yellow-200 dark:border-yellow-900"
               />
               <StatCard
                 title="Usuarios Activos"
                 value={data?.usuarios.activos || 0}
                 icon={<UserCheck />}
-                description={`${(((data?.usuarios.activos || 0) / (data?.usuarios.total || 1)) * 100).toFixed(0)}% del total`}
+                description={`${(
+                  ((data?.usuarios.activos || 0) /
+                    (data?.usuarios.total || 1)) *
+                  100
+                ).toFixed(0)}% del total`}
                 className="border-green-200 dark:border-green-900"
               />
             </>
@@ -128,7 +156,7 @@ const Dashboard = () => {
               <ActivitySummary
                 pendingApprovals={totalPendingApprovals}
                 recentActivity={recentActivity}
-                lastLogin={new Date().toISOString()}
+                lastLogin={lastLoginTime}
               />
             </>
           )}
@@ -151,7 +179,7 @@ const Dashboard = () => {
         )}
       </div>
     </MainLayout>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

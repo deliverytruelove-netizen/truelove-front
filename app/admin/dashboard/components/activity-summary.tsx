@@ -1,3 +1,4 @@
+// app\admin\dashboard\components\activity-summary.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react"
 

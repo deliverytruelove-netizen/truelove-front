@@ -17,6 +17,7 @@ import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "./ui/input"
 
 const MotorizadoList: React.FC = () => {
   const queryClient = useQueryClient()
@@ -145,10 +146,10 @@ const MotorizadoList: React.FC = () => {
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
+              <Input
                 type="text"
                 placeholder="Buscar..."
-                className="w-full sm:w-64 pl-9 py-2 h-10 bg-white text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full sm:w-64 pl-9 py-2 h-10"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
               />

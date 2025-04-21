@@ -1,3 +1,4 @@
+// app\admin\dashboard\components\approval-chart.tsx
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
