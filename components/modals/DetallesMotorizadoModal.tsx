@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import type { DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
 import { Button } from "@/components/ui/button"
 import { User, MapPin, CreditCard, Mail, Phone, Calendar, Car, FileText, X, CheckCircle } from "lucide-react"
-import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 import { PDFViewer } from "../PDFViewer"
+import { ImageThumbnail } from "@/components/ui/image-thumbnail"
 
 // Interfaces para las props de los componentes
 interface DetallesMotorizadoModalProps {
@@ -95,8 +94,6 @@ const normalizeFilePath = (src: string): string => {
 
 // Componente para mostrar archivos (imágenes o PDFs)
 const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
-  const [showFullSize, setShowFullSize] = useState(false)
-
   if (!src) return <p className="text-gray-500">Archivo no disponible</p>
 
   try {
@@ -113,65 +110,10 @@ const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
             // Usar el componente PDFViewer para PDFs con la ruta normalizada
             <PDFViewer url={normalizedPath} title={title} />
           ) : (
-            // Mostrar vista previa de imagen con la ruta normalizada
-            <div
-              className="relative w-full aspect-[4/3] cursor-pointer transition-transform hover:scale-[1.02]"
-              onClick={() => setShowFullSize(true)}
-            >
-              <Image
-                src={normalizedPath || "/placeholder.svg"}
-                alt={alt}
-                fill
-                className="object-cover rounded-lg"
-                unoptimized
-              />
-            </div>
+            // Usar el componente ImageThumbnail para imágenes
+            <ImageThumbnail src={normalizedPath || "/placeholder.svg"} alt={alt} title={title} />
           )}
         </div>
-
-        {/* Modal para vista ampliada (solo para imágenes) */}
-        {!isPdf && showFullSize && (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80"
-            onClick={() => setShowFullSize(false)}
-          >
-            <div className="relative flex flex-col items-center max-w-[90vw] max-h-[90vh]">
-              <h3 className="text-white text-xl font-medium mb-4">{title}</h3>
-
-              <div className="relative" style={{ width: "80vw", height: "70vh" }}>
-                <Image
-                  src={normalizedPath || "/placeholder.svg"}
-                  alt={alt}
-                  fill
-                  className="object-contain rounded-lg"
-                  unoptimized
-                  priority
-                />
-              </div>
-
-              <Button
-                variant="secondary"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowFullSize(false)
-                }}
-                className="mt-4 px-8"
-              >
-                Volver
-              </Button>
-
-              <button
-                className="absolute -top-2 -right-2 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowFullSize(false)
-                }}
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-          </div>
-        )}
       </>
     )
   } catch (error) {

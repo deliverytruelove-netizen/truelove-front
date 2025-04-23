@@ -1,4 +1,4 @@
-// aqui si se ve el logo del negocio y se puede subir uno nuevo
+// app\socio\admin\components\perfil-negocio.tsx aqui si se ve el logo del negocio y se puede subir uno nuevo 
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
