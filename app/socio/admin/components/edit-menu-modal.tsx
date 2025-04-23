@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Edit, Upload, DollarSign, Tag, FileText, X, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { Edit, Upload, Tag, FileText, X, CheckCircle2, XCircle, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Category, MenuItem } from "../services/menu.service"
 import Image from "next/image"
@@ -32,8 +32,8 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
 
   useEffect(() => {
     if (menuItem) {
-      setSelectedCategory(menuItem.categoria_id.toString())
-      setStatus(menuItem.status)
+      setSelectedCategory(menuItem.categoria_id? menuItem.categoria_id.toString() : "")
+      setStatus(menuItem.status || "active")
       if (menuItem.foto) {
         setPreviewImage(menuItem.foto)
       }
@@ -170,7 +170,7 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="precio" className="text-sm font-medium flex items-center gap-1">
-                <DollarSign className="h-4 w-4 text-gray-500" />
+              <span className="text-gray-600 font-bold text-sm mr-1">S/</span>
                 Precio
               </Label>
               <div className="relative">

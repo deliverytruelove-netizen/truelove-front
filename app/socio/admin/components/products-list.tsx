@@ -3,7 +3,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, MoreVertical, DollarSign, ShoppingBag, Trash2 } from "lucide-react"
+import { Edit, MoreVertical, ShoppingBag, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,7 +130,7 @@ export function ProductsList({
                 <h3 className="font-medium text-gray-800">{item.titulo}</h3>
                 <p className="text-sm text-gray-500 line-clamp-2 h-10">{item.descripcion}</p>
                 <div className="mt-2 flex items-center">
-                  <DollarSign className="h-4 w-4 text-green-600 mr-1" />
+                  {/* <DollarSign className="h-4 w-4 text-green-600 mr-1" /> */}
                   <p className="font-semibold text-gray-900">S/ {formatPrice(item.precio)}</p>
                 </div>
               </div>
