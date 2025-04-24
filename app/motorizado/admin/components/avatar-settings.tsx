@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { User, Settings, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
+import { useMotorizado } from "../context/MotorizadoContext"
+import { cerrarSesion } from "../services/auth"
 
-const API_URL = process.env.NEXT_PUBLIC_API_WEB
-const BASE_URL = API_URL?.replace("/api", "") // Remover /api para rutas de archivos
+const BASE_URL = process.env.NEXT_PUBLIC_API_WEB?.replace("/api", "") || "http://localhost:8000"
 
 const AvatarSettings = () => {
   const [userInitials, setUserInitials] = useState<string>("")
@@ -26,6 +28,8 @@ const AvatarSettings = () => {
   const [avatarUrl, setAvatarUrl] = useState<string>("")
   const [imageError, setImageError] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
+  const { usuario, perfilData } = useMotorizado()
 
   const getImageUrl = (path: string | null) => {
     if (!path) return null
@@ -36,67 +40,52 @@ const AvatarSettings = () => {
     return `${BASE_URL}/${cleanPath}`
   }
 
-  const obtenerDatosUsuario = useCallback(async () => {
-    try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("authToken="))
-        ?.split("=")[1]
+  useEffect(() => {
+    if (usuario) {
+      setEmail(usuario.email || "")
+    }
 
-      if (!token) {
-        throw new Error("No se encontró el token de autenticación")
-      }
-
-      const response = await fetch(`${API_URL}/motorizado/datos`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error("Error al obtener datos del usuario")
-      }
-
-      const datos = await response.json()
-
-      const firstName = datos.nombre?.split(" ")[0] || ""
-      const lastName = datos.nombre?.split(" ")[1] || ""
+    if (perfilData) {
+      const firstName = perfilData.usuario?.name?.split(" ")[0] || perfilData.repartidor?.nombres || ""
+      const lastName = perfilData.usuario?.name?.split(" ").slice(1).join(" ") || perfilData.repartidor?.apellidos || ""
       const fullName = `${firstName} ${lastName}`.trim()
 
-      setFullName(fullName || datos.email)
-      setEmail(datos.email)
+      setFullName(fullName || perfilData.usuario?.email || "")
       setUserInitials(
-        `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || datos.email.charAt(0).toUpperCase(),
+        `${firstName.charAt(0)}${lastName.charAt(0) || firstName.charAt(1)}`.toUpperCase() ||
+          (perfilData.usuario?.email || "").charAt(0).toUpperCase(),
       )
 
-      if (datos.foto_perfil) {
-        setAvatarUrl(datos.foto_perfil)
+      // Si hay foto de perfil, la establecemos
+      if (perfilData.repartidor?.documento_imagen_frente) {
+        setAvatarUrl(perfilData.repartidor.documento_imagen_frente)
         setImageError(false)
       }
-    } catch (error) {
-      console.error("Error al obtener datos del usuario:", error)
-      setImageError(true)
     }
-  }, [])
-
-  useEffect(() => {
-    obtenerDatosUsuario()
-  }, [obtenerDatosUsuario])
+  }, [usuario, perfilData])
 
   const handleImageError = () => {
     setImageError(true)
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken")
-    localStorage.removeItem("user")
-    localStorage.removeItem("userRole")
-    localStorage.removeItem("userProfile")
-    localStorage.removeItem("lastProfileUpdate")
-    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    router.push("/login")
+    try {
+      cerrarSesion()
+
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente",
+      })
+
+      router.push("/login")
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo cerrar sesión correctamente",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -106,7 +95,7 @@ const AvatarSettings = () => {
           <Avatar>
             {avatarUrl && !imageError ? (
               <Image
-                src={getImageUrl(avatarUrl) || "/placeholder.svg"}
+                src={getImageUrl(avatarUrl) || "/placeholder.svg?height=32&width=32&query=user"}
                 alt={fullName}
                 width={32}
                 height={32}
@@ -129,7 +118,7 @@ const AvatarSettings = () => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/motorizado/admin/perfil">
+          <Link href={`/motorizado/admin/perfil/${usuario?.id}`}>
             <User className="mr-2 h-4 w-4" />
             <span>Perfil</span>
           </Link>

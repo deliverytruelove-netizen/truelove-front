@@ -1,4 +1,4 @@
-// components\registerLocal\RegistrationForm.tsx
+// components\registerLocal\RegistrationForm.tsx este es el ejmplo
 "use client"
 
 import type React from "react"

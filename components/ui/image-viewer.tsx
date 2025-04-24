@@ -43,71 +43,54 @@ export function ImageViewer({ src, alt, title, isOpen, onClose }: ImageViewerPro
     }
   }, [src])
 
+  // Agregar este useEffect después de los otros useEffect existentes
+  useEffect(() => {
+    const container = imageContainerRef.current
+    if (!container) return
+
+    const wheelHandler = (e: WheelEvent) => {
+      e.preventDefault()
+
+      // Obtener la posición del cursor relativa al contenedor de la imagen
+      const rect = container.getBoundingClientRect()
+      if (!rect) return
+
+      // Calcular la posición relativa del cursor dentro de la imagen (0-1)
+      const x = (e.clientX - rect.left) / rect.width
+      const y = (e.clientY - rect.top) / rect.height
+
+      // Calcular el nuevo nivel de zoom
+      const oldZoom = zoomLevel
+      const newZoom =
+        e.deltaY < 0
+          ? Math.min(zoomLevel + 0.1, 5) // Zoom in (limitado a 5x)
+          : Math.max(zoomLevel - 0.1, 0.5) // Zoom out (limitado a 0.5x)
+
+      // Si el zoom no cambió, no hacemos nada más
+      if (oldZoom === newZoom) return
+
+      // Actualizar el nivel de zoom
+      setZoomLevel(newZoom)
+
+      // Calcular el desplazamiento necesario para mantener el punto bajo el cursor
+      if (imageRef.current) {
+        // Calcular la nueva posición para mantener el punto bajo el cursor
+        const newX = position.x - ((x - 0.5) * (newZoom - oldZoom)) / newZoom
+        const newY = position.y - ((y - 0.5) * (newZoom - oldZoom)) / newZoom
+
+        setPosition({ x: newX, y: newY })
+      }
+    }
+
+    container.addEventListener("wheel", wheelHandler, { passive: false })
+
+    return () => {
+      container.removeEventListener("wheel", wheelHandler)
+    }
+  }, [zoomLevel, position])
+
   // Retorno temprano después de todos los hooks
   if (!src || !isOpen) return null
-
-  // Función para manejar el zoom con la rueda del mouse
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
-
-    // Obtener la posición del cursor relativa al contenedor de la imagen
-    const rect = imageContainerRef.current?.getBoundingClientRect()
-    if (!rect) return
-
-    // Calcular la posición relativa del cursor dentro de la imagen (0-1)
-    const x = (e.clientX - rect.left) / rect.width
-    const y = (e.clientY - rect.top) / rect.height
-
-    // Calcular el nuevo nivel de zoom
-    const oldZoom = zoomLevel
-    const newZoom =
-      e.deltaY < 0
-        ? Math.min(zoomLevel + 0.1, 5) // Zoom in (limitado a 5x)
-        : Math.max(zoomLevel - 0.1, 0.5) // Zoom out (limitado a 0.5x)
-
-    // Si el zoom no cambió, no hacemos nada más
-    if (oldZoom === newZoom) return
-
-    // Actualizar el nivel de zoom
-    setZoomLevel(newZoom)
-
-    // Calcular el desplazamiento necesario para mantener el punto bajo el cursor
-    if (imageRef.current) {
-      // Calcular la nueva posición para mantener el punto bajo el cursor
-      const newX = position.x - ((x - 0.5) * (newZoom - oldZoom)) / newZoom
-      const newY = position.y - ((y - 0.5) * (newZoom - oldZoom)) / newZoom
-
-      setPosition({ x: newX, y: newY })
-    }
-  }
-
-  // Función para incrementar el zoom
-  const zoomIn = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const newZoom = Math.min(zoomLevel + 0.1, 5)
-    setZoomLevel(newZoom)
-  }
-
-  // Función para decrementar el zoom
-  const zoomOut = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const newZoom = Math.max(zoomLevel - 0.1, 0.5)
-    setZoomLevel(newZoom)
-  }
-
-  // Función para rotar la imagen
-  const rotateImage = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setRotation((prev) => (prev + 90) % 360)
-  }
-
-  // Función para resetear zoom y rotación
-  const resetView = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setZoomLevel(1)
-    setRotation(0)
-    setPosition({ x: 0, y: 0 })
-  }
 
   // Iniciar arrastre - Ahora permitimos arrastrar a cualquier nivel de zoom
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -143,6 +126,34 @@ export function ImageViewer({ src, alt, title, isOpen, onClose }: ImageViewerPro
   // Determinar el cursor apropiado
   const cursorStyle = isDragging ? "cursor-grabbing" : "cursor-grab"
 
+  // Función para incrementar el zoom
+  const zoomIn = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newZoom = Math.min(zoomLevel + 0.1, 5)
+    setZoomLevel(newZoom)
+  }
+
+  // Función para decrementar el zoom
+  const zoomOut = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newZoom = Math.max(zoomLevel - 0.1, 0.5)
+    setZoomLevel(newZoom)
+  }
+
+  // Función para rotar la imagen
+  const rotateImage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setRotation((prev) => (prev + 90) % 360)
+  }
+
+  // Función para resetear zoom y rotación
+  const resetView = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setZoomLevel(1)
+    setRotation(0)
+    setPosition({ x: 0, y: 0 })
+  }
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80"
@@ -174,7 +185,6 @@ export function ImageViewer({ src, alt, title, isOpen, onClose }: ImageViewerPro
             ref={imageContainerRef}
             className={`relative overflow-hidden ${cursorStyle} rounded-lg`}
             style={{ width: "80vw", height: "70vh" }}
-            onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
           >
