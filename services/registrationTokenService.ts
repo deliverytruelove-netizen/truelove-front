@@ -1,4 +1,4 @@
-// services\registrationTokenService.ts
+// services\registrationTokenService.ts 
 import { jwtVerify, SignJWT } from "jose"
 
 // Interfaz que define la estructura del token decodificado
