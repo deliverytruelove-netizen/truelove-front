@@ -5,7 +5,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, ArrowRight } from "lucide-react"
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
 import { ValidationAlert } from "@/components/ValidationAlert"
@@ -148,11 +148,11 @@ export default function RegistrationForm() {
   }
 
   const handleEmailChange = async (useNewEmail: boolean) => {
-    if (!registrationId) return;
-    
-    setIsLoading(true);
-    setShowEmailChangeModal(false);
-    
+    if (!registrationId) return
+
+    setIsLoading(true)
+    setShowEmailChangeModal(false)
+
     try {
       if (useNewEmail) {
         // Actualizar el correo en el registro existente
@@ -162,27 +162,27 @@ export default function RegistrationForm() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email: formData.email }),
-        });
-        
-        const data = await response.json();
-        
+        })
+
+        const data = await response.json()
+
         if (!response.ok) {
-          setError(data.message || "Error al actualizar el correo electrónico");
-          setOriginalEmail(null);
-          return;
+          setError(data.message || "Error al actualizar el correo electrónico")
+          setOriginalEmail(null)
+          return
         }
       }
-      
+
       // Redirigir a la página de estado de registro
-      router.push(`/registration-status?registration_id=${registrationId}`);
+      router.push(`/registration-status?registration_id=${registrationId}`)
     } catch (error) {
-      console.error("Error al procesar el cambio de correo:", error);
-      setError("Hubo un problema al procesar tu solicitud. Por favor, intenta nuevamente.");
+      console.error("Error al procesar el cambio de correo:", error)
+      setError("Hubo un problema al procesar tu solicitud. Por favor, intenta nuevamente.")
     } finally {
-      setIsLoading(false);
-      setOriginalEmail(null);
+      setIsLoading(false)
+      setOriginalEmail(null)
     }
-  };
+  }
 
   const handleRegistrationError = (error: string, message: string) => {
     if (error === "dni_registered") {
@@ -201,12 +201,12 @@ export default function RegistrationForm() {
   }
 
   return (
-    <div className="max-w-lg w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl mx-auto">
+    <div className="w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl">
       <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">¡Registra tu local ahora!</h2>
 
       {/* Modal de cambio de correo */}
       {originalEmail && (
-        <EmailChangeAlert 
+        <EmailChangeAlert
           originalEmail={originalEmail}
           isOpen={showEmailChangeModal}
           onConfirm={() => handleEmailChange(true)}
