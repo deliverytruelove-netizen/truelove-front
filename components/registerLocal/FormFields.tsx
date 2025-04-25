@@ -1,10 +1,14 @@
-// components\registerLocal\FormFields.tsx
 "use client"
 
 import type React from "react"
 import type { FormData, BusinessType } from "./types"
 import { useState } from "react"
 import { Upload, FileText, AlertCircle } from "lucide-react"
+
+
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface FormFieldsProps {
   formData: FormData
@@ -30,8 +34,8 @@ export const FormFields: React.FC<FormFieldsProps> = ({
     antecedentesPoliciales: "",
   })
 
-  const handleDocumentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nuevoTipoDocumento = e.target.value
+  const handleDocumentTypeChange = (value: string) => {
+    const nuevoTipoDocumento = value
 
     const datosLimpios: FormData = {
       documentType: nuevoTipoDocumento,
@@ -46,6 +50,13 @@ export const FormFields: React.FC<FormFieldsProps> = ({
     }
 
     setFormData(datosLimpios)
+  }
+
+  // Función auxiliar para manejar cambios en el Select de shadcn
+  const handleSelectChange = (name: string, value: string) => {
+    handleInputChange({
+      target: { name, value },
+    } as React.ChangeEvent<HTMLSelectElement>)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +89,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
 
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">{label} *</label>
+        <Label htmlFor={name}>{label} *</Label>
         <div className="relative">
           <div
             className={`w-full min-h-[100px] border-2 border-dashed rounded-lg 
@@ -87,6 +98,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
                         hover:border-red-400 hover:bg-gray-100 cursor-pointer`}
           >
             <input
+              id={name}
               type="file"
               name={name}
               onChange={handleFileChange}
@@ -134,25 +146,23 @@ export const FormFields: React.FC<FormFieldsProps> = ({
   return (
     <>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Tipo de Documento *</label>
-        <select
-          name="documentType"
-          value={formData.documentType}
-          onChange={handleDocumentTypeChange}
-          required
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200"
-        >
-          <option value="DNI">DNI</option>
-          <option value="RUC">RUC</option>
-          <option value="CARNET_EXTRANJERIA">Carnet de Extranjería</option>
-        </select>
+        <Label htmlFor="documentType">Tipo de Documento *</Label>
+        <Select value={formData.documentType} onValueChange={(value) => handleDocumentTypeChange(value)}>
+          <SelectTrigger id="documentType" className="w-full">
+            <SelectValue placeholder="Seleccione tipo de documento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="DNI">DNI</SelectItem>
+            <SelectItem value="RUC">RUC</SelectItem>
+            <SelectItem value="CARNET_EXTRANJERIA">Carnet de Extranjería</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Número de Documento *</label>
-        <input
+        <Label htmlFor="documentNumber">Número de Documento *</Label>
+        <Input
+          id="documentNumber"
           type="text"
           name="documentNumber"
           value={formData.documentNumber}
@@ -160,15 +170,14 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           required
           maxLength={formData.documentType === "RUC" ? 11 : 20}
           placeholder="Ingrese su número de documento"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200"
+          className="bg-white/50 backdrop-blur-sm"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Nombre *</label>
-        <input
+        <Label htmlFor="name">Nombre *</Label>
+        <Input
+          id="name"
           type="text"
           name="name"
           value={formData.name}
@@ -176,15 +185,14 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           required
           disabled={isFieldsLocked}
           placeholder="Ingrese su nombre"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
+          className="bg-white/50 backdrop-blur-sm"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Apellido *</label>
-        <input
+        <Label htmlFor="lastName">Apellido *</Label>
+        <Input
+          id="lastName"
           type="text"
           name="lastName"
           value={formData.lastName}
@@ -192,62 +200,53 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           required
           disabled={isFieldsLocked}
           placeholder="Ingrese su apellido"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-500"
+          className="bg-white/50 backdrop-blur-sm"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Tipo de negocio *</label>
-        <select
-          name="businessType"
-          value={formData.businessType}
-          onChange={handleInputChange}
-          required
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200"
-        >
-          <option value="">Seleccione tipo de negocio</option>
-          {businessTypes.map((type) => (
-            <option key={type.id} value={type.nombre}>
-              {type.nombre}
-            </option>
-          ))}
-        </select>
+        <Label htmlFor="businessType">Tipo de negocio *</Label>
+        <Select value={formData.businessType} onValueChange={(value) => handleSelectChange("businessType", value)}>
+          <SelectTrigger id="businessType" className="w-full">
+            <SelectValue placeholder="Seleccione tipo de negocio" />
+          </SelectTrigger>
+          <SelectContent>
+            {businessTypes.map((type) => (
+              <SelectItem key={type.id} value={type.nombre}>
+                {type.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Teléfono *</label>
-        <input
+        <Label htmlFor="phone">Teléfono *</Label>
+        <Input
+          id="phone"
           type="tel"
           name="phone"
           value={formData.phone}
           onChange={handlePhoneChange}
           required
           placeholder="Ingrese su número de teléfono"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200"
+          className="bg-white/50 backdrop-blur-sm"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">Correo Electrónico *</label>
-        <input
+        <Label htmlFor="email">Correo Electrónico *</Label>
+        <Input
+          id="email"
           type="email"
           name="email"
           value={formData.email}
           onChange={handleInputChange}
           required
           placeholder="Ingrese su correo electrónico"
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white/50 backdrop-blur-sm 
-                   text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#f34739] focus:border-transparent
-                   transition-colors duration-200"
+          className="bg-white/50 backdrop-blur-sm"
         />
       </div>
     </>
   )
 }
-

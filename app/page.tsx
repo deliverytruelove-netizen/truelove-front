@@ -28,7 +28,7 @@ export default function Home() {
         }}
       />
 
-      <main  className="pt-[50px]">
+      <main  className="pt-[60px]">
         <Navbar/>
         <div>
           <HomePage />
