@@ -9,6 +9,7 @@ import Image from "next/image";
 import { FaEye, FaEyeSlash, FaChartBar } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 import { checkAuth } from "@/services/apiService";
+import { Input } from "@/components/ui/input";
 
 const LoginPage: React.FC = () => {
   const {
@@ -25,34 +26,34 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const verifyAuth = async () => {
-      const token = localStorage.getItem("authToken")
+      const token = localStorage.getItem("authToken");
       if (token) {
         try {
-          const { authenticated, role } = await checkAuth()
+          const { authenticated, role } = await checkAuth();
           if (authenticated) {
             switch (role) {
               case "admin":
-                router.replace("/admin/dashboard")
-                break
+                router.replace("/admin/dashboard");
+                break;
               case "negocio":
-                router.replace("/socio/admin")
-                break
+                router.replace("/socio/admin");
+                break;
               case "motorizado":
-                router.replace("/motorizado/admin")
-                break
+                router.replace("/motorizado/admin");
+                break;
               default:
                 // Si el rol no es reconocido, no redirigimos
-                break
+                break;
             }
           }
         } catch (error) {
-          console.error("Error verificando autenticación:", error)
+          console.error("Error verificando autenticación:", error);
         }
       }
-    }
+    };
 
-    verifyAuth()
-  }, [router])
+    verifyAuth();
+  }, [router]);
   //   const token = localStorage.getItem("authToken");
   //   if (token) {
   //     router.push("/admin/dashboard");
@@ -109,15 +110,13 @@ const LoginPage: React.FC = () => {
               >
                 Usuario
               </label>
-              <input
+              <Input
                 type="text"
                 name="usuario"
                 id="usuario"
                 value={formData.usuario}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.usuario ? 'border-red-500' : 'border-red-300'
-                } rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-red-900 placeholder-red-300`}
+                className={errors.usuario ? "border-red-500" : ""}
                 placeholder="usuario"
               />
               {errors.usuario && (
@@ -132,15 +131,13 @@ const LoginPage: React.FC = () => {
               >
                 Contraseña
               </label>
-              <input
+              <Input
                 type={showPassword ? "text" : "password"}
                 name="password"
                 id="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border ${
-                  errors.password ? 'border-red-500' : 'border-red-300'
-                } rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-red-900 placeholder-red-300`}
+                className={errors.password ? "border-red-500" : ""}
                 placeholder="Contraseña"
               />
               {errors.password && (

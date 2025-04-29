@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X, Filter } from "lucide-react"
+import { Eye, Check, Search, RefreshCw, X, Filter, Trash2 } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -11,13 +11,17 @@ import {
   // changeStateSocio,
   fetchSocioDetails,
   aprobarSocio,
+  deleteSocio,
 } from "@/app/admin/socios/services/Socios.service"
 import type { DetallesSocio, Socio } from "@/app/admin/socios/types/Socios.types"
 // import type { ColumnSort } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { showAlert } from "@/components/ui/DataTable/Alert"
 import { DetallesSocioModal } from "./modals/DetallesSocioModal"
-import {Input} from "@/components/ui/input"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { DeleteSocioDialog } from "@/components/DeleteSocioDialog"
+
 // Definir los tipos de filtro
 type FilterType = "todos" | "completos" | "incompletos" | "aprobados" | "pendientes"
 
@@ -32,6 +36,8 @@ const SocioList: React.FC = () => {
     pageSize: DEFAULT_PAGE_SIZE,
     pageIndex: 0,
   })
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [socioToDelete, setSocioToDelete] = useState<{ id: number; name: string } | null>(null)
 
   // Consulta para obtener los socios y sus detalles
   const {
@@ -110,11 +116,45 @@ const SocioList: React.FC = () => {
     mutationFn: aprobarSocio,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["socios-detalles"] })
-      queryClient.invalidateQueries({ queryKey: ["socio-details", selectedSocioId] })
-      showAlert({ title: "Éxito", text: "Se aprobó el socio.", icon: "success" })
+      queryClient.invalidateQueries({
+        queryKey: ["socio-details", selectedSocioId],
+      })
+      showAlert({
+        title: "Éxito",
+        text: "Se aprobó el socio correctamente.",
+        icon: "success",
+      })
+    },
+    onError: (error: Error) => {
+      // Verificar si es un error de correo duplicado
+      if (error.message && error.message.includes("correo electrónico ya está registrado")) {
+        showAlert({
+          title: "Error de registro",
+          text: "El correo electrónico ya está registrado en el sistema. No se puede crear un usuario duplicado.",
+          icon: "error",
+        })
+      } else {
+        showAlert({ title: "Error", text: error.message, icon: "error" })
+      }
+    },
+  })
+
+  // mutación para eliminar un socio
+  const mutationDelete = useMutation({
+    mutationFn: deleteSocio,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["socios-detalles"] })
+      showAlert({
+        title: "Éxito",
+        text: "Se eliminó el socio correctamente.",
+        icon: "success",
+      })
+      setIsDeleteDialogOpen(false)
+      setSocioToDelete(null)
     },
     onError: (error: Error) => {
       showAlert({ title: "Error", text: error.message, icon: "error" })
+      setIsDeleteDialogOpen(false)
     },
   })
 
@@ -125,6 +165,17 @@ const SocioList: React.FC = () => {
   const handleAprobar = (id: number) => {
     setSelectedSocioId(id)
     mutationAprobar.mutate(id)
+  }
+
+  const handleDelete = (id: number, name: string) => {
+    setSocioToDelete({ id, name })
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (socioToDelete) {
+      mutationDelete.mutate(socioToDelete.id)
+    }
   }
 
   const formatDate = (dateString: string | null) => {
@@ -183,8 +234,9 @@ const SocioList: React.FC = () => {
           <div className="w-full sm:w-auto">
             {/* Filtro personalizado con mejor diseño */}
             <div className="relative inline-block">
-              <button
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none"
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
                 onClick={() => {
                   const dropdown = document.getElementById("filter-dropdown")
                   if (dropdown) {
@@ -200,7 +252,7 @@ const SocioList: React.FC = () => {
                   {filterType === "aprobados" && "Aprobados"}
                   {filterType === "pendientes" && "Pendientes"}
                 </span>
-              </button>
+              </Button>
               <div
                 id="filter-dropdown"
                 className="hidden absolute z-10 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg"
@@ -252,13 +304,9 @@ const SocioList: React.FC = () => {
                 </button>
               )}
             </div>
-            <button
-              onClick={() => refetch()}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
-              title="Actualizar"
-            >
+            <Button variant="ghost" size="icon" onClick={() => refetch()} title="Actualizar">
               <RefreshCw size={18} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -325,15 +373,16 @@ const SocioList: React.FC = () => {
                         : "No hay socios registrados en el sistema."}
                     </p>
                     {(globalFilter || filterType !== "todos") && (
-                      <button
-                        className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      <Button
+                        variant="outline"
+                        className="mt-4"
                         onClick={() => {
                           setGlobalFilter("")
                           setFilterType("todos")
                         }}
                       >
                         Limpiar filtros
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -369,38 +418,41 @@ const SocioList: React.FC = () => {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {/* Estructura de tabla con dos columnas para alineación consistente */}
-                        <table className="w-full">
-                          <tbody>
-                            <tr>
-                              {/* Columna 1: Siempre contiene el icono del ojo */}
-                              <td className="w-10 text-center">
-                                <button
-                                  onClick={() => {
-                                    setSelectedSocioId(socio.id)
-                                    setIsModalOpen(true)
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800"
-                                  title="Ver detalles"
-                                >
-                                  <Eye className="w-5 h-5" />
-                                </button>
-                              </td>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedSocioId(socio.id)
+                              setIsModalOpen(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Button>
 
-                              {/* Columna 2: Contiene el botón Aprobar (o nada) */}
-                              <td>
-                                {!socio.aprobado && (
-                                  <button
-                                    onClick={() => handleAprobar(socio.id)}
-                                    className="px-4 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                                  >
-                                    Aprobar
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                          {!socio.aprobado && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAprobar(socio.id)}
+                              className="text-blue-700 bg-blue-50 border-blue-100 hover:bg-blue-100"
+                            >
+                              Aprobar
+                            </Button>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(socio.id, socio.personal?.name || "este socio")}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Eliminar socio"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -416,14 +468,19 @@ const SocioList: React.FC = () => {
               Página {pagination.pageIndex + 1} de {Math.ceil(filteredSocios.length / pagination.pageSize)}
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setPagination({ ...pagination, pageIndex: Math.max(0, pagination.pageIndex - 1) })}
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setPagination({
+                    ...pagination,
+                    pageIndex: Math.max(0, pagination.pageIndex - 1),
+                  })
+                }
                 disabled={pagination.pageIndex === 0}
-                className="px-3 py-1 border border-gray-300 rounded-md text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Anterior
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() =>
                   setPagination({
                     ...pagination,
@@ -434,10 +491,9 @@ const SocioList: React.FC = () => {
                   })
                 }
                 disabled={pagination.pageIndex >= Math.ceil(filteredSocios.length / pagination.pageSize) - 1}
-                className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Siguiente
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -452,6 +508,16 @@ const SocioList: React.FC = () => {
         data={detallesSocio}
         onAprobar={handleAprobar}
       />
+
+      {/* Diálogo de confirmación para eliminar */}
+      {socioToDelete && (
+        <DeleteSocioDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+          socioName={socioToDelete.name}
+        />
+      )}
 
       {/* Script para cerrar el dropdown cuando se hace clic fuera de él */}
       <script

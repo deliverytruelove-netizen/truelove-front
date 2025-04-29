@@ -1,23 +1,25 @@
-// components\MotorizadoList.tsx
 "use client"
 
 import type React from "react"
 
 import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X, Filter } from "lucide-react"
+import { Eye, Check, Search, RefreshCw, X, Filter, Trash2 } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   fetchMotorizados,
   fetchMotorizadoDetails,
   aprobarMotorizado,
+  deleteMotorizado,
 } from "@/app/admin/motorizado/services/motorizado.service"
 import type { Motorizado, DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
+import { showAlert } from "@/components/ui/DataTable/Alert"
 import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal"
-import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "./ui/input"
+import { Button } from "@/components/ui/button"
+import { DeleteMotorizadoDialog } from "./DeleteMotorizadoDialog"
 
 const MotorizadoList: React.FC = () => {
   const queryClient = useQueryClient()
@@ -29,6 +31,8 @@ const MotorizadoList: React.FC = () => {
     pageIndex: 0,
   })
   const [statusFilter, setStatusFilter] = useState<"todos" | "aprobados" | "pendientes">("todos")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [motorizadoToDelete, setMotorizadoToDelete] = useState<{ id: number; name: string } | null>(null)
 
   const {
     data: motorizados = [],
@@ -53,32 +57,68 @@ const MotorizadoList: React.FC = () => {
     mutationFn: aprobarMotorizado,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motorizados"] })
+      showAlert({
+        title: "Éxito",
+        text: "Motorizado aprobado correctamente. Se han enviado las credenciales por correo electrónico.",
+        icon: "success",
+      })
     },
     onError: (error: Error) => {
       console.error("Error al aprobar motorizado:", error)
 
       // Verificar si es un error de correo duplicado
-      if (error.message && error.message.includes("Duplicate entry") && error.message.includes("email_unique")) {
-        toast.error("Error al aprobar motorizado", {
-          description: "El correo electrónico ya está registrado en el sistema.",
+      if (error.message && error.message.includes("correo electrónico ya está registrado")) {
+        showAlert({
+          title: "Error de registro",
+          text: "El correo electrónico ya está registrado en el sistema. No se puede crear un usuario duplicado.",
+          icon: "error",
         })
       } else {
-        toast.error("Error al aprobar motorizado", {
-          description: error.message || "No se pudo aprobar el motorizado o enviar las credenciales.",
+        showAlert({
+          title: "Error",
+          text: error.message || "No se pudo aprobar el motorizado o enviar las credenciales.",
+          icon: "error",
         })
       }
     },
   })
 
-  const handleAprobar = async (id: number) => {
-    try {
-      await mutationAprobar.mutateAsync(id)
-      toast.success("Motorizado aprobado correctamente", {
-        description: "Se han enviado las credenciales por correo electrónico.",
+  // Mutación para eliminar un motorizado
+  const mutationDelete = useMutation({
+    mutationFn: deleteMotorizado,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["motorizados"] })
+      showAlert({
+        title: "Éxito",
+        text: "Se eliminó el motorizado correctamente.",
+        icon: "success",
       })
-    } catch (error) {
-      console.error("Error al aprobar motorizado:", error)
-      // El error ya se maneja en onError del mutation
+      setIsDeleteDialogOpen(false)
+      setMotorizadoToDelete(null)
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "No se pudo eliminar el motorizado.",
+        icon: "error",
+      })
+      setIsDeleteDialogOpen(false)
+    },
+  })
+
+  const handleAprobar = (id: number) => {
+    setSelectedMotorizadoId(id)
+    mutationAprobar.mutate(id)
+  }
+
+  const handleDelete = (id: number, name: string) => {
+    setMotorizadoToDelete({ id, name })
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (motorizadoToDelete) {
+      mutationDelete.mutate(motorizadoToDelete.id)
     }
   }
 
@@ -162,13 +202,9 @@ const MotorizadoList: React.FC = () => {
                 </button>
               )}
             </div>
-            <button
-              onClick={() => refetch()}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
-              title="Actualizar"
-            >
+            <Button variant="ghost" size="icon" onClick={() => refetch()} title="Actualizar">
               <RefreshCw size={18} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -235,15 +271,16 @@ const MotorizadoList: React.FC = () => {
                         : "No hay motorizados registrados en el sistema."}
                     </p>
                     {(globalFilter || statusFilter !== "todos") && (
-                      <button
-                        className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      <Button
+                        variant="outline"
+                        className="mt-4"
                         onClick={() => {
                           setGlobalFilter("")
                           setStatusFilter("todos")
                         }}
                       >
                         Limpiar filtros
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -275,38 +312,41 @@ const MotorizadoList: React.FC = () => {
                         )}
                       </td>
                       <td className="px-3 py-2">
-                        {/* Estructura de tabla con dos columnas para alineación consistente */}
-                        <table className="w-full">
-                          <tbody>
-                            <tr>
-                              {/* Columna 1: Siempre contiene el icono del ojo */}
-                              <td className="w-10 text-center">
-                                <button
-                                  onClick={() => {
-                                    setSelectedMotorizadoId(motorizado.id)
-                                    setIsModalOpen(true)
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800"
-                                  title="Ver detalles"
-                                >
-                                  <Eye className="w-5 h-5" />
-                                </button>
-                              </td>
+                        <div className="flex items-center justify-center gap-2">
+                          {!motorizado.aprobado && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAprobar(motorizado.id)}
+                              className="text-blue-700 bg-blue-50 border-blue-100 hover:bg-blue-100"
+                            >
+                              Aprobar
+                            </Button>
+                          )}
 
-                              {/* Columna 2: Contiene el botón Aprobar (o nada) */}
-                              <td>
-                                {!motorizado.aprobado && (
-                                  <button
-                                    onClick={() => handleAprobar(motorizado.id)}
-                                    className="ml-2 px-4 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors "
-                                  >
-                                    Aprobar
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedMotorizadoId(motorizado.id)
+                              setIsModalOpen(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(motorizado.id, motorizado.nombres)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Eliminar motorizado"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -322,14 +362,14 @@ const MotorizadoList: React.FC = () => {
               Página {pagination.pageIndex + 1} de {Math.ceil(filteredMotorizados.length / pagination.pageSize)}
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setPagination({ ...pagination, pageIndex: Math.max(0, pagination.pageIndex - 1) })}
                 disabled={pagination.pageIndex === 0}
-                className="px-3 py-1 border border-gray-300 rounded-md text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Anterior
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() =>
                   setPagination({
                     ...pagination,
@@ -340,10 +380,9 @@ const MotorizadoList: React.FC = () => {
                   })
                 }
                 disabled={pagination.pageIndex >= Math.ceil(filteredMotorizados.length / pagination.pageSize) - 1}
-                className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Siguiente
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -358,9 +397,18 @@ const MotorizadoList: React.FC = () => {
         data={detallesMotorizado}
         onAprobar={handleAprobar}
       />
+
+      {/* Diálogo de confirmación para eliminar */}
+      {motorizadoToDelete && (
+        <DeleteMotorizadoDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+          motorizadoName={motorizadoToDelete.name}
+        />
+      )}
     </Section>
   )
 }
 
 export default MotorizadoList
-
