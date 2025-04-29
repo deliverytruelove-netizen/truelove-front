@@ -70,7 +70,12 @@ export function FormularioBancario() {
   const [cuentaBancariaId, setCuentaBancariaId] = useState<number | null>(null)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [showFileSelector, setShowFileSelector] = useState(true)
-
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+  
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -165,22 +170,38 @@ export function FormularioBancario() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length <= 2) {
       const files = Array.from(e.target.files)
-      const validFiles = files.every((file) => {
-        if (fileType === "image") {
-          return file.type.startsWith("image/") && (file.type.includes("jpeg") || file.type.includes("png"))
-        } else {
-          return file.type === "application/pdf"
-        }
-      })
 
-      if (!validFiles) {
-        setErrors({
-          ...errors,
-          imagen:
-            fileType === "image" ? "Solo se permiten archivos de imagen (JPEG, PNG)" : "Solo se permiten archivos PDF",
-        })
-        return
+    // Primero validar el tipo de archivo
+    const validFiles = files.every((file) => {
+      if (fileType === "image") {
+        return file.type.startsWith("image/") && (file.type.includes("jpeg") || file.type.includes("png"));
+      } else {
+        return file.type === "application/pdf";
       }
+    });
+
+    if (!validFiles) {
+      setErrors({
+        ...errors,
+        imagen: fileType === "image" ? "Solo se permiten archivos de imagen (JPEG, PNG)" : "Solo se permiten archivos PDF",
+      });
+      return;
+    }
+        // Agregar validación de tamaño
+        const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB en bytes
+        const archivosGrandes = files.filter(file => file.size > MAX_FILE_SIZE);
+        
+        if (archivosGrandes.length > 0) {
+          const detallesArchivo = archivosGrandes.map(file => 
+            `${file.name} (${formatFileSize(file.size)})`
+          ).join(", ");
+          
+          setErrors({
+            ...errors,
+            imagen: `El archivo es demasiado grande: ${detallesArchivo}. Tamaño máximo permitido: 4MB.`
+          });
+          return;
+        }
 
       setSelectedFiles(e.target.files)
       setCapturedImage(null)
@@ -206,13 +227,34 @@ export function FormularioBancario() {
     }
   }
 
-  const handleCapture = (imageSrc: string) => {
-    setCapturedImage(imageSrc)
-    setSelectedFiles(null)
-    setFilePreview([])
-    setErrors({ ...errors, imagen: "" })
-    setShowFileSelector(false)
-  }
+  const handleCapture = async (imageSrc: string) => {
+    try {
+      // Calcular tamaño aproximado de la imagen base64
+      const base64Size = Math.ceil((imageSrc.length * 3) / 4);
+      const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB en bytes
+      
+      if (base64Size > MAX_FILE_SIZE) {
+        setErrors({
+          ...errors,
+          imagen: `La imagen capturada es demasiado grande (${formatFileSize(base64Size)}). Tamaño máximo: 4MB.`
+        });
+        return;
+      }
+      
+      setCapturedImage(imageSrc);
+      setSelectedFiles(null);
+      setFilePreview([]);
+      setErrors({ ...errors, imagen: "" });
+      setShowFileSelector(false);
+    } catch (error) {
+      console.error("Error al procesar la imagen capturada:", error);
+      setErrors({
+        ...errors,
+        imagen: "Error al procesar la imagen. Intente nuevamente."
+      });
+    }
+  };
+  
 
   const handleRemoveImage = () => {
     setCapturedImage(null)
@@ -241,19 +283,24 @@ export function FormularioBancario() {
   }
 
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {}
-    if (!formData.titular) newErrors.titular = "El titular es requerido"
-    if (!formData.dni) newErrors.dni = "El DNI es requerido"
-    if (!formData.banco_id) newErrors.banco_id = "Selecciona un banco"
-    if (!formData.tipo_cuenta_id) newErrors.tipo_cuenta_id = "Selecciona un tipo de cuenta"
-    if (!formData.numero_cuenta) newErrors.numero_cuenta = "El número de cuenta es requerido"
-
-    // Solo requerir imagen si es un registro nuevo
-    if (!cuentaBancariaId && !selectedFiles && !capturedImage) newErrors.imagen = "El documento bancario es requerido"
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.titular) newErrors.titular = "El titular es requerido";
+    if (!formData.dni) newErrors.dni = "El DNI es requerido";
+    if (!formData.banco_id) newErrors.banco_id = "Selecciona un banco";
+    if (!formData.tipo_cuenta_id) newErrors.tipo_cuenta_id = "Selecciona un tipo de cuenta";
+    if (!formData.numero_cuenta) newErrors.numero_cuenta = "El número de cuenta es requerido";
+  
+    // Mantener error de imagen si existe
+    if (errors.imagen) {
+      newErrors.imagen = errors.imagen;
+    } else if (!cuentaBancariaId && !selectedFiles && !capturedImage) {
+      newErrors.imagen = "El documento bancario es requerido";
+    }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()

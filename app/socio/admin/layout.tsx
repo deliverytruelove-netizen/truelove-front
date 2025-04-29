@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import AvatarSettings from './components/AvatarSettings'
 import Link from 'next/link'
 import { cn } from "@/lib/utils"
+import Providers from './providers'
 
 const menuItems = [
   { name: 'Inicio', href: '/socio/admin', icon: Home },
@@ -110,10 +111,11 @@ export default function SocioAdminLayout({
 
         {/* Page Content */}
         <main className="p-4 md:p-6 max-w-7xl mx-auto">
-          {children}
+          <Providers>
+            {children}
+          </Providers>
         </main>
       </div>
     </div>
   )
 }
-

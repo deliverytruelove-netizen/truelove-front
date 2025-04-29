@@ -3,7 +3,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 import ImagenCuenta from "@/public/img/negocio.jpg"
 import { CapturarImagen } from "./components/CapturarImagen"
 import { updateRegistrationStep, getRegistrationData, getRegistrationToken } from "@/services/registrationTokenService"
@@ -30,6 +32,9 @@ export default function CuentaBancariaPage() {
     numero_cuenta: "",
   })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [apiError, setApiError] = useState<string | null>(null)
+  const [fileSizeError, setFileSizeError] = useState<boolean>(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -50,13 +55,31 @@ export default function CuentaBancariaPage() {
   }, [router, toast])
 
   const handleFileSelect = (files: FileList | null) => {
-    if (files && files.length <= 2) {
-      setSelectedFiles(files)
-      setCapturedImage(null)
+    if (!files || files.length === 0) return
+
+    // Verificar el tamaño de los archivos antes de establecerlos
+    const oversizedFiles = Array.from(files).filter((file) => file.size > 4 * 1024 * 1024) // 4MB en bytes
+
+    if (oversizedFiles.length > 0) {
+      setFileSizeError(true)
+      setApiError("Las imágenes no deben superar los 4MB de tamaño. Por favor, seleccione archivos más pequeños.")
+
+      // Limpiar el input de archivo
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      return
     }
+
+    setFileSizeError(false)
+    setApiError(null)
+    setSelectedFiles(files)
+    setCapturedImage(null)
   }
 
   const handleCapture = (imageSrc: string) => {
+    setApiError(null)
+    setFileSizeError(false)
     setCapturedImage(imageSrc)
     setSelectedFiles(null)
   }
@@ -71,9 +94,9 @@ export default function CuentaBancariaPage() {
 
   const clearSelectedFiles = () => {
     setSelectedFiles(null)
-    const fileInput = document.getElementById("file-upload") as HTMLInputElement
-    if (fileInput) {
-      fileInput.value = ""
+    setFileSizeError(false)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -85,6 +108,7 @@ export default function CuentaBancariaPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setFormErrors({})
+    setApiError(null)
 
     // Validate form
     const errors: Record<string, string> = {}
@@ -99,6 +123,17 @@ export default function CuentaBancariaPage() {
       setFormErrors(errors)
       setIsSubmitting(false)
       return
+    }
+
+    // Verificar tamaño de archivos antes de enviar
+    if (selectedFiles) {
+      const oversizedFiles = Array.from(selectedFiles).filter((file) => file.size > 4 * 1024 * 1024) // 4MB en bytes
+      if (oversizedFiles.length > 0) {
+        setFileSizeError(true)
+        setApiError("Las imágenes no deben superar los 4MB de tamaño. Por favor, seleccione archivos más pequeños.")
+        setIsSubmitting(false)
+        return
+      }
     }
 
     const submitData = new FormData()
@@ -135,12 +170,29 @@ export default function CuentaBancariaPage() {
         body: submitData,
       })
 
+      const responseData = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        if (response.status === 500) {
+        // Manejar errores específicos de validación
+        if (response.status === 422 && responseData.errores) {
+          // Buscar errores relacionados con el tamaño de la imagen
+          const errorMessages = Object.entries(responseData.errores).map(([key, value]) => {
+            if (
+              key.includes("imagenes_cuenta") &&
+              Array.isArray(value) &&
+              value.some((msg: string) => msg.includes("kilobytes"))
+            ) {
+              setFileSizeError(true)
+              return "Las imágenes no deben superar los 4MB de tamaño. Por favor, seleccione archivos más pequeños."
+            }
+            return Array.isArray(value) ? value.join(". ") : value
+          })
+
+          throw new Error(errorMessages.join(". "))
+        } else if (response.status === 500) {
           throw new Error("Error interno del servidor. Por favor, inténtelo de nuevo más tarde.")
         } else {
-          throw new Error(errorData.mensaje || "Error al guardar la cuenta bancaria")
+          throw new Error(responseData.mensaje || "Error al guardar la cuenta bancaria")
         }
       }
 
@@ -154,14 +206,11 @@ export default function CuentaBancariaPage() {
       router.push("/verificacion-documentos")
     } catch (error) {
       console.error("Error:", error)
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "No se pudo guardar la cuenta bancaria. Por favor, inténtelo de nuevo.",
-        variant: "destructive",
-      })
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo guardar la cuenta bancaria. Por favor, inténtelo de nuevo.",
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -204,6 +253,15 @@ export default function CuentaBancariaPage() {
                   <strong className="font-bold">Por favor, corrija los errores en el formulario.</strong>
                 </div>
               )}
+
+              {apiError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{apiError}</AlertDescription>
+                </Alert>
+              )}
+
               <div className="md:block hidden">
                 <h1 className="text-xl md:text-2xl font-bold">Imagen cuenta bancaria</h1>
                 <p className="text-sm md:text-base text-gray-500 mt-2">Necesitamos verificar tu información.</p>
@@ -297,16 +355,32 @@ export default function CuentaBancariaPage() {
 
                 <div className="space-y-2">
                   <Label className="text-sm md:text-base">Imagen de cuenta bancaria *</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
+
+                  {fileSizeError && (
+                    <div className="mb-3">
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error de tamaño de archivo</AlertTitle>
+                        <AlertDescription>
+                          Las imágenes no deben superar los 4MB de tamaño. Por favor, seleccione archivos más pequeños.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  )}
+
+                  <div
+                    className={`border-2 ${fileSizeError ? "border-red-500" : "border-dashed"} rounded-lg p-4 text-center space-y-4`}
+                  >
                     {/* Si no hay archivos seleccionados ni imagen capturada, mostrar instrucciones */}
                     {!selectedFiles && !capturedImage && (
                       <div className="flex flex-col items-center gap-2">
                         <p className="text-xs md:text-sm text-gray-500">
-                          Adjuntar en formato JPEG, PDF o PNG. Tamaño máximo del archivo: 4 MB. Puedes subir un máximo
-                          de 2 archivos
+                          Adjuntar en formato JPEG, PDF o PNG. <strong>Tamaño máximo del archivo: 4 MB</strong>. Puedes
+                          subir un máximo de 2 archivos
                         </p>
                         <Input
                           type="file"
+                          ref={fileInputRef}
                           onChange={(e) => handleFileSelect(e.target.files)}
                           accept=".jpg,.jpeg,.png,.pdf"
                           multiple
@@ -329,9 +403,14 @@ export default function CuentaBancariaPage() {
                         const isImage = file.type.startsWith("image/")
                         const isPdf = file.type === "application/pdf"
                         const fileUrl = URL.createObjectURL(file)
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2)
+                        const isOversize = file.size > 4 * 1024 * 1024
 
                         return (
-                          <div key={index} className="relative border rounded-lg p-2 mt-2">
+                          <div
+                            key={index}
+                            className={`relative border ${isOversize ? "border-red-500" : "border-gray-200"} rounded-lg p-2 mt-2`}
+                          >
                             <div className="flex items-center">
                               {isImage ? (
                                 <div className="relative h-20 w-20 mr-3">
@@ -381,7 +460,9 @@ export default function CuentaBancariaPage() {
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                                <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                <p className={`text-xs ${isOversize ? "text-red-500 font-bold" : "text-gray-500"}`}>
+                                  {fileSize} MB {isOversize && "- Archivo demasiado grande"}
+                                </p>
                               </div>
                               <button
                                 type="button"
@@ -447,8 +528,6 @@ export default function CuentaBancariaPage() {
                       </div>
                     )}
 
-                   
-
                     {/* Mostrar botón de cámara solo en dispositivos móviles y si no hay archivos seleccionados */}
                     {!selectedFiles && !capturedImage && typeof window !== "undefined" && isMobile() && (
                       <div className="flex flex-col items-center gap-2 mt-4">
@@ -478,7 +557,7 @@ export default function CuentaBancariaPage() {
                 <Button
                   type="submit"
                   className="bg-red-500 hover:bg-pink-600 text-xs md:text-sm"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || fileSizeError}
                 >
                   {isSubmitting ? "Enviando..." : "Continuar"}
                 </Button>

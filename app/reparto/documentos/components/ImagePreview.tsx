@@ -1,3 +1,4 @@
+// app\reparto\documentos\components\ImagePreview.tsx
 "use client"
 
 import Image from "next/image"
