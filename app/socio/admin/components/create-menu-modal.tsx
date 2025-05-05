@@ -11,10 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Plus, Upload, Tag, FileText, X, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { Plus, Upload, Tag, FileText, X, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { menuService, type Category } from "../services/menu.service"
 import Image from "next/image"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+
+// Imagen por defecto para cuando no se carga una imagen
+const DEFAULT_IMAGE = "https://via.placeholder.com/300x300.png?text=Imagen+del+producto"
 
 interface CreateMenuModalProps {
   categories: Category[]
@@ -29,39 +33,65 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategoryId || "")
   const [status, setStatus] = useState<string>("active") // Valor predeterminado: active
+  const [error, setError] = useState<string | null>(null)
+  const imageRequired = true // La imagen es obligatoria por defecto
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null) // Referencia al formulario
 
   useEffect(() => {
     if (defaultCategoryId) {
       setSelectedCategory(defaultCategoryId)
     }
   }, [defaultCategoryId])
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError(null)
+    
+    // Validar que se haya seleccionado una imagen
+    if (!fileInputRef.current?.files?.length) {
+      setError("La imagen es obligatoria. Por favor, selecciona una imagen para el producto.")
+      return
+    }
+    
+    // Verificar que el archivo sea una imagen válida
+    const file = fileInputRef.current.files[0]
+    if (file && !file.type.startsWith("image/")) {
+      setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
+      return
+    }
+
     setIsSubmitting(true)
-  
+
     try {
       const formData = new FormData(e.currentTarget)
-  
+
       // Añadir el status al FormData
       formData.append("status", status)
-  
+
       // Si hay una categoría seleccionada por defecto, usarla
       if (selectedCategory) {
         formData.set("categoria_id", selectedCategory)
       }
-  
+
       // Obtener el ID de empresa dinámicamente
       const empresaId = await menuService.getEmpresaId()
       formData.append("empresa_id", empresaId)
-  
+
       await onSubmit(formData)
       setOpen(false)
       setPreviewImage(null)
-      e.currentTarget.reset()
+
+      // Usar la referencia al formulario para hacer reset
+      if (formRef.current) {
+        formRef.current.reset()
+      }
+
       setStatus("active") // Resetear el estado
-    } catch (error) {
+      
+    } catch (error: Error | unknown) {
       console.error("Error al crear producto:", error)
+      setError(error instanceof Error ? error.message : "Error al crear producto. Por favor, intenta nuevamente.")
     } finally {
       setIsSubmitting(false)
     }
@@ -69,12 +99,26 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    setError(null) // Limpiar errores previos
+    
     if (file) {
+      // Verificar si es una imagen válida
+      if (!file.type.startsWith("image/")) {
+        setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+        setPreviewImage(null)
+        return
+      }
+      
       const reader = new FileReader()
       reader.onload = () => {
         setPreviewImage(reader.result as string)
       }
       reader.readAsDataURL(file)
+    } else {
+      setPreviewImage(null)
     }
   }
 
@@ -85,17 +129,19 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
     }
   }
 
+  // Función para resetear el formulario cuando se cierra el modal
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (!newOpen) {
+      setPreviewImage(null)
+      setStatus("active")
+      setError(null)
+      // No intentamos resetear el formulario aquí
+    }
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(newOpen) => {
-        setOpen(newOpen)
-        if (!newOpen) {
-          setPreviewImage(null)
-          setStatus("active") // Resetear el estado al cerrar
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button className="bg-red-600 hover:bg-red-700 text-white transition-colors gap-2">
@@ -111,12 +157,19 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             Crear nuevo producto
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="mt-4 space-y-5">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="titulo" className="text-sm font-medium flex items-center gap-1">
                 <FileText className="h-4 w-4 text-gray-500" />
-                Nombre del producto
+                Nombre del producto <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="titulo"
@@ -129,7 +182,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             <div className="space-y-2">
               <Label htmlFor="categoria_id" className="text-sm font-medium flex items-center gap-1">
                 <Tag className="h-4 w-4 text-gray-500" />
-                Categoría
+                Categoría <span className="text-red-500">*</span>
               </Label>
               <Select name="categoria_id" required value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
@@ -165,8 +218,8 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="precio" className="text-sm font-medium flex items-center gap-1">
-              <span className="text-gray-600 font-bold text-sm mr-1">S/</span>
-                Precio
+                <span className="text-gray-600 font-bold text-sm mr-1">S/</span>
+                Precio <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">S/</span>
@@ -186,7 +239,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
             <div className="space-y-2">
               <Label htmlFor="foto" className="text-sm font-medium flex items-center gap-1">
                 <Upload className="h-4 w-4 text-gray-500" />
-                Foto del producto
+                Foto del producto <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -200,10 +253,11 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                     "border-gray-300 focus:border-red-500 focus:ring-red-500",
                     previewImage ? "hidden" : "block",
                   )}
+                  required={imageRequired}
                 />
                 {previewImage && (
                   <div className="relative h-[100px] rounded-md overflow-hidden">
-                    <Image src={previewImage || "/placeholder.svg"} alt="Vista previa" fill className="object-cover" />
+                    <Image src={previewImage || DEFAULT_IMAGE} alt="Vista previa" fill className="object-cover" />
                     <Button
                       type="button"
                       variant="destructive"
@@ -215,6 +269,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                     </Button>
                   </div>
                 )}
+                <p className="text-xs text-gray-500 mt-1">La imagen es obligatoria. Formatos aceptados: JPG, PNG, GIF.</p>
               </div>
             </div>
           </div>
@@ -302,5 +357,3 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
     </Dialog>
   )
 }
-
-
