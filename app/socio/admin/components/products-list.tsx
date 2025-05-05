@@ -60,17 +60,14 @@ export function ProductsList({
     }
   }
 
-  // Función para formatear el precio correctamente
   const formatPrice = (price: number | string): string => {
-    // Si es un string, intentar convertirlo a número
     if (typeof price === "string") {
       const numPrice = Number.parseFloat(price)
       if (!isNaN(numPrice)) {
         return numPrice.toFixed(2)
       }
-      return price // Si no se puede convertir, devolver el string original
+      return price
     }
-    // Si ya es un número
     return price.toFixed(2)
   }
 
@@ -112,7 +109,7 @@ export function ProductsList({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
       {menuItems.map((item) => (
         <Card key={item.id} className="overflow-hidden border border-gray-200 hover:border-red-200 transition-colors">
           <div className="aspect-square relative">
@@ -124,14 +121,13 @@ export function ProductsList({
             />
             <div className="absolute top-2 right-2">{getStatusBadge(item.status)}</div>
           </div>
-          <CardContent className="p-4">
+          <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-medium text-gray-800">{item.titulo}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2 h-10">{item.descripcion}</p>
-                <div className="mt-2 flex items-center">
-                  {/* <DollarSign className="h-4 w-4 text-green-600 mr-1" /> */}
-                  <p className="font-semibold text-gray-900">S/ {formatPrice(item.precio)}</p>
+                <h3 className="font-medium text-gray-800 text-sm">{item.titulo}</h3>
+                <p className="text-xs text-gray-500 line-clamp-2 h-8">{item.descripcion}</p>
+                <div className="mt-1 flex items-center">
+                  <p className="font-semibold text-gray-900 text-sm">S/ {formatPrice(item.precio)}</p>
                 </div>
               </div>
               <DropdownMenu>
@@ -188,10 +184,10 @@ export function ProductsList({
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          <div className="flex flex-col gap-2">
-                            <div>Esta acción no se puede deshacer. Se eliminará permanentemente el producto:</div>
-                            <div className="font-semibold text-red-600">{item.titulo}</div>
+                        <AlertDialogDescription asChild>
+                          <div className="space-y-2">
+                            <p>Esta acción no se puede deshacer. Se eliminará permanentemente el producto:</p>
+                            <p className="font-semibold text-red-600">{item.titulo}</p>
                           </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -216,4 +212,3 @@ export function ProductsList({
     </div>
   )
 }
-

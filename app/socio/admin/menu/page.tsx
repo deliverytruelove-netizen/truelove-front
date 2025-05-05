@@ -1,3 +1,4 @@
+// app\socio\admin\menu\page.tsx
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
@@ -89,13 +90,28 @@ function MenuContent() {
 
   const handleCreateMenu = async (formData: FormData) => {
     try {
-      await menuService.createMenu(formData)
-      await loadData()
-      toast({
-        title: "Éxito",
-        description: "Producto creado correctamente",
-        variant: "default",
-      })
+      const response = await menuService.createMenu(formData)
+
+      // Si tenemos datos en la respuesta, añadimos el nuevo producto al estado
+      if (response && response.data) {
+        const newMenuItem = response.data as MenuItem
+        setMenuItems((prevItems) => [...prevItems, newMenuItem])
+
+        toast({
+          title: "Éxito",
+          description: "Producto creado correctamente",
+          variant: "default",
+        })
+      } else {
+        // Si no hay datos claros en la respuesta, recargamos todo
+        await loadData()
+
+        toast({
+          title: "Éxito",
+          description: "Producto creado correctamente",
+          variant: "default",
+        })
+      }
     } catch (error: unknown) {
       console.error("Error al crear producto:", error)
       toast({
@@ -106,15 +122,32 @@ function MenuContent() {
     }
   }
 
+  // Reemplazar la función handleCreateCategory completa con esta versión corregida
   const handleCreateCategory = async (nombre: string) => {
     try {
-      await menuService.createCategory({ nombre })
-      await loadData()
-      toast({
-        title: "Éxito",
-        description: "Categoría creada correctamente",
-        variant: "default",
-      })
+      const response = await menuService.createCategory({ nombre })
+
+      // Si tenemos datos en la respuesta, añadimos la nueva categoría al estado
+      if (response && response.data) {
+        // Asegurarnos de que response.data no sea undefined antes de actualizar el estado
+        const newCategory = response.data
+        setCategories((prevCategories) => [...prevCategories, newCategory])
+
+        toast({
+          title: "Éxito",
+          description: "Categoría creada correctamente",
+          variant: "default",
+        })
+      } else {
+        // Si no hay datos claros, recargamos todo
+        await loadData()
+
+        toast({
+          title: "Éxito",
+          description: "Categoría creada correctamente",
+          variant: "default",
+        })
+      }
     } catch (error: unknown) {
       toast({
         title: "Error",
@@ -127,7 +160,12 @@ function MenuContent() {
   const handleEditCategory = async (id: number, nombre: string) => {
     try {
       await menuService.updateCategory(id.toString(), { nombre })
-      await loadData()
+
+      // Actualizar solo la categoría modificada en el estado
+      setCategories((prevCategories) =>
+        prevCategories.map((category) => (category.id === id ? { ...category, nombre } : category)),
+      )
+
       toast({
         title: "Éxito",
         description: "Categoría actualizada correctamente",
@@ -139,13 +177,22 @@ function MenuContent() {
         description: error instanceof Error ? error.message : "No se pudo actualizar la categoría",
         variant: "destructive",
       })
+
+      // En caso de error, recargamos para asegurar consistencia
+      await loadData()
     }
   }
 
   const handleDeleteCategory = async (id: number) => {
     try {
       await menuService.deleteCategory(id.toString())
-      await loadData()
+
+      // Eliminar la categoría del estado
+      setCategories((prevCategories) => prevCategories.filter((category) => category.id !== id))
+
+      // También eliminar los productos asociados a esta categoría
+      setMenuItems((prevItems) => prevItems.filter((item) => Number(item.categoria_id) !== id))
+
       toast({
         title: "Éxito",
         description: "Categoría eliminada correctamente",
@@ -157,14 +204,22 @@ function MenuContent() {
         description: error instanceof Error ? error.message : "No se pudo eliminar la categoría",
         variant: "destructive",
       })
+
+      // En caso de error, recargamos para asegurar consistencia
+      await loadData()
     }
   }
 
   // Calcular el número de productos por categoría
   const productCounts: Record<number, number> = {}
   categories.forEach((category) => {
-    productCounts[category.id] = menuItems.filter((item) => Number(item.categoria_id) === Number(category.id)).length
+    productCounts[category.id] = menuItems.filter((item) => {
+      const categoryId = Number(category.id)
+      const itemCategoryId = Number(item.categoria_id)
+      return !isNaN(categoryId) && !isNaN(itemCategoryId) && categoryId === itemCategoryId
+    }).length
   })
+  
 
   // Filtrar categorías según el término de búsqueda
   const filteredCategories = categories.filter((category) => {
@@ -312,4 +367,3 @@ export default function Page() {
     </Suspense>
   )
 }
-

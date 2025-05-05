@@ -134,7 +134,6 @@ export const menuService = {
     }
   },
 
-
   createCategory: async (data: { nombre: string }): Promise<ApiResponse<Category>> => {
     try {
       const empresaId = await menuService.getEmpresaId()
@@ -158,7 +157,14 @@ export const menuService = {
         throw new Error(errorData.message || "Error al crear categoría")
       }
 
-      return response.json() as Promise<ApiResponse<Category>>
+      const responseData = await response.json()
+
+      // Asegurarnos de que la respuesta tenga el formato correcto
+      return {
+        success: true,
+        message: "Categoría creada correctamente",
+        data: responseData.data || responseData,
+      } as ApiResponse<Category>
     } catch (error) {
       console.error("Error en createCategory:", error)
       throw error
@@ -303,10 +309,18 @@ export const menuService = {
       const empresaId = await menuService.getEmpresaId()
       const token = getAuthToken()
 
+      // Verificar si se ha incluido una foto
+      if (!formData.has("foto") || (formData.get("foto") as File).size === 0) {
+        throw new Error("La imagen es obligatoria. Por favor, selecciona una imagen para el producto.")
+      }
+
       formData.append("empresa_id", empresaId.toString())
 
-      // Intentar primero con la ruta que tienes configurada
-      let response = await fetch(`${API_URL}/crear/menus/web`, {
+      // Crear un placeholder por si la imagen falla en el servidor
+      formData.append("default_image_url", "https://via.placeholder.com/300x300.png?text=Producto")
+
+      // Usamos directamente la primera ruta sin intentar fallbacks para evitar confusiones
+      const response = await fetch(`${API_URL}/crear/menus/web`, {
         method: "POST",
         headers: {
           Authorization: token || "",
@@ -315,22 +329,16 @@ export const menuService = {
         body: formData,
       })
 
-      // Si la primera ruta falla, intentar con la ruta alternativa
       if (!response.ok) {
-        console.log("Primera ruta falló, intentando ruta alternativa...")
-        response = await fetch(`${API_URL}/menus/web`, {
-          method: "POST",
-          headers: {
-            Authorization: token || "",
-            Accept: "application/json",
-          },
-          body: formData,
-        })
-      }
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || "Error al crear menú")
+        const errorData = await response.json()
+        const errorMessage = errorData.message || "Error al crear el producto"
+        
+        // Si es un error específico de validación de foto, personalizamos el mensaje
+        if (errorMessage.includes("foto") && errorMessage.includes("null")) {
+          throw new Error("Error al procesar la imagen. Asegúrate de seleccionar una imagen válida.")
+        }
+        
+        throw new Error(errorMessage)
       }
 
       return response.json() as Promise<ApiResponse<MenuItem>>
@@ -348,6 +356,12 @@ export const menuService = {
       formData.append("empresa_id", empresaId.toString())
       formData.append("_method", "PUT") // Para simular PUT con FormData
 
+      // Si se conserva la imagen existente, añadimos un campo adicional
+      if (formData.get("keep_existing_image") === "true" && !formData.has("foto")) {
+        // Placeholder para indicar que se mantiene la imagen existente
+        formData.append("maintain_existing_image", "true")
+      }
+
       // Implementamos la actualización del menú
       const response = await fetch(`${API_URL}/menus/web/${id}`, {
         method: "POST", // Usamos POST pero con _method=PUT para compatibilidad con Laravel
@@ -359,8 +373,15 @@ export const menuService = {
       })
 
       if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || "Error al actualizar menú")
+        const errorData = await response.json()
+        const errorMessage = errorData.message || "Error al actualizar el producto"
+        
+        // Si es un error específico de validación de foto, personalizamos el mensaje
+        if (errorMessage.includes("foto") && errorMessage.includes("null")) {
+          throw new Error("Error al procesar la imagen. Asegúrate de seleccionar una imagen válida.")
+        }
+        
+        throw new Error(errorMessage)
       }
 
       return response.json() as Promise<ApiResponse<MenuItem>>
@@ -374,8 +395,8 @@ export const menuService = {
     try {
       const token = getAuthToken()
 
-      // Intentar primero con la ruta que tienes configurada
-      let response = await fetch(`${API_URL}/menu/${id}/status`, {
+      // Intentar primero con la ruta correcta según la documentación proporcionada
+      const response = await fetch(`${API_URL}/menu/web/${id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -384,20 +405,6 @@ export const menuService = {
         },
         body: JSON.stringify({ status }),
       })
-
-      // Si la primera ruta falla, intentar con la ruta alternativa
-      if (!response.ok) {
-        console.log("Primera ruta falló, intentando ruta alternativa...")
-        response = await fetch(`${API_URL}/menus/web/${id}/status`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token || "",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ status }),
-        })
-      }
 
       if (!response.ok) {
         const errorData = (await response.json()) as { message?: string }
@@ -416,7 +423,6 @@ export const menuService = {
       const token = getAuthToken()
 
       // Implementamos la eliminación del menú
-      // Aunque no existe en el backend, podemos preparar el frontend
       const response = await fetch(`${API_URL}/menus/web/${id}`, {
         method: "DELETE",
         headers: {
@@ -436,32 +442,33 @@ export const menuService = {
       throw error
     }
   },
+
   getMenusByCategory: async (categoryId: string): Promise<MenuItem[]> => {
     try {
-      const token = getAuthToken();
-      
-      console.log(`Obteniendo menús para la categoría ID: ${categoryId}`);
-      console.log(`URL de la API: ${API_URL}/menus/categoria/${categoryId}`);
-  
+      const token = getAuthToken()
+
+      console.log(`Obteniendo menús para la categoría ID: ${categoryId}`)
+      console.log(`URL de la API: ${API_URL}/menus/categoria/${categoryId}`)
+
       const response = await fetch(`${API_URL}/menus/categoria/${categoryId}`, {
         headers: {
           Authorization: token || "",
           Accept: "application/json",
         },
-      });
-  
+      })
+
       if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string };
-        throw new Error(errorData.message || "Error al obtener menús por categoría");
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al obtener menús por categoría")
       }
-  
-      const menuItems = await response.json();
-      console.log("Menús obtenidos por categoría:", menuItems);
-      
-      return Array.isArray(menuItems) ? menuItems : [];
+
+      const menuItems = await response.json()
+      console.log("Menús obtenidos por categoría:", menuItems)
+
+      return Array.isArray(menuItems) ? menuItems : []
     } catch (error) {
-      console.error("Error en getMenusByCategory:", error);
-      return [];
+      console.error("Error en getMenusByCategory:", error)
+      return []
     }
-  }
+  },
 }

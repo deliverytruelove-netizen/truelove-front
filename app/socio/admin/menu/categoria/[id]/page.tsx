@@ -44,57 +44,53 @@ function CategoryContent() {
 
   const categoryId = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : ""
 
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
 
+      // Cargar categorías
+      const categoriesResponse = await menuService.getCategories()
 
-const loadData = useCallback(async () => {
-  try {
-    setLoading(true);
+      if (categoriesResponse.success && categoriesResponse.data) {
+        setAllCategories(categoriesResponse.data)
+        console.log("Categorías cargadas:", categoriesResponse.data)
 
-    // Cargar categorías
-    const categoriesResponse = await menuService.getCategories();
+        // Encontrar la categoría actual
+        const currentCategory = categoriesResponse.data.find((cat) => cat.id.toString() === categoryId)
 
-    if (categoriesResponse.success && categoriesResponse.data) {
-      setAllCategories(categoriesResponse.data);
-      console.log("Categorías cargadas:", categoriesResponse.data);
-
-      // Encontrar la categoría actual
-      const currentCategory = categoriesResponse.data.find(
-        (cat) => cat.id.toString() === categoryId
-      );
-
-      if (currentCategory) {
-        setCategory(currentCategory);
-        console.log("Categoría actual:", currentCategory);
+        if (currentCategory) {
+          setCategory(currentCategory)
+          console.log("Categoría actual:", currentCategory)
+        } else {
+          console.error("Categoría no encontrada con ID:", categoryId)
+          toast({
+            title: "Error",
+            description: "Categoría no encontrada",
+            variant: "destructive",
+          })
+          router.push("/socio/admin/menu")
+          return
+        }
       } else {
-        console.error("Categoría no encontrada con ID:", categoryId);
-        toast({
-          title: "Error",
-          description: "Categoría no encontrada",
-          variant: "destructive",
-        });
-        router.push("/socio/admin/menu");
-        return;
+        throw new Error(categoriesResponse.message || "Error al cargar categorías")
       }
-    } else {
-      throw new Error(categoriesResponse.message || "Error al cargar categorías");
-    }
 
-    // Usar el nuevo método para cargar menús por categoría
-    const categoryProducts = await menuService.getMenusByCategory(categoryId);
-    console.log("Productos de esta categoría:", categoryProducts);
-    
-    setMenuItems(categoryProducts);
-  } catch (error: unknown) {
-    console.error("Error al cargar datos:", error);
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Error al cargar datos",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-}, [categoryId, router, toast]);
+      // Usar el nuevo método para cargar menús por categoría
+      const categoryProducts = await menuService.getMenusByCategory(categoryId)
+      console.log("Productos de esta categoría:", categoryProducts)
+
+      setMenuItems(categoryProducts)
+    } catch (error: unknown) {
+      console.error("Error al cargar datos:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al cargar datos",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [categoryId, router, toast])
 
   useEffect(() => {
     loadData()
@@ -104,14 +100,30 @@ const loadData = useCallback(async () => {
     try {
       // Asegurarse de que el producto se cree con la categoría actual
       formData.set("categoria_id", categoryId)
-
-      await menuService.createMenu(formData)
-      await loadData()
-      toast({
-        title: "Éxito",
-        description: "Producto creado correctamente",
-        variant: "default",
-      })
+  
+      // Crear el producto
+      const response = await menuService.createMenu(formData)
+  
+      // Si tenemos datos en la respuesta, solo añadimos el nuevo producto al estado
+      if (response && response.data) {
+        const newMenuItem = response.data as MenuItem
+        setMenuItems((prevItems) => [...prevItems, newMenuItem])
+  
+        toast({
+          title: "Éxito",
+          description: "Producto creado correctamente",
+          variant: "default",
+        })
+      } else {
+        // Si no hay datos claros en la respuesta, entonces sí recargamos
+        await loadData()
+        
+        toast({
+          title: "Éxito",
+          description: "Producto creado correctamente",
+          variant: "default",
+        })
+      }
     } catch (error: unknown) {
       console.error("Error al crear producto:", error)
       toast({
@@ -121,11 +133,18 @@ const loadData = useCallback(async () => {
       })
     }
   }
+  
 
   const handleStatusChange = async (id: number, newStatus: string) => {
     try {
       await menuService.updateMenuStatus(id.toString(), newStatus)
-      await loadData()
+
+      // Actualizar solo el producto modificado en el estado local
+      setMenuItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === id ? { ...item, status: newStatus as "active" | "inactive" | "out-of-stock" } : item,
+        ),
+      )
 
       const statusMessages: Record<string, string> = {
         active: "Producto activado correctamente",
@@ -149,8 +168,33 @@ const loadData = useCallback(async () => {
 
   const handleEditMenu = async (id: number, formData: FormData) => {
     try {
-      await menuService.updateMenu(id.toString(), formData)
-      await loadData()
+      const response = await menuService.updateMenu(id.toString(), formData)
+
+      // Si tenemos datos en la respuesta, actualizamos solo ese producto
+      if (response && response.data) {
+        const updatedMenuItem = response.data as MenuItem
+
+        setMenuItems((prevItems) => prevItems.map((item) => (item.id === id ? updatedMenuItem : item)))
+      } else {
+        // Si no hay datos en la respuesta, actualizamos con los datos del formulario
+        setMenuItems((prevItems) =>
+          prevItems.map((item) => {
+            if (item.id === id) {
+              // Crear un objeto actualizado con los datos del formulario
+              return {
+                ...item,
+                titulo: (formData.get("titulo") as string) || item.titulo,
+                descripcion: (formData.get("descripcion") as string) || item.descripcion,
+                precio: (formData.get("precio") as string) || item.precio,
+                status: (formData.get("status") as "active" | "inactive" | "out-of-stock") || item.status,
+                // No actualizamos la foto aquí porque necesitaríamos la URL procesada del servidor
+              }
+            }
+            return item
+          }),
+        )
+      }
+
       toast({
         title: "Éxito",
         description: "Producto actualizado correctamente",
@@ -163,13 +207,19 @@ const loadData = useCallback(async () => {
         description: error instanceof Error ? error.message : "No se pudo actualizar el producto",
         variant: "destructive",
       })
+
+      // En caso de error, recargamos los datos para asegurar consistencia
+      await loadData()
     }
   }
 
   const handleDeleteMenu = async (id: number) => {
     try {
       await menuService.deleteMenu(id.toString())
-      await loadData()
+
+      // Eliminar el producto del estado local
+      setMenuItems((prevItems) => prevItems.filter((item) => item.id !== id))
+
       toast({
         title: "Éxito",
         description: "Producto eliminado correctamente",
@@ -182,6 +232,9 @@ const loadData = useCallback(async () => {
         description: error instanceof Error ? error.message : "No se pudo eliminar el producto",
         variant: "destructive",
       })
+
+      // En caso de error, recargamos los datos para asegurar consistencia
+      await loadData()
     }
   }
 
@@ -217,17 +270,6 @@ const loadData = useCallback(async () => {
         <Card className="border border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100">
             <CardTitle className="text-xl font-semibold text-gray-800">Productos en esta categoría</CardTitle>
-            {/* <CreateMenuModal
-              categories={allCategories}
-              onSubmit={handleCreateMenu}
-              defaultCategoryId={categoryId}
-              trigger={
-                <Button className="bg-red-600 hover:bg-red-700 text-white transition-colors gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nuevo producto
-                </Button>
-              }
-            /> */}
           </CardHeader>
           <CardContent className="p-5">
             <ProductsList
@@ -253,4 +295,3 @@ export default function Page() {
     </Suspense>
   )
 }
-
