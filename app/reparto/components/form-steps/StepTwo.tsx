@@ -17,8 +17,10 @@ export function StepTwo({ vehiculo, onVehiculoChange }: StepTwoProps) {
           <SelectValue placeholder="Elige tu vehículo" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="MOTO">MOTO</SelectItem>
+          <SelectItem value="MOTO">MOTO LINEAL</SelectItem>
           <SelectItem value="BICICLETA">BICICLETA</SelectItem>
+          <SelectItem value="MOTO SCOOTER">MOTO SCOOTER</SelectItem>
+          <SelectItem value="MOTO ELECTRICA">MOTO ELECTRICA</SelectItem>
         </SelectContent>
       </Select>
     </div>
