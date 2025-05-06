@@ -2,7 +2,7 @@
 
 import {createContext, useContext, type ReactNode } from "react"
 import type { IconType } from "react-icons"
-import { RiDashboardLine,RiShieldUserLine, RiRidingFill } from "react-icons/ri"
+import { RiDashboardLine,RiShieldUserLine, RiRidingFill, RiAncientGateLine } from "react-icons/ri"
 
 export interface NavItem { 
     title: string
@@ -36,6 +36,21 @@ export const navigationItems: NavItem [] = [
         title : "Motorizados",
         path : "/admin/motorizado",
         icon : RiRidingFill,
+    },
+    {
+        title : "Locales",
+        path : "/admin/locales",
+        icon : RiAncientGateLine,
+    },
+    {
+        title : "Califcaciones",
+        path : "/admin/local-rating",
+        icon : RiAncientGateLine,
+    },
+    {
+        title : "Promociones",
+        path : "/admin/promociones",
+        icon : RiShieldUserLine,
     },
 ]
 
