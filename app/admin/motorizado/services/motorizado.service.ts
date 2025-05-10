@@ -155,3 +155,23 @@ export const deleteMotorizado = async (id: number): Promise<void> => {
     throw new Error("Error al eliminar el motorizado");
   }
 };
+export const actualizarCantidadPedidos = async (id: number, cantidadPedidos: number): Promise<void> => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("No se encontró el token");
+  }
+
+  const response = await fetch(`${API_URL}/admin/motorizado/${id}/actualizar-pedidos`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ cantidad_pedidos_dias: cantidadPedidos }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al actualizar la cantidad de pedidos");
+  }
+};

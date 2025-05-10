@@ -1,32 +1,47 @@
-"use client"
+// components\modals\DetallesMotorizadoModal.tsx
+"use client";
 
-import type React from "react"
-import { useState, useEffect, useRef } from "react"
-import type { DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
-import { Button } from "@/components/ui/button"
-import { User, MapPin, CreditCard, Mail, Phone, Calendar, Car, FileText, X, CheckCircle } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { PDFViewer } from "../PDFViewer"
-import { ImageThumbnail } from "@/components/ui/image-thumbnail"
+import type React from "react";
+import { useState, useEffect, useRef } from "react";
+import type { DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types";
+import { Button } from "@/components/ui/button";
+import {
+  User,
+  MapPin,
+  CreditCard,
+  Mail,
+  Phone,
+  Calendar,
+  Car,
+  FileText,
+  X,
+  CheckCircle,
+  Clipboard,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { PDFViewer } from "../PDFViewer";
+import { ImageThumbnail } from "@/components/ui/image-thumbnail";
+import { AsignarPedidosModal } from "./AsignarPedidosModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Interfaces para las props de los componentes
 interface DetallesMotorizadoModalProps {
-  isOpen: boolean
-  onClose: () => void
-  data: DetallesMotorizado | undefined | null
-  onAprobar: (id: number) => void
+  isOpen: boolean;
+  onClose: () => void;
+  data: DetallesMotorizado | undefined | null;
+  onAprobar: (id: number) => void;
 }
 
 interface InfoItemProps {
-  icon: React.ReactNode
-  label: string
-  value: string | number | null
+  icon: React.ReactNode;
+  label: string;
+  value: string | number | null;
 }
 
 interface FileDisplayProps {
-  src: string | null
-  alt: string
-  title: string
+  src: string | null;
+  alt: string;
+  title: string;
 }
 
 // Componente para los botones de las pestañas
@@ -36,21 +51,23 @@ const TabButton = ({
   label,
   onClick,
 }: {
-  isActive: boolean
-  icon: React.ReactNode
-  label: string
-  onClick: () => void
+  isActive: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
 }) => (
   <button
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      isActive ? "bg-white shadow-md text-red-600" : "hover:bg-white/50 text-gray-600"
+      isActive
+        ? "bg-white shadow-md text-red-600"
+        : "hover:bg-white/50 text-gray-600"
     }`}
   >
     {icon}
     <span>{label}</span>
   </button>
-)
+);
 
 // Componente para mostrar información con icono
 const InfoItem = ({ icon, label, value }: InfoItemProps) => (
@@ -63,45 +80,45 @@ const InfoItem = ({ icon, label, value }: InfoItemProps) => (
       <p className="text-sm font-medium">{value || "No disponible"}</p>
     </div>
   </div>
-)
+);
 
 // Función para determinar si un archivo es un PDF basado en su extensión
 const isPdfFile = (url: string): boolean => {
-  return url.toLowerCase().endsWith(".pdf")
-}
+  return url.toLowerCase().endsWith(".pdf");
+};
 
 // Función para normalizar la ruta del archivo
 const normalizeFilePath = (src: string): string => {
   // Si ya es una ruta relativa que comienza con /storage, la dejamos como está
   if (src.startsWith("/storage/")) {
-    return src
+    return src;
   }
 
   // Si es una URL completa, extraemos solo la parte de la ruta después de /storage/
   if (src.includes("/storage/")) {
-    const storageIndex = src.indexOf("/storage/")
-    return src.substring(storageIndex)
+    const storageIndex = src.indexOf("/storage/");
+    return src.substring(storageIndex);
   }
 
   // Si no tiene el prefijo /storage/, lo añadimos
   if (!src.startsWith("/")) {
-    return `/storage/${src}`
+    return `/storage/${src}`;
   }
 
   // En cualquier otro caso, asumimos que es una ruta relativa válida
-  return src
-}
+  return src;
+};
 
 // Componente para mostrar archivos (imágenes o PDFs)
 const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
-  if (!src) return <p className="text-gray-500">Archivo no disponible</p>
+  if (!src) return <p className="text-gray-500">Archivo no disponible</p>;
 
   try {
     // Normalizar la ruta del archivo para asegurar que sea una ruta relativa
-    const normalizedPath = normalizeFilePath(src)
+    const normalizedPath = normalizeFilePath(src);
 
     // Determinar si es un PDF basado en la extensión
-    const isPdf = isPdfFile(normalizedPath)
+    const isPdf = isPdfFile(normalizedPath);
 
     return (
       <>
@@ -111,16 +128,20 @@ const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
             <PDFViewer url={normalizedPath} title={title} />
           ) : (
             // Usar el componente ImageThumbnail para imágenes
-            <ImageThumbnail src={normalizedPath || "/placeholder.svg"} alt={alt} title={title} />
+            <ImageThumbnail
+              src={normalizedPath || "/placeholder.svg"}
+              alt={alt}
+              title={title}
+            />
           )}
         </div>
       </>
-    )
+    );
   } catch (error) {
-    console.log(`Error al mostrar el archivo: ${error}`)
-    return <p className="text-gray-500">Error al cargar el archivo</p>
+    console.log(`Error al mostrar el archivo: ${error}`);
+    return <p className="text-gray-500">Error al cargar el archivo</p>;
   }
-}
+};
 
 // Componente para los títulos de las imágenes
 const ImageTitle = ({ children }: { children: React.ReactNode }) => (
@@ -128,104 +149,114 @@ const ImageTitle = ({ children }: { children: React.ReactNode }) => (
     <FileText className="h-5 w-5 text-red-600" />
     {children}
   </h4>
-)
+);
 
 // Hook personalizado para animaciones de montaje/desmontaje
 const useAnimatedUnmount = (show: boolean, duration = 300) => {
-  const [shouldRender, setShouldRender] = useState(show)
-  const [isLeaving, setIsLeaving] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [shouldRender, setShouldRender] = useState(show);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (show) {
-      setShouldRender(true)
-      setIsLeaving(false)
+      setShouldRender(true);
+      setIsLeaving(false);
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     } else {
-      setIsLeaving(true)
+      setIsLeaving(true);
       timeoutRef.current = setTimeout(() => {
-        setShouldRender(false)
-        timeoutRef.current = null
-      }, duration)
+        setShouldRender(false);
+        timeoutRef.current = null;
+      }, duration);
     }
 
     return () => {
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+        clearTimeout(timeoutRef.current);
       }
-    }
-  }, [show, duration])
+    };
+  }, [show, duration]);
 
-  return { shouldRender, isLeaving }
-}
+  return { shouldRender, isLeaving };
+};
 
 // Componente principal del modal
-export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: DetallesMotorizadoModalProps) {
-  const [activeTab, setActiveTab] = useState("registros")
-  const { toast } = useToast()
-  const [isAprobado, setIsAprobado] = useState<boolean>(false)
-  const [showNotification, setShowNotification] = useState<boolean>(false)
-  const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } = useAnimatedUnmount(
-    showNotification,
-    300,
-  )
-
+export function DetallesMotorizadoModal({
+  isOpen,
+  onClose,
+  data,
+  onAprobar,
+}: DetallesMotorizadoModalProps) {
+  const [activeTab, setActiveTab] = useState("registros");
+  const { toast } = useToast();
+  const [isAprobado, setIsAprobado] = useState<boolean>(false);
+  const [showNotification, setShowNotification] = useState<boolean>(false);
+  const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } =
+    useAnimatedUnmount(showNotification, 300);
+  const [showAsignarPedidosModal, setShowAsignarPedidosModal] = useState(false);
+  const queryClient = useQueryClient();
   // Actualizar el estado local de aprobación cuando cambian los datos
   useEffect(() => {
     if (data) {
-      console.log("Estado de aprobación del motorizado:", data.aprobado)
-      const aprobadoStatus = Boolean(data.aprobado)
-      setIsAprobado(aprobadoStatus)
-      setShowNotification(aprobadoStatus)
+      console.log("Estado de aprobación del motorizado:", data.aprobado);
+      const aprobadoStatus = Boolean(data.aprobado);
+      setIsAprobado(aprobadoStatus);
+      setShowNotification(aprobadoStatus);
     }
-  }, [data])
+  }, [data]);
 
   // Bloquear el scroll del body cuando el modal está abierto
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "auto"
+      document.body.style.overflow = "auto";
     }
 
     return () => {
-      document.body.style.overflow = "auto"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen]);
 
   const handleCloseNotification = () => {
-    setShowNotification(false)
-  }
+    setShowNotification(false);
+  };
 
-  if (!data || !isOpen) return null
+  if (!data || !isOpen) return null;
 
   // Manejador para aprobar al motorizado
   const handleAprobar = async () => {
     try {
-      await onAprobar(data.id)
-      setIsAprobado(true)
-      setShowNotification(true)
+      await onAprobar(data.id);
+      setIsAprobado(true);
+      setShowNotification(true);
       toast({
         title: "Éxito",
-        description: "Se aprobó el motorizado y se enviaron las credenciales por correo electrónico.",
+        description:
+          "Se aprobó el motorizado y se enviaron las credenciales por correo electrónico.",
         action: (
-          <Button variant="outline" onClick={onClose} className="bg-white hover:bg-gray-100">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="bg-white hover:bg-gray-100"
+          >
             OK
           </Button>
         ),
-      })
+      });
     } catch (error) {
-      console.log(`Error Motorizado: ${error}`)
+      console.log(`Error Motorizado: ${error}`);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo aprobar el motorizado o enviar las credenciales.",
-      })
+        description:
+          "No se pudo aprobar el motorizado o enviar las credenciales.",
+      });
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -239,14 +270,18 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
         {isAprobado && renderNotification && (
           <div
             className={`absolute z-[60] top-4 right-6 max-w-md w-auto bg-green-50 border border-green-200 shadow-lg rounded-md p-3 flex items-center transition-all duration-300 ${
-              isNotificationLeaving ? "opacity-0 translate-y-[-10px]" : "opacity-100 translate-y-0"
+              isNotificationLeaving
+                ? "opacity-0 translate-y-[-10px]"
+                : "opacity-100 translate-y-0"
             }`}
           >
             <div className="bg-green-100 rounded-full p-2 mr-3">
               <CheckCircle className="h-5 w-5 text-green-600" />
             </div>
             <div className="flex-1">
-              <p className="text-green-800 font-medium">Este motorizado ya ha sido aprobado</p>
+              <p className="text-green-800 font-medium">
+                Este motorizado ya ha sido aprobado
+              </p>
             </div>
             <button
               onClick={handleCloseNotification}
@@ -286,6 +321,12 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                 label="Bancarios"
                 onClick={() => setActiveTab("bancarios")}
               />
+              <TabButton
+                isActive={activeTab === "pedidos"}
+                icon={<Clipboard className="w-5 h-5" />}
+                label="Pedidos"
+                onClick={() => setActiveTab("pedidos")}
+              />
             </div>
 
             <div className="space-y-6">
@@ -304,7 +345,11 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                       label="Correo Electrónico"
                       value={data.personal.email}
                     />
-                    <InfoItem icon={<Phone className="w-5 h-5" />} label="Teléfono" value={data.personal.phone} />
+                    <InfoItem
+                      icon={<Phone className="w-5 h-5" />}
+                      label="Teléfono"
+                      value={data.personal.phone}
+                    />
                     <InfoItem
                       icon={<FileText className="w-5 h-5" />}
                       label="Documento"
@@ -318,7 +363,10 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                       <div>
                         <ImageTitle>Frente del Documento</ImageTitle>
                         <FileDisplay
-                          src={data.personal.documento_imagen_frente || "/placeholder.svg"}
+                          src={
+                            data.personal.documento_imagen_frente ||
+                            "/placeholder.svg"
+                          }
                           alt="Frente del Documento"
                           title="Frente del Documento de Identidad"
                         />
@@ -328,7 +376,10 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                       <div>
                         <ImageTitle>Reverso del Documento</ImageTitle>
                         <FileDisplay
-                          src={data.personal.documento_imagen_reverso || "/placeholder.svg"}
+                          src={
+                            data.personal.documento_imagen_reverso ||
+                            "/placeholder.svg"
+                          }
                           alt="Reverso del Documento"
                           title="Reverso del Documento de Identidad"
                         />
@@ -347,12 +398,18 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                       label="Fecha de Nacimiento"
                       value={data.datosPersonales.fecha_nacimiento}
                     />
-                    <InfoItem icon={<User className="w-5 h-5" />} label="Género" value={data.datosPersonales.genero} />
+                    <InfoItem
+                      icon={<User className="w-5 h-5" />}
+                      label="Género"
+                      value={data.datosPersonales.genero}
+                    />
                     {/* departamento */}
                     <InfoItem
                       icon={<MapPin className="w-5 h-5" />}
                       label="Departamento"
-                      value={data.datosPersonales.departamento || "No especificado"}
+                      value={
+                        data.datosPersonales.departamento || "No especificado"
+                      }
                     />
                     {/* ciudad */}
                     <InfoItem
@@ -370,7 +427,9 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                   <div className="w-full max-w-md mx-auto">
                     <ImageTitle>Foto de Perfil del Motorizado</ImageTitle>
                     <FileDisplay
-                      src={data.datosPersonales.url_selfie || "/placeholder.svg"}
+                      src={
+                        data.datosPersonales.url_selfie || "/placeholder.svg"
+                      }
                       alt="Selfie"
                       title="Foto de Perfil"
                     />
@@ -382,7 +441,11 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
               {activeTab === "vehiculo" && data.registroVehiculo && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InfoItem icon={<Car className="w-5 h-5" />} label="Placa" value={data.registroVehiculo.placa} />
+                    <InfoItem
+                      icon={<Car className="w-5 h-5" />}
+                      label="Placa"
+                      value={data.registroVehiculo.placa}
+                    />
                     <InfoItem
                       icon={<FileText className="w-5 h-5" />}
                       label="Licencia de Conducir"
@@ -404,7 +467,10 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                     <div>
                       <ImageTitle>Fotografía de la Placa</ImageTitle>
                       <FileDisplay
-                        src={data.registroVehiculo.imagen_placa || "/placeholder.svg"}
+                        src={
+                          data.registroVehiculo.imagen_placa ||
+                          "/placeholder.svg"
+                        }
                         alt="Placa"
                         title="Placa del Vehículo"
                       />
@@ -412,7 +478,10 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                     <div>
                       <ImageTitle>Fotografía de la Licencia</ImageTitle>
                       <FileDisplay
-                        src={data.registroVehiculo.imagen_licencia || "/placeholder.svg"}
+                        src={
+                          data.registroVehiculo.imagen_licencia ||
+                          "/placeholder.svg"
+                        }
                         alt="Licencia"
                         title="Licencia de Conducir"
                       />
@@ -420,15 +489,23 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                     <div>
                       <ImageTitle>Fotografía del Seguro</ImageTitle>
                       <FileDisplay
-                        src={data.registroVehiculo.imagen_seguro || "/placeholder.svg"}
+                        src={
+                          data.registroVehiculo.imagen_seguro ||
+                          "/placeholder.svg"
+                        }
                         alt="Seguro"
                         title="Seguro del Vehículo"
                       />
                     </div>
                     <div>
-                      <ImageTitle>Fotografía de la Tarjeta de Propiedad</ImageTitle>
+                      <ImageTitle>
+                        Fotografía de la Tarjeta de Propiedad
+                      </ImageTitle>
                       <FileDisplay
-                        src={data.registroVehiculo.imagen_tarjeta_propiedad || "/placeholder.svg"}
+                        src={
+                          data.registroVehiculo.imagen_tarjeta_propiedad ||
+                          "/placeholder.svg"
+                        }
                         alt="Tarjeta de Propiedad"
                         title="Tarjeta de Propiedad"
                       />
@@ -441,8 +518,16 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
               {activeTab === "bancarios" && data.datosBancarios && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InfoItem icon={<User className="w-5 h-5" />} label="Titular" value={data.datosBancarios.titular} />
-                    <InfoItem icon={<FileText className="w-5 h-5" />} label="DNI" value={data.datosBancarios.dni} />
+                    <InfoItem
+                      icon={<User className="w-5 h-5" />}
+                      label="Titular"
+                      value={data.datosBancarios.titular}
+                    />
+                    <InfoItem
+                      icon={<FileText className="w-5 h-5" />}
+                      label="DNI"
+                      value={data.datosBancarios.dni}
+                    />
                     <InfoItem
                       icon={<CreditCard className="w-5 h-5" />}
                       label="Banco"
@@ -463,12 +548,77 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                     <div className="mt-6">
                       <ImageTitle>Documento de la Cuenta Bancaria</ImageTitle>
                       <FileDisplay
-                        src={data.datosBancarios.imagen_cuenta || "/placeholder.svg"}
+                        src={
+                          data.datosBancarios.imagen_cuenta ||
+                          "/placeholder.svg"
+                        }
                         alt="Documento de la Cuenta Bancaria"
                         title="Documento de la Cuenta Bancaria"
                       />
                     </div>
                   )}
+                </div>
+              )}
+              {/* Pestaña de Pedidos */}
+              {activeTab === "pedidos" && (
+                <div className="space-y-6">
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                      <Clipboard className="h-5 w-5 text-red-600" />
+                      Configuración de Pedidos Diarios
+                    </h3>
+
+                    <div className="mb-6">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Cantidad máxima de pedidos que este motorizado puede
+                        tomar :
+                      </p>
+
+                      <div className="flex items-center gap-4">
+                        <div className="bg-red-50 text-red-700 text-2xl font-bold py-3 px-6 rounded-lg border border-red-200 flex-grow text-center">
+                          {data.cantidad_pedidos_dias !== undefined
+                            ? data.cantidad_pedidos_dias
+                            : 0}
+                        </div>
+
+                        {isAprobado && (
+                          <Button
+                            onClick={() => setShowAsignarPedidosModal(true)}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                          >
+                            Editar cantidad
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                      <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Información
+                      </h4>
+                      <p className="text-sm text-blue-700">
+                        Esta configuración limita la cantidad de pedidos que el
+                        motorizado puede aceptar. Asegúrese de establecer un
+                        valor adecuado según la capacidad y disponibilidad del
+                        motorizado.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Aquí puedes agregar más secciones relacionadas con pedidos en el futuro */}
+                  {/* Por ejemplo: historial de pedidos, estadísticas, etc. */}
                 </div>
               )}
 
@@ -477,12 +627,29 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
                 (!data.registroVehiculo && activeTab === "vehiculo") ||
                 (!data.datosBancarios && activeTab === "bancarios" && (
                   <div className="h-full flex items-center justify-center py-8">
-                    <p className="text-gray-500 text-center text-lg">No hay datos disponibles</p>
+                    <p className="text-gray-500 text-center text-lg">
+                      No hay datos disponibles
+                    </p>
                   </div>
                 ))}
             </div>
           </div>
         </div>
+        {/* Modal para asignar cantidad de pedidos */}
+        {data && (
+          <AsignarPedidosModal
+            isOpen={showAsignarPedidosModal}
+            onClose={() => setShowAsignarPedidosModal(false)}
+            motorizadoId={data.id}
+            motorizadoNombre={`${data.personal.name} ${data.personal.lastName}`}
+            onSuccess={() => {
+              // Recargar los datos del motorizado
+              queryClient.invalidateQueries({
+                queryKey: ["motorizado-details", data.id],
+              });
+            }}
+          />
+        )}
 
         {/* Pie fijo */}
         <div className="bg-gray-50 border-t p-6 flex justify-end gap-3 rounded-b-lg">
@@ -490,12 +657,15 @@ export function DetallesMotorizadoModal({ isOpen, onClose, data, onAprobar }: De
             Cerrar
           </Button>
           {!isAprobado && (
-            <Button onClick={handleAprobar} className="bg-red-500 hover:bg-red-600 text-white">
+            <Button
+              onClick={handleAprobar}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
               Aprobar Motorizado
             </Button>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

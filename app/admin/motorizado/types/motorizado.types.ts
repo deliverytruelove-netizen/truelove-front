@@ -53,4 +53,5 @@ export interface DetallesMotorizado {
     imagen_tarjeta_propiedad: string;
   } | null;
   aprobado: boolean;
+  cantidad_pedidos_dias?: number;
 }

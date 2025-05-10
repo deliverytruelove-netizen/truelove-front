@@ -1,4 +1,4 @@
-// components\registerLocal\RegistrationForm.tsx este es el ejmplo
+// components\registerLocal\RegistrationForm.tsx 
 "use client"
 
 import type React from "react"
@@ -27,6 +27,7 @@ export default function RegistrationForm() {
     businessType: "",
     phone: "+51",
     email: "",
+    posToDriver: false,
   })
   const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
@@ -94,6 +95,7 @@ export default function RegistrationForm() {
       formDataToSend.append("businessType", formData.businessType)
       formDataToSend.append("phone", formData.phone.replace(/\D/g, ""))
       formDataToSend.append("email", formData.email)
+      formDataToSend.append("posToDriver",formData.posToDriver ? "1" : "0")
 
       // Agregar documentos si es Carnet de Extranjería
       if (formData.documentType === "CARNET_EXTRANJERIA") {

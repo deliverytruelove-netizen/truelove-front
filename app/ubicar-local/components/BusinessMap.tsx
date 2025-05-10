@@ -1,117 +1,165 @@
 // app\ubicar-local\components\BusinessMap.tsx
-'use client';
+"use client"
 
-import { useEffect, useRef, useCallback, useMemo } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import type React from "react"
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
-
-interface MapboxFeature {
-  id: string;
-  place_name: string;
-  center: [number, number];
-  text: string;
-  context?: Array<{
-    id: string;
-    text: string;
-  }>;
-  address?: string;
-}
+import { useEffect, useRef, useCallback, useState, useMemo } from "react"
+import { loadLibrary, LIMA_COORDINATES } from "../services/maps.service"
+import type { GoogleMapsLocation } from "../types/google-maps"
 
 interface MapComponentProps {
-  selectedLocation: { center: [number, number] } | null;
-  onLocationUpdate?: (location: MapboxFeature) => void;
+  selectedLocation: { center: [number, number] } | null
+  onLocationUpdate?: (location: GoogleMapsLocation) => void
 }
 
-export default function MapComponent({ selectedLocation, onLocationUpdate }: MapComponentProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const defaultCenter = useMemo<[number, number]>(() => [-77.0369, -12.0464], []);
+const MapComponent: React.FC<MapComponentProps> = ({ selectedLocation, onLocationUpdate }) => {
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<google.maps.Map | null>(null)
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null)
+  const defaultCenter = useMemo(() => LIMA_COORDINATES, []) // Lima, Perú
 
-  const handleClick = useCallback((e: mapboxgl.MapMouseEvent & { lngLat: mapboxgl.LngLat }) => {
-    const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-    markerRef.current?.setLngLat(coordinates);
-    mapRef.current?.flyTo({ center: coordinates, zoom: 15, essential: true });
-
-    if (onLocationUpdate) {
-      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}&types=address&country=PE&language=es`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.features?.[0]) {
-            const feature = data.features[0];
-            onLocationUpdate({
-              id: feature.id,
-              place_name: feature.place_name,
-              center: coordinates,
-              text: feature.text,
-              context: feature.context,
-              address: feature.address
-            });
-          }
-        })
-        .catch(error => console.error('Error al obtener la dirección:', error));
-    }
-  }, [onLocationUpdate]);
-
+  // Cargar Google Maps API
   useEffect(() => {
-    if (!mapContainerRef.current) {
-      console.error("El contenedor del mapa no está disponible.");
-      return;
+    const initializeMap = async () => {
+      try {
+        // Cargar la biblioteca de geocodificación
+        const geocodingLib = await loadLibrary<google.maps.GeocodingLibrary>("geocoding")
+        geocoderRef.current = new geocodingLib.Geocoder()
+        setIsLoaded(true)
+      } catch (error) {
+        console.error("Error al inicializar el geocodificador:", error)
+      }
     }
 
-    if (!mapboxgl.accessToken) {
-      console.error("Mapbox Access Token no está configurado.");
-      return;
+    initializeMap()
+  }, [])
+
+  // Manejar clic en el mapa
+  const handleMapClick = useCallback(
+    async (event: google.maps.MapMouseEvent) => {
+      if (!event.latLng || !geocoderRef.current || !onLocationUpdate) return
+
+      const position = event.latLng
+      const coordinates: [number, number] = [position.lng(), position.lat()]
+
+      if (markerRef.current) {
+        markerRef.current.position = position
+      }
+
+      // Obtener la dirección a partir de las coordenadas
+      try {
+        const response = await geocoderRef.current.geocode({ location: position })
+        
+        if (response.results && response.results[0]) {
+          const result = response.results[0]
+
+          const locationData: GoogleMapsLocation = {
+            place_id: result.place_id,
+            formatted_address: result.formatted_address,
+            center: coordinates,
+            name: result.address_components?.[0]?.long_name || "",
+            address_components: result.address_components,
+          }
+
+          onLocationUpdate(locationData)
+        }
+      } catch (error) {
+        console.error("Error en geocodificación inversa:", error)
+      }
+    },
+    [onLocationUpdate],
+  )
+
+  // Inicializar el mapa cuando la API está cargada
+  useEffect(() => {
+    if (!isLoaded || !mapContainerRef.current) return
+
+    const initMap = async () => {
+      try {
+        // Cargar las bibliotecas necesarias
+        const mapsLib = await loadLibrary<google.maps.MapsLibrary>("maps")
+        const markerLib = await loadLibrary<google.maps.MarkerLibrary>("marker")
+        
+        // Configuración inicial del mapa
+        const initialCenter = selectedLocation?.center
+          ? { lat: selectedLocation.center[1], lng: selectedLocation.center[0] }
+          : defaultCenter
+
+        const mapOptions: google.maps.MapOptions = {
+          center: initialCenter,
+          zoom: 15,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl: true,
+          mapId :"map",
+          styles: [
+            {
+              featureType: "poi",
+              elementType: "labels",
+              stylers: [{ visibility: "off" }],
+            },
+          ],
+        }
+
+        // Crear el mapa
+        if (!mapContainerRef.current) {
+          throw new Error("mapContainerRef is null");
+        }
+        const map = new mapsLib.Map(mapContainerRef.current, mapOptions)
+        mapRef.current = map
+
+        // Crear el marcador avanzado
+        const marker = new markerLib.AdvancedMarkerElement({
+          position: initialCenter,
+          map,
+          gmpDraggable: false,
+        })
+        markerRef.current = marker
+
+        // Agregar listener de clic
+        map.addListener("click", handleMapClick)
+      } catch (error) {
+        console.error("Error al inicializar el mapa:", error)
+      }
     }
 
-    // Solo crear el mapa si no existe uno ya
-    if (!mapRef.current) {
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: selectedLocation?.center || defaultCenter,
-        zoom: 13,
-      });
-
-      mapRef.current = map;
-
-      const marker = new mapboxgl.Marker({ color: '#FF0000', draggable: false })
-        .setLngLat(selectedLocation?.center || defaultCenter)
-        .addTo(map);
-
-      markerRef.current = marker;
-
-      map.addControl(new mapboxgl.NavigationControl());
-
-      map.on('click', handleClick);
-
-      map.on('load', () => {
-        console.log("Mapa cargado correctamente");
-        map.resize(); // Asegura que el mapa se redimensione
-      });
-    }
+    initMap()
 
     return () => {
-      // No eliminamos el mapa aquí, ya que lo queremos mantener
-    };
-  }, [selectedLocation, defaultCenter, handleClick]);
-
-  useEffect(() => {
-    if (mapRef.current && markerRef.current && selectedLocation?.center) {
-      markerRef.current.setLngLat(selectedLocation.center);
-      mapRef.current.flyTo({
-        center: selectedLocation.center,
-        zoom: 15,
-        essential: true,
-      });
+      if (mapRef.current) {
+        window.google.maps.event.clearListeners(mapRef.current, "click")
+      }
     }
-  }, [selectedLocation]);
+  }, [isLoaded, selectedLocation, defaultCenter, handleMapClick])
+
+  // Actualizar el mapa cuando cambia la ubicación seleccionada
+  useEffect(() => {
+    if (!mapRef.current || !markerRef.current || !selectedLocation?.center) return
+
+    const position = {
+      lat: selectedLocation.center[1],
+      lng: selectedLocation.center[0],
+    }
+
+    markerRef.current.position = position
+    mapRef.current.panTo(position)
+    mapRef.current.setZoom(15)
+  }, [selectedLocation])
 
   return (
     <div className="relative h-64 mb-6 overflow-hidden max-w-[430px] w-full rounded-lg border">
-      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full">
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <p className="text-gray-500">Cargando mapa...</p>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
+
+export default MapComponent

@@ -9,6 +9,7 @@ export interface FormData {
     email: string
     antecedentesPenales?: File
     antecedentesPoliciales?: File
+    posToDriver?: boolean
   }
   
   export interface BusinessType {
