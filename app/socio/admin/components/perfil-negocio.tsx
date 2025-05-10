@@ -1,9 +1,8 @@
-// app\socio\admin\components\perfil-negocio.tsx aqui si se ve el logo del negocio y se puede subir uno nuevo 
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
-import { Clock, Upload, Plus, Calendar } from "lucide-react"
+import { Clock, Upload, Plus, Calendar, ImageIcon } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,15 +27,18 @@ interface HorarioNegocio {
 
 interface PerfilNegocioProps {
   logo?: string
+  banner?: string
   horarios: HorarioNegocio[]
   business?: string
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB
 
-export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegocioProps) {
+export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: PerfilNegocioProps) {
   const [subiendoLogo, setSubiendoLogo] = useState(false)
+  const [subiendoBanner, setSubiendoBanner] = useState(false)
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined)
+  const [bannerUrl, setBannerUrl] = useState<string | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [horarios, setHorarios] = useState<HorarioNegocio[]>(horariosIniciales)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -50,6 +52,7 @@ export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegoc
 
       if (!token) {
         setLogoUrl(logo)
+        setBannerUrl(banner)
         return
       }
 
@@ -63,17 +66,20 @@ export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegoc
       if (respuesta.ok) {
         const datos = await respuesta.json()
         setLogoUrl(datos.ruta_logo || logo)
+        setBannerUrl(datos.banner || banner)
         if (datos.horarios) {
           setHorarios(datos.horarios)
         }
       } else {
         setLogoUrl(logo)
+        setBannerUrl(banner)
       }
     } catch (error) {
       console.error("Error al obtener el perfil:", error)
       setLogoUrl(logo)
+      setBannerUrl(banner)
     }
-  }, [logo])
+  }, [logo, banner])
 
   useEffect(() => {
     obtenerPerfil()
@@ -123,6 +129,54 @@ export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegoc
         }
       } finally {
         setSubiendoLogo(false)
+      }
+    }
+  }
+
+  const manejarSubidaBanner = async (evento: React.ChangeEvent<HTMLInputElement>) => {
+    if (evento.target.files && evento.target.files[0]) {
+      const archivo = evento.target.files[0]
+      setSubiendoBanner(true)
+      setError(null)
+
+      try {
+        const formData = new FormData()
+        formData.append("banner", archivo)
+
+        const token = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("authToken="))
+          ?.split("=")[1]
+
+        if (!token) {
+          throw new Error("No se encontró el token de autenticación")
+        }
+
+        const respuesta = await fetch(`${API_URL}/negocio/banner`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        })
+
+        if (!respuesta.ok) {
+          const errorData = await respuesta.json()
+          throw new Error(errorData.message || "Error al subir el banner")
+        }
+
+        const datos = await respuesta.json()
+        setBannerUrl(datos.banner)
+      } catch (error: unknown) {
+        console.error("Error al subir el banner:", error)
+        if (error instanceof Error) {
+          setError(error.message)
+        } else {
+          setError("Error al subir el banner")
+        }
+      } finally {
+        setSubiendoBanner(false)
       }
     }
   }
@@ -243,6 +297,52 @@ export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegoc
           </CardContent>
         </Card>
 
+        {/* Banner Section */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-6">
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold tracking-tight">Banner del Negocio</h2>
+                <p className="text-sm text-muted-foreground">
+                  Sube un banner atractivo para destacar tu negocio en la plataforma.
+                </p>
+              </div>
+
+              <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gradient-to-br from-background to-muted/50 border-2 border-muted/20 shadow-sm group hover:border-primary/20 hover:shadow-md transition-all duration-300">
+                {bannerUrl ? (
+                  <Image
+                    src={bannerUrl || "/placeholder.svg"}
+                    alt="Banner del negocio"
+                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    priority
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">No hay banner configurado</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button
+                  size="lg"
+                  className="relative overflow-hidden bg-red-600 shadow-lg transition-all hover:shadow-xl"
+                  disabled={subiendoBanner}
+                  onClick={() => document.getElementById("input-banner")?.click()}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-/10 to-transparent opacity-0 transition-opacity hover:opacity-100" />
+                  <Upload className="mr-2 h-5 w-5" />
+                  {subiendoBanner ? "Subiendo..." : "Actualizar Banner"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Horarios Section */}
         <Card className="overflow-hidden">
           <CardContent className="p-6">
@@ -333,9 +433,9 @@ export function PerfilNegocio({ logo, horarios: horariosIniciales }: PerfilNegoc
       </div>
 
       <input id="input-logo" type="file" accept="image/*" className="hidden" onChange={manejarSubidaLogo} />
+      <input id="input-banner" type="file" accept="image/*" className="hidden" onChange={manejarSubidaBanner} />
 
       <HorarioModal open={modalAbierto} onOpenChange={setModalAbierto} onGuardar={guardarHorario} />
     </div>
   )
 }
-

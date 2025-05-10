@@ -1,19 +1,15 @@
 // app\ubicar-local\components\BussinessForm.tsx
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Input } from '@/components/ui/input'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+import type React from "react"
+import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import type { GoogleMapsLocation } from "../types/google-maps"
+
 
 const formSchema = z.object({
   businessName: z.string().min(2, "El nombre es requerido"),
@@ -27,59 +23,64 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
-interface LocationContext {
-  id: string
-  text: string
-}
-
-interface SelectedLocation {
-  address?: string
-  text?: string
-  context?: LocationContext[]
-  businessName?: string
-}
-
 interface BusinessFormProps {
-  selectedLocation: SelectedLocation | null
+  selectedLocation: GoogleMapsLocation | null
   onSubmit: (data: FormData) => void
 }
 
-export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFormProps) {
+const BusinessForm: React.FC<BusinessFormProps> = ({ selectedLocation, onSubmit }) => {
   const [formData, setFormData] = useState<Partial<FormData>>({})
-  
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      businessName: '',
-      street: '',
-      number: '',
-      postalCode: '',
-      province: '',
-      city: '',
-      reference: '',
+      businessName: "",
+      street: "",
+      number: "",
+      postalCode: "",
+      province: "",
+      city: "",
+      reference: "",
     },
   })
 
+  // Extraer información de los componentes de dirección de Google Maps
+  const extractAddressComponent = (
+    components: google.maps.GeocoderAddressComponent[] | undefined,
+    type: string,
+  ): string => {
+    if (!components) return ""
+
+    const component = components.find((comp) => comp.types.includes(type))
+
+    return component ? component.long_name : ""
+  }
+
   useEffect(() => {
-    if (selectedLocation) {
-      const context = selectedLocation.context || []
-      const address = selectedLocation.address || ''
-      const streetName = selectedLocation.text || ''
-      const postalCode = context.find((item) => item.id.startsWith('postcode'))?.text || ''
-      const city = context.find((item) => item.id.startsWith('place'))?.text || ''
-      const province = context.find((item) => item.id.startsWith('region'))?.text || ''
-      const businessName = selectedLocation.businessName || ''  // Modificar esta línea
-  
+    if (selectedLocation && selectedLocation.address_components) {
+      const addressComponents = selectedLocation.address_components
+
+      // Extraer información de los componentes de dirección
+      const streetName = extractAddressComponent(addressComponents, "route")
+      const streetNumber = extractAddressComponent(addressComponents, "street_number")
+      const postalCode = extractAddressComponent(addressComponents, "postal_code")
+      const city =
+        extractAddressComponent(addressComponents, "locality") ||
+        extractAddressComponent(addressComponents, "administrative_area_level_2")
+      const province = extractAddressComponent(addressComponents, "administrative_area_level_1")
+      const businessName = selectedLocation.businessName || selectedLocation.name || ""
+
+      // Crear nuevos valores para el formulario
       const newValues = {
-        businessName: businessName || form.getValues('businessName') || '',
-        street: streetName || form.getValues('street') || '',
-        number: address || form.getValues('number') || '',
-        postalCode: postalCode || form.getValues('postalCode') || '',
-        city: city || form.getValues('city') || '',
-        province: province || form.getValues('province') || '',
-        reference: form.getValues('reference') || '',
+        businessName: businessName || form.getValues("businessName") || "",
+        street: streetName || form.getValues("street") || "",
+        number: streetNumber || form.getValues("number") || "",
+        postalCode: postalCode || form.getValues("postalCode") || "",
+        city: city || form.getValues("city") || "",
+        province: province || form.getValues("province") || "",
+        reference: form.getValues("reference") || "",
       }
-  
+
       setFormData(newValues)
       form.reset(newValues)
     }
@@ -88,13 +89,14 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
   const handleFieldChange = (name: keyof FormData, value: string) => {
     const newData = {
       ...form.getValues(),
-      [name]: value
+      [name]: value,
     }
+
     setFormData(newData)
-    form.setValue(name, value, { 
+    form.setValue(name, value, {
       shouldValidate: true,
       shouldDirty: true,
-      shouldTouch: true
+      shouldTouch: true,
     })
 
     if (form.formState.isValid) {
@@ -120,10 +122,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
             <FormItem>
               <FormLabel>Nombre del negocio</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
-                  value={formData.businessName || ''}
-                  onChange={(e) => handleFieldChange('businessName', e.target.value)}
+                <Input
+                  {...field}
+                  value={formData.businessName || ""}
+                  onChange={(e) => handleFieldChange("businessName", e.target.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -139,10 +141,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
               <FormItem>
                 <FormLabel>Calle</FormLabel>
                 <FormControl>
-                  <Input 
-                    {...field} 
-                    value={formData.street || ''}
-                    onChange={(e) => handleFieldChange('street', e.target.value)}
+                  <Input
+                    {...field}
+                    value={formData.street || ""}
+                    onChange={(e) => handleFieldChange("street", e.target.value)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -157,10 +159,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
               <FormItem>
                 <FormLabel>Número</FormLabel>
                 <FormControl>
-                  <Input 
+                  <Input
                     {...field}
-                    value={formData.number || ''} 
-                    onChange={(e) => handleFieldChange('number', e.target.value)}
+                    value={formData.number || ""}
+                    onChange={(e) => handleFieldChange("number", e.target.value)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -177,10 +179,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
               <FormItem>
                 <FormLabel>Provincia</FormLabel>
                 <FormControl>
-                  <Input 
+                  <Input
                     {...field}
-                    value={formData.province || ''}
-                    onChange={(e) => handleFieldChange('province', e.target.value)}
+                    value={formData.province || ""}
+                    onChange={(e) => handleFieldChange("province", e.target.value)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -195,10 +197,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
               <FormItem>
                 <FormLabel>Ciudad</FormLabel>
                 <FormControl>
-                  <Input 
+                  <Input
                     {...field}
-                    value={formData.city || ''}
-                    onChange={(e) => handleFieldChange('city', e.target.value)}
+                    value={formData.city || ""}
+                    onChange={(e) => handleFieldChange("city", e.target.value)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -214,10 +216,10 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
             <FormItem>
               <FormLabel>Código Postal</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   {...field}
-                  value={formData.postalCode || ''}
-                  onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+                  value={formData.postalCode || ""}
+                  onChange={(e) => handleFieldChange("postalCode", e.target.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -232,11 +234,11 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
             <FormItem>
               <FormLabel>Referencias de ubicación</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   {...field}
-                  value={formData.reference || ''}
+                  value={formData.reference || ""}
                   placeholder="Ej: Frente al parque principal"
-                  onChange={(e) => handleFieldChange('reference', e.target.value)}
+                  onChange={(e) => handleFieldChange("reference", e.target.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -247,3 +249,5 @@ export default function BusinessForm({ selectedLocation, onSubmit }: BusinessFor
     </Form>
   )
 }
+
+export default BusinessForm

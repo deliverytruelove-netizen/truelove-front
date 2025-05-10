@@ -1,39 +1,60 @@
-"use client"
+// components\MotorizadoList.tsx
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X, Filter, Trash2 } from "lucide-react"
-import Section from "@/components/layout/Section"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import type React from "react";
+import { AsignarPedidosModal } from "./modals/AsignarPedidosModal";
+import { useState } from "react";
+import { Eye, Check, Search, RefreshCw, X, Filter, Trash2 } from "lucide-react";
+import Section from "@/components/layout/Section";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchMotorizados,
   fetchMotorizadoDetails,
   aprobarMotorizado,
   deleteMotorizado,
-} from "@/app/admin/motorizado/services/motorizado.service"
-import type { Motorizado, DetallesMotorizado } from "@/app/admin/motorizado/types/motorizado.types"
-import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
-import { showAlert } from "@/components/ui/DataTable/Alert"
-import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "./ui/input"
-import { Button } from "@/components/ui/button"
-import { DeleteMotorizadoDialog } from "./DeleteMotorizadoDialog"
+} from "@/app/admin/motorizado/services/motorizado.service";
+import type {
+  Motorizado,
+  DetallesMotorizado,
+} from "@/app/admin/motorizado/types/motorizado.types";
+import { DEFAULT_PAGE_SIZE } from "@/config/constanst";
+import { showAlert } from "@/components/ui/DataTable/Alert";
+import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "./ui/input";
+import { Button } from "@/components/ui/button";
+import { DeleteMotorizadoDialog } from "./DeleteMotorizadoDialog";
 
 const MotorizadoList: React.FC = () => {
-  const queryClient = useQueryClient()
-  const [globalFilter, setGlobalFilter] = useState<string>("")
-  const [selectedMotorizadoId, setSelectedMotorizadoId] = useState<number | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const queryClient = useQueryClient();
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [selectedMotorizadoId, setSelectedMotorizadoId] = useState<
+    number | null
+  >(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [pagination, setPagination] = useState({
     pageSize: DEFAULT_PAGE_SIZE,
     pageIndex: 0,
-  })
-  const [statusFilter, setStatusFilter] = useState<"todos" | "aprobados" | "pendientes">("todos")
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [motorizadoToDelete, setMotorizadoToDelete] = useState<{ id: number; name: string } | null>(null)
-
+  });
+  const [statusFilter, setStatusFilter] = useState<
+    "todos" | "aprobados" | "pendientes"
+  >("todos");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [motorizadoToDelete, setMotorizadoToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [motorizadoToApprove, setMotorizadoToApprove] = useState<{
+    id: number;
+    nombre: string;
+  } | null>(null);
+  const [showAsignarPedidosModal, setShowAsignarPedidosModal] = useState(false);
   const {
     data: motorizados = [],
     isLoading,
@@ -41,123 +62,134 @@ const MotorizadoList: React.FC = () => {
   } = useQuery<Motorizado[], Error>({
     queryKey: ["motorizados"],
     queryFn: fetchMotorizados,
-  })
+  });
 
   const { data: detallesMotorizado } = useQuery<DetallesMotorizado | null>({
     queryKey: ["motorizado-details", selectedMotorizadoId],
     queryFn: async () => {
-      if (!selectedMotorizadoId) return null
-      const data = await fetchMotorizadoDetails(selectedMotorizadoId)
-      return data
+      if (!selectedMotorizadoId) return null;
+      const data = await fetchMotorizadoDetails(selectedMotorizadoId);
+      return data;
     },
     enabled: !!selectedMotorizadoId,
-  })
+  });
 
   const mutationAprobar = useMutation({
     mutationFn: aprobarMotorizado,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["motorizados"] })
+      queryClient.invalidateQueries({ queryKey: ["motorizados"] });
       showAlert({
         title: "Éxito",
         text: "Motorizado aprobado correctamente. Se han enviado las credenciales por correo electrónico.",
         icon: "success",
-      })
+      });
     },
     onError: (error: Error) => {
-      console.error("Error al aprobar motorizado:", error)
+      console.error("Error al aprobar motorizado:", error);
 
       // Verificar si es un error de correo duplicado
-      if (error.message && error.message.includes("correo electrónico ya está registrado")) {
+      if (
+        error.message &&
+        error.message.includes("correo electrónico ya está registrado")
+      ) {
         showAlert({
           title: "Error de registro",
           text: "El correo electrónico ya está registrado en el sistema. No se puede crear un usuario duplicado.",
           icon: "error",
-        })
+        });
       } else {
         showAlert({
           title: "Error",
-          text: error.message || "No se pudo aprobar el motorizado o enviar las credenciales.",
+          text:
+            error.message ||
+            "No se pudo aprobar el motorizado o enviar las credenciales.",
           icon: "error",
-        })
+        });
       }
     },
-  })
+  });
 
   // Mutación para eliminar un motorizado
   const mutationDelete = useMutation({
     mutationFn: deleteMotorizado,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["motorizados"] })
+      queryClient.invalidateQueries({ queryKey: ["motorizados"] });
       showAlert({
         title: "Éxito",
         text: "Se eliminó el motorizado correctamente.",
         icon: "success",
-      })
-      setIsDeleteDialogOpen(false)
-      setMotorizadoToDelete(null)
+      });
+      setIsDeleteDialogOpen(false);
+      setMotorizadoToDelete(null);
     },
     onError: (error: Error) => {
       showAlert({
         title: "Error",
         text: error.message || "No se pudo eliminar el motorizado.",
         icon: "error",
-      })
-      setIsDeleteDialogOpen(false)
+      });
+      setIsDeleteDialogOpen(false);
     },
-  })
+  });
 
   const handleAprobar = (id: number) => {
-    setSelectedMotorizadoId(id)
-    mutationAprobar.mutate(id)
-  }
+    const motorizado = motorizados.find((m) => m.id === id);
+    if (motorizado) {
+      setMotorizadoToApprove({
+        id,
+        nombre: `${motorizado.nombres} ${motorizado.apellidos}`,
+      });
+      setShowAsignarPedidosModal(true);
+    }
+  };
 
   const handleDelete = (id: number, name: string) => {
-    setMotorizadoToDelete({ id, name })
-    setIsDeleteDialogOpen(true)
-  }
+    setMotorizadoToDelete({ id, name });
+    setIsDeleteDialogOpen(true);
+  };
 
   const confirmDelete = () => {
     if (motorizadoToDelete) {
-      mutationDelete.mutate(motorizadoToDelete.id)
+      mutationDelete.mutate(motorizadoToDelete.id);
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, "0")
-    const month = String(date.getMonth() + 1).padStart(2, "0")
-    const year = date.getFullYear()
-    const hours = String(date.getHours()).padStart(2, "0")
-    const minutes = String(date.getMinutes()).padStart(2, "0")
-    return `${day}/${month}/${year} ${hours}:${minutes}`
-  }
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
 
   // Aplicar filtros de estado y búsqueda
   const filteredMotorizados = motorizados
     .filter((motorizado) => {
       // Filtrar por estado
-      if (statusFilter === "aprobados") return motorizado.aprobado
-      if (statusFilter === "pendientes") return !motorizado.aprobado
-      return true // "todos"
+      if (statusFilter === "aprobados") return motorizado.aprobado;
+      if (statusFilter === "pendientes") return !motorizado.aprobado;
+      return true; // "todos"
     })
     .filter((motorizado) => {
       // Filtrar por término de búsqueda
-      if (!globalFilter) return true
+      if (!globalFilter) return true;
 
-      const searchTerm = globalFilter.toLowerCase()
+      const searchTerm = globalFilter.toLowerCase();
       return (
         motorizado.nombres?.toLowerCase().includes(searchTerm) ||
         motorizado.apellidos?.toLowerCase().includes(searchTerm) ||
         motorizado.celular?.toLowerCase().includes(searchTerm) ||
         motorizado.email?.toLowerCase().includes(searchTerm) ||
         motorizado.nro_documento?.toLowerCase().includes(searchTerm)
-      )
-    })
+      );
+    });
 
   const paginatedMotorizados = filteredMotorizados.slice(
     pagination.pageIndex * pagination.pageSize,
-    (pagination.pageIndex + 1) * pagination.pageSize,
-  )
+    (pagination.pageIndex + 1) * pagination.pageSize
+  );
 
   return (
     <Section title="Listado de Motorizados">
@@ -168,8 +200,8 @@ const MotorizadoList: React.FC = () => {
             <Select
               value={statusFilter}
               onValueChange={(value: "todos" | "aprobados" | "pendientes") => {
-                setStatusFilter(value)
-                setPagination({ ...pagination, pageIndex: 0 }) // Resetear a la primera página
+                setStatusFilter(value);
+                setPagination({ ...pagination, pageIndex: 0 }); // Resetear a la primera página
               }}
             >
               <SelectTrigger className="w-[180px]">
@@ -202,7 +234,12 @@ const MotorizadoList: React.FC = () => {
                 </button>
               )}
             </div>
-            <Button variant="ghost" size="icon" onClick={() => refetch()} title="Actualizar">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => refetch()}
+              title="Actualizar"
+            >
               <RefreshCw size={18} />
             </Button>
           </div>
@@ -246,7 +283,10 @@ const MotorizadoList: React.FC = () => {
                 Array(5)
                   .fill(0)
                   .map((_, index) => (
-                    <tr key={index} className="bg-white border-b hover:bg-gray-50">
+                    <tr
+                      key={index}
+                      className="bg-white border-b hover:bg-gray-50"
+                    >
                       <td colSpan={9} className="px-4 py-3">
                         <div className="animate-pulse flex items-center space-x-4">
                           <div className="h-10 w-10 rounded-full bg-gray-200"></div>
@@ -264,7 +304,9 @@ const MotorizadoList: React.FC = () => {
                     <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-800">No se encontraron motorizados</h3>
+                    <h3 className="text-lg font-medium text-gray-800">
+                      No se encontraron motorizados
+                    </h3>
                     <p className="text-gray-500 mt-2">
                       {globalFilter || statusFilter !== "todos"
                         ? "Intenta con otra búsqueda o elimina los filtros aplicados."
@@ -275,8 +317,8 @@ const MotorizadoList: React.FC = () => {
                         variant="outline"
                         className="mt-4"
                         onClick={() => {
-                          setGlobalFilter("")
-                          setStatusFilter("todos")
+                          setGlobalFilter("");
+                          setStatusFilter("todos");
                         }}
                       >
                         Limpiar filtros
@@ -286,19 +328,34 @@ const MotorizadoList: React.FC = () => {
                 </tr>
               ) : (
                 paginatedMotorizados.map((motorizado, index) => {
-                  const pageSize = pagination.pageSize
-                  const pageIndex = pagination.pageIndex
-                  const rowNumber = pageSize * pageIndex + index + 1
+                  const pageSize = pagination.pageSize;
+                  const pageIndex = pagination.pageIndex;
+                  const rowNumber = pageSize * pageIndex + index + 1;
 
                   return (
-                    <tr key={motorizado.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
-                      <td className="px-4 py-3 font-medium text-gray-800">{motorizado.nombres}</td>
-                      <td className="px-4 py-3 text-gray-600">{motorizado.apellidos}</td>
-                      <td className="px-4 py-3 text-gray-600">{motorizado.celular}</td>
-                      <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">{motorizado.email}</td>
+                    <tr
+                      key={motorizado.id}
+                      className="bg-white border-b hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 py-3 text-center font-medium text-gray-600">
+                        {rowNumber}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        {motorizado.nombres}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {motorizado.apellidos}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {motorizado.celular}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">
+                        {motorizado.email}
+                      </td>
                       <td className="px-4 py-3 text-gray-600">{`${motorizado.tipo_documento}: ${motorizado.nro_documento}`}</td>
-                      <td className="px-4 py-3 text-center text-gray-600">{formatDate(motorizado.created_at)}</td>
+                      <td className="px-4 py-3 text-center text-gray-600">
+                        {formatDate(motorizado.created_at)}
+                      </td>
                       <td className="px-4 py-3 text-center">
                         {motorizado.aprobado ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -328,8 +385,8 @@ const MotorizadoList: React.FC = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                              setSelectedMotorizadoId(motorizado.id)
-                              setIsModalOpen(true)
+                              setSelectedMotorizadoId(motorizado.id);
+                              setIsModalOpen(true);
                             }}
                             className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                             title="Ver detalles"
@@ -340,7 +397,9 @@ const MotorizadoList: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(motorizado.id, motorizado.nombres)}
+                            onClick={() =>
+                              handleDelete(motorizado.id, motorizado.nombres)
+                            }
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             title="Eliminar motorizado"
                           >
@@ -349,7 +408,7 @@ const MotorizadoList: React.FC = () => {
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })
               )}
             </tbody>
@@ -359,12 +418,18 @@ const MotorizadoList: React.FC = () => {
         {filteredMotorizados.length > 0 && (
           <div className="flex items-center justify-between p-4 border-t border-gray-200">
             <div className="text-sm text-gray-600">
-              Página {pagination.pageIndex + 1} de {Math.ceil(filteredMotorizados.length / pagination.pageSize)}
+              Página {pagination.pageIndex + 1} de{" "}
+              {Math.ceil(filteredMotorizados.length / pagination.pageSize)}
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => setPagination({ ...pagination, pageIndex: Math.max(0, pagination.pageIndex - 1) })}
+                onClick={() =>
+                  setPagination({
+                    ...pagination,
+                    pageIndex: Math.max(0, pagination.pageIndex - 1),
+                  })
+                }
                 disabled={pagination.pageIndex === 0}
               >
                 Anterior
@@ -374,12 +439,18 @@ const MotorizadoList: React.FC = () => {
                   setPagination({
                     ...pagination,
                     pageIndex: Math.min(
-                      Math.ceil(filteredMotorizados.length / pagination.pageSize) - 1,
-                      pagination.pageIndex + 1,
+                      Math.ceil(
+                        filteredMotorizados.length / pagination.pageSize
+                      ) - 1,
+                      pagination.pageIndex + 1
                     ),
                   })
                 }
-                disabled={pagination.pageIndex >= Math.ceil(filteredMotorizados.length / pagination.pageSize) - 1}
+                disabled={
+                  pagination.pageIndex >=
+                  Math.ceil(filteredMotorizados.length / pagination.pageSize) -
+                    1
+                }
               >
                 Siguiente
               </Button>
@@ -391,8 +462,8 @@ const MotorizadoList: React.FC = () => {
       <DetallesMotorizadoModal
         isOpen={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false)
-          setSelectedMotorizadoId(null)
+          setIsModalOpen(false);
+          setSelectedMotorizadoId(null);
         }}
         data={detallesMotorizado}
         onAprobar={handleAprobar}
@@ -407,8 +478,27 @@ const MotorizadoList: React.FC = () => {
           motorizadoName={motorizadoToDelete.name}
         />
       )}
+      {/* Modal para asignar cantidad de pedidos */}
+      {motorizadoToApprove && (
+        <AsignarPedidosModal
+          isOpen={showAsignarPedidosModal}
+          onClose={() => {
+            setShowAsignarPedidosModal(false);
+            // Si el usuario elige "Asignar más tarde", aún así aprobamos al motorizado
+            mutationAprobar.mutate(motorizadoToApprove.id);
+            setMotorizadoToApprove(null);
+          }}
+          motorizadoId={motorizadoToApprove.id}
+          motorizadoNombre={motorizadoToApprove.nombre}
+          onSuccess={() => {
+            // Después de asignar la cantidad, aprobamos al motorizado
+            mutationAprobar.mutate(motorizadoToApprove.id);
+            setMotorizadoToApprove(null);
+          }}
+        />
+      )}
     </Section>
-  )
-}
+  );
+};
 
-export default MotorizadoList
+export default MotorizadoList;

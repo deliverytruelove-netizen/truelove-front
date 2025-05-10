@@ -12,6 +12,9 @@ import { fetchDashboardStats } from "./services/dashboard.service";
 import { Users, Truck, Store, UserCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
+import { TopClientsChart } from "./components/top-clients-chart";
+import { TopStoresChart } from "./components/top-stores-chart";
+// import { LocalRatingsDetail } from "./components/local-ratings-detail"
 
 const Dashboard = () => {
   const { data, isLoading, error } = useQuery({
@@ -55,9 +58,9 @@ const Dashboard = () => {
 
     return () => clearInterval(interval);
   }, []);
-  useEffect(()=>{
+  useEffect(() => {
     setLastLoginTime(new Date().toISOString());
-  },[])
+  }, []);
   return (
     <MainLayout>
       <div className="grid gap-4 sm:gap-6">
@@ -161,7 +164,22 @@ const Dashboard = () => {
             </>
           )}
         </div>
-
+        {/* NUEVOS GRÁFICOS DE RANKINGS */}
+     {/* GRÁFICOS DE RANKINGS */}
+     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+        {isLoading ? (
+          <>
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className="h-[300px] w-full" />
+            ))}
+          </>
+        ) : (
+          <>
+            <TopClientsChart data={data?.topClients || []} />
+            <TopStoresChart data={data?.topStores || []} />
+          </>
+        )}
+      </div>
         {/* Gráfico de tipos de negocio */}
         <div className="grid gap-4 grid-cols-1">
           {isLoading ? (

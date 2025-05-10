@@ -1,10 +1,14 @@
+// app/admin/dashboard/services/dashboard.service.ts
 import { fetchUsers } from "../../usuarios/services/User.service"
 import { fetchMotorizados } from "../../motorizado/services/motorizado.service"
 import { fetchSocios } from "../../socios/services/Socios.service"
+import { fetchRankings } from "./rankings.service"
 import type { User } from "../../usuarios/types/User.types"
 import type { Motorizado } from "../../motorizado/types/motorizado.types"
 import type { Socio } from "../../socios/types/Socios.types"
-
+import type { TopClient, TopStore } from "./rankings.service"
+import { fetchLocalRatings } from "./ratings.service"
+// Tipo para las estadísticas del dashboard
 export type DashboardStats = {
   usuarios: {
     total: number
@@ -33,14 +37,26 @@ export type DashboardStats = {
     nombre: string
     estado: string
   }[]
+  // Nuevos campos para rankings
+  topClients: TopClient[]
+  topStores: TopStore[]
 }
 
+/**
+ * Función para obtener todas las estadísticas del dashboard
+ * @returns Estadísticas completas del dashboard
+ */
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {
-    // Fetch all data in parallel
-    const [usuarios, motorizados, socios] = await Promise.all([fetchUsers(), fetchMotorizados(), fetchSocios()])
+    // Obtener todos los datos en paralelo
+    const [usuarios, motorizados, socios, rankings] = await Promise.all([
+      fetchUsers(), 
+      fetchMotorizados(), 
+      fetchSocios(),
+      fetchRankings()
+    ])
 
-    // Process users data
+    // Procesar datos de usuarios
     const usuariosStats = {
       total: usuarios.length,
       administradores: usuarios.filter((u: User) => u.role_id === 1).length,
@@ -50,7 +66,7 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
       inactivos: usuarios.filter((u: User) => u.estado === 0).length,
     }
 
-    // Process motorized data
+    // Procesar datos de motorizados
     const motorizadosStats = {
       total: motorizados.length,
       pendientes: motorizados.filter((m: Motorizado) => !m.aprobado).length,
@@ -58,7 +74,7 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
       rechazados: 0, // No hay campo de rechazado en el tipo, asumimos 0
     }
 
-    // Process business partners data
+    // Procesar datos de socios comerciales
     const tiposNegocio: Record<string, number> = {}
     socios.forEach((socio: Socio) => {
       const tipo = socio.businessType || "Otro"
@@ -80,7 +96,7 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
       porTipoNegocio: tiposNegocio,
     }
 
-    // Get recent registrations (last 10)
+    // Obtener registros recientes (últimos 10)
     const registrosUsuarios = usuarios.map((u: User) => ({
       fecha: u.created_at || "",
       tipo: "usuario" as const,
@@ -114,14 +130,27 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
       })
       .slice(0, 10)
 
+    // Retornar todos los datos combinados
     return {
       usuarios: usuariosStats,
       motorizados: motorizadosStats,
       socios: sociosStats,
       registrosRecientes: todosRegistros,
+      // Añadir los datos de rankings
+      topClients: rankings.topClients,
+      topStores: rankings.topStores,
     }
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error)
+    console.error("Error al obtener estadísticas del dashboard:", error)
+    throw error
+  }
+}
+
+export const fetchLocalRatingData = async (localId: number) => {
+  try {
+    return await fetchLocalRatings(localId)
+  } catch (error) {
+    console.error("Error al obtener datos de calificaciones:", error)
     throw error
   }
 }

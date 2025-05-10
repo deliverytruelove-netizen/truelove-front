@@ -12,7 +12,7 @@ import { WebcamModal } from "./WebcamModal"
 import { useMediaQuery } from "../hooks/use-media-query"
 import { VisualCaptcha } from "./VisualCapcha"
 import { ValidationAlert } from "@/components/ValidationAlert"
-import type { FormData, DocumentInfo } from "../types/form-types"
+import type { FormData, DocumentInfo, DocumentoAdicional } from "../types/form-types"
 import { StepOne } from "./form-steps/StepOne"
 import { StepTwo } from "./form-steps/StepTwo"
 import { StepThree } from "./form-steps/StepThree"
@@ -50,12 +50,15 @@ export default function RegisterForm() {
     aceptaPolitica: false,
     documentoImagenFrente: null,
     documentoImagenReverso: null,
+    documentosAdicionales: []
   })
   const [isCameraOpenFrente, setIsCameraOpenFrente] = React.useState(false)
   const [isCameraOpenReverso, setIsCameraOpenReverso] = React.useState(false)
   const [previewImageFrente, setPreviewImageFrente] = React.useState<string | null>(null)
   const [previewImageReverso, setPreviewImageReverso] = React.useState<string | null>(null)
   const [validationError, setValidationError] = React.useState<string | null>(null)
+  const fileInputRefAdicional = React.useRef<HTMLInputElement>(null)
+const [isUploading, setIsUploading] = React.useState(false)
 
   const fileInputRefFrente = React.useRef<HTMLInputElement>(null)
   const fileInputRefReverso = React.useRef<HTMLInputElement>(null)
@@ -131,11 +134,85 @@ export default function RegisterForm() {
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
-
+const handleDocumentoAdicionalUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  
+  // Verificar tipo de archivo
+  if (file.type !== 'application/pdf') {
+    toast({
+      title: "Error",
+      description: "Solo se permiten archivos PDF",
+      variant: "destructive",
+    })
+    return
+  }
+  
+  // Verificar tamaño (2MB)
+  const maxSize = 2 * 1024 * 1024 // 2MB
+  if (file.size > maxSize) {
+    toast({
+      title: "Error",
+      description: "El archivo excede el tamaño máximo de 2MB",
+      variant: "destructive",
+    })
+    return
+  }
+  
+  setIsUploading(true)
+  try {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result)
+        } else {
+          reject(new Error("Failed to read file as base64"))
+        }
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+    
+    const nuevoDocumento: DocumentoAdicional = {
+      nombre: file.name,
+      archivo: base64,
+      tipo: file.type
+    }
+    
+    updateFormData("documentosAdicionales", [
+      ...formData.documentosAdicionales,
+      nuevoDocumento
+    ])
+    
+    toast({
+      title: "Documento agregado",
+      description: "El documento se ha agregado correctamente",
+    })
+  } catch (error) {
+    console.error("Error al procesar documento adicional:", error)
+    toast({
+      title: "Error",
+      description: "No se pudo procesar el documento",
+      variant: "destructive",
+    })
+  } finally {
+    setIsUploading(false)
+    // Limpiar el input para permitir seleccionar el mismo archivo nuevamente
+    if (fileInputRefAdicional.current) {
+      fileInputRefAdicional.current.value = ''
+    }
+  }
+}
   const handleSubmit = useCallback(async (): Promise<void> => {
     setIsLoading(true)
     setValidationError(null) // Clear any previous errors
     try {
+      const documentosAdicionales = formData.documentosAdicionales.map(doc => ({
+      nombre: doc.nombre,
+      archivo: doc.archivo.split(",")[1], // Eliminar el prefijo "data:application/pdf;base64,"
+      tipo: doc.tipo
+    }))
       const requestData = {
         departamento: formData.departamento,
         vehiculo: formData.vehiculo,
@@ -149,7 +226,8 @@ export default function RegisterForm() {
         acepta_politica: formData.aceptaPolitica,
         documento_imagen_frente: formData.documentoImagenFrente?.split(",")[1] || null,
         documento_imagen_reverso: formData.documentoImagenReverso?.split(",")[1] || null,
-      }
+      documentos_adicionales: documentosAdicionales.length > 0 ? documentosAdicionales : undefined
+    }
 
       console.log("Enviando datos de registro:", requestData)
 
@@ -529,13 +607,16 @@ export default function RegisterForm() {
                 isLoading={isLoading}
                 handleDocumentChange={handleDocumentChange}
                 handleFileUpload={handleFileUpload}
+                handleDocumentoAdicionalUpload={handleDocumentoAdicionalUpload}
                 previewImageFrente={previewImageFrente}
                 previewImageReverso={previewImageReverso}
                 fileInputRefFrente={fileInputRefFrente}
                 fileInputRefReverso={fileInputRefReverso}
+                fileInputRefAdicional={fileInputRefAdicional}
                 isMobile={isMobile}
                 setIsCameraOpenFrente={setIsCameraOpenFrente}
                 setIsCameraOpenReverso={setIsCameraOpenReverso}
+                isUploading={isUploading}
               />
             )}
 

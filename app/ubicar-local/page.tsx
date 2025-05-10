@@ -17,14 +17,14 @@ import { useToast } from "@/hooks/use-toast"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
-type MapboxFeature = {
-  id: string
-  place_name: string
-  center: [number, number]
-  text: string
-  context?: { id: string; text: string }[]
-  address?: string // Added the address property
-  businessName?: string // Added the business name property
+// Actualización de la interfaz para Google Maps
+interface GoogleMapsLocation {
+  place_id?: string;
+  formatted_address: string;
+  center: [number, number];
+  name?: string;
+  address_components?: google.maps.GeocoderAddressComponent[];
+  businessName?: string;
 }
 
 type FormData = {
@@ -41,7 +41,7 @@ export default function BusinessLocation() {
   useBodyScrollLock()
   const router = useRouter()
   const { toast } = useToast()
-  const [selectedLocation, setSelectedLocation] = useState<MapboxFeature | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<GoogleMapsLocation | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<FormData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -72,62 +72,56 @@ export default function BusinessLocation() {
     }
   };
   
-  // Efecto para verificar el token de registro al cargar el componente
-useEffect(() => {
-  const checkToken = async () => {
-    const data = await getRegistrationData();
-    if (!data || (data.current_step !== '/ubicar-local' && data.current_step !== '/datosClaves')) {
-      toast({
-        title: "Error",
-        description: "Por favor complete los pasos anteriores",
-        variant: "destructive",
-      });
-      router.push('/');
-      return;
-    }
+  useEffect(() => {
+    const checkToken = async () => {
+      const data = await getRegistrationData();
+      if (!data || (data.current_step !== '/ubicar-local' && data.current_step !== '/datosClaves')) {
+        toast({
+          title: "Error",
+          description: "Por favor complete los pasos anteriores",
+          variant: "destructive",
+        });
+        router.push('/');
+        return;
+      }
 
-    // Cargar datos del establecimiento si existen
-  // Cargar datos del establecimiento si existen
-if (data.registration_id) {
-  const establecimientoData = await fetchEstablecimientoData(data.registration_id);
-  if (establecimientoData) {
-    console.log("Datos del establecimiento:", establecimientoData);
-    
-    // Actualizar el estado del componente con los datos existentes
-    setSelectedLocation({
-      id: 'existing-location',
-      place_name: establecimientoData.direccion_completa,
-      center: [parseFloat(establecimientoData.longitud), parseFloat(establecimientoData.latitud)],
-      text: establecimientoData.calle,
-      context: [
-        { id: 'region.123', text: establecimientoData.provincia },
-        { id: 'place.123', text: establecimientoData.ciudad },
-        { id: 'postcode.123', text: establecimientoData.codigo_postal }
-      ],
-      address: establecimientoData.numero,
-      businessName: establecimientoData.nombre_establecimiento
-    });
+      if (data.registration_id) {
+        const establecimientoData = await fetchEstablecimientoData(data.registration_id);
+        if (establecimientoData) {
+          console.log("Datos del establecimiento:", establecimientoData);
+          
+          setSelectedLocation({
+            place_id: 'existing-location',
+            formatted_address: establecimientoData.direccion_completa,
+            center: [parseFloat(establecimientoData.longitud), parseFloat(establecimientoData.latitud)],
+            name: establecimientoData.nombre_establecimiento,
+            address_components: [
+              { long_name: establecimientoData.provincia, types: ['administrative_area_level_1'] },
+              { long_name: establecimientoData.ciudad, types: ['locality'] },
+              { long_name: establecimientoData.codigo_postal, types: ['postal_code'] }
+            ] as google.maps.GeocoderAddressComponent[],
+            businessName: establecimientoData.nombre_establecimiento
+          });
 
-    // Actualizar el formulario con los datos existentes
-    setFormData({
-      businessName: establecimientoData.nombre_establecimiento,
-      street: establecimientoData.calle,
-      number: establecimientoData.numero,
-      postalCode: establecimientoData.codigo_postal,
-      province: establecimientoData.provincia,
-      city: establecimientoData.ciudad,
-      reference: establecimientoData.referencia || '',
-    });
+          setFormData({
+            businessName: establecimientoData.nombre_establecimiento,
+            street: establecimientoData.calle,
+            number: establecimientoData.numero,
+            postalCode: establecimientoData.codigo_postal,
+            province: establecimientoData.provincia,
+            city: establecimientoData.ciudad,
+            reference: establecimientoData.referencia || '',
+          });
 
-    setShowForm(true);
-  }
-}
-  };
+          setShowForm(true);
+        }
+      }
+    };
 
-  checkToken();
-}, [router, toast]);
+    checkToken();
+  }, [router, toast]);
 
-  const handleLocationSelect = (location: MapboxFeature) => {
+  const handleLocationSelect = (location: GoogleMapsLocation) => {
     console.log("Location selected:", location)
     setSelectedLocation(location)
     setShowForm(true)
@@ -152,7 +146,7 @@ if (data.registration_id) {
       const locationData = {
         ...formData,
         coordinates: selectedLocation.center,
-        fullAddress: selectedLocation.place_name,
+        fullAddress: selectedLocation.formatted_address,
         business_registration_id: registrationData.registration_id
       }
 
@@ -174,9 +168,7 @@ if (data.registration_id) {
       const result = await response.json()
       console.log('Respuesta del servidor recibida:', result)
       
-      // Actualizar el paso del registro
       await updateRegistrationStep('/datosClaves')
-
       await new Promise(resolve => setTimeout(resolve, 1000))
       router.push('/datosClaves')
 
@@ -192,13 +184,9 @@ if (data.registration_id) {
     }
   }
 
-  //funciom para manejar el botón de volver
-
-
   const handleBack = async () => {
     try {
       await updateRegistrationStep('/acercaNegocio')
-      //vavegar al paso anterior 
       router.push('/acercaNegocio')
     } catch (error) {
       console.error('Error al volver hacia atras:', error)
@@ -226,12 +214,12 @@ if (data.registration_id) {
         <div className="hidden md:flex w-full md:w-1/2 p-4 bg-gray-100">
           <div className="h-full flex justify-center items-center">
             <Image
-              src={ImaDelivery}
+             src={ImaDelivery || "/placeholder.svg"}
               alt="delivery"
               layout="responsive"
               width={500}
               height={500}
-              priority
+              loading="lazy" // Usar lazy loading en su lugar
             />
           </div>
         </div>
@@ -281,4 +269,3 @@ if (data.registration_id) {
     </div>
   )
 }
-

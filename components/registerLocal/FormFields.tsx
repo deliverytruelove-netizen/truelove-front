@@ -1,3 +1,4 @@
+// components\registerLocal\FormFields.tsx
 "use client"
 
 import type React from "react"
@@ -6,6 +7,7 @@ import { useState } from "react"
 import { Upload, FileText, AlertCircle } from "lucide-react"
 
 
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -247,6 +249,32 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           className="bg-white/50 backdrop-blur-sm"
         />
       </div>
+      
+      <div className="flex items-start space-x-3 mt-4 p-3 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors">
+  <Checkbox
+    id="posToDriver"
+    name="posToDriver"
+    checked={formData.posToDriver || false}
+    onCheckedChange={(checked) => {
+      setFormData({
+        ...formData,
+        posToDriver: checked === true,
+      });
+    }}
+    className="mt-0.5" // Alinea verticalmente el checkbox con el texto
+  />
+  <div className="flex flex-col">
+    <label
+      htmlFor="posToDriver"
+      className="text-sm font-medium text-gray-900 cursor-pointer"
+    >
+      ¿Deseas facilitar tu máquina POS al driver?
+    </label>
+    {/* <p className="text-xs text-gray-500 mt-1">
+      Esta opción permite que el repartidor use tu dispositivo para cobros con tarjeta a los clientes.
+    </p> */}
+  </div>
+</div>
     </>
   )
 }
