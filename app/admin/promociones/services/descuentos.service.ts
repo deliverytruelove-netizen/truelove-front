@@ -2,7 +2,7 @@
 import axios from "axios";
 import { DescuentoCliente, TopCliente, Cliente } from "../types/descuento.types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+const API_URL = process.env.NEXT_PUBLIC_API_WEB || " ";
 
 export const getDescuentos = async (): Promise<DescuentoCliente[]> => {
   const response = await axios.get(`${API_URL}/descuentos/clientes`);
