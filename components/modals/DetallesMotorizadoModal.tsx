@@ -42,6 +42,7 @@ interface FileDisplayProps {
   src: string | null;
   alt: string;
   title: string;
+  downloadName?: string;
 }
 
 // Componente para los botones de las pestañas
@@ -110,7 +111,7 @@ const normalizeFilePath = (src: string): string => {
 };
 
 // Componente para mostrar archivos (imágenes o PDFs)
-const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
+const FileDisplay = ({ src, alt, title, downloadName }: FileDisplayProps) => {
   if (!src) return <p className="text-gray-500">Archivo no disponible</p>;
 
   try {
@@ -125,7 +126,7 @@ const FileDisplay = ({ src, alt, title }: FileDisplayProps) => {
         <div className="flex flex-col items-center w-full">
           {isPdf ? (
             // Usar el componente PDFViewer para PDFs con la ruta normalizada
-            <PDFViewer url={normalizedPath} title={title} />
+            <PDFViewer url={normalizedPath} title={title} downloadName= {downloadName} />
           ) : (
             // Usar el componente ImageThumbnail para imágenes
             <ImageThumbnail
@@ -198,6 +199,7 @@ export function DetallesMotorizadoModal({
     useAnimatedUnmount(showNotification, 300);
   const [showAsignarPedidosModal, setShowAsignarPedidosModal] = useState(false);
   const queryClient = useQueryClient();
+
   // Actualizar el estado local de aprobación cuando cambian los datos
   useEffect(() => {
     if (data) {
@@ -256,6 +258,13 @@ export function DetallesMotorizadoModal({
           "No se pudo aprobar el motorizado o enviar las credenciales.",
       });
     }
+  };
+  // Añade esta función dentro del componente DetallesMotorizadoModal, justo después de handleAprobar
+  const getDocumentoByCategoría = (categoria: string) => {
+    if (!data?.personal?.documentos_adicionales) return null;
+    return data.personal.documentos_adicionales.find(
+      (doc) => doc.categoria === categoria
+    );
   };
 
   return (
@@ -386,6 +395,97 @@ export function DetallesMotorizadoModal({
                       </div>
                     )}
                   </div>
+                  {/* Documentos adicionales */}
+                  {data.personal.documentos_adicionales &&
+                    data.personal.documentos_adicionales.length > 0 && (
+                      <>
+                        <div className="mt-8 mb-4">
+                          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-red-600" />
+                            Documentos Adicionales
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Curriculum */}
+                          {getDocumentoByCategoría("curriculum") && (
+                            <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                              <ImageTitle>Curriculum Vitae</ImageTitle>
+                              <FileDisplay
+                                src={normalizeFilePath(
+                                  getDocumentoByCategoría("curriculum")?.ruta ||
+                                    ""
+                                )}
+                                alt="Curriculum Vitae"
+                                // title={
+                                //   getDocumentoByCategoría("curriculum")
+                                //     ?.nombre || "Curriculum Vitae"
+                                // }
+                                 title=""
+                                 downloadName= {`curriculum_${data.personal.nro_documento}.pdf`}                              />
+                              <p className="text-xs text-gray-500 mt-2 text-center">
+                                Subido el:{" "}
+                                {getDocumentoByCategoría("curriculum")
+                                  ?.fecha_carga || ""}
+                              </p>
+                            </div>
+                          )}
+                          {/* Antecedentes Penales */}
+                          {getDocumentoByCategoría("antecedentes_penales") && (
+                            <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                              <ImageTitle>Antecedentes Penales</ImageTitle>
+                              <FileDisplay
+                                src={normalizeFilePath(
+                                  getDocumentoByCategoría(
+                                    "antecedentes_penales"
+                                  )?.ruta || ""
+                                )}
+                                alt="Antecedentes Penales"
+                                // title={
+                                //   getDocumentoByCategoría(
+                                //     "antecedentes_penales"
+                                //   )?.nombre || "Antecedentes Penales"
+                                // }
+                                title=""
+                                downloadName= {`antecedentes_penales_${data.personal.nro_documento}.pdf`}                              />
+                              <p className="text-xs text-gray-500 mt-2 text-center">
+                                Subido el:{" "}
+                                {getDocumentoByCategoría("antecedentes_penales")
+                                  ?.fecha_carga || ""}
+                              </p>
+                            </div>
+                          )}
+                          {/* Antecedentes Policiales */}
+                          {getDocumentoByCategoría(
+                            "antecedentes_policiales"
+                          ) && (
+                            <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                              <ImageTitle>Antecedentes Policiales</ImageTitle>
+                              <FileDisplay
+                                src={normalizeFilePath(
+                                  getDocumentoByCategoría(
+                                    "antecedentes_policiales"
+                                  )?.ruta || ""
+                                )}
+                                alt="Antecedentes Policiales"
+                                // title={
+                                //   getDocumentoByCategoría(
+                                //     "antecedentes_policiales"
+                                //   )?.nombre || "Antecedentes Policiales"
+                                // }
+                                 title=""
+                                 downloadName={`antecedentes_policiales_${data.personal.nro_documento}.pdf`}                              />
+                              <p className="text-xs text-gray-500 mt-2 text-center">
+                                Subido el:{" "}
+                                {getDocumentoByCategoría(
+                                  "antecedentes_policiales"
+                                )?.fecha_carga || ""}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                 </div>
               )}
 

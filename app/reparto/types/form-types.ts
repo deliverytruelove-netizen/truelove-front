@@ -28,4 +28,5 @@ export interface DocumentoAdicional{
   nombre: string
   archivo : string
   tipo: string
+  categoria : string
 }

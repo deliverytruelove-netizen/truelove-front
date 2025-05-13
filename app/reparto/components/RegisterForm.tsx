@@ -158,7 +158,9 @@ const handleDocumentoAdicionalUpload = async (e: React.ChangeEvent<HTMLInputElem
     })
     return
   }
-  
+  // obtener la categoria del artributo data
+  const categoria = fileInputRefAdicional.current?.getAttribute('data-categoria') || 'otros'
+
   setIsUploading(true)
   try {
     const base64 = await new Promise<string>((resolve, reject) => {
@@ -173,15 +175,20 @@ const handleDocumentoAdicionalUpload = async (e: React.ChangeEvent<HTMLInputElem
       reader.onerror = reject
       reader.readAsDataURL(file)
     })
-    
+   
     const nuevoDocumento: DocumentoAdicional = {
       nombre: file.name,
       archivo: base64,
-      tipo: file.type
+      tipo: file.type,
+      categoria: categoria
+
     }
-    
+// Eliminar documento anterior de la misma categoría si existe
+    const documentosActualizados = formData.documentosAdicionales.filter(
+      doc => doc.categoria !== categoria
+    );
     updateFormData("documentosAdicionales", [
-      ...formData.documentosAdicionales,
+      ...documentosActualizados,
       nuevoDocumento
     ])
     
@@ -211,7 +218,8 @@ const handleDocumentoAdicionalUpload = async (e: React.ChangeEvent<HTMLInputElem
       const documentosAdicionales = formData.documentosAdicionales.map(doc => ({
       nombre: doc.nombre,
       archivo: doc.archivo.split(",")[1], // Eliminar el prefijo "data:application/pdf;base64,"
-      tipo: doc.tipo
+      tipo: doc.tipo,
+      categoria : doc.categoria
     }))
       const requestData = {
         departamento: formData.departamento,
