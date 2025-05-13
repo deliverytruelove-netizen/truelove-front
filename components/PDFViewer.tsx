@@ -14,9 +14,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`
 interface PDFViewerProps {
   url: string | null
   title: string
+  downloadName?: string
 }
 
-export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
+export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }) => {
   const [numPages, setNumPages] = useState<number | null>(null)
   const [pageNumber, setPageNumber] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +49,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title }) => {
       const downloadUrl = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = downloadUrl
-      link.download = `${title.toLowerCase().replace(/ /g, "_")}.pdf`
+
+      // usar el donwloadName si se proporciona, de lo contrario usar el título
+      link.download = downloadName || `${title.toLowerCase().replace(/ /g, "_")}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

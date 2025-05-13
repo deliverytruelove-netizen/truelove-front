@@ -43,39 +43,63 @@ function MenuContent() {
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
   const router = useRouter()
-
+// Añadir esta línea junto a los otros estados
+const [productCounts, setProductCounts] = useState<Record<number, number>>({});
   // Modificar la función loadData para mostrar más información de depuración
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true)
+ const loadData = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      // Cargar categorías
-      const categoriesResponse = await menuService.getCategories()
+    // Cargar categorías
+    const categoriesResponse = await menuService.getCategories();
 
-      if (categoriesResponse.success) {
-        setCategories(categoriesResponse.data || [])
-        console.log("Categorías cargadas:", categoriesResponse.data)
-      } else {
-        throw new Error(categoriesResponse.message || "Error al cargar categorías")
+    if (categoriesResponse.success) {
+      setCategories(categoriesResponse.data || []);
+      console.log("Categorías cargadas:", categoriesResponse.data);
+      
+      // Calcular conteos de productos por categoría
+      const productCountsTemp: Record<number, number> = {};
+      
+      if (categoriesResponse.data && categoriesResponse.data.length > 0) {
+        // Primero inicializamos todos los contadores a 0
+        categoriesResponse.data.forEach(category => {
+          productCountsTemp[category.id] = 0;
+        });
+        
+        // Luego cargamos los productos de cada categoría
+        for (const category of categoriesResponse.data) {
+          try {
+            const categoryProducts = await menuService.getMenusByCategory(category.id.toString());
+            productCountsTemp[category.id] = categoryProducts.length;
+            console.log(`Categoría ${category.id} (${category.nombre}): ${categoryProducts.length} productos`);
+          } catch (error) {
+            console.error(`Error al cargar productos para categoría ${category.id}:`, error);
+          }
+        }
       }
-
-      // Cargar menús
-      const menusResponse = await menuService.getMenus()
-      console.log("Respuesta completa de menús:", menusResponse)
-
-      // Los menús ya vienen procesados del servicio
-      setMenuItems(menusResponse)
-    } catch (error: unknown) {
-      console.error("Error al cargar datos:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al cargar datos",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+      
+      // Actualizar el estado con los conteos correctos
+      setProductCounts(productCountsTemp);
+    } else {
+      throw new Error(categoriesResponse.message || "Error al cargar categorías");
     }
-  }, [toast])
+
+    // Cargar menús (opcional, si necesitas todos los menús para otra funcionalidad)
+    const menusResponse = await menuService.getMenus();
+    console.log("Respuesta completa de menús:", menusResponse);
+    setMenuItems(menusResponse);
+    
+  } catch (error: unknown) {
+    console.error("Error al cargar datos:", error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Error al cargar datos",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [toast]);
 
   useEffect(() => {
     loadData()
@@ -210,15 +234,7 @@ function MenuContent() {
     }
   }
 
-  // Calcular el número de productos por categoría
-  const productCounts: Record<number, number> = {}
-  categories.forEach((category) => {
-    productCounts[category.id] = menuItems.filter((item) => {
-      const categoryId = Number(category.id)
-      const itemCategoryId = Number(item.categoria_id)
-      return !isNaN(categoryId) && !isNaN(itemCategoryId) && categoryId === itemCategoryId
-    }).length
-  })
+
   
 
   // Filtrar categorías según el término de búsqueda

@@ -132,30 +132,72 @@ export function StepThree({
 
       {/* Sección de documentos adicionales */}
       <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex justify-between items-center mb-2">
-          <Label>Documentos adicionales</Label>
-          <span className="text-sm text-gray-500">(Opcional, máx. 2MB)</span>
-        </div>
+      <div className="flex justify-between items-center mb-2">
+  <Label>Documentos requeridos</Label>
+  <span className="text-sm text-gray-500">(Opcional, máx. 2MB)</span>
+</div>
+
         
         <div className="space-y-3">
-          {formData.documentosAdicionales?.map((doc, index) => (
-            <div key={index} className="flex items-center justify-between border p-2 rounded">
-              <div className="truncate max-w-[80%]">{doc.nombre}</div>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  const nuevosDocumentos = [...formData.documentosAdicionales];
-                  nuevosDocumentos.splice(index, 1);
-                  updateFormData("documentosAdicionales", nuevosDocumentos);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
           
-          <input
+          {/* Mostrar documentos subidos agrupados por categoría */}
+          {['curriculum', 'antecedentes_penales', 'antecedentes_policiales'].map((categoria) => {
+            const documentosCategoria = formData.documentosAdicionales?.filter(doc => doc.categoria === categoria);
+            return (
+              <div key={categoria} className="mb-3">
+                <Label className="mb-1 block">
+                  {categoria === 'curriculum' ? 'Curriculum Vitae' :
+                    categoria === 'antecedentes_penales' ? 'Antecedentes Penales' :
+                      'Antecedentes Policiales'}
+                </Label>
+
+                {documentosCategoria?.length > 0 ? (
+                  documentosCategoria.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between border p-2 rounded mb-2">
+                      <div className="truncate max-w-[80%]">{doc.nombre}</div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const nuevosDocumentos = formData.documentosAdicionales.filter(
+                            (d) => !(d.nombre === doc.nombre && d.categoria === categoria)
+                          );
+                          updateFormData("documentosAdicionales", nuevosDocumentos);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full mb-2"
+                    onClick={() => {
+                      if (fileInputRefAdicional.current) {
+                        fileInputRefAdicional.current.setAttribute('data-categoria', categoria);
+                        fileInputRefAdicional.current.click();
+                      }
+                    }}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Subir documento (PDF, máx. 2MB)
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+          <Input
             type="file"
             id="documentoAdicional"
             ref={fileInputRefAdicional}
@@ -163,26 +205,7 @@ export function StepThree({
             accept=".pdf,application/pdf"
             className="hidden"
           />
-          
-          <Button 
-            variant="outline" 
-            className="w-full" 
-            onClick={() => fileInputRefAdicional.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Procesando...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Subir documento adicional (PDF, máx. 2MB)
-              </>
-            )}
-          </Button>
-          
+                   
           <p className="text-xs text-gray-500 mt-1">
             Consejo: Para reducir el tamaño de tus PDFs, puedes usar herramientas en línea como 
             <a href="https://smallpdf.com/compress-pdf" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">

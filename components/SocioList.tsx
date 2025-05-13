@@ -200,7 +200,8 @@ const SocioList: React.FC = () => {
     const searchTerm = globalFilter.toLowerCase()
     const matchesSearch =
       !globalFilter ||
-      socio.personal?.name?.toLowerCase().includes(searchTerm) ||
+      // socio.personal?.name?.toLowerCase().includes(searchTerm) ||
+      (socio.personal?.name?.toLowerCase() + " " + socio.personal?.lastName?.toLowerCase()).includes(searchTerm) ||
       socio.personal?.lastName?.toLowerCase().includes(searchTerm) ||
       socio.personal?.businessType?.toLowerCase().includes(searchTerm) ||
       socio.personal?.phone?.toLowerCase().includes(searchTerm) ||
@@ -317,12 +318,8 @@ const SocioList: React.FC = () => {
                 <th scope="col" className="px-4 py-3 text-center w-12">
                   #
                 </th>
-                <th scope="col" className="px-4 py-3">
-                  Usuario
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Apellidos
-                </th>
+              
+                <th scope="col" className="px-4 py-3"> Datos </th>
                 <th scope="col" className="px-4 py-3">
                   Tipo de Negocio
                 </th>
@@ -395,10 +392,21 @@ const SocioList: React.FC = () => {
                   return (
                     <tr key={socio.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
-                      <td className="px-4 py-3 font-medium text-gray-800">
-                        {socio.personal?.name || "No especificado"}
+
+                      <td className="px-4 py-3">
+                        <div>
+                          <div className="font-medium text-gray-800">
+                            {socio.personal?.name || "No especificado"} {socio.personal?.lastName || ""}
+                          </div>
+                          {socio.documentType && socio.documentNumber && (
+                            <div className="text-xs text-gray-600">
+                              {socio.documentType} : {socio.documentNumber}
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{socio.personal?.lastName || "No especificado"}</td>
+
+
                       <td className="px-4 py-3 text-gray-600">{socio.personal?.businessType || "No especificado"}</td>
                       <td className="px-4 py-3 text-gray-600">{socio.personal?.phone || "No especificado"}</td>
                       <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">

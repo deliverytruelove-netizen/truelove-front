@@ -25,6 +25,13 @@ export interface DetallesMotorizado {
     created_at: string;
     documento_imagen_frente?: string;
     documento_imagen_reverso?: string;
+    documentos_adicionales?: Array<{
+      // nombre: string;
+      ruta: string;
+      tipo: string;
+      categoria: string;
+      fecha_carga: string;
+    }>;
   };
   datosPersonales: {
     fecha_nacimiento: string;

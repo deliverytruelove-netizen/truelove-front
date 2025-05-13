@@ -11,6 +11,7 @@ interface PDFModalProps {
   onClose: () => void
   url: string
   title: string
+  
 }
 
 export function PDFModal({ isOpen, onClose, url, title }: PDFModalProps) {

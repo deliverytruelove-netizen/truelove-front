@@ -178,7 +178,11 @@ const MotorizadoList: React.FC = () => {
 
       const searchTerm = globalFilter.toLowerCase();
       return (
-        motorizado.nombres?.toLowerCase().includes(searchTerm) ||
+        (
+          motorizado.nombres?.toLowerCase() +
+          " " +
+          motorizado.apellidos?.toLowerCase()
+        ).includes(searchTerm) ||
         motorizado.apellidos?.toLowerCase().includes(searchTerm) ||
         motorizado.celular?.toLowerCase().includes(searchTerm) ||
         motorizado.email?.toLowerCase().includes(searchTerm) ||
@@ -252,11 +256,17 @@ const MotorizadoList: React.FC = () => {
                 <th scope="col" className="px-4 py-3 text-center w-12">
                   #
                 </th>
-                <th scope="col" className="px-4 py-3">
+                {/* <th scope="col" className="px-4 py-3">
                   Nombre
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Apellidos
+                </th> */}
+                <th scope="col" className="px-4 py-3">
+                  Datos
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Documento
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Teléfono
@@ -264,9 +274,7 @@ const MotorizadoList: React.FC = () => {
                 <th scope="col" className="px-4 py-3">
                   Correo
                 </th>
-                <th scope="col" className="px-4 py-3">
-                  Documento
-                </th>
+
                 <th scope="col" className="px-4 py-3 text-center">
                   Fecha de Registro
                 </th>
@@ -341,18 +349,27 @@ const MotorizadoList: React.FC = () => {
                         {rowNumber}
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-800">
-                        {motorizado.nombres}
+                        {motorizado.nombres} {motorizado.apellidos}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {motorizado.apellidos}
-                      </td>
+                      {/* <td className="px-4 py-3">
+  <div>
+    <div className="font-medium text-gray-800">
+      {motorizado.nombres} {motorizado.apellidos}
+    </div>
+    <div className="text-xs text-gray-500">
+      {motorizado.tipo_documento}: {motorizado.nro_documento}
+    </div>
+  </div>
+</td> */}
+
+                      <td className="px-4 py-3 text-gray-600">{`${motorizado.tipo_documento}: ${motorizado.nro_documento}`}</td>
                       <td className="px-4 py-3 text-gray-600">
                         {motorizado.celular}
                       </td>
                       <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">
                         {motorizado.email}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{`${motorizado.tipo_documento}: ${motorizado.nro_documento}`}</td>
+
                       <td className="px-4 py-3 text-center text-gray-600">
                         {formatDate(motorizado.created_at)}
                       </td>
@@ -398,7 +415,11 @@ const MotorizadoList: React.FC = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() =>
-                              handleDelete(motorizado.id, motorizado.nombres)
+                              // handleDelete(motorizado.id, motorizado.nombres)
+                              handleDelete(
+                                motorizado.id,
+                                `${motorizado.nombres} ${motorizado.apellidos}`
+                              )
                             }
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             title="Eliminar motorizado"
