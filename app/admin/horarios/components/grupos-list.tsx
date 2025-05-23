@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, Trash2, Edit, Plus, Calendar } from "lucide-react";
+import { Clock, Users, Trash2, Edit, Plus, Calendar } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface GruposListProps {
@@ -48,8 +48,15 @@ export function GruposList({
   const [grupoToDelete, setGrupoToDelete] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Función para formatear hora de 24h a 12h para mostrar
+  const formatTimeDisplay = (time24: string): string => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
 
-const loadGrupos = useCallback(async () => {
+  const loadGrupos = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchGruposHorarios();
@@ -66,7 +73,7 @@ const loadGrupos = useCallback(async () => {
     }
   }, [toast]); // Incluye toast como dependencia
   
-useEffect(() => {
+  useEffect(() => {
     loadGrupos();
   }, [refreshTrigger, loadGrupos]);
 
@@ -234,7 +241,7 @@ useEffect(() => {
                               {formatDiaSemana(rango.dia_semana)}
                             </Badge>
                             <span className="font-medium">
-                              {rango.hora_inicio} - {rango.hora_fin}
+                              {formatTimeDisplay(rango.hora_inicio)} - {formatTimeDisplay(rango.hora_fin)}
                             </span>
                           </div>
                         ))}
