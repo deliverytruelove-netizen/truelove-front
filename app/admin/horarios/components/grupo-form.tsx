@@ -1,7 +1,7 @@
 // app/admin/horarios/components/grupo-form.tsx
 "use client";
 
-import { useState, useEffect , useCallback} from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   createGrupoHorario,
   updateGrupoHorario,
@@ -59,6 +59,14 @@ interface GrupoFormProps {
 }
 
 export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
+  // Función para convertir hora de 24h a 12h con AM/PM
+  const formatTimeToDisplay = (time24: string): string => {
+    const [hours, minutes] = time24.split(":").map(Number);
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${displayHour}:${minutes.toString().padStart(2, "0")} ${period}`;
+  };
+
   const [nombre, setNombre] = useState(grupo?.nombre || "");
   const [descripcion, setDescripcion] = useState(grupo?.descripcion || "");
   const [rangos, setRangos] = useState<
@@ -70,7 +78,7 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
   const [motorizadosDisponibles, setMotorizadosDisponibles] = useState<
     Motorizado[]
   >([]);
-const [, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [motorizadosDialogOpen, setMotorizadosDialogOpen] = useState(false);
   const [rangoDialogOpen, setRangoDialogOpen] = useState(false);
@@ -85,7 +93,6 @@ const [, setLoading] = useState(false);
 
   const { toast } = useToast();
 
-
   useEffect(() => {
     // Actualizar estado de "todos seleccionados" cuando cambia la selección
     const todosDisponiblesSeleccionados =
@@ -96,27 +103,26 @@ const [, setLoading] = useState(false);
     setTodosSeleccionados(todosDisponiblesSeleccionados);
   }, [motorizadosSeleccionados, motorizadosDisponibles]);
 
-const loadMotorizados = useCallback(async () => {
-  try {
-    setLoading(true);
-    const data = await fetchMotorizadosDisponibles();
-    setMotorizadosDisponibles(data);
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "No se pudieron cargar los motorizados disponibles",
-      variant: "destructive",
-    });
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-}, [toast]); 
+  const loadMotorizados = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchMotorizadosDisponibles();
+      setMotorizadosDisponibles(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los motorizados disponibles",
+        variant: "destructive",
+      });
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     loadMotorizados();
   }, [loadMotorizados]);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,91 +184,95 @@ const loadMotorizados = useCallback(async () => {
     }
   };
 
-const handleAddRango = () => {
-  // Validar que la hora de fin sea posterior a la hora de inicio
-  if (nuevoRango.hora_inicio >= nuevoRango.hora_fin) {
-    toast({
-      title: "Error",
-      description: "La hora de fin debe ser posterior a la hora de inicio",
-      variant: "destructive",
-    })
-    return
-  }
-
-  // Validar que se haya seleccionado al menos un día
-  if (nuevoRango.dia_semana.length === 0) {
-    toast({
-      title: "Error",
-      description: "Debes seleccionar al menos un día de la semana",
-      variant: "destructive",
-    })
-    return
-  }
-
-  // Verificar si alguno de los días seleccionados ya existe
-  const diasExistentes = nuevoRango.dia_semana.filter(dia => 
-    rangos.some(rango => 
-      // Asegurarnos de que rango.dia_semana es un array
-      Array.isArray(rango.dia_semana) && rango.dia_semana.includes(dia)
-    )
-  );
-
-  let diasDuplicados: string[] = [];
-  const nuevosRangos: Rango[] = [];
-
-  if (diasExistentes.length > 0) {
-    // Hay días duplicados
-    diasDuplicados = diasExistentes.map(dia => formatDiaSemana(dia));
-    
-    // Filtrar los días que no están duplicados
-    const diasNoExistentes = nuevoRango.dia_semana.filter(dia => 
-      !diasExistentes.includes(dia)
-    );
-    
-    if (diasNoExistentes.length === 0) {
-      // Todos los días seleccionados ya existen
+  const handleAddRango = () => {
+    // Validar que la hora de fin sea posterior a la hora de inicio
+    if (nuevoRango.hora_inicio >= nuevoRango.hora_fin) {
       toast({
         title: "Error",
-        description: "Todos los días seleccionados ya tienen rangos asignados.",
+        description: "La hora de fin debe ser posterior a la hora de inicio",
         variant: "destructive",
       });
       return;
     }
-    
-    // Mostrar advertencia sobre días duplicados
-    toast({
-      title: "Advertencia",
-      description: `Ya existen rangos para: ${diasDuplicados.join(", ")}. Solo se añadirán los días restantes.`,
-      variant: 'default',
-    });
-    
-    // Crear un solo rango con los días no duplicados
-    nuevosRangos.push({
-      dia_semana: diasNoExistentes,
-      hora_inicio: nuevoRango.hora_inicio,
-      hora_fin: nuevoRango.hora_fin,
-    });
-  } else {
-    // No hay días duplicados, crear un solo rango con todos los días seleccionados
-    nuevosRangos.push({
-      dia_semana: [...nuevoRango.dia_semana],
-      hora_inicio: nuevoRango.hora_inicio,
-      hora_fin: nuevoRango.hora_fin,
-    });
-  }
 
-  // Añadir los nuevos rangos
-  setRangos((prevRangos) => [...prevRangos, ...nuevosRangos]);
-  
-  setRangoDialogOpen(false);
+    // Validar que se haya seleccionado al menos un día
+    if (nuevoRango.dia_semana.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar al menos un día de la semana",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // Resetear el formulario de nuevo rango
-  setNuevoRango({
-    dia_semana: ["lunes"],
-    hora_inicio: "08:00",
-    hora_fin: "17:00",
-  });
-}
+    // Verificar si alguno de los días seleccionados ya existe
+    const diasExistentes = nuevoRango.dia_semana.filter((dia) =>
+      rangos.some(
+        (rango) =>
+          // Asegurarnos de que rango.dia_semana es un array
+          Array.isArray(rango.dia_semana) && rango.dia_semana.includes(dia)
+      )
+    );
+
+    let diasDuplicados: string[] = [];
+    const nuevosRangos: Rango[] = [];
+
+    if (diasExistentes.length > 0) {
+      // Hay días duplicados
+      diasDuplicados = diasExistentes.map((dia) => formatDiaSemana(dia));
+
+      // Filtrar los días que no están duplicados
+      const diasNoExistentes = nuevoRango.dia_semana.filter(
+        (dia) => !diasExistentes.includes(dia)
+      );
+
+      if (diasNoExistentes.length === 0) {
+        // Todos los días seleccionados ya existen
+        toast({
+          title: "Error",
+          description:
+            "Todos los días seleccionados ya tienen rangos asignados.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Mostrar advertencia sobre días duplicados
+      toast({
+        title: "Advertencia",
+        description: `Ya existen rangos para: ${diasDuplicados.join(
+          ", "
+        )}. Solo se añadirán los días restantes.`,
+        variant: "default",
+      });
+
+      // Crear un solo rango con los días no duplicados
+      nuevosRangos.push({
+        dia_semana: diasNoExistentes,
+        hora_inicio: nuevoRango.hora_inicio,
+        hora_fin: nuevoRango.hora_fin,
+      });
+    } else {
+      // No hay días duplicados, crear un solo rango con todos los días seleccionados
+      nuevosRangos.push({
+        dia_semana: [...nuevoRango.dia_semana],
+        hora_inicio: nuevoRango.hora_inicio,
+        hora_fin: nuevoRango.hora_fin,
+      });
+    }
+
+    // Añadir los nuevos rangos
+    setRangos((prevRangos) => [...prevRangos, ...nuevosRangos]);
+
+    setRangoDialogOpen(false);
+
+    // Resetear el formulario de nuevo rango
+    setNuevoRango({
+      dia_semana: ["lunes"],
+      hora_inicio: "08:00",
+      hora_fin: "17:00",
+    });
+  };
 
   const handleDeleteRango = (index: number) => {
     const nuevosRangos = [...rangos];
@@ -293,56 +303,67 @@ const handleAddRango = () => {
     }
   };
 
-const formatDiaSemana = (dia: string | string[]): string => {
-  const diasMap: Record<string, string> = {
-    lunes: "Lunes",
-    martes: "Martes",
-    miercoles: "Miércoles",
-    jueves: "Jueves",
-    viernes: "Viernes",
-    sabado: "Sábado",
-    domingo: "Domingo",
-  };
-  
-  // Si es un string, simplemente formateamos ese día
-  if (typeof dia === 'string') {
-    return diasMap[dia] || dia;
-  }
-  
-  // Si es un array, procesamos según la cantidad de días
-  if (dia.length === 0) {
-    return "Sin días";
-  }
-  
-  if (dia.length === 1) {
-    return diasMap[dia[0]] || dia[0];
-  }
-  
-  if (dia.length === 7) {
-    return "Todos los días";
-  }
-  
-  // Verificar si son días consecutivos para mostrar como rango
-  const ordenDias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
-  const indices = dia.map(d => ordenDias.indexOf(d)).sort((a, b) => a - b);
-  
-  // Verificar si los índices son consecutivos
-  let esConsecutivo = true;
-  for (let i = 1; i < indices.length; i++) {
-    if (indices[i] !== indices[i-1] + 1) {
-      esConsecutivo = false;
-      break;
+  const formatDiaSemana = (dia: string | string[]): string => {
+    const diasMap: Record<string, string> = {
+      lunes: "Lunes",
+      martes: "Martes",
+      miercoles: "Miércoles",
+      jueves: "Jueves",
+      viernes: "Viernes",
+      sabado: "Sábado",
+      domingo: "Domingo",
+    };
+
+    // Si es un string, simplemente formateamos ese día
+    if (typeof dia === "string") {
+      return diasMap[dia] || dia;
     }
-  }
-  
-  if (esConsecutivo && indices.length > 1) {
-    // Si son consecutivos, mostrar como rango (ej: "Lunes-Jueves")
-    return `${diasMap[ordenDias[indices[0]]]} - ${diasMap[ordenDias[indices[indices.length - 1]]]}`;
-  }
-  
-  // Si no son consecutivos, mostrar como lista separada por comas
-  return dia.map(d => diasMap[d]).join(", ");
-}
+
+    // Si es un array, procesamos según la cantidad de días
+    if (dia.length === 0) {
+      return "Sin días";
+    }
+
+    if (dia.length === 1) {
+      return diasMap[dia[0]] || dia[0];
+    }
+
+    if (dia.length === 7) {
+      return "Todos los días";
+    }
+
+    // Verificar si son días consecutivos para mostrar como rango
+    const ordenDias = [
+      "lunes",
+      "martes",
+      "miercoles",
+      "jueves",
+      "viernes",
+      "sabado",
+      "domingo",
+    ];
+    const indices = dia.map((d) => ordenDias.indexOf(d)).sort((a, b) => a - b);
+
+    // Verificar si los índices son consecutivos
+    let esConsecutivo = true;
+    for (let i = 1; i < indices.length; i++) {
+      if (indices[i] !== indices[i - 1] + 1) {
+        esConsecutivo = false;
+        break;
+      }
+    }
+
+    if (esConsecutivo && indices.length > 1) {
+      // Si son consecutivos, mostrar como rango (ej: "Lunes-Jueves")
+      return `${diasMap[ordenDias[indices[0]]]} - ${
+        diasMap[ordenDias[indices[indices.length - 1]]]
+      }`;
+    }
+
+    // Si no son consecutivos, mostrar como lista separada por comas
+    return dia.map((d) => diasMap[d]).join(", ");
+  };
+
   const motorizadosFiltrados = motorizadosDisponibles.filter((m) =>
     `${m.nombres} ${m.apellidos} ${m.email}`
       .toLowerCase()
@@ -461,10 +482,10 @@ const formatDiaSemana = (dia: string | string[]): string => {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {rango.hora_inicio}
+                          {formatTimeToDisplay(rango.hora_inicio)}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {rango.hora_fin}
+                          {formatTimeToDisplay(rango.hora_fin)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
@@ -659,7 +680,7 @@ const formatDiaSemana = (dia: string | string[]): string => {
                       />
                       <label
                         htmlFor={`dia-${dia.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
                         {dia.label}
                       </label>
@@ -694,7 +715,7 @@ const formatDiaSemana = (dia: string | string[]): string => {
                   />
                   <label
                     htmlFor="seleccionar-todos"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
                     Seleccionar todos
                   </label>
@@ -707,33 +728,118 @@ const formatDiaSemana = (dia: string | string[]): string => {
                 <Label htmlFor="hora_inicio" className="text-base font-medium">
                   Hora de Inicio
                 </Label>
-                <Input
-                  id="hora_inicio"
-                  type="time"
-                  value={nuevoRango.hora_inicio}
-                  onChange={(e) =>
-                    setNuevoRango({
-                      ...nuevoRango,
-                      hora_inicio: e.target.value,
-                    })
-                  }
-                  className="mt-1.5 h-10"
-                />
+                <div className="relative mt-1.5">
+                  <select
+                    id="hora_inicio"
+                    value={nuevoRango.hora_inicio}
+                    onChange={(e) =>
+                      setNuevoRango({
+                        ...nuevoRango,
+                        hora_inicio: e.target.value,
+                      })
+                    }
+                    className="w-full h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                  >
+                    {Array.from({ length: 96 }, (_, i) => {
+                      const totalMinutes = i * 15;
+                      const hours = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+                      const timeValue = `${hours
+                        .toString()
+                        .padStart(2, "0")}:${minutes
+                        .toString()
+                        .padStart(2, "0")}`;
+
+                      // Convertir a formato 12 horas para mostrar
+                      const displayHour =
+                        hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+                      const period = hours >= 12 ? "PM" : "AM";
+                      const displayTime = `${displayHour}:${minutes
+                        .toString()
+                        .padStart(2, "0")} ${period}`;
+
+                      return (
+                        <option key={i} value={timeValue}>
+                          {displayTime}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg
+                      className="h-4 w-4 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div>
                 <Label htmlFor="hora_fin" className="text-base font-medium">
                   Hora de Fin
                 </Label>
-                <Input
-                  id="hora_fin"
-                  type="time"
-                  value={nuevoRango.hora_fin}
-                  onChange={(e) =>
-                    setNuevoRango({ ...nuevoRango, hora_fin: e.target.value })
-                  }
-                  className="mt-1.5 h-10"
-                />
+                <div className="relative mt-1.5">
+                  <select
+                    id="hora_fin"
+                    value={nuevoRango.hora_fin}
+                    onChange={(e) =>
+                      setNuevoRango({
+                        ...nuevoRango,
+                        hora_fin: e.target.value,
+                      })
+                    }
+                    className="w-full h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                  >
+                    {Array.from({ length: 96 }, (_, i) => {
+                      const totalMinutes = i * 15;
+                      const hours = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+                      const timeValue = `${hours
+                        .toString()
+                        .padStart(2, "0")}:${minutes
+                        .toString()
+                        .padStart(2, "0")}`;
+
+                      // Convertir a formato 12 horas para mostrar
+                      const displayHour =
+                        hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+                      const period = hours >= 12 ? "PM" : "AM";
+                      const displayTime = `${displayHour}:${minutes
+                        .toString()
+                        .padStart(2, "0")} ${period}`;
+
+                      return (
+                        <option key={i} value={timeValue}>
+                          {displayTime}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg
+                      className="h-4 w-4 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -810,7 +916,8 @@ const formatDiaSemana = (dia: string | string[]): string => {
                 </div>
               ) : motorizadosFiltrados.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-              No se encontraron resultados para &quot;{searchMotorizado}&quot;
+                  No se encontraron resultados para &quot;{searchMotorizado}
+                  &quot;
                 </div>
               ) : (
                 <Table>

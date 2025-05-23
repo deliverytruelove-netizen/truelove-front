@@ -4,8 +4,9 @@
 import type React from "react";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { postData } from "../../services/apiService";
+// import { resolve } from "path";
 
 interface LoginFormData {
   usuario: string;
@@ -31,6 +32,12 @@ interface ApiError {
   };
   message: string;
 }
+interface UserData {
+  id: number;
+  usuario: string;
+  email: string;
+  [key: string]: unknown;
+}
 
 export const useLoginForm = () => {
   const [formData, setFormData] = useState<LoginFormData>({
@@ -44,7 +51,7 @@ export const useLoginForm = () => {
     password?: string;
     general?: string;
   }>({});
-  const router = useRouter();
+  // const router = useRouter();
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
@@ -52,6 +59,26 @@ export const useLoginForm = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined, general: undefined }));
+  };
+
+  const setAuthData = async (
+    token: string,
+    user: UserData,
+    role: string
+  ): Promise<void> => {
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("userRole", role);
+
+    const secure = window.location.protocol === "https:";
+    const cookieOptions = `path=/; ${
+      secure ? "secure;" : ""
+    } samesite=strict; max-age=86400`;
+
+    document.cookie = `authToken=${token}; ${cookieOptions}`;
+    document.cookie = `userRole=${role}; ${cookieOptions}`;
+
+    return new Promise((resolve) => setTimeout(resolve, 150));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,35 +111,42 @@ export const useLoginForm = () => {
         data: formDataToSend, // datos a enviar del formulario
       });
 
-      // alamacer datos en el local storage
-      localStorage.setItem("authToken", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-      localStorage.setItem("userRole", response.role);
-
-      // Set cookies
-      document.cookie = `authToken=${response.token}; path=/`;
-      document.cookie = `userRole=${response.role}; path=/`;
-
-      // forzar la recarga de la pagina
-      router.refresh();
-
-      //pequeña pausa para que se cargue la pagina
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // Navigate based on role
-      switch (response.role) {
-        case "admin":
-          router.push("/admin/dashboard");
-          break;
-        case "negocio":
-          router.push("/socio/admin");
-          break;
-        case "motorizado":
-          router.push("/motorizado/admin");
-          break;
-        default:
-          router.push("/login");
+       if (response.role === "motorizado") {
+        setErrors({
+          general:
+            "Los motorizados solo pueden acceder a través de la aplicación móvil de TrueLove. Por favor, descarga la app para motorizados.",
+        });
+        setIsLoading(false);
+        return;
       }
+
+      await setAuthData(response.token, response.user, response.role);
+
+
+ const redirectPaths = {
+        admin: "/admin/dashboard",
+        negocio: "/socio/admin",
+        motorizado: "/motorizado/admin",
+      } as const;
+      
+     const redirectPath =
+        redirectPaths[response.role as keyof typeof redirectPaths] || "/login";
+      window.location.href = redirectPath;
+
+      // // Navigate based on role
+      // switch (response.role) {
+      //   case "admin":
+      //     router.push("/admin/dashboard");
+      //     break;
+      //   case "negocio":
+      //     router.push("/socio/admin");
+      //     break;
+      //   case "motorizado":
+      //     router.push("/motorizado/admin");
+      //     break;
+      //   default:
+      //     router.push("/login");
+      // }
     } catch (error) {
       console.error("Error en login:", error);
       const apiError = error as ApiError;
