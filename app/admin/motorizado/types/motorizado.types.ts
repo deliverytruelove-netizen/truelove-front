@@ -32,6 +32,8 @@ export interface DetallesMotorizado {
       categoria: string;
       fecha_carga: string;
     }>;
+    departamento?: string;
+    vehiculo?: string;
   };
   datosPersonales: {
     fecha_nacimiento: string;
