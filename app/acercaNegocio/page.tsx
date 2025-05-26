@@ -1,4 +1,4 @@
-// app\acercaNegocio\page.tsx 
+// app\acercaNegocio\page.tsx  este es el segundo paso del registro
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";

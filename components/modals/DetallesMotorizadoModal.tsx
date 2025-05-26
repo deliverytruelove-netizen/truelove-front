@@ -364,6 +364,18 @@ export function DetallesMotorizadoModal({
                       label="Documento"
                       value={`${data.personal.tipo_documento}: ${data.personal.nro_documento}`}
                     />
+                    <InfoItem
+                    icon={<FileText className="w-5 h-5" />}
+                    label="Departamento"
+                    value={`${data.personal.departamento || "No especificado"}`}
+                    />
+                    <InfoItem 
+                
+                    icon={<FileText className="w-5 h-5" />}
+                    label="Vehículo"
+                    value={`${data.personal.vehiculo || "No especificado"}`}
+                    />
+                    
                   </div>
 
                   {/* Imágenes del documento una al lado de la otra */}

@@ -1,16 +1,14 @@
-// app\ubicar-local\components\Search.tsx
-
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useCallback, useRef } from "react"
-import { SearchIcon, X } from 'lucide-react'
+import { SearchIcon, X, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { loadLibrary, getAutocompleteSuggestions, searchPlaces } from "../services/maps.service"
 import type { GoogleMapsLocation, PlaceResult } from "../types/google-maps"
+// import type { google } from "google-maps"
 
 interface SearchComponentProps {
   onLocationSelect: (location: GoogleMapsLocation) => void
@@ -22,8 +20,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
   const [results, setResults] = useState<PlaceResult[]>([])
   const [hasSelected, setHasSelected] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [isSearchingPlaces, setIsSearchingPlaces] = useState(false)
   const geocoderRef = useRef<google.maps.Geocoder | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const loadGoogleMapsAPI = async () => {
@@ -44,12 +44,15 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
     async (query: string) => {
       if (query.length < 3 || hasSelected || !isLoaded) return
 
+      setIsLoadingSuggestions(true)
       try {
         const predictions = await getAutocompleteSuggestions(query)
         setSuggestions(predictions)
       } catch (error) {
         console.error("Error al obtener sugerencias:", error)
         setSuggestions([])
+      } finally {
+        setIsLoadingSuggestions(false)
       }
     },
     [hasSelected, isLoaded],
@@ -57,9 +60,9 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
 
   const searchAllPlaces = useCallback(
     async (query: string) => {
-      if (query.length < 3 || !isLoaded) return
+      if (query.length < 4 || !isLoaded) return // Cambié de 5 a 4 letras
 
-      setIsSearching(true)
+      setIsSearchingPlaces(true)
       try {
         const results = await searchPlaces(query)
         setResults(results)
@@ -67,7 +70,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
         console.error("Error al buscar lugares:", error)
         setResults([])
       } finally {
-        setIsSearching(false)
+        setIsSearchingPlaces(false)
       }
     },
     [isLoaded],
@@ -77,9 +80,18 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
     const timeoutId = setTimeout(() => {
       if (searchQuery && !hasSelected) {
         fetchSuggestions(searchQuery)
-        if (searchQuery.length >= 5) {
+        // Solo buscar lugares si hay 4+ letras (reducido de 5)
+        if (searchQuery.length >= 4) {
           searchAllPlaces(searchQuery)
+        } else {
+          setResults([]) // Limpiar resultados si hay menos de 4 letras
+          setIsSearchingPlaces(false)
         }
+      } else {
+        setSuggestions([])
+        setResults([])
+        setIsLoadingSuggestions(false)
+        setIsSearchingPlaces(false)
       }
     }, 300)
 
@@ -91,6 +103,10 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
     setSuggestions([])
     setResults([])
     setHasSelected(false)
+    setIsLoadingSuggestions(false)
+    setIsSearchingPlaces(false)
+    // Mantener el focus en el input
+    setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   const handleLocationSelect = async (prediction: google.maps.places.AutocompletePrediction) => {
@@ -98,7 +114,7 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
 
     try {
       const response = await geocoderRef.current.geocode({ placeId: prediction.place_id })
-      
+
       if (response.results && response.results[0]) {
         const location = response.results[0]
         const lat = location.geometry?.location?.lat() || 0
@@ -120,6 +136,8 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
         setSuggestions([])
         setResults([])
         setHasSelected(true)
+        setIsLoadingSuggestions(false)
+        setIsSearchingPlaces(false)
       }
     } catch (error) {
       console.error("Error en geocodificación:", error)
@@ -142,12 +160,18 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
     setSuggestions([])
     setResults([])
     setHasSelected(true)
+    setIsLoadingSuggestions(false)
+    setIsSearchingPlaces(false)
   }
+
+  const isLoading = isLoadingSuggestions || isSearchingPlaces
+  const showResults = (suggestions.length > 0 || results.length > 0) && !hasSelected
 
   return (
     <div className="relative mb-6 max-w-[430px] w-full">
       <div className="relative">
         <Input
+          ref={inputRef}
           type="text"
           placeholder="Buscar dirección o negocio en Perú..."
           value={searchQuery}
@@ -156,9 +180,13 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
             setHasSelected(false)
           }}
           className="w-full pl-10 pr-10"
-          disabled={!isLoaded || isSearching}
+          // Removido el disabled para mantener siempre el focus
         />
         <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+
+        {/* Indicador de carga en el lado derecho */}
+        {isLoading && <Loader2 className="absolute right-10 top-3 h-4 w-4 text-muted-foreground animate-spin" />}
+
         {searchQuery && (
           <Button variant="ghost" size="icon" className="absolute right-1 top-1" onClick={handleClearSearch}>
             <X className="h-4 w-4" />
@@ -166,10 +194,11 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
         )}
       </div>
 
-      {(suggestions.length > 0 || results.length > 0) && !hasSelected && (
+      {showResults && (
         <Card className="absolute w-full mt-1 z-50">
           <CardContent className="p-0">
             <ul className="max-h-[280px] overflow-auto">
+              {/* Mostrar sugerencias de autocompletado */}
               {suggestions.map((suggestion) => (
                 <li
                   key={suggestion.place_id}
@@ -183,10 +212,12 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
                 </li>
               ))}
 
+              {/* Separador si hay ambos tipos de resultados */}
               {results.length > 0 && suggestions.length > 0 && (
-                <li className="p-2 bg-muted text-xs font-medium">Resultados de búsqueda</li>
+                <li className="p-2 bg-muted text-xs font-medium">Más resultados</li>
               )}
 
+              {/* Mostrar resultados de búsqueda de lugares */}
               {results.map((place) => (
                 <li
                   key={place.place_id}
@@ -197,12 +228,21 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onLocationSelect }) =
                   <div className="text-sm text-muted-foreground">{place.formatted_address}</div>
                 </li>
               ))}
+
+              {/* Mensaje de carga */}
+              {isLoading && suggestions.length === 0 && results.length === 0 && (
+                <li className="p-3 text-center text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Buscando...
+                  </div>
+                </li>
+              )}
             </ul>
           </CardContent>
         </Card>
       )}
 
-      {isSearching && <div className="text-center py-2 text-sm text-muted-foreground">Buscando lugares...</div>}
     </div>
   )
 }
