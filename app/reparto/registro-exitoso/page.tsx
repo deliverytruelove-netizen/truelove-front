@@ -1,66 +1,109 @@
-// app\reparto\registro-exitoso\page.tsx
 "use client"
 
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, Loader2 } from "lucide-react"
 import { createRepartoToken } from "@/services/repartoTokenService"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { FormDataService } from "@/services/formDataService"
+import { toast } from "@/hooks/use-toast"
 
 export default function RegistroExitoso() {
   const router = useRouter()
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [registroId, setRegistroId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState("Procesando datos")
+  const [currentRegistroId, setCurrentRegistroId] = useState<string | null>(null)
 
   useEffect(() => {
-    // Obtener el ID de registro de sessionStorage
     const id = sessionStorage.getItem("repartoRegistroId")
     if (id) {
-      setRegistroId(id)
-      console.log("ID de registro encontrado:", id)
+      setCurrentRegistroId(id)
+      
+      const datosBasicos = FormDataService.obtenerDatosBasicos()
+      const datosPersonales = FormDataService.obtenerDatosPersonales()
+      const cuentaBancaria = FormDataService.obtenerCuentaBancaria()
+      const vehiculo = FormDataService.obtenerVehiculo()
+      
+      if (!datosBasicos || !datosPersonales || !cuentaBancaria || !vehiculo) {
+        toast({
+          title: "Error",
+          description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
+          variant: "destructive",
+        })
+        router.push("/reparto")
+      }
     } else {
-      console.error("No se encontró el ID de registro en sessionStorage")
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del registro",
+        variant: "destructive",
+      })
+      router.push("/reparto")
     }
-  }, [])
+  }, [router])
 
-  const handleContinue = async () => {
+  const enviarRegistroCompleto = async () => {
+    if (!currentRegistroId) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del registro",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSubmitting(true)
+    setLoadingMessage("Enviando datos al servidor")
+    
     try {
-      setIsUpdating(true)
-
-      // SOLUCIÓN: Crear un nuevo token directamente en lugar de actualizar
-      if (registroId) {
-        console.log("Creando nuevo token para avanzar a entrega-material")
-        const newToken = await createRepartoToken(registroId, "/reparto/entrega-material")
-
+      const datosCompletos = FormDataService.obtenerTodosLosDatos()
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro-completo`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...datosCompletos,
+          temp_id: currentRegistroId
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Error al enviar los datos")
+      }
+      
+      const data = await response.json()
+      
+      if (data.data && data.data.id) {
+        sessionStorage.setItem("repartoRegistroId", data.data.id)
+        FormDataService.limpiarTodosLosDatos()
+        
+        setLoadingMessage("Preparando siguiente paso")
+        const newToken = await createRepartoToken(data.data.id, "/reparto/entrega-material")
+        
         if (newToken) {
-          console.log("Token creado correctamente para entrega-material")
-
-          // Asegurar que el paso actual se actualice en sessionStorage
           sessionStorage.setItem("repartoCurrentStep", "/reparto/entrega-material")
-
-          // Asegurar que el ID de registro se mantenga
-          sessionStorage.setItem("repartoRegistroId", registroId)
-
-          // Añadir un pequeño retraso para asegurar que todo se guarde
-          setTimeout(() => {
-            // Usar un enfoque diferente para la redirección
-            window.location.href = "/reparto/entrega-material"
-          }, 300)
-        } else {
-          console.error("Error al crear el token")
           router.push("/reparto/entrega-material")
+        } else {
+          throw new Error("Error al crear el token")
         }
       } else {
-        console.error("No se encontró ID de registro")
-        router.push("/reparto/entrega-material")
+        throw new Error("No se recibió ID de registro")
       }
     } catch (error) {
-      console.error("Error al crear el token:", error)
-      // Intentar redirección directa en caso de error
-      router.push("/reparto/entrega-material")
+      console.error("Error al enviar registro:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error 
+          ? error.message 
+          : "Hubo un problema al enviar el registro. Por favor, intente de nuevo.",
+        variant: "destructive",
+      })
     } finally {
-      setIsUpdating(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -78,16 +121,20 @@ export default function RegistroExitoso() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">¡Felicitaciones!</h1>
             <p className="text-gray-500">
-              Has completado exitosamente el registro de tu vehículo. Ahora estás un paso más cerca de formar parte de
-              nuestro equipo.
+              Has completado todos los pasos del registro. Haz clic en Finalizar para guardar toda tu información.
             </p>
             <div className="pt-4">
               <Button
-                onClick={handleContinue}
+                onClick={enviarRegistroCompleto}
                 className="bg-[#f34739] hover:bg-[#d63c30] text-white"
-                disabled={isUpdating}
+                disabled={isSubmitting}
               >
-                {isUpdating ? "Procesando..." : "Continuar"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                    {loadingMessage}...
+                  </>
+                ) : "Finalizar Registro"}
               </Button>
             </div>
           </div>

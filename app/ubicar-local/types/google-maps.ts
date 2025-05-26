@@ -1,34 +1,64 @@
 // app\ubicar-local\types\google-maps.ts  Tipos para Google Maps y componentes relacionados
+
 export interface GoogleMapsLocation {
-    place_id?: string
-    formatted_address: string
-    center: [number, number] // [lng, lat]
-    name?: string
-    address_components?: google.maps.GeocoderAddressComponent[]
-    businessName?: string
-  }
-  
-  // Tipo para los datos del formulario de negocio
-  export interface BusinessFormData {
-    businessName: string
-    street: string
-    number: string
-    postalCode: string
-    province: string
-    city: string
-    reference?: string
-  }
-  
-  // Tipo para los resultados de búsqueda de lugares
-  export interface PlaceResult {
-    place_id: string
-    name: string
-    formatted_address: string
-    geometry: {
-      location: {
-        lat: () => number
-        lng: () => number
-      }
+  place_id?: string
+  formatted_address: string
+  center: [number, number] // [lng, lat]
+  name?: string
+  address_components?: Array<{
+    long_name: string
+    short_name: string
+    types: string[]
+  }>
+  businessName?: string
+}
+
+// Tipo para los datos del formulario de negocio
+export interface BusinessFormData {
+  businessName: string
+  street: string
+  number: string
+  postalCode: string
+  province: string
+  city: string
+  reference?: string
+}
+
+// Tipo para los resultados de búsqueda de lugares
+export interface PlaceResult {
+  place_id: string
+  name: string
+  formatted_address: string
+  geometry: {
+    location: {
+      lat: () => number
+      lng: () => number
     }
   }
-  
+}
+
+// Tipos para la nueva API de Google Maps Places
+export interface PlaceDetailsResponse {
+  place: {
+    location?: {
+      latitude: number
+      longitude: number
+    }
+    displayName?: {
+      text: string
+    }
+    formattedAddress?: string
+    addressComponents?: Array<{
+      longText: string
+      shortText: string
+      types: string[]
+    }>
+  }
+}
+
+// Tipo para componentes de dirección de la nueva API
+export interface AddressComponent {
+  longText: string
+  shortText: string
+  types: string[]
+}

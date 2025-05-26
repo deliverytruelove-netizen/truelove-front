@@ -1,4 +1,4 @@
-// app\reparto\zonas\components\FormularioDatos.tsx
+// app\reparto\zonas\components\FormularioDatos.tsx este es el segundo paso
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
 import React from "react"
 import { createRepartoToken } from "@/services/repartoTokenService"
-
+import { FormDataService } from "@/services/formDataService"
 interface Ubigeo {
   id_ubigeo: number
   departamento: string
@@ -35,7 +35,7 @@ export function FormularioDatos() {
   const [fechaNacimiento, setFechaNacimiento] = useState<string>("")
   const [cargando, setCargando] = useState(false)
   const [cargandoDatos, setCargandoDatos] = useState(false)
-  const [datosPersonalesId, setDatosPersonalesId] = useState<number | null>(null)
+  const [, setDatosPersonalesId] = useState<number | null>(null) //datosPersonalesId
   const [generoError, setGeneroError] = useState<string>("")
   const [selfieError, setSelfieError] = useState<string>("")
   const [fechaNacimientoError, setFechaNacimientoError] = useState<string>("")
@@ -389,113 +389,173 @@ export function FormularioDatos() {
     return esValido
   }, [fechaNacimiento, genero, imagenCapturada, departamentoSeleccionado, provinciaSeleccionada, distritoSeleccionado])
 
+  // const manejarEnvio = async (e: React.FormEvent) => {
+  //   e.preventDefault()
+
+  //   if (!validarFormulario()) {
+  //     return
+  //   }
+
+  //   try {
+  //     setCargando(true)
+
+  //     let imagenComprimida = null
+  //     // Solo comprimir la imagen si es una captura nueva (base64) y no una URL
+  //     if (imagenCapturada && imagenCapturada.startsWith("data:")) {
+  //       try {
+  //         const imagenBase64 = await compressImage(imagenCapturada)
+  //         const response = await fetch(imagenBase64)
+  //         imagenComprimida = await response.blob()
+  //       } catch (error) {
+  //         console.error("Error al comprimir la imagen:", error)
+  //         toast({
+  //           title: "Error",
+  //           description: "Error al procesar la imagen. Por favor, intenta de nuevo.",
+  //           variant: "destructive",
+  //         })
+  //         return
+  //       }
+  //     }
+
+  //     const datosFormulario = new FormData()
+  //     datosFormulario.append("reparto_registro_id", repartoRegistroId!)
+  //     datosFormulario.append("fecha_nacimiento", fechaNacimiento)
+  //     datosFormulario.append("genero", genero)
+  //     datosFormulario.append("ubigeo_id", distritoSeleccionado)
+
+  //     if (imagenComprimida) {
+  //       datosFormulario.append("selfie", imagenComprimida, "selfie.jpg")
+  //     }
+
+  //     // Determinar si es una actualización o creación
+  //     const url = datosPersonalesId
+  //       ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-personales/${datosPersonalesId}`
+  //       : `${process.env.NEXT_PUBLIC_API_WEB}/datos-personales`
+
+  //     const respuesta = await fetch(url, {
+  //       method: "POST",
+  //       body: datosFormulario,
+  //     })
+
+  //     if (!respuesta.ok) {
+  //       const contentType = respuesta.headers.get("content-type")
+  //       if (contentType?.includes("application/json")) {
+  //         const datosError = await respuesta.json()
+  //         throw new Error(datosError.message || "Error al enviar el formulario")
+  //       }
+  //       throw new Error("Error al enviar el formulario")
+  //     }
+
+  //     // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
+  //     try {
+  //       console.log("Actualizando token para avanzar a documentos")
+
+  //       // Crear un nuevo token directamente
+  //       if (repartoRegistroId) {
+  //         const newToken = await createRepartoToken(repartoRegistroId, "/reparto/documentos")
+
+  //         if (newToken) {
+  //           console.log("Token creado correctamente para documentos")
+
+  //           // Asegurar que el paso actual se actualice en sessionStorage
+  //           sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos")
+
+  //           // Mantener el ID en sessionStorage para la siguiente página
+  //           sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
+
+  //           // Añadir un pequeño retraso para asegurar que todo se guarde
+  //           setTimeout(() => {
+  //             // Usar un enfoque diferente para la redirección
+  //             window.location.href = "/reparto/documentos"
+  //           }, 300)
+  //         } else {
+  //           console.error("Error al crear el token")
+  //           // Intentar redirección directa en caso de error
+  //           router.push("/reparto/documentos")
+  //         }
+  //       } else {
+  //         console.error("No se encontró ID de registro")
+  //         router.push("/reparto/documentos")
+  //       }
+  //     } catch (tokenError) {
+  //       console.error("Error al crear el token:", tokenError)
+  //       // Intentar redirección directa en caso de error
+  //       router.push("/reparto/documentos")
+  //     }
+  //   } catch (error) {
+  //     console.error("Error al enviar el formulario:", error)
+  //     toast({
+  //       title: "Error",
+  //       description:
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Hubo un problema al enviar el formulario. Por favor, intenta de nuevo.",
+  //       variant: "destructive",
+  //     })
+  //   } finally {
+  //     setCargando(false)
+  //   }
+  // }
+
   const manejarEnvio = async (e: React.FormEvent) => {
-    e.preventDefault()
+  e.preventDefault();
 
-    if (!validarFormulario()) {
-      return
-    }
-
-    try {
-      setCargando(true)
-
-      let imagenComprimida = null
-      // Solo comprimir la imagen si es una captura nueva (base64) y no una URL
-      if (imagenCapturada && imagenCapturada.startsWith("data:")) {
-        try {
-          const imagenBase64 = await compressImage(imagenCapturada)
-          const response = await fetch(imagenBase64)
-          imagenComprimida = await response.blob()
-        } catch (error) {
-          console.error("Error al comprimir la imagen:", error)
-          toast({
-            title: "Error",
-            description: "Error al procesar la imagen. Por favor, intenta de nuevo.",
-            variant: "destructive",
-          })
-          return
-        }
-      }
-
-      const datosFormulario = new FormData()
-      datosFormulario.append("reparto_registro_id", repartoRegistroId!)
-      datosFormulario.append("fecha_nacimiento", fechaNacimiento)
-      datosFormulario.append("genero", genero)
-      datosFormulario.append("ubigeo_id", distritoSeleccionado)
-
-      if (imagenComprimida) {
-        datosFormulario.append("selfie", imagenComprimida, "selfie.jpg")
-      }
-
-      // Determinar si es una actualización o creación
-      const url = datosPersonalesId
-        ? `${process.env.NEXT_PUBLIC_API_WEB}/datos-personales/${datosPersonalesId}`
-        : `${process.env.NEXT_PUBLIC_API_WEB}/datos-personales`
-
-      const respuesta = await fetch(url, {
-        method: "POST",
-        body: datosFormulario,
-      })
-
-      if (!respuesta.ok) {
-        const contentType = respuesta.headers.get("content-type")
-        if (contentType?.includes("application/json")) {
-          const datosError = await respuesta.json()
-          throw new Error(datosError.message || "Error al enviar el formulario")
-        }
-        throw new Error("Error al enviar el formulario")
-      }
-
-      // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
-      try {
-        console.log("Actualizando token para avanzar a documentos")
-
-        // Crear un nuevo token directamente
-        if (repartoRegistroId) {
-          const newToken = await createRepartoToken(repartoRegistroId, "/reparto/documentos")
-
-          if (newToken) {
-            console.log("Token creado correctamente para documentos")
-
-            // Asegurar que el paso actual se actualice en sessionStorage
-            sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos")
-
-            // Mantener el ID en sessionStorage para la siguiente página
-            sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
-
-            // Añadir un pequeño retraso para asegurar que todo se guarde
-            setTimeout(() => {
-              // Usar un enfoque diferente para la redirección
-              window.location.href = "/reparto/documentos"
-            }, 300)
-          } else {
-            console.error("Error al crear el token")
-            // Intentar redirección directa en caso de error
-            router.push("/reparto/documentos")
-          }
-        } else {
-          console.error("No se encontró ID de registro")
-          router.push("/reparto/documentos")
-        }
-      } catch (tokenError) {
-        console.error("Error al crear el token:", tokenError)
-        // Intentar redirección directa en caso de error
-        router.push("/reparto/documentos")
-      }
-    } catch (error) {
-      console.error("Error al enviar el formulario:", error)
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Hubo un problema al enviar el formulario. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
-    }
+  if (!validarFormulario()) {
+    return;
   }
+
+  try {
+    setCargando(true);
+
+    let imagenComprimida = imagenCapturada;
+    
+    // Solo comprimir la imagen si es una captura nueva (base64)
+    if (imagenCapturada && imagenCapturada.startsWith("data:")) {
+      try {
+        imagenComprimida = await compressImage(imagenCapturada);
+      } catch (error) {
+        console.error("Error al comprimir la imagen:", error);
+        toast({
+          title: "Error",
+          description: "Error al procesar la imagen. Por favor, intenta de nuevo.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Guardar datos en el almacenamiento local
+    const datosPersonales = {
+      fecha_nacimiento: fechaNacimiento,
+      genero: genero,
+      ubigeo_id: distritoSeleccionado,
+      selfie: imagenComprimida,
+      departamento: departamentoSeleccionado,
+      provincia: provinciaSeleccionada
+    };
+    
+    // Guardar en el servicio
+    FormDataService.guardarDatosPersonales(datosPersonales);
+    
+    // Actualizar el paso actual
+    sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos");
+    
+    // Redireccionar al siguiente paso
+    router.push("/reparto/documentos");
+  } catch (error) {
+    console.error("Error al procesar datos:", error);
+    toast({
+      title: "Error",
+      description:
+        error instanceof Error
+          ? error.message
+          : "Hubo un problema al procesar el formulario. Por favor, intenta de nuevo.",
+      variant: "destructive",
+    });
+  } finally {
+    setCargando(false);
+  }
+};
 
   if (!repartoRegistroId) return null
 

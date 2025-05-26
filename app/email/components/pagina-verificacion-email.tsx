@@ -1,3 +1,4 @@
+// app\email\components\pagina-verificacion-email.tsx
 "use client"
 
 import { motion } from "framer-motion"

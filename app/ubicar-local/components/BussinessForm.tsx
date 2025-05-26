@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import type { GoogleMapsLocation } from "../types/google-maps"
 
-
 const formSchema = z.object({
   businessName: z.string().min(2, "El nombre es requerido"),
   street: z.string().min(2, "La calle es requerida"),
@@ -44,15 +43,12 @@ const BusinessForm: React.FC<BusinessFormProps> = ({ selectedLocation, onSubmit 
     },
   })
 
-  // Extraer información de los componentes de dirección de Google Maps
   const extractAddressComponent = (
     components: google.maps.GeocoderAddressComponent[] | undefined,
     type: string,
   ): string => {
     if (!components) return ""
-
     const component = components.find((comp) => comp.types.includes(type))
-
     return component ? component.long_name : ""
   }
 
@@ -60,7 +56,6 @@ const BusinessForm: React.FC<BusinessFormProps> = ({ selectedLocation, onSubmit 
     if (selectedLocation && selectedLocation.address_components) {
       const addressComponents = selectedLocation.address_components
 
-      // Extraer información de los componentes de dirección
       const streetName = extractAddressComponent(addressComponents, "route")
       const streetNumber = extractAddressComponent(addressComponents, "street_number")
       const postalCode = extractAddressComponent(addressComponents, "postal_code")
@@ -68,11 +63,11 @@ const BusinessForm: React.FC<BusinessFormProps> = ({ selectedLocation, onSubmit 
         extractAddressComponent(addressComponents, "locality") ||
         extractAddressComponent(addressComponents, "administrative_area_level_2")
       const province = extractAddressComponent(addressComponents, "administrative_area_level_1")
-      const businessName = selectedLocation.businessName || selectedLocation.name || ""
+      // const businessName = selectedLocation.businessName || selectedLocation.name || ""
 
-      // Crear nuevos valores para el formulario
       const newValues = {
-        businessName: businessName || form.getValues("businessName") || "",
+          // businessName: businessName || form.getValues("businessName") || "",
+          businessName: form.getValues("businessName") || "",
         street: streetName || form.getValues("street") || "",
         number: streetNumber || form.getValues("number") || "",
         postalCode: postalCode || form.getValues("postalCode") || "",

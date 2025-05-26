@@ -13,6 +13,7 @@ import { CameraCapture } from "./CapturarCamara";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { createRepartoToken } from "@/services/repartoTokenService";
+import { FormDataService } from "@/services/formDataService";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -173,6 +174,95 @@ export function VehicleRegistrationForm() {
     }
   }, [router, toast, cargarDatosExistentes]);
 
+  // async function onSubmit(values: z.infer<typeof formSchema>) {
+  //   if (!repartoRegistroId) {
+  //     toast({
+  //       title: "Error",
+  //       description: "No se encontró el ID del registro",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     const formData = new FormData();
+
+  //     // Append reparto_registro_id
+  //     formData.append("reparto_registro_id", repartoRegistroId);
+
+  //     // Append text fields
+  //     Object.entries(values).forEach(([key, value]) => {
+  //       formData.append(key, value);
+  //     });
+
+  //     // Append image fields - solo si son nuevas imágenes (base64)
+  //     Object.entries(images).forEach(([key, value]) => {
+  //       if (value.startsWith("data:")) {
+  //         const imageFile = dataURLtoFile(value, `${key}.jpg`);
+  //         formData.append(`${key}_imagen`, imageFile);
+  //       }
+  //     });
+
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_WEB}/registro-vehiculo`,
+  //       {
+  //         method: "POST",
+  //         body: formData,
+  //       }
+  //     );
+
+  //     // Después de recibir la respuesta exitosa
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.mensaje || "Error al enviar el formulario");
+  //     }
+
+  //     const data = await response.json();
+  //     console.log("Respuesta del servidor:", data);
+  //     toast({
+  //       title: "Registro exitoso",
+  //       description: "El vehículo ha sido registrado correctamente.",
+  //     });
+  //     try {
+  //       // Crear token para el siguiente paso
+  //       const newToken = await createRepartoToken(
+  //         repartoRegistroId,
+  //         "/reparto/registro-exitoso"
+  //       );
+
+  //       if (newToken) {
+  //         // Actualizar sessionStorage
+  //         sessionStorage.setItem(
+  //           "repartoCurrentStep",
+  //           "/reparto/registro-exitoso"
+  //         );
+  //         sessionStorage.setItem("repartoRegistroId", repartoRegistroId);
+
+  //         // Usar window.location para forzar la recarga completa
+  //         window.location.href = "/reparto/registro-exitoso";
+  //       } else {
+  //         throw new Error("Error al crear el token");
+  //       }
+  //     } catch (tokenError) {
+  //       console.error("Error al crear el token:", tokenError);
+  //       // En caso de error, intentar redirección directa
+  //       window.location.href = "/reparto/registro-exitoso";
+  //     }
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     toast({
+  //       title: "Error",
+  //       description:
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Error al registrar el vehículo",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!repartoRegistroId) {
       toast({
@@ -185,69 +275,26 @@ export function VehicleRegistrationForm() {
 
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
+      // Preparar datos del vehículo para almacenamiento local
+      const datosVehiculo = {
+        placa: values.placa,
+        licenciaConducir: values.licenciaConducir,
+        seguro: values.seguro,
+        tarjetaPropiedad: values.tarjetaPropiedad,
+        placa_imagen: images.placa,
+        licenciaConducir_imagen: images.licenciaConducir,
+        seguro_imagen: images.seguro,
+        tarjetaPropiedad_imagen: images.tarjetaPropiedad,
+      };
 
-      // Append reparto_registro_id
-      formData.append("reparto_registro_id", repartoRegistroId);
+      // Guardar en el servicio
+      FormDataService.guardarVehiculo(datosVehiculo);
 
-      // Append text fields
-      Object.entries(values).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+      // Actualizar el paso actual
+      sessionStorage.setItem("repartoCurrentStep", "/reparto/registro-exitoso");
 
-      // Append image fields - solo si son nuevas imágenes (base64)
-      Object.entries(images).forEach(([key, value]) => {
-        if (value.startsWith("data:")) {
-          const imageFile = dataURLtoFile(value, `${key}.jpg`);
-          formData.append(`${key}_imagen`, imageFile);
-        }
-      });
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/registro-vehiculo`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      // Después de recibir la respuesta exitosa
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.mensaje || "Error al enviar el formulario");
-      }
-
-      const data = await response.json();
-      console.log("Respuesta del servidor:", data);
-      toast({
-        title: "Registro exitoso",
-        description: "El vehículo ha sido registrado correctamente.",
-      });
-      try {
-        // Crear token para el siguiente paso
-        const newToken = await createRepartoToken(
-          repartoRegistroId,
-          "/reparto/registro-exitoso"
-        );
-
-        if (newToken) {
-          // Actualizar sessionStorage
-          sessionStorage.setItem(
-            "repartoCurrentStep",
-            "/reparto/registro-exitoso"
-          );
-          sessionStorage.setItem("repartoRegistroId", repartoRegistroId);
-
-          // Usar window.location para forzar la recarga completa
-          window.location.href = "/reparto/registro-exitoso";
-        } else {
-          throw new Error("Error al crear el token");
-        }
-      } catch (tokenError) {
-        console.error("Error al crear el token:", tokenError);
-        // En caso de error, intentar redirección directa
-        window.location.href = "/reparto/registro-exitoso";
-      }
+      // Redireccionar al paso final
+      router.push("/reparto/registro-exitoso");
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -255,14 +302,13 @@ export function VehicleRegistrationForm() {
         description:
           error instanceof Error
             ? error.message
-            : "Error al registrar el vehículo",
+            : "Error al procesar los datos del vehículo",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   }
-
   const handleCapture = (field: string) => {
     setCurrentField(field);
     setIsCameraOpen(true);
@@ -282,17 +328,17 @@ export function VehicleRegistrationForm() {
     }
   };
 
-  const dataURLtoFile = (dataurl: string, filename: string): File => {
-    const arr = dataurl.split(",");
-    const mime = arr[0].match(/:(.*?);/)?.[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, { type: mime });
-  };
+  // const dataURLtoFile = (dataurl: string, filename: string): File => {
+  //   const arr = dataurl.split(",");
+  //   const mime = arr[0].match(/:(.*?);/)?.[1];
+  //   const bstr = atob(arr[1]);
+  //   let n = bstr.length;
+  //   const u8arr = new Uint8Array(n);
+  //   while (n--) {
+  //     u8arr[n] = bstr.charCodeAt(n);
+  //   }
+  //   return new File([u8arr], filename, { type: mime });
+  // };
 
   if (!repartoRegistroId) return null;
 

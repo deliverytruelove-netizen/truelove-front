@@ -1,4 +1,4 @@
-// app\reparto\documentos\components\formulario-bancario.tsx
+// app\reparto\documentos\components\formulario-bancario.tsx 3re paso
 "use client"
 
 import type React from "react"
@@ -15,7 +15,8 @@ import { CapturarImagen } from "./CapturarImagen"
 import { FileText, ImageIcon, Loader2, Info, CheckCircle2 } from "lucide-react"
 import { PdfPreview } from "./Pdf-preview"
 import { ImagePreview } from "./ImagePreview"
-import { createRepartoToken } from "@/services/repartoTokenService"
+// import { createRepartoToken } from "@/services/repartoTokenService"
+import { FormDataService } from "@/services/formDataService"
 
 interface Banco {
   id: number
@@ -27,26 +28,26 @@ interface TipoCuenta {
   nombre: string
 }
 
-interface CuentaBancaria {
-  id: number
-  titular: string
-  dni: string
-  banco_id: string
-  banco_nombre?: string
-  tipo_cuenta_id: string
-  tipo_cuenta_nombre?: string
-  numero_cuenta: string
-  url_imagen_cuenta: string
-}
+// interface CuentaBancaria {
+//   id: number
+//   titular: string
+//   dni: string
+//   banco_id: string
+//   banco_nombre?: string
+//   tipo_cuenta_id: string
+//   tipo_cuenta_nombre?: string
+//   numero_cuenta: string
+//   url_imagen_cuenta: string
+// }
 
-interface ApiError {
-  mensaje: string
-}
+// interface ApiError {
+//   mensaje: string
+// }
 
-interface ApiResponse {
-  mensaje: string
-  cuenta_bancaria: CuentaBancaria
-}
+// interface ApiResponse {
+//   mensaje: string
+//   cuenta_bancaria: CuentaBancaria
+// }
 
 export function FormularioBancario() {
   const router = useRouter()
@@ -302,104 +303,166 @@ export function FormularioBancario() {
   };
   
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  // const handleSubmit = async (e: FormEvent) => {
+  //   e.preventDefault()
 
-    if (!validateForm()) {
-      toast.error("Por favor, complete todos los campos obligatorios correctamente")
-      return
-    }
+  //   if (!validateForm()) {
+  //     toast.error("Por favor, complete todos los campos obligatorios correctamente")
+  //     return
+  //   }
 
-    if (!repartoRegistroId) {
-      toast.error("No se encontró el ID del registro")
-      return
-    }
+  //   if (!repartoRegistroId) {
+  //     toast.error("No se encontró el ID del registro")
+  //     return
+  //   }
 
-    setIsSubmitting(true)
+  //   setIsSubmitting(true)
 
-    try {
-      const formDataToSend = new FormData()
+  //   try {
+  //     const formDataToSend = new FormData()
 
-      // Si es una actualización, no necesitamos enviar el ID del registro
-      if (!cuentaBancariaId) {
-        formDataToSend.append("reparto_registro_id", repartoRegistroId)
-      }
+  //     // Si es una actualización, no necesitamos enviar el ID del registro
+  //     if (!cuentaBancariaId) {
+  //       formDataToSend.append("reparto_registro_id", repartoRegistroId)
+  //     }
 
-      formDataToSend.append("titular", formData.titular)
-      formDataToSend.append("dni", formData.dni)
-      formDataToSend.append("banco_id", formData.banco_id)
-      formDataToSend.append("tipo_cuenta_id", formData.tipo_cuenta_id)
-      formDataToSend.append("numero_cuenta", formData.numero_cuenta)
+  //     formDataToSend.append("titular", formData.titular)
+  //     formDataToSend.append("dni", formData.dni)
+  //     formDataToSend.append("banco_id", formData.banco_id)
+  //     formDataToSend.append("tipo_cuenta_id", formData.tipo_cuenta_id)
+  //     formDataToSend.append("numero_cuenta", formData.numero_cuenta)
 
-      // Solo adjuntar imagen si se seleccionó una nueva
-      if (selectedFiles) {
-        Array.from(selectedFiles).forEach((file) => {
-          formDataToSend.append("imagen_cuenta", file)
-        })
-      } else if (capturedImage && capturedImage.startsWith("data:")) {
-        // Solo procesar la imagen capturada si es una nueva (base64)
-        const response = await fetch(capturedImage)
-        const blob = await response.blob()
-        const file = new File([blob], "imagen_capturada.jpg", {
-          type: "image/jpeg",
-        })
-        formDataToSend.append("imagen_cuenta", file)
-      }
+  //     // Solo adjuntar imagen si se seleccionó una nueva
+  //     if (selectedFiles) {
+  //       Array.from(selectedFiles).forEach((file) => {
+  //         formDataToSend.append("imagen_cuenta", file)
+  //       })
+  //     } else if (capturedImage && capturedImage.startsWith("data:")) {
+  //       // Solo procesar la imagen capturada si es una nueva (base64)
+  //       const response = await fetch(capturedImage)
+  //       const blob = await response.blob()
+  //       const file = new File([blob], "imagen_capturada.jpg", {
+  //         type: "image/jpeg",
+  //       })
+  //       formDataToSend.append("imagen_cuenta", file)
+  //     }
 
-      // Determinar si es una actualización o creación
-      const url = cuentaBancariaId
-        ? `${process.env.NEXT_PUBLIC_API_WEB}/cuenta-bancaria/${cuentaBancariaId}`
-        : `${process.env.NEXT_PUBLIC_API_WEB}/cuenta-bancaria`
+  //     // Determinar si es una actualización o creación
+  //     const url = cuentaBancariaId
+  //       ? `${process.env.NEXT_PUBLIC_API_WEB}/cuenta-bancaria/${cuentaBancariaId}`
+  //       : `${process.env.NEXT_PUBLIC_API_WEB}/cuenta-bancaria`
 
-      const response = await fetch(url, {
-        method: "POST",
-        body: formDataToSend,
-      })
+  //     const response = await fetch(url, {
+  //       method: "POST",
+  //       body: formDataToSend,
+  //     })
 
-      const data: ApiResponse | ApiError = await response.json()
+  //     const data: ApiResponse | ApiError = await response.json()
 
-      if (!response.ok) {
-        throw new Error("mensaje" in data ? data.mensaje : "Error al guardar la cuenta bancaria")
-      }
+  //     if (!response.ok) {
+  //       throw new Error("mensaje" in data ? data.mensaje : "Error al guardar la cuenta bancaria")
+  //     }
 
-      toast.success("mensaje" in data ? data.mensaje : "Cuenta bancaria guardada exitosamente")
+  //     toast.success("mensaje" in data ? data.mensaje : "Cuenta bancaria guardada exitosamente")
 
-      // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
-      try {
-      // Crear un nuevo token directamente
-      if (repartoRegistroId) {
-        const newToken = await createRepartoToken(repartoRegistroId, "/reparto/documento-motorizado")
+  //     // SOLUCIÓN: Actualizar el token con el siguiente paso antes de redirigir
+  //     try {
+  //     // Crear un nuevo token directamente
+  //     if (repartoRegistroId) {
+  //       const newToken = await createRepartoToken(repartoRegistroId, "/reparto/documento-motorizado")
 
-        if (newToken) {
-          // Actualizar el paso actual en sessionStorage
-          sessionStorage.setItem("repartoCurrentStep", "/reparto/documento-motorizado")
-          sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
+  //       if (newToken) {
+  //         // Actualizar el paso actual en sessionStorage
+  //         sessionStorage.setItem("repartoCurrentStep", "/reparto/documento-motorizado")
+  //         sessionStorage.setItem("repartoRegistroId", repartoRegistroId)
 
-          // Usar window.location para forzar la recarga completa
-          window.location.href = "/reparto/documento-motorizado"
-        } else {
-          throw new Error("Error al crear el token")
-        }
-      } else {
-        throw new Error("No se encontró ID de registro")
-      }
-    } catch (tokenError) {
-      console.error("Error al crear el token:", tokenError)
-      // En caso de error, intentar redirección directa
-      window.location.href = "/reparto/documento-motorizado"
-    }
+  //         // Usar window.location para forzar la recarga completa
+  //         window.location.href = "/reparto/documento-motorizado"
+  //       } else {
+  //         throw new Error("Error al crear el token")
+  //       }
+  //     } else {
+  //       throw new Error("No se encontró ID de registro")
+  //     }
+  //   } catch (tokenError) {
+  //     console.error("Error al crear el token:", tokenError)
+  //     // En caso de error, intentar redirección directa
+  //     window.location.href = "/reparto/documento-motorizado"
+  //   }
       
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error("Ocurrió un error al guardar la cuenta bancaria. Por favor, intente nuevamente.")
-      }
-      console.error("Error al guardar cuenta bancaria:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       toast.error(error.message)
+  //     } else {
+  //       toast.error("Ocurrió un error al guardar la cuenta bancaria. Por favor, intente nuevamente.")
+  //     }
+  //     console.error("Error al guardar cuenta bancaria:", error)
+  //   } finally {
+  //     setIsSubmitting(false)
+  //   }
+  // }
+
+
+
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault();
+
+  if (!validateForm()) {
+    toast.error("Por favor, complete todos los campos obligatorios correctamente");
+    return;
   }
+
+  if (!repartoRegistroId) {
+    toast.error("No se encontró el ID del registro");
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    // Preparar datos para almacenamiento local
+    const datosBancarios = {
+      titular: formData.titular,
+      dni: formData.dni,
+      banco_id: formData.banco_id,
+      tipo_cuenta_id: formData.tipo_cuenta_id,
+      numero_cuenta: formData.numero_cuenta,
+      imagen_cuenta: selectedFiles ? await convertFilesToBase64(selectedFiles) : capturedImage
+    };
+    
+    // Guardar en el servicio
+    FormDataService.guardarCuentaBancaria(datosBancarios);
+    
+    // Actualizar el paso actual
+    sessionStorage.setItem("repartoCurrentStep", "/reparto/documento-motorizado");
+    
+    // Redireccionar al siguiente paso
+    router.push("/reparto/documento-motorizado");
+  } catch (error) {
+    if (error instanceof Error) {
+      toast.error(error.message);
+    } else {
+      toast.error("Ocurrió un error al procesar los datos bancarios. Por favor, intente nuevamente.");
+    }
+    console.error("Error al procesar datos bancarios:", error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+// Función auxiliar para convertir archivos a base64
+const convertFilesToBase64 = async (files: FileList): Promise<string | null> => {
+  if (files.length === 0) return null;
+  
+  const file = files[0];
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 
   if (!repartoRegistroId) return null
 
