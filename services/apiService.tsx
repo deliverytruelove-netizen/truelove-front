@@ -1,13 +1,17 @@
 // services\apiService.tsx
-const API_URL = process.env.NEXT_PUBLIC_API_WEB
+const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
 interface PostDataParams {
-  endpoint: string
-  data: FormData
-  token?: string
+  endpoint: string;
+  data: FormData;
+  token?: string;
 }
 
-export const postData = async <T = Record<string, unknown>>({ endpoint, data, token }: PostDataParams): Promise<T> => {
+export const postData = async <T = Record<string, unknown>,>({
+  endpoint,
+  data,
+  token,
+}: PostDataParams): Promise<T> => {
   try {
     const response = await fetch(`${API_URL}/${endpoint}`, {
       method: "POST",
@@ -15,89 +19,111 @@ export const postData = async <T = Record<string, unknown>>({ endpoint, data, to
         ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: data,
-    })
+    });
 
-    const contentType = response.headers.get("content-type")
+    const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") !== -1) {
-      const result = await response.json()
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Error en la solicitud a la API")
+        throw new Error(result.error || "Error en la solicitud a la API");
       }
-      return result
+      return result;
     } else {
-      throw new Error("La respuesta no es JSON válido")
+      throw new Error("La respuesta no es JSON válido");
     }
   } catch (error) {
-    console.error("Error en la solicitud:", error)
-    throw error
+    console.error("Error en la solicitud:", error);
+    throw error;
   }
-}
+};
 
 // Nuevas funciones para las rutas adicionales
 
-export const resetPassword = async (email: string, newPassword: string, token: string): Promise<void> => {
-  const formData = new FormData()
-  formData.append("email", email)
-  formData.append("newPassword", newPassword)
-  formData.append("token", token)
+export const resetPassword = async (
+  email: string,
+  newPassword: string,
+  token: string
+): Promise<void> => {
+  const formData = new FormData();
+  formData.append("email", email);
+  formData.append("newPassword", newPassword);
+  formData.append("token", token);
 
   await postData({
     endpoint: "admin/reset-password",
     data: formData,
-  })
-}
+  });
+};
 
-export const verifyEmail = async (email: string): Promise<{ exists: boolean; message: string; code?: string }> => {
-  const formData = new FormData()
-  formData.append("email", email)
+export const verifyEmail = async (
+  email: string
+): Promise<{ exists: boolean; message: string; code?: string }> => {
+  const formData = new FormData();
+  formData.append("email", email);
 
   try {
-    const response = await postData<{ exists: boolean; message: string; code?: string }>({
+    const response = await postData<{
+      exists: boolean;
+      message: string;
+      code?: string;
+    }>({
       endpoint: "admin/verify-email",
       data: formData,
-    })
-    return response
+    });
+    return response;
   } catch (error) {
-    console.error("Error al verificar el correo:", error)
-    throw new Error("Error al verificar el correo electrónico. Por favor, intente nuevamente.")
+    console.error("Error al verificar el correo:", error);
+    throw new Error(
+      "Error al verificar el correo electrónico. Por favor, intente nuevamente."
+    );
   }
-}
+};
 
 export const verifyCode = async (
   email: string,
-  code: string,
+  code: string
 ): Promise<{ valid: boolean; message: string; token?: string }> => {
-  const formData = new FormData()
-  formData.append("email", email)
-  formData.append("code", code)
+  const formData = new FormData();
+  formData.append("email", email);
+  formData.append("code", code);
 
   try {
-    const response = await postData<{ valid: boolean; message: string; token?: string }>({
+    const response = await postData<{
+      valid: boolean;
+      message: string;
+      token?: string;
+    }>({
       endpoint: "admin/verify-code",
       data: formData,
-    })
-    return response
+    });
+    return response;
   } catch (error) {
-    console.error("Error al verificar el código:", error)
-    throw new Error("Error al verificar el código. Por favor, intente nuevamente.")
+    console.error("Error al verificar el código:", error);
+    throw new Error(
+      "Error al verificar el código. Por favor, intente nuevamente."
+    );
   }
-}
+};
 
 export interface User {
-  id: number
-  usuario: string
-  email: string
+  id: number;
+  usuario: string;
+  email: string;
   businessRegistration?: {
-    id: number
-    name: string
-    businessType: string
-  }
+    id: number;
+    name: string;
+    businessType: string;
+  };
 }
 
-export const checkAuth = async (): Promise<{ authenticated: boolean; user?: User; role?: string }> => {
-  const token = localStorage.getItem("authToken")
+export const checkAuth = async (): Promise<{
+  authenticated: boolean;
+  user?: User;
+  role?: string;
+}> => {
+  const token = localStorage.getItem("authToken");
   if (!token) {
-    return { authenticated: false }
+    return { authenticated: false };
   }
 
   try {
@@ -106,17 +132,16 @@ export const checkAuth = async (): Promise<{ authenticated: boolean; user?: User
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    })
+    });
 
     if (!response.ok) {
-      throw new Error("Error en la verificación de autenticación")
+      throw new Error("Error en la verificación de autenticación");
     }
 
-    const data = await response.json()
-    return data
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Error en la verificación de autenticación:", error)
-    return { authenticated: false }
+    console.error("Error en la verificación de autenticación:", error);
+    return { authenticated: false };
   }
-}
-
+};
