@@ -43,33 +43,47 @@ export function FormularioDatos() {
   const [provinciaError, setProvinciaError] = useState<string>("")
   const [distritoError, setDistritoError] = useState<string>("")
 
-  const obtenerDepartamentosFunc = async () => {
-    try {
-      setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/departamentos`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      })
+const obtenerDepartamentosFunc = async () => {
+  try {
+    setCargando(true)
 
-      if (!respuesta.ok) {
-        throw new Error(`Error al obtener departamentos: ${respuesta.status}`)
-      }
+    // Timeout más largo para móviles
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
 
-      const datos = await respuesta.json()
-      setDepartamentos(datos)
-    } catch (error) {
-      console.error("Error al obtener departamentos:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los departamentos. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
+    const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/departamentos`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!respuesta.ok) {
+      throw new Error(`Error al obtener departamentos: ${respuesta.status}`)
     }
+
+    const datos = await respuesta.json()
+    setDepartamentos(datos)
+  } catch (error) {
+    console.error("Error al obtener departamentos:", error)
+
+    let mensaje = "No se pudieron cargar los departamentos. Por favor, intenta de nuevo."
+    if (error instanceof Error && error.name === "AbortError") {
+      mensaje = "La carga está tomando demasiado tiempo. Por favor, verifica tu conexión."
+    }
+
+    toast({
+      title: "Error",
+      description: mensaje,
+      variant: "destructive",
+    })
+  } finally {
+    setCargando(false)
   }
+}
 
   // Modificar la función cargarDatosExistentes para manejar correctamente la carga de ubicación
   const cargarDatosExistentesFunc = async (id: string) => {
@@ -191,69 +205,95 @@ export function FormularioDatos() {
     }
   }, [router, cargarDatosExistentes])
 
-  const manejarCaptura = useCallback((srcImagen: string) => {
-    setImagenCapturada(srcImagen)
-  }, [])
+ const manejarCaptura = useCallback((srcImagen: string) => {
+  setImagenCapturada(srcImagen)
+  setSelfieError("") // Limpiar error cuando se captura imagen
+}, [])
 
-  const obtenerProvincias = useCallback(async (departamentoId: string) => {
-    if (!departamentoId) return
+const obtenerProvincias = useCallback(async (departamentoId: string) => {
+  if (!departamentoId) return
 
-    try {
-      setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/provincias/${departamentoId}`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      })
+  try {
+    setCargando(true)
 
-      if (!respuesta.ok) {
-        throw new Error(`Error al obtener provincias: ${respuesta.status}`)
-      }
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
 
-      const datos = await respuesta.json()
-      setProvincias(datos)
-    } catch (error) {
-      console.error("Error al obtener provincias:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las provincias. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
+    const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/provincias/${departamentoId}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!respuesta.ok) {
+      throw new Error(`Error al obtener provincias: ${respuesta.status}`)
     }
-  }, [])
 
-  const obtenerDistritos = useCallback(async (departamentoId: string, provinciaId: string) => {
-    if (!departamentoId || !provinciaId) return
+    const datos = await respuesta.json()
+    setProvincias(datos)
+  } catch (error) {
+    console.error("Error al obtener provincias:", error)
 
-    try {
-      setCargando(true)
-      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${departamentoId}/${provinciaId}`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      })
-
-      if (!respuesta.ok) {
-        throw new Error(`Error al obtener distritos: ${respuesta.status}`)
-      }
-
-      const datos = await respuesta.json()
-      setDistritos(datos)
-    } catch (error) {
-      console.error("Error al obtener distritos:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los distritos. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setCargando(false)
+    let mensaje = "No se pudieron cargar las provincias. Por favor, intenta de nuevo."
+    if (error instanceof Error && error.name === "AbortError") {
+      mensaje = "La carga está tomando demasiado tiempo. Por favor, verifica tu conexión."
     }
-  }, [])
+
+    toast({
+      title: "Error",
+      description: mensaje,
+      variant: "destructive",
+    })
+  } finally {
+    setCargando(false)
+  }
+}, [])
+const obtenerDistritos = useCallback(async (departamentoId: string, provinciaId: string) => {
+  if (!departamentoId || !provinciaId) return
+
+  try {
+    setCargando(true)
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+    const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/distritos/${departamentoId}/${provinciaId}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!respuesta.ok) {
+      throw new Error(`Error al obtener distritos: ${respuesta.status}`)
+    }
+
+    const datos = await respuesta.json()
+    setDistritos(datos)
+  } catch (error) {
+    console.error("Error al obtener distritos:", error)
+
+    let mensaje = "No se pudieron cargar los distritos. Por favor, intenta de nuevo."
+    if (error instanceof Error && error.name === "AbortError") {
+      mensaje = "La carga está tomando demasiado tiempo. Por favor, verifica tu conexión."
+    }
+
+    toast({
+      title: "Error",
+      description: mensaje,
+      variant: "destructive",
+    })
+  } finally {
+    setCargando(false)
+  }
+}, [])
 
   const manejarCambioDepartamento = useCallback(
     (departamentoId: string) => {
@@ -497,30 +537,26 @@ export function FormularioDatos() {
   //   }
   // }
 
-  const manejarEnvio = async (e: React.FormEvent) => {
-  e.preventDefault();
+const manejarEnvio = async (e: React.FormEvent) => {
+  e.preventDefault()
 
   if (!validarFormulario()) {
-    return;
+    return
   }
 
   try {
-    setCargando(true);
+    setCargando(true)
 
-    let imagenComprimida = imagenCapturada;
-    
+    let imagenComprimida = imagenCapturada
+
     // Solo comprimir la imagen si es una captura nueva (base64)
     if (imagenCapturada && imagenCapturada.startsWith("data:")) {
       try {
-        imagenComprimida = await compressImage(imagenCapturada);
+        imagenComprimida = await compressImage(imagenCapturada)
       } catch (error) {
-        console.error("Error al comprimir la imagen:", error);
-        toast({
-          title: "Error",
-          description: "Error al procesar la imagen. Por favor, intenta de nuevo.",
-          variant: "destructive",
-        });
-        return;
+        console.error("Error al comprimir la imagen:", error)
+        setSelfieError("Error al procesar la imagen. Por favor, intenta de nuevo.")
+        return
       }
     }
 
@@ -531,31 +567,38 @@ export function FormularioDatos() {
       ubigeo_id: distritoSeleccionado,
       selfie: imagenComprimida,
       departamento: departamentoSeleccionado,
-      provincia: provinciaSeleccionada
-    };
-    
+      provincia: provinciaSeleccionada,
+    }
+
     // Guardar en el servicio
-    FormDataService.guardarDatosPersonales(datosPersonales);
-    
+    FormDataService.guardarDatosPersonales(datosPersonales)
+
     // Actualizar el paso actual
-    sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos");
-    
+    sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos")
+
     // Redireccionar al siguiente paso
-    router.push("/reparto/documentos");
+    router.push("/reparto/documentos")
   } catch (error) {
-    console.error("Error al procesar datos:", error);
+    console.error("Error al procesar datos:", error)
+
+    let mensaje = "Hubo un problema al procesar el formulario. Por favor, intenta de nuevo."
+    if (error instanceof Error) {
+      if (error.message.includes("fetch") || error.message.includes("network")) {
+        mensaje = "Error de conexión. Por favor, verifica tu internet e intenta nuevamente."
+      } else {
+        mensaje = error.message
+      }
+    }
+
     toast({
       title: "Error",
-      description:
-        error instanceof Error
-          ? error.message
-          : "Hubo un problema al procesar el formulario. Por favor, intenta de nuevo.",
+      description: mensaje,
       variant: "destructive",
-    });
+    })
   } finally {
-    setCargando(false);
+    setCargando(false)
   }
-};
+}
 
   if (!repartoRegistroId) return null
 
