@@ -1,164 +1,222 @@
 // app\socio\admin\components\edit-menu-modal.tsx
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Edit, Upload, Tag, FileText, X, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
-import type { Category, MenuItem } from "../services/menu.service"
-import Image from "next/image"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Edit,
+  Upload,
+  Tag,
+  FileText,
+  X,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Category, MenuItem } from "../services/menu.service";
+import Image from "next/image";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Imagen por defecto para cuando no se carga una imagen
-const DEFAULT_IMAGE = "https://via.placeholder.com/300x300.png?text=Imagen+del+producto"
+const DEFAULT_IMAGE =
+  "https://via.placeholder.com/300x300.png?text=Imagen+del+producto";
 
 interface EditMenuModalProps {
-  menuItem: MenuItem
-  categories: Category[]
-  onSubmit: (id: number, formData: FormData) => Promise<void>
-  trigger?: React.ReactNode
+  menuItem: MenuItem;
+  categories: Category[];
+  onSubmit: (id: number, formData: FormData) => Promise<void>;
+  trigger?: React.ReactNode;
 }
 
-export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditMenuModalProps) {
-  const [open, setOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [status, setStatus] = useState<string>("active")
-  const [error, setError] = useState<string | null>(null)
-  const [isNewImageSelected, setIsNewImageSelected] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export function EditMenuModal({
+  menuItem,
+  categories,
+  onSubmit,
+  trigger,
+}: EditMenuModalProps) {
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [status, setStatus] = useState<string>("active");
+  const [error, setError] = useState<string | null>(null);
+  const [isNewImageSelected, setIsNewImageSelected] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (menuItem) {
-      setSelectedCategory(menuItem.categoria_id? menuItem.categoria_id.toString() : "")
-      setStatus(menuItem.status || "active")
+      setSelectedCategory(
+        menuItem.categoria_id ? menuItem.categoria_id.toString() : ""
+      );
+      setStatus(menuItem.status || "active");
       if (menuItem.foto) {
-        setPreviewImage(menuItem.foto)
+        setPreviewImage(menuItem.foto);
       }
     }
-  }, [menuItem, open])
+  }, [menuItem, open]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null)
-    
+    e.preventDefault();
+    setError(null);
+
     // Si se ha eliminado la imagen existente y no se ha seleccionado una nueva
     if (!previewImage && !fileInputRef.current?.files?.length) {
-      setError("La imagen es obligatoria. Por favor, selecciona una imagen para el producto.")
-      return
+      setError(
+        "La imagen es obligatoria. Por favor, selecciona una imagen para el producto."
+      );
+      return;
     }
-    
+
     // Verificar el tipo de archivo si se seleccionó uno nuevo
     if (fileInputRef.current?.files?.length) {
-      const file = fileInputRef.current.files[0]
+      const file = fileInputRef.current.files[0];
       if (!file.type.startsWith("image/")) {
-        setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
-        return
+        setError(
+          "El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF."
+        );
+        return;
       }
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      const formData = new FormData(e.currentTarget)
+      const formData = new FormData(e.currentTarget);
 
       // Añadir el status al FormData
-      formData.append("status", status)
+      formData.append("status", status);
 
       // Si hay una categoría seleccionada, usarla
       if (selectedCategory) {
-        formData.set("categoria_id", selectedCategory)
+        formData.set("categoria_id", selectedCategory);
       }
 
       // Si no se seleccionó una nueva imagen y hay una imagen previa, añadimos un parámetro para indicarlo
       if (!isNewImageSelected && menuItem.foto) {
-        formData.append("keep_existing_image", "true")
+        formData.append("keep_existing_image", "true");
       }
 
-      await onSubmit(menuItem.id, formData)
-      setOpen(false)
+      await onSubmit(menuItem.id, formData);
+      setOpen(false);
     } catch (error: Error | unknown) {
-      console.error("Error al actualizar producto:", error)
-      setError(error instanceof Error ? error.message : "Error al actualizar producto. Por favor, intenta nuevamente.")
+      console.error("Error al actualizar producto:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Error al actualizar producto. Por favor, intenta nuevamente."
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    setError(null) // Limpiar errores previos
-    
+    const file = e.target.files?.[0];
+    setError(null); // Limpiar errores previos
+
     if (file) {
-      // Verificar si es una imagen válida
-      if (!file.type.startsWith("image/")) {
-        setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
+      // Verificar tamaño del archivo (3MB = 3 * 1024 * 1024 bytes)
+      const maxSize = 3 * 1024 * 1024; // 3MB
+      if (file.size > maxSize) {
+        setError(
+          "La imagen es demasiado grande. El tamaño máximo permitido es 3MB."
+        );
         if (fileInputRef.current) {
-          fileInputRef.current.value = ""
+          fileInputRef.current.value = "";
         }
         // Si ya teníamos una imagen previa, la mantenemos
         if (!menuItem.foto) {
-          setPreviewImage(null)
+          setPreviewImage(null);
         }
-        return
+        return;
       }
-      
-      const reader = new FileReader()
+
+      // Verificar si es una imagen válida
+      if (!file.type.startsWith("image/")) {
+        setError(
+          "El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF."
+        );
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        // Si ya teníamos una imagen previa, la mantenemos
+        if (!menuItem.foto) {
+          setPreviewImage(null);
+        }
+        return;
+      }
+
+      const reader = new FileReader();
       reader.onload = () => {
-        setPreviewImage(reader.result as string)
-        setIsNewImageSelected(true)
-      }
-      reader.readAsDataURL(file)
+        setPreviewImage(reader.result as string);
+        setIsNewImageSelected(true);
+      };
+      reader.readAsDataURL(file);
     } else {
       // Si no hay archivo seleccionado y teníamos la imagen original, mostramos la imagen original
       if (menuItem.foto && !isNewImageSelected) {
-        setPreviewImage(menuItem.foto)
+        setPreviewImage(menuItem.foto);
       } else {
-        setPreviewImage(null)
+        setPreviewImage(null);
       }
     }
-  }
-
+  };
   const clearImage = () => {
-    setPreviewImage(null)
-    setIsNewImageSelected(false)
+    setPreviewImage(null);
+    setIsNewImageSelected(false);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+      fileInputRef.current.value = "";
     }
-  }
+  };
 
   return (
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
-        setOpen(newOpen)
-        setError(null)
+        setOpen(newOpen);
+        setError(null);
         if (!newOpen) {
           // Resetear el estado si se cierra el modal sin guardar
           if (menuItem.foto) {
-            setPreviewImage(menuItem.foto)
+            setPreviewImage(menuItem.foto);
           } else {
-            setPreviewImage(null)
+            setPreviewImage(null);
           }
-          setIsNewImageSelected(false)
-          setStatus(menuItem.status)
-          setSelectedCategory(menuItem.categoria_id.toString())
+          setIsNewImageSelected(false);
+          setStatus(menuItem.status);
+          setSelectedCategory(menuItem.categoria_id.toString());
         }
       }}
     >
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+          >
             <Edit className="h-4 w-4" />
             Editar
           </Button>
@@ -178,10 +236,13 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="titulo" className="text-sm font-medium flex items-center gap-1">
+              <Label
+                htmlFor="titulo"
+                className="text-sm font-medium flex items-center gap-1"
+              >
                 <FileText className="h-4 w-4 text-gray-500" />
                 Nombre del producto <span className="text-red-500">*</span>
               </Label>
@@ -195,20 +256,32 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="categoria_id" className="text-sm font-medium flex items-center gap-1">
+              <Label
+                htmlFor="categoria_id"
+                className="text-sm font-medium flex items-center gap-1"
+              >
                 <Tag className="h-4 w-4 text-gray-500" />
                 Categoría <span className="text-red-500">*</span>
               </Label>
-              <Select name="categoria_id" value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                name="categoria_id"
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
                 <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">No hay categorías disponibles</div>
+                    <div className="p-2 text-sm text-gray-500">
+                      No hay categorías disponibles
+                    </div>
                   ) : (
                     categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
                         {category.nombre}
                       </SelectItem>
                     ))
@@ -233,19 +306,28 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="precio" className="text-sm font-medium flex items-center gap-1">
-              <span className="text-gray-600 font-bold text-sm mr-1">S/</span>
+              <Label
+                htmlFor="precio"
+                className="text-sm font-medium flex items-center gap-1"
+              >
+                <span className="text-gray-600 font-bold text-sm mr-1">S/</span>
                 Precio <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">S/</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  S/
+                </span>
                 <Input
                   id="precio"
                   name="precio"
                   type="number"
                   step="0.01"
                   min="0"
-                  defaultValue={typeof menuItem.precio === "string" ? menuItem.precio : menuItem.precio.toFixed(2)}
+                  defaultValue={
+                    typeof menuItem.precio === "string"
+                      ? menuItem.precio
+                      : menuItem.precio.toFixed(2)
+                  }
                   placeholder="0.00"
                   className="pl-8 border-gray-300 focus:border-red-500 focus:ring-red-500"
                   required
@@ -254,7 +336,10 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="foto" className="text-sm font-medium flex items-center gap-1">
+              <Label
+                htmlFor="foto"
+                className="text-sm font-medium flex items-center gap-1"
+              >
                 <Upload className="h-4 w-4 text-gray-500" />
                 Foto del producto <span className="text-red-500">*</span>
               </Label>
@@ -268,12 +353,17 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
                   onChange={handleFileChange}
                   className={cn(
                     "border-gray-300 focus:border-red-500 focus:ring-red-500",
-                    previewImage ? "hidden" : "block",
+                    previewImage ? "hidden" : "block"
                   )}
                 />
                 {previewImage && (
                   <div className="relative h-[100px] rounded-md overflow-hidden">
-                    <Image src={previewImage || DEFAULT_IMAGE} alt="Vista previa" fill className="object-cover" />
+                    <Image
+                      src={previewImage || DEFAULT_IMAGE}
+                      alt="Vista previa"
+                      fill
+                      className="object-cover"
+                    />
                     <Button
                       type="button"
                       variant="destructive"
@@ -286,11 +376,11 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
                   </div>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  {isNewImageSelected 
-                    ? "Nueva imagen seleccionada" 
-                    : menuItem.foto 
-                    ? "Usando imagen existente" 
-                    : "La imagen es obligatoria. Formatos aceptados: JPG, PNG, GIF."}
+                  {isNewImageSelected
+                    ? "Nueva imagen seleccionada"
+                    : menuItem.foto
+                    ? "Usando imagen existente"
+                    : "La imagen es obligatoria. Tamaño máximo: 3MB. Formatos: JPG, PNG, GIF."}
                 </p>
               </div>
             </div>
@@ -299,29 +389,48 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
           {/* Estado del producto */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Estado del producto</Label>
-            <RadioGroup value={status} onValueChange={setStatus} className="flex flex-col space-y-1">
+            <RadioGroup
+              value={status}
+              onValueChange={setStatus}
+              className="flex flex-col space-y-1"
+            >
               <div className="flex items-center space-x-2 rounded-md border p-2 hover:bg-gray-50">
                 <RadioGroupItem value="active" id="active-edit" />
-                <Label htmlFor="active-edit" className="flex items-center cursor-pointer">
+                <Label
+                  htmlFor="active-edit"
+                  className="flex items-center cursor-pointer"
+                >
                   <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
                   <span>Activo</span>
-                  <span className="text-xs text-gray-500 ml-2">(Disponible para compra)</span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    (Disponible para compra)
+                  </span>
                 </Label>
               </div>
               <div className="flex items-center space-x-2 rounded-md border p-2 hover:bg-gray-50">
                 <RadioGroupItem value="inactive" id="inactive-edit" />
-                <Label htmlFor="inactive-edit" className="flex items-center cursor-pointer">
+                <Label
+                  htmlFor="inactive-edit"
+                  className="flex items-center cursor-pointer"
+                >
                   <XCircle className="h-4 w-4 text-gray-500 mr-2" />
                   <span>Inactivo</span>
-                  <span className="text-xs text-gray-500 ml-2">(No visible para clientes)</span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    (No visible para clientes)
+                  </span>
                 </Label>
               </div>
               <div className="flex items-center space-x-2 rounded-md border p-2 hover:bg-gray-50">
                 <RadioGroupItem value="out-of-stock" id="out-of-stock-edit" />
-                <Label htmlFor="out-of-stock-edit" className="flex items-center cursor-pointer">
+                <Label
+                  htmlFor="out-of-stock-edit"
+                  className="flex items-center cursor-pointer"
+                >
                   <Clock className="h-4 w-4 text-amber-500 mr-2" />
                   <span>Agotado</span>
-                  <span className="text-xs text-gray-500 ml-2">(Visible pero no disponible)</span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    (Visible pero no disponible)
+                  </span>
                 </Label>
               </div>
             </RadioGroup>
@@ -377,5 +486,5 @@ export function EditMenuModal({ menuItem, categories, onSubmit, trigger }: EditM
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

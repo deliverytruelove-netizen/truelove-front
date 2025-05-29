@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
+// import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { CheckCircle2, Circle, CreditCard, Clock } from "lucide-react"
@@ -84,15 +84,15 @@ export default function VerificacionDocumentosPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-red-50 to-white">
-      <Navbar>
-        <Button
+      <Navbar/>
+        {/* <Button
           asChild
           variant="default"
           className="bg-[#f34739] text-white hover:bg-[#d63c30] transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           <Link href="/">Guardar y salir</Link>
         </Button>
-      </Navbar>
+      </Navbar> */}
 
       <div className="flex flex-col md:flex-row flex-1">
         <motion.div
