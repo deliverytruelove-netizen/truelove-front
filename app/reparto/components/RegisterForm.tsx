@@ -337,20 +337,50 @@ export default function RegisterForm() {
   // }, [formData, router, toast])
 
   // Funciones para manejar los botones del diálogo
- const validarFormulario = (formData: FormData) => {
-  return !!(
-    formData.departamento &&
-    formData.vehiculo &&
-    formData.tipoDocumento &&
-    formData.nroDocumento &&
-    formData.nombres &&
-    formData.celular &&
-    formData.email &&
-    formData.mayorEdad &&
-    formData.aceptaPolitica
-  );
-};
+// Función mejorada de validación del formulario
+// Función mejorada de validación del formulario
+const validarFormulario = useCallback((formData: FormData) => {
+  const errores: string[] = []
 
+  if (!formData.departamento) errores.push("Departamento es requerido")
+  if (!formData.vehiculo) errores.push("Vehículo es requerido")
+  if (!formData.tipoDocumento) errores.push("Tipo de documento es requerido")
+  if (!formData.nroDocumento) errores.push("Número de documento es requerido")
+  if (!formData.nombres) errores.push("Nombres son requeridos")
+  if (!formData.celular) errores.push("Celular es requerido")
+  if (!formData.email) errores.push("Email es requerido")
+  if (!formData.mayorEdad) errores.push("Confirmación de mayoría de edad es requerida")
+  if (!formData.aceptaPolitica) errores.push("Debe aceptar la política de privacidad")
+
+  // Validaciones específicas para móviles
+  if (isMobile) {
+    // Validar formato de email en móviles
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (formData.email && !emailRegex.test(formData.email)) {
+      errores.push("El formato del email no es válido")
+    }
+
+    // Validar longitud del celular
+    if (formData.celular && formData.celular.length < 9) {
+      errores.push("El número de celular debe tener al menos 9 dígitos")
+    }
+
+    // Validar documento según tipo
+    if (formData.tipoDocumento === "DNI" && formData.nroDocumento.length !== 8) {
+      errores.push("El DNI debe tener 8 dígitos")
+    }
+    if (formData.tipoDocumento === "RUC" && formData.nroDocumento.length !== 11) {
+      errores.push("El RUC debe tener 11 dígitos")
+    }
+  }
+
+  if (errores.length > 0) {
+    setValidationError(errores[0]) // Mostrar el primer error
+    return false
+  }
+
+  return true
+}, [isMobile, setValidationError])
 // Usar useCallback para handleSaveAndRedirect
 const handleSaveAndRedirect = useCallback((): void => {
   try {
@@ -392,21 +422,28 @@ const handleSaveAndRedirect = useCallback((): void => {
 }, [formData, router, toast]);
 
 const handleSubmit = useCallback(async (): Promise<void> => {
-  setIsLoading(true);
-  setValidationError(null);
+  setIsLoading(true)
+  setValidationError(null)
 
   try {
+    // Validación mejorada
     if (!validarFormulario(formData)) {
-      setIsLoading(false);
-      return;
+      setIsLoading(false)
+      return
     }
 
     // Si estamos en el paso 4, hacer validación previa del documento y correo
     if (step === 4) {
-      console.log("Validando documento y correo...");
-      const validationResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/reparto/validate-document-email`,
-        {
+      console.log("Validando documento y correo...")
+
+      // Timeout más largo para móviles
+      const timeoutDuration = isMobile ? 10000 : 5000
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutDuration)
+
+      try {
+        const validationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/validate-document-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -415,43 +452,67 @@ const handleSubmit = useCallback(async (): Promise<void> => {
             nro_documento: formData.nroDocumento,
             email: formData.email,
           }),
-        }
-      );
+          signal: controller.signal,
+        })
 
-      const validationData = await validationResponse.json();
-      console.log("Respuesta de validación:", validationData);
+        clearTimeout(timeoutId)
 
-      if (!validationResponse.ok) {
-        if (validationData.errors) {
-          const errorMessages = Object.values(validationData.errors).flat();
-          setValidationError(errorMessages[0] as string);
+        const validationData = await validationResponse.json()
+        console.log("Respuesta de validación:", validationData)
+
+        if (!validationResponse.ok) {
+          if (validationData.errors) {
+            const errorMessages = Object.values(validationData.errors).flat()
+            setValidationError(errorMessages[0] as string)
+          } else {
+            setValidationError("Error en la validación. Por favor, intenta nuevamente.")
+          }
+          setIsLoading(false)
+          return
         }
-        setIsLoading(false);
-        return;
+
+        // Si la validación es exitosa, mostrar captcha
+        setShowCaptcha(true)
+        setIsLoading(false)
+        return
+      } catch (fetchError) {
+        clearTimeout(timeoutId)
+        if (fetchError instanceof Error && fetchError.name === "AbortError") {
+          setValidationError(
+            "La validación está tomando demasiado tiempo. Por favor, verifica tu conexión e intenta nuevamente.",
+          )
+        } else {
+          setValidationError("Error de conexión. Por favor, verifica tu internet e intenta nuevamente.")
+        }
+        setIsLoading(false)
+        return
       }
-
-      // Si la validación es exitosa, mostrar captcha
-      setShowCaptcha(true);
-      setIsLoading(false);
-      return;
     }
 
     // Para los pasos 1-3, continuar con el flujo normal
-    handleSaveAndRedirect();
+    handleSaveAndRedirect()
   } catch (error) {
-    console.error("Detalles del error:", error);
+    console.error("Detalles del error:", error)
+
+    let errorMessage = "Hubo un problema al procesar el formulario. Por favor, intenta de nuevo."
+
+    if (error instanceof Error) {
+      if (error.message.includes("fetch")) {
+        errorMessage = "Error de conexión. Por favor, verifica tu internet e intenta nuevamente."
+      } else {
+        errorMessage = error.message
+      }
+    }
+
     toast({
       title: "Error",
-      description:
-        error instanceof Error
-          ? error.message
-          : "Hubo un problema al procesar el formulario. Por favor, intenta de nuevo.",
+      description: errorMessage,
       variant: "destructive",
-    });
+    })
   } finally {
-    setIsLoading(false);
+    setIsLoading(false)
   }
-}, [formData, toast, step, handleSaveAndRedirect]); // Incluir handleSaveAndRedirect
+}, [formData, toast, step, handleSaveAndRedirect, isMobile, validarFormulario])
 
 
 
