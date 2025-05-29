@@ -58,7 +58,7 @@ export const navigationItems: NavItem [] = [
     //     icon : RiCoupon3Line,
     // },
     {
-        title : "Merodos De Pagos",
+        title : "Metodos De Pagos",
         path : "/admin/metodo-pago",
         icon : RiBankCardFill ,
     },
