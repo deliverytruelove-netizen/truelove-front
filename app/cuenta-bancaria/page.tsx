@@ -5,7 +5,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
-import Link from "next/link"
+// import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
@@ -229,8 +229,8 @@ export default function CuentaBancariaPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar>
-        <div className="flex items-center gap-2 md:gap-4">
+      <Navbar/>
+        {/* <div className="flex items-center gap-2 md:gap-4">
           <Button asChild variant="ghost" className="text-xs md:text-sm">
             <Link href="/">¿Tienes preguntas?</Link>
           </Button>
@@ -238,7 +238,7 @@ export default function CuentaBancariaPage() {
             <Link href="/">Guardar y salir</Link>
           </Button>
         </div>
-      </Navbar>
+      </Navbar> */}
 
       <div className="flex flex-col md:flex-row flex-1">
         <div className="hidden md:block w-full md:w-1/2 h-48 md:h-auto relative">

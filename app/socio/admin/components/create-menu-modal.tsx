@@ -97,30 +97,41 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    setError(null) // Limpiar errores previos
-    
-    if (file) {
-      // Verificar si es una imagen válida
-      if (!file.type.startsWith("image/")) {
-        setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
-        setPreviewImage(null)
-        return
+ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  setError(null) // Limpiar errores previos
+  
+  if (file) {
+    // Verificar tamaño del archivo (3MB = 3 * 1024 * 1024 bytes)
+    const maxSize = 3 * 1024 * 1024; // 3MB
+    if (file.size > maxSize) {
+      setError("La imagen es demasiado grande. El tamaño máximo permitido es 3MB.")
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
       }
-      
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreviewImage(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    } else {
       setPreviewImage(null)
+      return
     }
+    
+    // Verificar si es una imagen válida
+    if (!file.type.startsWith("image/")) {
+      setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      setPreviewImage(null)
+      return
+    }
+    
+    const reader = new FileReader()
+    reader.onload = () => {
+      setPreviewImage(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  } else {
+    setPreviewImage(null)
   }
+}
 
   const clearImage = () => {
     setPreviewImage(null)
@@ -269,7 +280,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                     </Button>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 mt-1">La imagen es obligatoria. Formatos aceptados: JPG, PNG, GIF.</p>
+                <p className="text-xs text-gray-500 mt-1">La imagen es obligatoria. Tamaño máximo: 3MB. Formatos: JPG, PNG, GIF.</p>
               </div>
             </div>
           </div>

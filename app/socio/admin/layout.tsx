@@ -4,7 +4,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Menu, Home, Utensils, ShoppingBag, PieChart, Settings, ChevronLeft, ChevronRight } from "lucide-react"
+import { Menu, Home, Utensils, ShoppingBag, Settings, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AvatarSettings from "./components/AvatarSettings"
 import Link from "next/link"
@@ -16,7 +16,7 @@ const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
   { name: "Menú", href: "/socio/admin/menu", icon: Utensils },
   { name: "Pedidos", href: "/socio/admin/pedidos", icon: ShoppingBag },
-  { name: "Finanzas", href: "/socio/admin/finanzas", icon: PieChart },
+  // { name: "Finanzas", href: "/socio/admin/finanzas", icon: PieChart },
   { name: "Configuración", href: "/socio/admin/configuracion", icon: Settings },
 ]
 

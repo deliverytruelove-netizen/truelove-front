@@ -1,6 +1,6 @@
 import { getRegistrationToken } from "./registrationTokenService"
 
-// Tipos para los datos del registro
+// Tipos para los datos del registros
 export interface RegistrationData {
   // Datos del formulario inicial
   personalData?: {

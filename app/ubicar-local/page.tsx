@@ -4,9 +4,9 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import Link from "next/link"
+// import Link from "next/link"
 import ImaDelivery from "@/public/img/deli-ubicacion.jpg"
-import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import MapComponent from "./components/BusinessMap"
@@ -200,15 +200,15 @@ export default function BusinessLocation() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar>
-        <Button
+      <Navbar/>
+        {/* <Button
           asChild
           variant="default"
           className="bg-[#f34739] text-white hover:bg-[#d63c30]"
         >
           <Link href="/">Guardar y salir</Link>
         </Button>
-      </Navbar>
+      </Navbar> */}
 
       <div className="flex flex-1 flex-col md:flex-row">
         <div className="hidden md:flex w-full md:w-1/2 p-4 bg-gray-100">
