@@ -16,7 +16,7 @@ import { formSchema, type BusinessFormValues } from "./schemas/business-form";
 import type { TipoNegocio, Categoria } from "./types/business";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
-import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/utils/saveStorage'
+import {   removeLocalStorage } from '@/utils/saveStorage'
 
 function FormularioDetallesNegocioContent() {
   useBodyScrollLock();
@@ -95,12 +95,12 @@ function FormularioDetallesNegocioContent() {
         
         // Cargar las categorías correspondientes
         await fetchCategorias(negocioData.tipo_negocio_id.toString());
-      } else {
-        // Si no hay datos, cargar del localStorage
-        const savedData = getLocalStorage<BusinessFormValues>("businessFormData");
-        if (savedData) {
-          form.reset(savedData);
-        }
+      // } else {
+      //   // Si no hay datos, cargar del localStorage
+      //   const savedData = getLocalStorage<BusinessFormValues>("businessFormData");
+      //   if (savedData) {
+      //     form.reset(savedData);
+      //   }
       }
 
       setIsLoading(false);
@@ -110,12 +110,12 @@ function FormularioDetallesNegocioContent() {
     fetchTiposNegocio();
   }, [form, router]);
 
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      setLocalStorage("businessFormData", value)
-    })
-    return () => subscription.unsubscribe()
-  }, [form])
+  // useEffect(() => {
+  //   const subscription = form.watch((value) => {
+  //     setLocalStorage("businessFormData", value)
+  //   })
+  //   return () => subscription.unsubscribe()
+  // }, [form])
 
   const fetchTiposNegocio = async () => {
     try {

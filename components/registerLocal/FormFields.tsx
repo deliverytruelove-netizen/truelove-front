@@ -212,13 +212,13 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           <SelectTrigger id="businessType" className="w-full">
             <SelectValue placeholder="Seleccione tipo de negocio" />
           </SelectTrigger>
-          <SelectContent>
-            {businessTypes.map((type) => (
-              <SelectItem key={type.id} value={type.nombre}>
-                {type.nombre}
-              </SelectItem>
-            ))}
-          </SelectContent>
+       <SelectContent className="max-h-[200px]">
+  {businessTypes.map((type) => (
+    <SelectItem key={type.id} value={type.nombre}>
+      {type.nombre}
+    </SelectItem>
+  ))}
+</SelectContent>
         </Select>
       </div>
 
