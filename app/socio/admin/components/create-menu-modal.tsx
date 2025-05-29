@@ -1,4 +1,3 @@
-// app\socio\admin\components\create-menu-modal.tsx
 "use client"
 
 import type React from "react"
@@ -19,6 +18,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 // Imagen por defecto para cuando no se carga una imagen
 const DEFAULT_IMAGE = "https://via.placeholder.com/300x300.png?text=Imagen+del+producto"
+
+// Tipos de archivo permitidos
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif"]
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"]
 
 interface CreateMenuModalProps {
   categories: Category[]
@@ -44,20 +47,32 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
     }
   }, [defaultCategoryId])
 
+  // Función para validar el tipo de archivo
+  const isValidImageType = (file: File): boolean => {
+    // Verificar por MIME type
+    if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return true
+    }
+
+    // Verificar por extensión como respaldo
+    const fileName = file.name.toLowerCase()
+    return ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext))
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
-    
+
     // Validar que se haya seleccionado una imagen
     if (!fileInputRef.current?.files?.length) {
       setError("La imagen es obligatoria. Por favor, selecciona una imagen para el producto.")
       return
     }
-    
+
     // Verificar que el archivo sea una imagen válida
     const file = fileInputRef.current.files[0]
-    if (file && !file.type.startsWith("image/")) {
-      setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
+    if (file && !isValidImageType(file)) {
+      setError("Formato de imagen no válido. Solo se permiten archivos JPG, PNG y GIF.")
       return
     }
 
@@ -88,50 +103,49 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
       }
 
       setStatus("active") // Resetear el estado
-      
-    } catch (error: Error | unknown) {
+    } catch (error) {
       console.error("Error al crear producto:", error)
-      setError(error instanceof Error ? error.message : "Error al crear producto. Por favor, intenta nuevamente.")
+      setError("Error al crear producto. Por favor, intenta nuevamente.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
- const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
-  setError(null) // Limpiar errores previos
-  
-  if (file) {
-    // Verificar tamaño del archivo (3MB = 3 * 1024 * 1024 bytes)
-    const maxSize = 3 * 1024 * 1024; // 3MB
-    if (file.size > maxSize) {
-      setError("La imagen es demasiado grande. El tamaño máximo permitido es 3MB.")
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setError(null) // Limpiar errores previos
+
+    if (file) {
+      // Verificar si es una imagen válida PRIMERO
+      if (!isValidImageType(file)) {
+        setError("Formato de imagen no válido. Solo se permiten archivos JPG, PNG y GIF.")
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+        setPreviewImage(null)
+        return
       }
-      setPreviewImage(null)
-      return
-    }
-    
-    // Verificar si es una imagen válida
-    if (!file.type.startsWith("image/")) {
-      setError("El archivo seleccionado no es una imagen válida. Por favor, selecciona un archivo JPG, PNG o GIF.")
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
+
+      // Verificar tamaño del archivo (3MB = 3 * 1024 * 1024 bytes)
+      const maxSize = 3 * 1024 * 1024 // 3MB
+      if (file.size > maxSize) {
+        setError("La imagen es demasiado grande. El tamaño máximo permitido es 3MB.")
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+        setPreviewImage(null)
+        return
       }
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        setPreviewImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    } else {
       setPreviewImage(null)
-      return
     }
-    
-    const reader = new FileReader()
-    reader.onload = () => {
-      setPreviewImage(reader.result as string)
-    }
-    reader.readAsDataURL(file)
-  } else {
-    setPreviewImage(null)
   }
-}
 
   const clearImage = () => {
     setPreviewImage(null)
@@ -175,7 +189,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="titulo" className="text-sm font-medium flex items-center gap-1">
@@ -257,7 +271,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                   id="foto"
                   name="foto"
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png,.gif"
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className={cn(
@@ -280,7 +294,9 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                     </Button>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 mt-1">La imagen es obligatoria. Tamaño máximo: 3MB. Formatos: JPG, PNG, GIF.</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  La imagen es obligatoria. Tamaño máximo: 3MB. Formatos permitidos: JPG, PNG, GIF únicamente.
+                </p>
               </div>
             </div>
           </div>
