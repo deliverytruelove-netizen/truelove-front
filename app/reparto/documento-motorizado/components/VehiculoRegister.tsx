@@ -275,7 +275,6 @@ export function VehicleRegistrationForm() {
 
     setIsSubmitting(true);
     try {
-      // Preparar datos del vehículo para almacenamiento local
       const datosVehiculo = {
         placa: values.placa,
         licenciaConducir: values.licenciaConducir,
@@ -287,13 +286,23 @@ export function VehicleRegistrationForm() {
         tarjetaPropiedad_imagen: images.tarjetaPropiedad,
       };
 
-      // Guardar en el servicio
-      FormDataService.guardarVehiculo(datosVehiculo);
+      // ✅ MANEJAR ERROR DE CUOTA
+      try {
+        FormDataService.guardarVehiculo(datosVehiculo);
+      } catch (error) {
+        if (error instanceof Error && error.name === "QuotaExceededError") {
+          toast({
+            title: "Imágenes demasiado grandes",
+            description:
+              "Las imágenes son muy pesadas. Por favor, use imágenes más pequeñas o de menor calidad.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
-      // Actualizar el paso actual
       sessionStorage.setItem("repartoCurrentStep", "/reparto/registro-exitoso");
-
-      // Redireccionar al paso final
       router.push("/reparto/registro-exitoso");
     } catch (error) {
       console.error("Error:", error);
@@ -320,9 +329,56 @@ export function VehicleRegistrationForm() {
   ) => {
     const file = e.target.files?.[0];
     if (file) {
+      // ✅ AGREGAR VALIDACIÓN DE TIPO
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Formato no válido",
+          description: "Solo se permiten archivos JPG, JPEG y PNG",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ✅ AGREGAR VALIDACIÓN DE TAMAÑO
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: "El archivo debe ser menor a 2MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImages((prev) => ({ ...prev, [field]: reader.result as string }));
+        // ✅ COMPRIMIR IMAGEN ANTES DE GUARDAR
+      const img = document.createElement('img');
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          // Redimensionar si es muy grande
+          const maxWidth = 800;
+          const maxHeight = 600;
+          let { width, height } = img;
+
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width *= ratio;
+            height *= ratio;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Convertir a base64 con calidad reducida
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+          setImages((prev) => ({ ...prev, [field]: compressedBase64 }));
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -476,7 +532,32 @@ export function VehicleRegistrationForm() {
           </DialogHeader>
           <CameraCapture
             onCapture={(imageSrc) => {
-              setImages((prev) => ({ ...prev, [currentField]: imageSrc }));
+            const img = document.createElement('img');
+              img.onload = () => {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                const maxWidth = 800;
+                const maxHeight = 600;
+                let { width, height } = img;
+
+                if (width > maxWidth || height > maxHeight) {
+                  const ratio = Math.min(maxWidth / width, maxHeight / height);
+                  width *= ratio;
+                  height *= ratio;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx?.drawImage(img, 0, 0, width, height);
+
+                const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+                setImages((prev) => ({
+                  ...prev,
+                  [currentField]: compressedBase64,
+                }));
+              };
+              img.src = imageSrc;
               setIsCameraOpen(false);
             }}
           />
@@ -515,11 +596,17 @@ function DocumentUpload({
           <input
             type="file"
             className="absolute inset-0 opacity-0 cursor-pointer"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png" // ✅ ESPECIFICAR TIPOS PERMITIDOS
             onChange={(e) => onFileUpload(field, e)}
           />
         </Button>
       </div>
+
+      {/* ✅ AGREGAR ADVERTENCIA VISUAL */}
+      <div className="text-xs text-gray-500 mt-1">
+        Solo JPG, JPEG, PNG (máx. 2MB)
+      </div>
+
       {image && (
         <Card className="mt-2">
           <CardContent className="p-2">

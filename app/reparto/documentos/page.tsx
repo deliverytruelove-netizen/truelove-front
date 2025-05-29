@@ -1,7 +1,5 @@
 // app\reparto\documentos\page.tsx
-import Link from "next/link"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
 import { FormularioBancario } from "./components/formulario-bancario"
 import Moto from "@/src/assets/img/documentos.jpg"
@@ -10,8 +8,8 @@ export default function RepartoDocumento() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <Navbar>
-        <div className="flex items-center gap-2 md:gap-4">
+      <Navbar />
+        {/* <div className="flex items-center gap-2 md:gap-4">
           <Button asChild variant="ghost" className="text-xs md:text-sm">
             <Link href="/">¿Tienes preguntas?</Link>
           </Button>
@@ -23,7 +21,7 @@ export default function RepartoDocumento() {
             <Link href="/">Guardar y salir</Link>
           </Button>
         </div>
-      </Navbar>
+      </Navbar> */}
 
       {/* Contenido principal */}
       <div className="flex flex-col md:flex-row flex-1">
