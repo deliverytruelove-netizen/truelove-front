@@ -1,59 +1,63 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import Image from "next/image"
-import { Clock, Upload, Plus, Calendar, ImageIcon } from 'lucide-react'
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { HorarioModal } from "./horario-modal"
-import logoPerfil from "@/src/assets/img/logotipo.png"
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import { Clock, Upload, Plus, Calendar, ImageIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { HorarioModal } from "./horario-modal";
+import logoPerfil from "@/src/assets/img/logotipo.png";
 
 interface HorarioNegocio {
-  id: number
-  nombre: string
-  lunes: boolean
-  martes: boolean
-  miercoles: boolean
-  jueves: boolean
-  viernes: boolean
-  sabado: boolean
-  domingo: boolean
-  hora_apertura: string
-  hora_cierre: string
-  activo: boolean
+  id: number;
+  nombre: string;
+  lunes: boolean;
+  martes: boolean;
+  miercoles: boolean;
+  jueves: boolean;
+  viernes: boolean;
+  sabado: boolean;
+  domingo: boolean;
+  hora_apertura: string;
+  hora_cierre: string;
+  activo: boolean;
 }
 
 interface PerfilNegocioProps {
-  logo?: string
-  banner?: string
-  horarios: HorarioNegocio[]
-  business?: string
+  logo?: string;
+  banner?: string;
+  horarios: HorarioNegocio[];
+  business?: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_WEB
+const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
-export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: PerfilNegocioProps) {
-  const [subiendoLogo, setSubiendoLogo] = useState(false)
-  const [subiendoBanner, setSubiendoBanner] = useState(false)
-  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined)
-  const [bannerUrl, setBannerUrl] = useState<string | undefined>(undefined)
-  const [error, setError] = useState<string | null>(null)
-  const [horarios, setHorarios] = useState<HorarioNegocio[]>(horariosIniciales)
-  const [modalAbierto, setModalAbierto] = useState(false)
+export function PerfilNegocio({
+  logo,
+  banner,
+  horarios: horariosIniciales,
+}: PerfilNegocioProps) {
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
+  const [subiendoBanner, setSubiendoBanner] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
+  const [bannerUrl, setBannerUrl] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [horarios, setHorarios] = useState<HorarioNegocio[]>(horariosIniciales);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   const obtenerPerfil = useCallback(async () => {
     try {
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("authToken="))
-        ?.split("=")[1]
+        ?.split("=")[1];
 
       if (!token) {
-        setLogoUrl(logo)
-        setBannerUrl(banner)
-        return
+        setLogoUrl(logo);
+        setBannerUrl(banner);
+        return;
       }
 
       const respuesta = await fetch(`${API_URL}/negocio/logo`, {
@@ -61,47 +65,49 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
-      })
+      });
 
       if (respuesta.ok) {
-        const datos = await respuesta.json()
-        setLogoUrl(datos.ruta_logo || logo)
-        setBannerUrl(datos.banner || banner)
+        const datos = await respuesta.json();
+        setLogoUrl(datos.ruta_logo || logo);
+        setBannerUrl(datos.banner || banner);
         if (datos.horarios) {
-          setHorarios(datos.horarios)
+          setHorarios(datos.horarios);
         }
       } else {
-        setLogoUrl(logo)
-        setBannerUrl(banner)
+        setLogoUrl(logo);
+        setBannerUrl(banner);
       }
     } catch (error) {
-      console.error("Error al obtener el perfil:", error)
-      setLogoUrl(logo)
-      setBannerUrl(banner)
+      console.error("Error al obtener el perfil:", error);
+      setLogoUrl(logo);
+      setBannerUrl(banner);
     }
-  }, [logo, banner])
+  }, [logo, banner]);
 
   useEffect(() => {
-    obtenerPerfil()
-  }, [obtenerPerfil])
+    obtenerPerfil();
+  }, [obtenerPerfil]);
 
-  const manejarSubidaLogo = async (evento: React.ChangeEvent<HTMLInputElement>) => {
+  const manejarSubidaLogo = async (
+    evento: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (evento.target.files && evento.target.files[0]) {
-      const archivo = evento.target.files[0]
-      setSubiendoLogo(true)
-      setError(null)
+      const archivo = evento.target.files[0];
+      setSubiendoLogo(true);
+      setError(null);
 
       try {
-        const formData = new FormData()
-        formData.append("logo", archivo)
+        const formData = new FormData();
+        formData.append("logo", archivo);
 
         const token = document.cookie
           .split("; ")
           .find((row) => row.startsWith("authToken="))
-          ?.split("=")[1]
+          ?.split("=")[1];
 
         if (!token) {
-          throw new Error("No se encontró el token de autenticación")
+          throw new Error("No se encontró el token de autenticación");
         }
 
         const respuesta = await fetch(`${API_URL}/negocio/logo`, {
@@ -111,46 +117,76 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-        })
+        });
 
         if (!respuesta.ok) {
-          const errorData = await respuesta.json()
-          throw new Error(errorData.message || "Error al subir el logo")
+          const errorData = await respuesta.json();
+          throw new Error(errorData.message || "Error al subir el logo");
         }
 
-        const datos = await respuesta.json()
-        setLogoUrl(datos.ruta_logo)
+        const datos = await respuesta.json();
+        setLogoUrl(datos.ruta_logo);
       } catch (error: unknown) {
-        console.error("Error al subir el logo:", error)
+        console.error("Error al subir el logo:", error);
         if (error instanceof Error) {
-          setError(error.message)
+          setError(error.message);
         } else {
-          setError("Error al subir el logo")
+          setError("Error al subir el logo");
         }
       } finally {
-        setSubiendoLogo(false)
+        setSubiendoLogo(false);
       }
     }
-  }
+  };
 
-  const manejarSubidaBanner = async (evento: React.ChangeEvent<HTMLInputElement>) => {
+  const manejarSubidaBanner = async (
+    evento: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (evento.target.files && evento.target.files[0]) {
-      const archivo = evento.target.files[0]
-      setSubiendoBanner(true)
-      setError(null)
+      const archivo = evento.target.files[0];
+
+      // Validar archivo antes de subirlo
+      const tiposPermitidos = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
+      if (!tiposPermitidos.includes(archivo.type)) {
+        setError("Solo se permiten archivos JPG, PNG y GIF.");
+        evento.target.value = ""; // Limpiar el input
+        return;
+      }
+
+      // Verificar tamaño del archivo (4MB)
+      const tamañoMaximo = 4 * 1024 * 1024; // 4MB
+      if (archivo.size > tamañoMaximo) {
+        setError("El archivo es demasiado grande. Máximo 4MB permitido.");
+        evento.target.value = ""; // Limpiar el input
+        return;
+      }
+
+      setSubiendoBanner(true);
+      setError(null);
 
       try {
-        const formData = new FormData()
-        formData.append("banner", archivo)
+        const formData = new FormData();
+        formData.append("banner", archivo);
 
         const token = document.cookie
           .split("; ")
           .find((row) => row.startsWith("authToken="))
-          ?.split("=")[1]
+          ?.split("=")[1];
 
         if (!token) {
-          throw new Error("No se encontró el token de autenticación")
+          throw new Error("No se encontró el token de autenticación");
         }
+
+        console.log("Enviando banner:", {
+          fileName: archivo.name,
+          fileType: archivo.type,
+          fileSize: archivo.size,
+        });
 
         const respuesta = await fetch(`${API_URL}/negocio/banner`, {
           method: "POST",
@@ -159,37 +195,41 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-        })
+        });
 
         if (!respuesta.ok) {
-          const errorData = await respuesta.json()
-          throw new Error(errorData.message || "Error al subir el banner")
+          const errorData = await respuesta.json();
+          console.error("Error del servidor:", errorData);
+          throw new Error(errorData.message || "Error al subir el banner");
         }
 
-        const datos = await respuesta.json()
-        setBannerUrl(datos.banner)
+        const datos = await respuesta.json();
+        setBannerUrl(datos.banner);
+        setError(null);
       } catch (error: unknown) {
-        console.error("Error al subir el banner:", error)
+        console.error("Error al subir el banner:", error);
         if (error instanceof Error) {
-          setError(error.message)
+          setError(error.message);
         } else {
-          setError("Error al subir el banner")
+          setError("Error al subir el banner");
         }
       } finally {
-        setSubiendoBanner(false)
+        setSubiendoBanner(false);
+        // Limpiar el input
+        evento.target.value = "";
       }
     }
-  }
+  };
 
   const guardarHorario = async (horarioNuevo: Omit<HorarioNegocio, "id">) => {
     try {
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("authToken="))
-        ?.split("=")[1]
+        ?.split("=")[1];
 
       if (!token) {
-        throw new Error("No se encontró el token de autenticación")
+        throw new Error("No se encontró el token de autenticación");
       }
 
       const respuesta = await fetch(`${API_URL}/negocio/horarios`, {
@@ -200,49 +240,51 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
           Accept: "application/json",
         },
         body: JSON.stringify(horarioNuevo),
-      })
+      });
 
       if (!respuesta.ok) {
-        const errorData = await respuesta.json()
-        throw new Error(errorData.message || "Error al guardar el horario")
+        const errorData = await respuesta.json();
+        throw new Error(errorData.message || "Error al guardar el horario");
       }
 
-      const horarioGuardado = await respuesta.json()
-      setHorarios([...horarios, horarioGuardado])
-      setModalAbierto(false)
+      const horarioGuardado = await respuesta.json();
+      setHorarios([...horarios, horarioGuardado]);
+      setModalAbierto(false);
     } catch (error: unknown) {
-      console.error("Error al guardar horario:", error)
+      console.error("Error al guardar horario:", error);
       if (error instanceof Error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
-      throw new Error("Error al guardar el horario")
+      throw new Error("Error al guardar el horario");
     }
-  }
+  };
 
   const obtenerDiasString = (horario: HorarioNegocio) => {
-    const dias = []
-    if (horario.lunes) dias.push("Lun")
-    if (horario.martes) dias.push("Mar")
-    if (horario.miercoles) dias.push("Mié")
-    if (horario.jueves) dias.push("Jue")
-    if (horario.viernes) dias.push("Vie")
-    if (horario.sabado) dias.push("Sáb")
-    if (horario.domingo) dias.push("Dom")
-    return dias.join(", ")
-  }
+    const dias = [];
+    if (horario.lunes) dias.push("Lun");
+    if (horario.martes) dias.push("Mar");
+    if (horario.miercoles) dias.push("Mié");
+    if (horario.jueves) dias.push("Jue");
+    if (horario.viernes) dias.push("Vie");
+    if (horario.sabado) dias.push("Sáb");
+    if (horario.domingo) dias.push("Dom");
+    return dias.join(", ");
+  };
 
   const formatearHora = (hora: string) => {
     return new Date(`2000-01-01T${hora}`).toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Perfil del Negocio</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Perfil del Negocio
+        </h1>
       </div>
 
       <div className="grid gap-6">
@@ -272,9 +314,12 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
 
               <div className="flex flex-col gap-4">
                 <div className="space-y-2">
-                  <h2 className="text-xl font-semibold tracking-tight">Logo del Negocio</h2>
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Logo del Negocio
+                  </h2>
                   <p className="text-sm text-muted-foreground">
-                    Sube el logo de tu negocio para que tus clientes puedan identificarte fácilmente.
+                    Sube el logo de tu negocio para que tus clientes puedan
+                    identificarte fácilmente.
                   </p>
                 </div>
 
@@ -283,7 +328,9 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
                     size="lg"
                     className="relative overflow-hidden bg-red-600 shadow-lg transition-all hover:shadow-xl"
                     disabled={subiendoLogo}
-                    onClick={() => document.getElementById("input-logo")?.click()}
+                    onClick={() =>
+                      document.getElementById("input-logo")?.click()
+                    }
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-/10 to-transparent opacity-0 transition-opacity hover:opacity-100" />
                     <Upload className="mr-2 h-5 w-5" />
@@ -291,7 +338,11 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
                   </Button>
                 </div>
 
-                {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
+                {error && (
+                  <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
+                    {error}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -302,9 +353,12 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
           <CardContent className="p-6">
             <div className="flex flex-col gap-6">
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold tracking-tight">Banner del Negocio</h2>
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Banner del Negocio
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                  Sube un banner atractivo para destacar tu negocio en la plataforma.
+                  Sube un banner atractivo para destacar tu negocio en la
+                  plataforma.
                 </p>
               </div>
 
@@ -321,7 +375,9 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                       <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
-                      <p className="text-sm text-muted-foreground">No hay banner configurado</p>
+                      <p className="text-sm text-muted-foreground">
+                        No hay banner configurado
+                      </p>
                     </div>
                   </div>
                 )}
@@ -332,7 +388,9 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
                   size="lg"
                   className="relative overflow-hidden bg-red-600 shadow-lg transition-all hover:shadow-xl"
                   disabled={subiendoBanner}
-                  onClick={() => document.getElementById("input-banner")?.click()}
+                  onClick={() =>
+                    document.getElementById("input-banner")?.click()
+                  }
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-/10 to-transparent opacity-0 transition-opacity hover:opacity-100" />
                   <Upload className="mr-2 h-5 w-5" />
@@ -349,7 +407,9 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <h2 className="text-xl font-semibold tracking-tight">Horarios de Atención</h2>
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Horarios de Atención
+                  </h2>
                   <p className="text-sm text-muted-foreground">
                     Configura los horarios en los que tu negocio estará abierto.
                   </p>
@@ -370,9 +430,12 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
                 {horarios.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <Calendar className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No hay horarios configurados</h3>
+                    <h3 className="text-lg font-medium mb-2">
+                      No hay horarios configurados
+                    </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Comienza agregando el primer horario de atención para tu negocio.
+                      Comienza agregando el primer horario de atención para tu
+                      negocio.
                     </p>
                     <Button
                       onClick={() => setModalAbierto(true)}
@@ -393,11 +456,14 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
                       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                       <div className="relative flex items-center justify-between">
                         <div className="space-y-3">
-                          <h4 className="text-xl font-medium tracking-tight">{horario.nombre}</h4>
+                          <h4 className="text-xl font-medium tracking-tight">
+                            {horario.nombre}
+                          </h4>
                           <div className="flex items-center text-base">
                             <Clock className="mr-2 h-5 w-5 text-primary/70" />
                             <span className="font-medium text-muted-foreground">
-                              {formatearHora(horario.hora_apertura)} - {formatearHora(horario.hora_cierre)}
+                              {formatearHora(horario.hora_apertura)} -{" "}
+                              {formatearHora(horario.hora_cierre)}
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -432,10 +498,26 @@ export function PerfilNegocio({ logo, banner, horarios: horariosIniciales }: Per
         </Card>
       </div>
 
-      <input id="input-logo" type="file" accept="image/*" className="hidden" onChange={manejarSubidaLogo} />
-      <input id="input-banner" type="file" accept="image/*" className="hidden" onChange={manejarSubidaBanner} />
+      <input
+        id="input-banner"
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/gif"
+        className="hidden"
+        onChange={manejarSubidaBanner}
+      />
+      <input
+        id="input-logo"
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/gif"
+        className="hidden"
+        onChange={manejarSubidaLogo}
+      />
 
-      <HorarioModal open={modalAbierto} onOpenChange={setModalAbierto} onGuardar={guardarHorario} />
+      <HorarioModal
+        open={modalAbierto}
+        onOpenChange={setModalAbierto}
+        onGuardar={guardarHorario}
+      />
     </div>
-  )
+  );
 }
