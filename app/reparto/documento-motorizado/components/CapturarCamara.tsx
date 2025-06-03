@@ -1,3 +1,4 @@
+// app\reparto\documento-motorizado\components\CapturarCamara.tsx
 'use client'
 
 import { useCallback, useRef } from 'react'

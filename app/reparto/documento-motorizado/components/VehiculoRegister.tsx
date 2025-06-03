@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Image from "next/image";
-import { Camera, Upload, Loader2 } from "lucide-react";
+import { Camera, Upload, Loader2 } from 'lucide-react';
 import { CameraCapture } from "./CapturarCamara";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -68,6 +68,71 @@ export function VehicleRegistrationForm() {
       tarjetaPropiedad: "",
     },
   });
+  
+  // ✅ FUNCIÓN PARA VALIDAR IMÁGENES
+  const todasLasImagenesPresentes = () => {
+    const imagenesRequeridas = ['placa', 'licenciaConducir', 'seguro', 'tarjetaPropiedad'];
+    return imagenesRequeridas.every(campo => images[campo] && images[campo].length > 0);
+  };
+
+  // ✅ FUNCIÓN PARA OBTENER IMÁGENES FALTANTES
+  const getImagenesFaltantes = () => {
+    const imagenesRequeridas = ['placa', 'licenciaConducir', 'seguro', 'tarjetaPropiedad'];
+ // ✅ CORRECCIÓN CON TIPOS EXPLÍCITOS
+const nombresAmigables: Record<string, string> = {
+  placa: 'Placa del vehículo',
+  licenciaConducir: 'Licencia de conducir',
+  seguro: 'Seguro del vehículo',
+  tarjetaPropiedad: 'Tarjeta de propiedad'
+};
+
+return imagenesRequeridas
+  .filter((campo: string) => !images[campo] || images[campo].length === 0)
+  .map((campo: string) => nombresAmigables[campo]);
+  };
+  
+  // ✅ FUNCIÓN PARA COMPRIMIR IMÁGENES DE MANERA CONSISTENTE
+  const comprimirImagen = (imageSrc: string, field: string) => {
+    const img = document.createElement('img');
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Tamaños más pequeños para reducir peso
+      const maxWidth = 600;  // Reducido de 800
+      const maxHeight = 450; // Reducido de 600
+      let { width, height } = img;
+
+      // Siempre redimensionar para optimizar
+      const ratio = Math.min(maxWidth / width, maxHeight / height);
+      width *= ratio;
+      height *= ratio;
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+
+      // Calidad más baja para reducir tamaño
+      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.5); // Reducido de 0.7 a 0.5
+      
+      // Verificar tamaño final
+      const finalSize = Math.round((compressedBase64.length * 3) / 4); // Tamaño aproximado en bytes
+      console.log(`Imagen ${field} comprimida: ${(finalSize / 1024).toFixed(2)}KB`);
+      
+      if (finalSize > 500 * 1024) { // Si es mayor a 500KB
+        toast({
+          title: "Imagen aún muy grande",
+          description: "La imagen sigue siendo muy pesada después de la compresión. Intente con una imagen más pequeña.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setImages((prev) => ({ ...prev, [field]: compressedBase64 }));
+    };
+    img.src = imageSrc;
+  };
+
   const cargarDatosExistentes = useCallback(
     async (id: string) => {
       try {
@@ -273,6 +338,17 @@ export function VehicleRegistrationForm() {
       return;
     }
 
+    // ✅ VALIDAR IMÁGENES ANTES DE CONTINUAR
+    if (!todasLasImagenesPresentes()) {
+      const faltantes = getImagenesFaltantes();
+      toast({
+        title: "Imágenes faltantes",
+        description: `Debe subir las siguientes imágenes: ${faltantes.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const datosVehiculo = {
@@ -286,18 +362,40 @@ export function VehicleRegistrationForm() {
         tarjetaPropiedad_imagen: images.tarjetaPropiedad,
       };
 
+      // ✅ VERIFICAR TAMAÑO TOTAL ANTES DE GUARDAR
+      const datosString = JSON.stringify(datosVehiculo);
+      const tamanoTotal = new Blob([datosString]).size;
+      console.log(`Tamaño total de datos: ${(tamanoTotal / 1024).toFixed(2)}KB`);
+
+      if (tamanoTotal > 4 * 1024 * 1024) { // 4MB límite de sessionStorage
+        toast({
+          title: "Datos demasiado grandes",
+          description: "Las imágenes son muy pesadas para el almacenamiento. Por favor, use imágenes más pequeñas.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // ✅ MANEJAR ERROR DE CUOTA
       try {
         FormDataService.guardarVehiculo(datosVehiculo);
+        
+        // ✅ VERIFICAR QUE SE GUARDÓ CORRECTAMENTE
+        const datosGuardados = FormDataService.obtenerVehiculo();
+        if (!datosGuardados) {
+          throw new Error("Los datos no se guardaron correctamente");
+        }
+        
       } catch (error) {
-        if (error instanceof Error && error.name === "QuotaExceededError") {
-          toast({
-            title: "Imágenes demasiado grandes",
-            description:
-              "Las imágenes son muy pesadas. Por favor, use imágenes más pequeñas o de menor calidad.",
-            variant: "destructive",
-          });
-          return;
+        if (error instanceof Error) {
+          if (error.name === "QuotaExceededError" || error.message.includes("quota")) {
+            toast({
+              title: "Almacenamiento lleno",
+              description: "No hay suficiente espacio. Por favor, use imágenes más pequeñas o reinicie el navegador.",
+              variant: "destructive",
+            });
+            return;
+          }
         }
         throw error;
       }
@@ -318,6 +416,7 @@ export function VehicleRegistrationForm() {
       setIsSubmitting(false);
     }
   }
+  
   const handleCapture = (field: string) => {
     setCurrentField(field);
     setIsCameraOpen(true);
@@ -329,7 +428,7 @@ export function VehicleRegistrationForm() {
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      // ✅ AGREGAR VALIDACIÓN DE TIPO
+      // ✅ VALIDACIÓN DE TIPO MEJORADA
       const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
       if (!allowedTypes.includes(file.type)) {
         toast({
@@ -340,8 +439,8 @@ export function VehicleRegistrationForm() {
         return;
       }
 
-      // ✅ AGREGAR VALIDACIÓN DE TAMAÑO
-      const maxSize = 2 * 1024 * 1024; // 2MB
+      // ✅ VALIDACIÓN DE TAMAÑO REDUCIDA (1MB en lugar de 2MB)
+      const maxSize = 2 * 1024 * 1024; // 1MB
       if (file.size > maxSize) {
         toast({
           title: "Archivo demasiado grande",
@@ -353,32 +452,8 @@ export function VehicleRegistrationForm() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        // ✅ COMPRIMIR IMAGEN ANTES DE GUARDAR
-      const img = document.createElement('img');
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-
-          // Redimensionar si es muy grande
-          const maxWidth = 800;
-          const maxHeight = 600;
-          let { width, height } = img;
-
-          if (width > maxWidth || height > maxHeight) {
-            const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width *= ratio;
-            height *= ratio;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          // Convertir a base64 con calidad reducida
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-          setImages((prev) => ({ ...prev, [field]: compressedBase64 }));
-        };
-        img.src = reader.result as string;
+        // ✅ USAR FUNCIÓN DE COMPRESIÓN CONSISTENTE
+        comprimirImagen(reader.result as string, field);
       };
       reader.readAsDataURL(file);
     }
@@ -516,13 +591,38 @@ export function VehicleRegistrationForm() {
           )}
         />
 
+        {/* ✅ BOTÓN MEJORADO CON VALIDACIÓN */}
         <Button
           type="submit"
-          className="w-full bg-[#f34739] hover:bg-[#d63c30] text-white"
-          disabled={isSubmitting}
+          className="w-full bg-[#f34739] hover:bg-[#d63c30] text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+          disabled={isSubmitting || !todasLasImagenesPresentes()}
         >
-          {isSubmitting ? "Guardando..." : "Guardar Información"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            "Guardar Información"
+          )}
         </Button>
+
+     {/* ✅ MANTENER ESTE MENSAJE GENERAL */}
+{!todasLasImagenesPresentes() && !isSubmitting && (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+    <p className="text-sm text-red-700 font-medium mb-2">
+      📋 Para continuar, debe completar lo siguiente:
+    </p>
+    <ul className="text-sm text-red-600 space-y-1">
+      {getImagenesFaltantes().map((imagen, index) => (
+        <li key={index} className="flex items-center">
+          <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+          Subir imagen de {imagen.toLowerCase()}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
       </form>
 
       <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
@@ -532,32 +632,8 @@ export function VehicleRegistrationForm() {
           </DialogHeader>
           <CameraCapture
             onCapture={(imageSrc) => {
-            const img = document.createElement('img');
-              img.onload = () => {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-
-                const maxWidth = 800;
-                const maxHeight = 600;
-                let { width, height } = img;
-
-                if (width > maxWidth || height > maxHeight) {
-                  const ratio = Math.min(maxWidth / width, maxHeight / height);
-                  width *= ratio;
-                  height *= ratio;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                ctx?.drawImage(img, 0, 0, width, height);
-
-                const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-                setImages((prev) => ({
-                  ...prev,
-                  [currentField]: compressedBase64,
-                }));
-              };
-              img.src = imageSrc;
+              // ✅ USAR LA FUNCIÓN DE COMPRESIÓN CONSISTENTE
+              comprimirImagen(imageSrc, currentField);
               setIsCameraOpen(false);
             }}
           />
@@ -566,7 +642,6 @@ export function VehicleRegistrationForm() {
     </Form>
   );
 }
-
 function DocumentUpload({
   field,
   image,
@@ -578,6 +653,14 @@ function DocumentUpload({
   onCapture: (field: string) => void;
   onFileUpload: (field: string, e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  // ✅ NOMBRES AMIGABLES PARA MOSTRAR
+  // const nombresAmigables: Record<string, string> = {
+  //   placa: 'placa del vehículo',
+  //   licenciaConducir: 'licencia de conducir', 
+  //   seguro: 'seguro del vehículo',
+  //   tarjetaPropiedad: 'tarjeta de propiedad'
+  // };
+
   return (
     <>
       <Button
@@ -596,13 +679,21 @@ function DocumentUpload({
           <input
             type="file"
             className="absolute inset-0 opacity-0 cursor-pointer"
-            accept="image/jpeg,image/jpg,image/png" // ✅ ESPECIFICAR TIPOS PERMITIDOS
+            accept="image/jpeg,image/jpg,image/png"
             onChange={(e) => onFileUpload(field, e)}
           />
         </Button>
       </div>
 
-      {/* ✅ AGREGAR ADVERTENCIA VISUAL */}
+      {/* ✅ QUITAR LOS MENSAJES INDIVIDUALES DE REQUERIDO */}
+      
+      {/* ✅ SOLO MOSTRAR INDICADOR VISUAL DE ESTADO */}
+      {image && (
+        <span className="text-xs text-green-600 font-medium ml-2">
+          ✅
+        </span>
+      )}
+
       <div className="text-xs text-gray-500 mt-1">
         Solo JPG, JPEG, PNG (máx. 2MB)
       </div>
