@@ -1,9 +1,9 @@
-// app\socio\admin\components\categories-list.tsx
 "use client"
 
+import React from "react"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, Tag, ChevronRight, Plus } from "lucide-react"
+import { Edit, Tag, ChevronRight, Plus } from 'lucide-react'
 import { CategoryDialog } from "./category-dialog"
 import type { Category } from "../services/menu.service"
 import Link from "next/link"
@@ -11,20 +11,20 @@ import Link from "next/link"
 interface CategoriesListProps {
   categories: Category[]
   productCounts: Record<number, number>
-  onEditCategory: (id: number, nombre: string) => Promise<void>
-  onDeleteCategory: (id: number) => Promise<void>
-  onCreateCategory: (nombre: string) => Promise<void>
+  onEditCategory: (id: number, nombre: string) => Promise<void>  // ✅ Corregido: Promise<void>
+  onDeleteCategory: (id: number) => Promise<void>  // ✅ Corregido: Promise<void>
+  onCreateCategory: (nombre: string) => Promise<void>  // ✅ Corregido: Promise<void>
   isLoading: boolean
 }
 
-export function CategoriesList({
+export const CategoriesList = React.memo<CategoriesListProps>(function CategoriesList({
   categories,
   productCounts,
   onEditCategory,
   onDeleteCategory,
   onCreateCategory,
   isLoading,
-}: CategoriesListProps) {
+}) {
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -45,10 +45,10 @@ export function CategoriesList({
 
   if (categories.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-        <Plus className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">No hay categorías creadas</p>
-        <p className="text-sm text-gray-500 mt-1">Crea tu primera categoría para comenzar</p>
+      <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300 dark:bg-gray-800">
+        <Plus className="h-12 w-12 text-gray-400 dark:text-gray-200 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-gray-400 font-medium">No hay categorías creadas</p>
+        <p className="text-sm text-gray-500 dark:text-gray-200 mt-1">Crea tu primera categoría para comenzar</p>
         <CategoryDialog
           onSubmit={onCreateCategory}
           trigger={
@@ -65,8 +65,8 @@ export function CategoriesList({
   return (
     <div className="space-y-4">
       {categories.map((category) => (
-        <Card key={category.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b border-gray-100 py-3">
+        <Card key={category.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow dark:border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b border-gray-100 py-3 dark:bg-gray-800 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-red-600" />
               <CardTitle className="text-lg font-medium text-gray-800">
@@ -84,13 +84,13 @@ export function CategoriesList({
                 onDelete={() => onDeleteCategory(category.id)}
                 trigger={
                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-200">
-                    <Edit className="h-4 w-4 text-gray-600" />
+                    <Edit className="h-4 w-4 text-gray-600 dark:text-gray-200" />
                     <span className="sr-only">Editar categoría</span>
                   </Button>
                 }
               />
               <Link href={`/socio/admin/menu/categoria/${category.id}`} passHref>
-                <Button variant="outline" size="sm" className="gap-1">
+                <Button variant="outline" size="sm" className="gap-1 dark:bg-brand-900">
                   Ver productos
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -101,5 +101,4 @@ export function CategoriesList({
       ))}
     </div>
   )
-}
-
+})

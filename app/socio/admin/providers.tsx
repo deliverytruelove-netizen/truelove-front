@@ -1,5 +1,6 @@
 // app\socio\admin\providers.tsx
 "use client"
+import type React from "react"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState } from "react"

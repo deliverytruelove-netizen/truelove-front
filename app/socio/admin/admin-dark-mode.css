@@ -1,0 +1,57 @@
+/* app\socio\admin\admin-dark-mode.css */
+/* Estilos específicos para el modo oscuro del admin */
+.dark {
+  color-scheme: dark;
+}
+
+/* Variables CSS para el tema oscuro del admin */
+.dark {
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+  --muted: 223 47% 11%;
+  --muted-foreground: 215.4 16.3% 56.9%;
+  --popover: 224 71% 4%;
+  --popover-foreground: 215 20.2% 65.1%;
+  --border: 216 34% 17%;
+  --input: 216 34% 17%;
+  --card: 224 71% 4%;
+  --card-foreground: 213 31% 91%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 1.2%;
+  --secondary: 222.2 84% 4.9%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 216 34% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 98%;
+  --ring: 216 34% 17%;
+  --radius: 0.5rem;
+}
+
+/* Transiciones suaves para el cambio de tema */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Asegurar que los dropdowns y modales también usen el tema */
+.dark .radix-dropdown-content,
+.dark .radix-dialog-content {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Variables específicas para el tema de la marca */
+:root {
+  --brand-50: 0 100% 97%;
+  --brand-100: 0 100% 94%;
+  --brand-200: 0 100% 89%;
+  --brand-300: 0 100% 84%;
+  --brand-400: 0 100% 74%;
+  --brand-500: 0 100% 65%;
+  --brand-600: 0 100% 58%;
+  --brand-700: 0 100% 50%;
+  --brand-800: 0 100% 42%;
+  --brand-900: 0 100% 35%;
+  --brand-950: 0 100% 20%;
+}

@@ -175,9 +175,9 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] dark:bg-gray-800 ">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+          <DialogTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <Plus className="h-5 w-5 text-red-600" />
             Crear nuevo producto
           </DialogTitle>
@@ -200,7 +200,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                 id="titulo"
                 name="titulo"
                 placeholder="Ej: Hamburguesa clásica"
-                className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                className="border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:focus:border-none dark:border-0"
                 required
               />
             </div>
@@ -210,15 +210,16 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                 Categoría <span className="text-red-500">*</span>
               </Label>
               <Select name="categoria_id" required value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
+                <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:focus:border-none dark:border-0">
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">No hay categorías disponibles</div>
+                    <div className="p-2 text-sm text-gray-500  ">No hay categorías disponibles</div>
                   ) : (
                     categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem key={category.id} value={category.id.toString()} 
+                  >
                         {category.nombre}
                       </SelectItem>
                     ))
@@ -236,7 +237,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
               id="descripcion"
               name="descripcion"
               placeholder="Describe los ingredientes o características del producto"
-              className="min-h-[80px] border-gray-300 focus:border-red-500 focus:ring-red-500"
+              className="min-h-[80px] border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:focus:border-none dark:border-0"
             />
           </div>
 
@@ -255,7 +256,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                   step="0.01"
                   min="0"
                   placeholder="0.00"
-                  className="pl-8 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                  className="pl-8 border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:focus:border-none dark:border-0"
                   required
                 />
               </div>
@@ -263,7 +264,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
 
             <div className="space-y-2">
               <Label htmlFor="foto" className="text-sm font-medium flex items-center gap-1">
-                <Upload className="h-4 w-4 text-gray-500" />
+                <Upload className="h-4 w-4 text-gray-500 " />
                 Foto del producto <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
@@ -275,7 +276,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className={cn(
-                    "border-gray-300 focus:border-red-500 focus:ring-red-500",
+                    "border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-700 dark:focus:border-none dark:border-0",
                     previewImage ? "hidden" : "block",
                   )}
                   required={imageRequired}

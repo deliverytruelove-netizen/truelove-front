@@ -1,3 +1,4 @@
+// app\socio\admin\components\perfil-negocio.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -287,11 +288,11 @@ export function PerfilNegocio({
         </h1>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-6 ">
         {/* Logo Section */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-800">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-6">
+            <div className="flex flex-col md:flex-row md:items-center gap-6 ">
               <div className="relative w-40 h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-background to-muted/50 border-2 border-muted/20 shadow-sm group hover:border-primary/20 hover:shadow-md transition-all duration-300">
                 {logoUrl ? (
                   <Image
@@ -312,7 +313,7 @@ export function PerfilNegocio({
                 )}
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 ">
                 <div className="space-y-2">
                   <h2 className="text-xl font-semibold tracking-tight">
                     Logo del Negocio
@@ -326,13 +327,13 @@ export function PerfilNegocio({
                 <div className="flex items-center gap-4">
                   <Button
                     size="lg"
-                    className="relative overflow-hidden bg-red-600 shadow-lg transition-all hover:shadow-xl"
+                    className="relative overflow-hidden bg-brand-900 shadow-lg transition-all hover:shadow-xl dark:text-gray-200"
                     disabled={subiendoLogo}
                     onClick={() =>
                       document.getElementById("input-logo")?.click()
                     }
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-/10 to-transparent opacity-0 transition-opacity hover:opacity-100" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-/10 to-transparent opacity-0 transition-opacity hover:opacity-100 " />
                     <Upload className="mr-2 h-5 w-5" />
                     {subiendoLogo ? "Subiendo..." : "Actualizar Logo"}
                   </Button>
@@ -349,7 +350,7 @@ export function PerfilNegocio({
         </Card>
 
         {/* Banner Section */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-800">
           <CardContent className="p-6">
             <div className="flex flex-col gap-6">
               <div className="space-y-2">
@@ -386,7 +387,7 @@ export function PerfilNegocio({
               <div className="flex items-center gap-4">
                 <Button
                   size="lg"
-                  className="relative overflow-hidden bg-red-600 shadow-lg transition-all hover:shadow-xl"
+                  className="relative overflow-hidden bg-brand-900 dark:text-gray-200 shadow-lg transition-all hover:shadow-xl"
                   disabled={subiendoBanner}
                   onClick={() =>
                     document.getElementById("input-banner")?.click()
@@ -402,7 +403,7 @@ export function PerfilNegocio({
         </Card>
 
         {/* Horarios Section */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden dark:bg-gray-800">
           <CardContent className="p-6">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -416,7 +417,7 @@ export function PerfilNegocio({
                 </div>
                 <Button
                   onClick={() => setModalAbierto(true)}
-                  className="relative overflow-hidden  text-primary-foreground shadow-lg transition-all hover:shadow-xl bg-red-600 hover:bg-red-700"
+                  className="relative overflow-hidden  text-primary-foreground shadow-lg transition-all hover:shadow-xl bg-red-600 hover:bg-red-700 dark:text-gray-200"
                 >
                   <div className="absolute inset-0 opacity-0  hover:opacity-100 " />
                   <Plus className="mr-2 h-5 w-5 " />
@@ -440,7 +441,7 @@ export function PerfilNegocio({
                     <Button
                       onClick={() => setModalAbierto(true)}
                       variant="outline"
-                      className="relative overflow-hidden group"
+                      className="relative overflow-hidden group dark:bg-red-900"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <Plus className="mr-2 h-4 w-4" />
