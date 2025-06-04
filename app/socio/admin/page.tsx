@@ -43,7 +43,7 @@ export default function SocioDashboard() {
                 <Link href="/socio/admin/menu" className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-white"
+                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-gray-800 dark:text-white"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-center gap-3">
@@ -61,7 +61,7 @@ export default function SocioDashboard() {
                 <Link href="/socio/admin/pedidos" className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-white"
+                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-gray-800 dark:text-white"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-center gap-3">
@@ -79,7 +79,7 @@ export default function SocioDashboard() {
                 <Link href="/socio/admin/configuracion" className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-white"
+                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-gray-800 dark:text-white"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-center gap-3">
@@ -96,7 +96,7 @@ export default function SocioDashboard() {
 
                 <Button
                   variant="outline"
-                  className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-gray-200"
+                  className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-gray-800 dark:text-gray-200"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center gap-3">

@@ -135,6 +135,16 @@ const MotorizadoList: React.FC = () => {
   const handleAprobar = (id: number) => {
     const motorizado = motorizados.find((m) => m.id === id);
     if (motorizado) {
+      // Verificar si ya está aprobado
+      if (motorizado.aprobado) {
+        showAlert({
+          title: "Información",
+          text: "Este motorizado ya está aprobado.",
+          icon: "info",
+        });
+        return;
+      }
+
       setMotorizadoToApprove({
         id,
         nombre: `${motorizado.nombres} ${motorizado.apellidos}`,
@@ -393,11 +403,13 @@ const MotorizadoList: React.FC = () => {
                               size="sm"
                               onClick={() => handleAprobar(motorizado.id)}
                               className="text-blue-700 bg-blue-50 border-blue-100 hover:bg-blue-100"
+                              disabled={mutationAprobar.isPending}
                             >
-                              Aprobar
+                              {mutationAprobar.isPending
+                                ? "Aprobando..."
+                                : "Aprobar"}
                             </Button>
                           )}
-
                           <Button
                             variant="ghost"
                             size="icon"
@@ -488,6 +500,7 @@ const MotorizadoList: React.FC = () => {
         }}
         data={detallesMotorizado}
         onAprobar={handleAprobar}
+        isApproving={mutationAprobar.isPending}
       />
 
       {/* Diálogo de confirmación para eliminar */}
@@ -499,25 +512,32 @@ const MotorizadoList: React.FC = () => {
           motorizadoName={motorizadoToDelete.name}
         />
       )}
-      {/* Modal para asignar cantidad de pedidos */}
-      {motorizadoToApprove && (
-        <AsignarPedidosModal
-          isOpen={showAsignarPedidosModal}
-          onClose={() => {
-            setShowAsignarPedidosModal(false);
-            // Si el usuario elige "Asignar más tarde", aún así aprobamos al motorizado
-            mutationAprobar.mutate(motorizadoToApprove.id);
-            setMotorizadoToApprove(null);
-          }}
-          motorizadoId={motorizadoToApprove.id}
-          motorizadoNombre={motorizadoToApprove.nombre}
-          onSuccess={() => {
-            // Después de asignar la cantidad, aprobamos al motorizado
-            mutationAprobar.mutate(motorizadoToApprove.id);
-            setMotorizadoToApprove(null);
-          }}
-        />
-      )}
+    {motorizadoToApprove && (
+  <AsignarPedidosModal
+    isOpen={showAsignarPedidosModal}
+    onClose={(shouldApprove = true) => {
+      setShowAsignarPedidosModal(false);
+      // Solo aprobar si shouldApprove es true (tanto para "Asignar más tarde" como para cuando no se asignan pedidos)
+      if (shouldApprove) {
+        const motorizado = motorizados.find(m => m.id === motorizadoToApprove.id);
+        if (motorizado && !motorizado.aprobado) {
+          mutationAprobar.mutate(motorizadoToApprove.id);
+        }
+      }
+      setMotorizadoToApprove(null);
+    }}
+    motorizadoId={motorizadoToApprove.id}
+    motorizadoNombre={motorizadoToApprove.nombre}
+    onSuccess={() => {
+      // Cuando se asignan pedidos exitosamente, también aprobar
+      const motorizado = motorizados.find(m => m.id === motorizadoToApprove.id);
+      if (motorizado && !motorizado.aprobado) {
+        mutationAprobar.mutate(motorizadoToApprove.id);
+      }
+      setMotorizadoToApprove(null);
+    }}
+  />
+)}
     </Section>
   );
 };
