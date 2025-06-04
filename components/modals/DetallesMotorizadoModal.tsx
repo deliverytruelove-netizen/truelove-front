@@ -30,6 +30,7 @@ interface DetallesMotorizadoModalProps {
   onClose: () => void;
   data: DetallesMotorizado | undefined | null;
   onAprobar: (id: number) => void;
+  isApproving?: boolean;
 }
 
 interface InfoItemProps {
@@ -126,7 +127,11 @@ const FileDisplay = ({ src, alt, title, downloadName }: FileDisplayProps) => {
         <div className="flex flex-col items-center w-full">
           {isPdf ? (
             // Usar el componente PDFViewer para PDFs con la ruta normalizada
-            <PDFViewer url={normalizedPath} title={title} downloadName= {downloadName} />
+            <PDFViewer
+              url={normalizedPath}
+              title={title}
+              downloadName={downloadName}
+            />
           ) : (
             // Usar el componente ImageThumbnail para imágenes
             <ImageThumbnail
@@ -190,6 +195,7 @@ export function DetallesMotorizadoModal({
   onClose,
   data,
   onAprobar,
+  isApproving,
 }: DetallesMotorizadoModalProps) {
   const [activeTab, setActiveTab] = useState("registros");
   const { toast } = useToast();
@@ -204,7 +210,10 @@ export function DetallesMotorizadoModal({
   useEffect(() => {
     if (data) {
       console.log("Estado de aprobación del motorizado:", data.aprobado);
-      const aprobadoStatus = Boolean(data.aprobado);
+      console.log("Tipo de data.aprobado:", typeof data.aprobado);
+
+      // Como aprobado es boolean, solo necesitamos verificar que sea true
+      const aprobadoStatus = data.aprobado === true;
       setIsAprobado(aprobadoStatus);
       setShowNotification(aprobadoStatus);
     }
@@ -235,20 +244,6 @@ export function DetallesMotorizadoModal({
       await onAprobar(data.id);
       setIsAprobado(true);
       setShowNotification(true);
-      toast({
-        title: "Éxito",
-        description:
-          "Se aprobó el motorizado y se enviaron las credenciales por correo electrónico.",
-        action: (
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="bg-white hover:bg-gray-100"
-          >
-            OK
-          </Button>
-        ),
-      });
     } catch (error) {
       console.log(`Error Motorizado: ${error}`);
       toast({
@@ -365,17 +360,17 @@ export function DetallesMotorizadoModal({
                       value={`${data.personal.tipo_documento}: ${data.personal.nro_documento}`}
                     />
                     <InfoItem
-                    icon={<FileText className="w-5 h-5" />}
-                    label="Departamento"
-                    value={`${data.personal.departamento || "No especificado"}`}
+                      icon={<FileText className="w-5 h-5" />}
+                      label="Departamento"
+                      value={`${
+                        data.personal.departamento || "No especificado"
+                      }`}
                     />
-                    <InfoItem 
-                
-                    icon={<FileText className="w-5 h-5" />}
-                    label="Vehículo"
-                    value={`${data.personal.vehiculo || "No especificado"}`}
+                    <InfoItem
+                      icon={<FileText className="w-5 h-5" />}
+                      label="Vehículo"
+                      value={`${data.personal.vehiculo || "No especificado"}`}
                     />
-                    
                   </div>
 
                   {/* Imágenes del documento una al lado de la otra */}
@@ -433,8 +428,9 @@ export function DetallesMotorizadoModal({
                                 //   getDocumentoByCategoría("curriculum")
                                 //     ?.nombre || "Curriculum Vitae"
                                 // }
-                                 title=""
-                                 downloadName= {`curriculum_${data.personal.nro_documento}.pdf`}                              />
+                                title=""
+                                downloadName={`curriculum_${data.personal.nro_documento}.pdf`}
+                              />
                               <p className="text-xs text-gray-500 mt-2 text-center">
                                 Subido el:{" "}
                                 {getDocumentoByCategoría("curriculum")
@@ -459,7 +455,8 @@ export function DetallesMotorizadoModal({
                                 //   )?.nombre || "Antecedentes Penales"
                                 // }
                                 title=""
-                                downloadName= {`antecedentes_penales_${data.personal.nro_documento}.pdf`}                              />
+                                downloadName={`antecedentes_penales_${data.personal.nro_documento}.pdf`}
+                              />
                               <p className="text-xs text-gray-500 mt-2 text-center">
                                 Subido el:{" "}
                                 {getDocumentoByCategoría("antecedentes_penales")
@@ -485,8 +482,9 @@ export function DetallesMotorizadoModal({
                                 //     "antecedentes_policiales"
                                 //   )?.nombre || "Antecedentes Policiales"
                                 // }
-                                 title=""
-                                 downloadName={`antecedentes_policiales_${data.personal.nro_documento}.pdf`}                              />
+                                title=""
+                                downloadName={`antecedentes_policiales_${data.personal.nro_documento}.pdf`}
+                              />
                               <p className="text-xs text-gray-500 mt-2 text-center">
                                 Subido el:{" "}
                                 {getDocumentoByCategoría(
@@ -772,8 +770,9 @@ export function DetallesMotorizadoModal({
             <Button
               onClick={handleAprobar}
               className="bg-red-500 hover:bg-red-600 text-white"
+              disabled={isApproving} // Deshabilitar durante la carga
             >
-              Aprobar Motorizado
+              {isApproving ? "Aprobando motorizado..." : "Aprobar Motorizado"}
             </Button>
           )}
         </div>

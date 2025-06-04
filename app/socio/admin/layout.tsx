@@ -95,7 +95,7 @@ function SocioAdminLayoutContent({
                         "w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200",
                         isCollapsed ? "px-0 justify-center h-10 w-10 mx-auto" : "px-3",
                         isActive &&
-                          "bg-brand-50 dark:bg-brand-950 text-brand-700  hover:bg-brand-100 dark:hover:bg-brand-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-brand-800 dark:text-gray-200",
+                          "bg-brand-50 dark:bg-brand-950 text-brand-700  hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200",
                       )}
                     >
                       <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-brand-600 dark:text-brand-400")} />
