@@ -82,9 +82,9 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark:bg-gray-700">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-800">
+          <DialogTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
             {category ? "Editar" : "Crear nueva"} categoría
           </DialogTitle>
         </DialogHeader>
@@ -99,7 +99,7 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej: Entradas, Platos principales, Postres"
-                className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                className="border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-800"
                 required
               />
             </div>
@@ -144,7 +144,7 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
                 )}
               </div>
               <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-gray-300">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-gray-300 dark:bg-gray-800">
                   Cancelar
                 </Button>
                 <Button

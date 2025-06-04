@@ -83,7 +83,7 @@ export function ProductsList({
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4">
+        <div className="h-8 w-8 animate-spin text-red-600 dark:text-gray-200 mx-auto mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -93,41 +93,41 @@ export function ProductsList({
             />
           </svg>
         </div>
-        <p className="text-gray-600">Cargando productos...</p>
+        <p className="text-gray-600 dark:text-gray-200">Cargando productos...</p>
       </div>
     )
   }
 
   if (menuItems.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-        <ShoppingBag className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">No hay productos en esta categoría</p>
-        <p className="text-sm text-gray-500 mt-1">Agrega productos usando el botón Nuevo producto</p>
+      <div className="text-center py-12 bg-gray-50 dark:bg-gray-700  rounded-lg border border-dashed border-gray-300">
+        <ShoppingBag className="h-12 w-12 text-gray-400 dark:text-gray-200 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-gray-400 font-medium">No hay productos en esta categoría</p>
+        <p className="text-sm text-gray-500 mt-1 dark:text-gray-200">Agrega productos usando el botón Nuevo producto</p>
       </div>
     )
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 ">
       {menuItems.map((item) => (
-        <Card key={item.id} className="overflow-hidden border border-gray-200 hover:border-red-200 transition-colors">
-          <div className="aspect-square relative">
+        <Card key={item.id} className="overflow-hidden border border-gray-200 dark:bg-gray-800 hover:border-red-200 transition-colors">
+          <div className="aspect-square relative dark:text-bg-gray-800 dark:text-gray-200">
             <Image
               src={item.foto || "/placeholder.svg?height=300&width=300"}
               alt={item.titulo}
               fill
-              className="object-cover"
+              className="object-cover dark:text-gray-200"
             />
-            <div className="absolute top-2 right-2">{getStatusBadge(item.status)}</div>
+            <div className="absolute top-2 right-2 dark:text-gray-200">{getStatusBadge(item.status)}</div>
           </div>
           <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-medium text-gray-800 text-sm">{item.titulo}</h3>
-                <p className="text-xs text-gray-500 line-clamp-2 h-8">{item.descripcion}</p>
+                <h3 className="font-medium text-gray-800 text-sm dark:text-gray-200">{item.titulo}</h3>
+                <p className="text-xs text-gray-500 line-clamp-2 h-8 dark:text-gray-400">{item.descripcion}</p>
                 <div className="mt-1 flex items-center">
-                  <p className="font-semibold text-gray-900 text-sm">S/ {formatPrice(item.precio)}</p>
+                  <p className="font-semibold text-gray-900 text-sm dark:text-gray-200">S/ {formatPrice(item.precio)}</p>
                 </div>
               </div>
               <DropdownMenu>
@@ -187,7 +187,7 @@ export function ProductsList({
                         <AlertDialogDescription asChild>
                           <div className="space-y-2">
                             <p>Esta acción no se puede deshacer. Se eliminará permanentemente el producto:</p>
-                            <p className="font-semibold text-red-600">{item.titulo}</p>
+                            <p className="font-semibold text-red-600 dark:text-gray-200">{item.titulo}</p>
                           </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>

@@ -30,20 +30,20 @@ export default function SocioDashboard() {
       {/* Espacio para futuras estadísticas */}
       <div className="mb-6"></div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 ">
         <div className="md:col-span-2">
           <PerfilNegocio horarios={horariosEjemplo} />
         </div>
 
         <div className="space-y-4">
-          <Card className="overflow-hidden bg-white border-0 shadow-md">
+          <Card className="overflow-hidden bg-white dark:bg-gray-800 border-0 shadow-md">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4">Accesos Rápidos</h3>
               <div className="grid gap-3">
                 <Link href="/socio/admin/menu" className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200"
+                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-white"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-center gap-3">
@@ -52,7 +52,7 @@ export default function SocioDashboard() {
                       </div>
                       <div className="flex flex-col items-start">
                         <span className="font-medium">Gestionar Menú</span>
-                        <span className="text-xs text-gray-500">Administra tus productos</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-200">Administra tus productos</span>
                       </div>
                     </div>
                   </Button>
@@ -61,7 +61,7 @@ export default function SocioDashboard() {
                 <Link href="/socio/admin/pedidos" className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200"
+                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-white"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-center gap-3">
@@ -70,7 +70,7 @@ export default function SocioDashboard() {
                       </div>
                       <div className="flex flex-col items-start">
                         <span className="font-medium">Pedidos Pendientes</span>
-                        <span className="text-xs text-gray-500">Revisa tus pedidos activos</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-200">Revisa tus pedidos activos</span>
                       </div>
                     </div>
                   </Button>
@@ -79,7 +79,7 @@ export default function SocioDashboard() {
                 <Link href="/socio/admin/configuracion" className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200"
+                    className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-white"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-center gap-3">
@@ -88,7 +88,7 @@ export default function SocioDashboard() {
                       </div>
                       <div className="flex flex-col items-start">
                         <span className="font-medium">Horario</span>
-                        <span className="text-xs text-gray-500">Configura tus horarios</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-200">Configura tus horarios</span>
                       </div>
                     </div>
                   </Button>
@@ -96,7 +96,7 @@ export default function SocioDashboard() {
 
                 <Button
                   variant="outline"
-                  className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200"
+                  className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-brand-800 dark:text-gray-200"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-brand-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center gap-3">
@@ -105,7 +105,7 @@ export default function SocioDashboard() {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="font-medium">Soporte</span>
-                      <span className="text-xs text-gray-500">¿Necesitas ayuda?</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-200">¿Necesitas ayuda?</span>
                     </div>
                   </div>
                 </Button>

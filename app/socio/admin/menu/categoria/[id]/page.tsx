@@ -243,7 +243,7 @@ function CategoryContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -251,15 +251,15 @@ function CategoryContent() {
               variant="outline"
               size="sm"
               onClick={() => router.push("/socio/admin/menu")}
-              className="border-gray-300"
+              className="border-gray-300 dark:border-gray-800"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               Volver
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">{category?.nombre || "Categoría"}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-200">{category?.nombre || "Categoría"}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={loadData} className="border-gray-300">
+            <Button variant="outline" size="sm" onClick={loadData} className="border-gray-300 dark:border-gray-800">
               <Loader2 className="mr-2 h-4 w-4" />
               Recargar datos
             </Button>
@@ -267,9 +267,9 @@ function CategoryContent() {
           </div>
         </div>
 
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100">
-            <CardTitle className="text-xl font-semibold text-gray-800">Productos en esta categoría</CardTitle>
+        <Card className="border border-gray-200  dark:border-gray-800 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b dark:bg-gray-800 border-gray-100 dark:border-gray-800">
+            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">Productos en esta categoría</CardTitle>
           </CardHeader>
           <CardContent className="p-5">
             <ProductsList
