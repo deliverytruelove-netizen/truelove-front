@@ -12,6 +12,7 @@ import { useBannersQuery, useBannerMutations, useImageFormatter } from "../hooks
 import type { Banner } from "../types/banner.types"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "../hooks/use-debounce" 
+import Swal from "sweetalert2"
 // import { Switch } from "@/components/ui/switch"
 // import { Label } from "@/components/ui/label"
 export default function GestionBanner() {
@@ -44,11 +45,34 @@ export default function GestionBanner() {
     setSelectedBanner(null)
   }
 
-  const handleDeleteBanner = async (id: number) => {
-    if (confirm("¿Estás seguro de que deseas eliminar este banner?")) {
-      await deleteBanner(id)
+const handleDeleteBanner = async (id: number) => {
+  Swal.fire({
+    title: '¿Estás seguro?',
+    text: "¿Deseas eliminar este banner?",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Aceptar',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      deleteBanner(id).then(() => {
+        Swal.fire(
+          '¡Eliminado!',
+          'El banner ha sido eliminado correctamente.',
+          'success'
+        );
+      }).catch((error) => {
+        Swal.fire(
+          'Error',
+          'No se pudo eliminar el banner: ' + error.message,
+          'error'
+        );
+      });
     }
-  }
+  });
+};
 
   const banners = data?.data || []
   const total = data?.total || 0

@@ -78,10 +78,10 @@ export function useBanners() {
         try {
           setIsLoading(true)
           await deleteBanner(id)
-          toast({
-            title: "Éxito",
-            description: "Banner eliminado correctamente",
-          })
+          // toast({
+          //   title: "Éxito",
+          //   description: "Banner eliminado correctamente",
+          // })
           loadBanners()
         } catch  {
           toast({
