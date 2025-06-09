@@ -18,6 +18,7 @@ import {
   FileText,
   FileCheck,
   CheckCircle,
+  SquareTerminal,
   X,
 } from "lucide-react"
 import NextImage from "next/image"
@@ -238,6 +239,7 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
                     value={new Date(data.personal.created_at).toLocaleString()}
                   />
                 )}
+                <InfoItem icon={<SquareTerminal />} label="POS" value={data.personal.posToDriver ? "Sí" : "No"} />
               </>
             )}
           </div>

@@ -67,6 +67,11 @@ export const navigationItems: NavItem [] = [
         path : "/admin/horarios",
         icon : RiCalendar2Fill ,
     },
+    {
+        title : "Cuotas Motorizados",
+        path: "/admin/coutas-drivers",
+        icon: RiAncientGateLine,
+    },
 ]
 
 export const NavigationProvider = ({children}: {children: ReactNode})=> {

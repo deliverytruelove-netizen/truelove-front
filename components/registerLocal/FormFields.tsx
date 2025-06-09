@@ -1,25 +1,34 @@
 // components\registerLocal\FormFields.tsx
-"use client"
+"use client";
 
-import type React from "react"
-import type { FormData, BusinessType } from "./types"
-import { useState } from "react"
-import { Upload, FileText, AlertCircle } from "lucide-react"
+import type React from "react";
+import type { FormData, BusinessType } from "./types";
+import { useState } from "react";
+import { Upload, FileText, AlertCircle } from "lucide-react";
 
-
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FormFieldsProps {
-  formData: FormData
-  businessTypes: BusinessType[]
-  isFieldsLocked: boolean
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
-  handlePhoneChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
-  setFormData: (data: FormData) => void
-  currentStep: number
+  formData: FormData;
+  businessTypes: BusinessType[];
+  isFieldsLocked: boolean;
+  handleInputChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
+  handlePhoneChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
+  setFormData: (data: FormData) => void;
+  currentStep: number;
 }
 
 export const FormFields: React.FC<FormFieldsProps> = ({
@@ -34,10 +43,10 @@ export const FormFields: React.FC<FormFieldsProps> = ({
   const [fileErrors, setFileErrors] = useState({
     antecedentesPenales: "",
     antecedentesPoliciales: "",
-  })
+  });
 
   const handleDocumentTypeChange = (value: string) => {
-    const nuevoTipoDocumento = value
+    const nuevoTipoDocumento = value;
 
     const datosLimpios: FormData = {
       documentType: nuevoTipoDocumento,
@@ -49,45 +58,54 @@ export const FormFields: React.FC<FormFieldsProps> = ({
       email: "",
       antecedentesPenales: undefined,
       antecedentesPoliciales: undefined,
-    }
+    };
 
-    setFormData(datosLimpios)
-  }
+    setFormData(datosLimpios);
+  };
 
   // Función auxiliar para manejar cambios en el Select de shadcn
   const handleSelectChange = (name: string, value: string) => {
     handleInputChange({
       target: { name, value },
-    } as React.ChangeEvent<HTMLSelectElement>)
-  }
+    } as React.ChangeEvent<HTMLSelectElement>);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target
-    setFileErrors((prev) => ({ ...prev, [name]: "" }))
+    const { name, files } = e.target;
+    setFileErrors((prev) => ({ ...prev, [name]: "" }));
 
     if (files && files.length > 0) {
-      const file = files[0]
+      const file = files[0];
 
       // Validar tipo de archivo
       if (file.type !== "application/pdf") {
-        setFileErrors((prev) => ({ ...prev, [name]: "Solo se permiten archivos PDF" }))
-        return
+        setFileErrors((prev) => ({
+          ...prev,
+          [name]: "Solo se permiten archivos PDF",
+        }));
+        return;
       }
 
       // Validar tamaño (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setFileErrors((prev) => ({ ...prev, [name]: "El archivo no debe superar los 5MB" }))
-        return
+        setFileErrors((prev) => ({
+          ...prev,
+          [name]: "El archivo no debe superar los 5MB",
+        }));
+        return;
       }
 
       handleInputChange({
         target: { name, value: file },
-      } as unknown as React.ChangeEvent<HTMLInputElement>)
+      } as unknown as React.ChangeEvent<HTMLInputElement>);
     }
-  }
+  };
 
-  const renderFileInput = (name: "antecedentesPenales" | "antecedentesPoliciales", label: string) => {
-    const file = formData[name] as File | undefined
+  const renderFileInput = (
+    name: "antecedentesPenales" | "antecedentesPoliciales",
+    label: string
+  ) => {
+    const file = formData[name] as File | undefined;
 
     return (
       <div className="space-y-2">
@@ -95,7 +113,11 @@ export const FormFields: React.FC<FormFieldsProps> = ({
         <div className="relative">
           <div
             className={`w-full min-h-[100px] border-2 border-dashed rounded-lg 
-                        ${fileErrors[name] ? "border-red-300 bg-red-50" : "border-gray-300 bg-gray-50"} 
+                        ${
+                          fileErrors[name]
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300 bg-gray-50"
+                        } 
                         transition-colors duration-200 flex flex-col items-center justify-center p-4 gap-2
                         hover:border-red-400 hover:bg-gray-100 cursor-pointer`}
           >
@@ -112,14 +134,18 @@ export const FormFields: React.FC<FormFieldsProps> = ({
                 <FileText className="w-8 h-8 text-red-500" />
                 <div className="text-sm text-center">
                   <p className="font-medium text-gray-900">{file.name}</p>
-                  <p className="text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-gray-500">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
               </>
             ) : (
               <>
                 <Upload className="w-8 h-8 text-gray-400" />
                 <div className="text-sm text-center">
-                  <p className="font-medium text-gray-900">Haz clic para subir o arrastra y suelta</p>
+                  <p className="font-medium text-gray-900">
+                    Haz clic para subir o arrastra y suelta
+                  </p>
                   <p className="text-gray-500">PDF (máx. 5MB)</p>
                 </div>
               </>
@@ -133,30 +159,38 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   if (formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 2) {
     return (
       <div className="space-y-6">
         {renderFileInput("antecedentesPenales", "Antecedentes Penales (PDF)")}
-        {renderFileInput("antecedentesPoliciales", "Antecedentes Policiales (PDF)")}
+        {renderFileInput(
+          "antecedentesPoliciales",
+          "Antecedentes Policiales (PDF)"
+        )}
       </div>
-    )
+    );
   }
 
   return (
     <>
       <div className="space-y-1">
         <Label htmlFor="documentType">Tipo de Documento *</Label>
-        <Select value={formData.documentType} onValueChange={(value) => handleDocumentTypeChange(value)}>
+        <Select
+          value={formData.documentType}
+          onValueChange={(value) => handleDocumentTypeChange(value)}
+        >
           <SelectTrigger id="documentType" className="w-full">
             <SelectValue placeholder="Seleccione tipo de documento" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="DNI">DNI</SelectItem>
             <SelectItem value="RUC">RUC</SelectItem>
-            <SelectItem value="CARNET_EXTRANJERIA">Carnet de Extranjería</SelectItem>
+            <SelectItem value="CARNET_EXTRANJERIA">
+              Carnet de Extranjería
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -208,17 +242,20 @@ export const FormFields: React.FC<FormFieldsProps> = ({
 
       <div className="space-y-1">
         <Label htmlFor="businessType">Tipo de negocio *</Label>
-        <Select value={formData.businessType} onValueChange={(value) => handleSelectChange("businessType", value)}>
+        <Select
+          value={formData.businessType}
+          onValueChange={(value) => handleSelectChange("businessType", value)}
+        >
           <SelectTrigger id="businessType" className="w-full">
             <SelectValue placeholder="Seleccione tipo de negocio" />
           </SelectTrigger>
-       <SelectContent className="max-h-[200px]">
-  {businessTypes.map((type) => (
-    <SelectItem key={type.id} value={type.nombre}>
-      {type.nombre}
-    </SelectItem>
-  ))}
-</SelectContent>
+          <SelectContent className="max-h-[200px]">
+            {businessTypes.map((type) => (
+              <SelectItem key={type.id} value={type.nombre}>
+                {type.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -249,32 +286,32 @@ export const FormFields: React.FC<FormFieldsProps> = ({
           className="bg-white/50 backdrop-blur-sm"
         />
       </div>
-      
+
       <div className="flex items-start space-x-3 mt-4 p-3 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors">
-  <Checkbox
-    id="posToDriver"
-    name="posToDriver"
-    checked={formData.posToDriver || false}
-    onCheckedChange={(checked) => {
-      setFormData({
-        ...formData,
-        posToDriver: checked === true,
-      });
-    }}
-    className="mt-0.5" // Alinea verticalmente el checkbox con el texto
-  />
-  <div className="flex flex-col">
-    <label
-      htmlFor="posToDriver"
-      className="text-sm font-medium text-gray-900 cursor-pointer"
-    >
-      ¿Deseas facilitar tu máquina POS al driver?
-    </label>
-    {/* <p className="text-xs text-gray-500 mt-1">
+        <Checkbox
+          id="posToDriver"
+          name="posToDriver"
+          checked={formData.posToDriver || false}
+          onCheckedChange={(checked) => {
+            setFormData({
+              ...formData,
+              posToDriver: checked === true,
+            });
+          }}
+          className="mt-0.5" // Alinea verticalmente el checkbox con el texto
+        />
+        <div className="flex flex-col">
+          <label
+            htmlFor="posToDriver"
+            className="text-sm font-medium text-gray-900 cursor-pointer"
+          >
+            ¿Deseas facilitar tu máquina POS al driver?
+          </label>
+          {/* <p className="text-xs text-gray-500 mt-1">
       Esta opción permite que el repartidor use tu dispositivo para cobros con tarjeta a los clientes.
     </p> */}
-  </div>
-</div>
+        </div>
+      </div>
     </>
-  )
-}
+  );
+};
