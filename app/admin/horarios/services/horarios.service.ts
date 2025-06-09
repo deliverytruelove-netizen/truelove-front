@@ -1,32 +1,28 @@
-// app/admin/horarios/services/horarios.service.ts
+// src/services/horarios.service.ts
 import axios from "axios";
-import type { Grupo, Rango, Motorizado } from "../types/horarios.types";
+import type { HorarioGrupo, HorarioBloque, Motorizado } from "../types/horarios.types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_WEB;
+const API_URL = process.env.NEXT_PUBLIC_API_WEB ;
+
+// Función auxiliar para obtener headers de autenticación
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    throw new Error("No se encontró el token de autenticación");
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+};
 
 /**
  * Obtiene todos los grupos de horarios
- * @returns Lista de grupos de horarios
  */
-export const fetchGruposHorarios = async (): Promise<Grupo[]> => {
+export const fetchGruposHorarios = async (): Promise<HorarioGrupo[]> => {
   try {
-    // Obtener el token de autenticación
-    const token = localStorage.getItem("authToken");
-
-    // Verificar si existe el token
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    // Configuración de headers para las peticiones
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    // Obtener los grupos de horarios
+    const headers = getAuthHeaders();
     const response = await axios.get(`${API_URL}/admin/horarios`, { headers });
-    
     return response.data.data || [];
   } catch (error) {
     console.error("Error al obtener grupos de horarios:", error);
@@ -36,24 +32,11 @@ export const fetchGruposHorarios = async (): Promise<Grupo[]> => {
 
 /**
  * Obtiene un grupo de horarios específico
- * @param id ID del grupo
- * @returns Datos del grupo
  */
-export const fetchGrupoHorario = async (id: number): Promise<Grupo> => {
+export const fetchGrupoHorario = async (id: number): Promise<HorarioGrupo> => {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
+    const headers = getAuthHeaders();
     const response = await axios.get(`${API_URL}/admin/horarios/${id}`, { headers });
-    
     return response.data.data;
   } catch (error) {
     console.error(`Error al obtener grupo de horario ${id}:`, error);
@@ -62,30 +45,47 @@ export const fetchGrupoHorario = async (id: number): Promise<Grupo> => {
 };
 
 /**
+ * Obtiene horarios grupales
+ */
+export const fetchHorariosGrupales = async (): Promise<HorarioGrupo[]> => {
+  try {
+    const headers = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/admin/horarios/grupales`, { headers });
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error al obtener horarios grupales:", error);
+    throw error;
+  }
+};
+
+/**
+ * Obtiene horarios individuales
+ */
+export const fetchHorariosIndividuales = async (): Promise<HorarioGrupo[]> => {
+  try {
+    const headers = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/admin/horarios/individuales`, { headers });
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error al obtener horarios individuales:", error);
+    throw error;
+  }
+};
+
+/**
  * Crea un nuevo grupo de horarios
- * @param grupo Datos del grupo a crear
- * @returns Grupo creado
  */
 export const createGrupoHorario = async (grupo: {
   nombre: string;
   descripcion?: string;
-  rangos: Omit<Rango, "id">[];
+  tipo: 'grupal' | 'individual';
+  motorizado_individual_id?: number;
+  bloques: Omit<HorarioBloque, 'id' | 'grupo_id'>[];
   motorizados?: number[];
-}): Promise<Grupo> => {
+}): Promise<HorarioGrupo> => {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
+    const headers = getAuthHeaders();
     const response = await axios.post(`${API_URL}/admin/horarios`, grupo, { headers });
-    
     return response.data.data;
   } catch (error) {
     console.error("Error al crear grupo de horario:", error);
@@ -95,33 +95,19 @@ export const createGrupoHorario = async (grupo: {
 
 /**
  * Actualiza un grupo de horarios existente
- * @param id ID del grupo
- * @param grupo Datos actualizados del grupo
- * @returns Grupo actualizado
  */
 export const updateGrupoHorario = async (
   id: number,
   grupo: {
     nombre: string;
     descripcion?: string;
-    rangos: (Rango | Omit<Rango, "id">)[];
+    bloques: HorarioBloque[];
     motorizados?: number[];
   }
-): Promise<Grupo> => {
+): Promise<HorarioGrupo> => {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
+    const headers = getAuthHeaders();
     const response = await axios.put(`${API_URL}/admin/horarios/${id}`, grupo, { headers });
-    
     return response.data.data;
   } catch (error) {
     console.error(`Error al actualizar grupo de horario ${id}:`, error);
@@ -131,21 +117,10 @@ export const updateGrupoHorario = async (
 
 /**
  * Elimina un grupo de horarios
- * @param id ID del grupo a eliminar
  */
 export const deleteGrupoHorario = async (id: number): Promise<void> => {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
+    const headers = getAuthHeaders();
     await axios.delete(`${API_URL}/admin/horarios/${id}`, { headers });
   } catch (error) {
     console.error(`Error al eliminar grupo de horario ${id}:`, error);
@@ -154,62 +129,29 @@ export const deleteGrupoHorario = async (id: number): Promise<void> => {
 };
 
 /**
- * Asigna motorizados a un grupo de horarios
- * @param grupoId ID del grupo
- * @param motorizadosIds IDs de los motorizados a asignar
- * @returns Motorizados asignados
+ * Obtiene todos los motorizados disponibles
  */
-export const asignarMotorizados = async (
-  grupoId: number,
-  motorizadosIds: number[]
-): Promise<Motorizado[]> => {
+export const fetchMotorizadosDisponibles = async (): Promise<Motorizado[]> => {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    const response = await axios.post(
-      `${API_URL}/admin/horarios/${grupoId}/asignar`,
-      { motorizados: motorizadosIds },
-      { headers }
-    );
-    
-    return response.data.data;
+    const headers = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/admin/horarios/motorizados/disponibles`, { headers });
+    return response.data.data || [];
   } catch (error) {
-    console.error(`Error al asignar motorizados al grupo ${grupoId}:`, error);
+    console.error("Error al obtener motorizados disponibles:", error);
     throw error;
   }
 };
 
 /**
- * Obtiene todos los motorizados disponibles
- * @returns Lista de motorizados disponibles
+ * Obtiene horario de un motorizado específico
  */
-export const fetchMotorizadosDisponibles = async (): Promise<Motorizado[]> => {
+export const fetchHorarioMotorizado = async (motorizadoId: number): Promise<{ data: HorarioGrupo | null, tipo: string }> => {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("No se encontró el token de autenticación");
-    }
-
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    const response = await axios.get(`${API_URL}/admin/horarios/motorizados/disponibles`, { headers });
-    
-    return response.data.data || [];
+    const headers = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/admin/horarios/motorizado/${motorizadoId}`, { headers });
+    return response.data;
   } catch (error) {
-    console.error("Error al obtener motorizados disponibles:", error);
+    console.error(`Error al obtener horario del motorizado ${motorizadoId}:`, error);
     throw error;
   }
 };

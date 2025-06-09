@@ -1,4 +1,4 @@
-// Alert.tsx
+// components\ui\DataTable\Alert.tsx
 import Swal from "sweetalert2"
 
 interface AlertOptions {

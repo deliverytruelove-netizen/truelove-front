@@ -24,6 +24,7 @@ import { ImagePreview } from "./ImagePreview";
 // import { createRepartoToken } from "@/services/repartoTokenService"
 import { FormDataService } from "@/services/formDataService";
 
+
 interface Banco {
   id: number;
   nombre: string;
@@ -136,17 +137,28 @@ export function FormularioBancario() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    const id = sessionStorage.getItem("repartoRegistroId");
-    if (!id) {
-      toast.error("No se encontró el ID del registro");
-      router.push("/reparto/registro");
+useEffect(() => {
+  const id = sessionStorage.getItem("repartoRegistroId");
+  if (!id) {
+    toast.error("No se encontró el ID del registro");
+    router.push("/reparto/registro");
+  } else {
+    setRepartoRegistroId(id);
+    
+    // Verificar solo los datos básicos y personales (que son obligatorios)
+    const datosBasicos = FormDataService.obtenerDatosBasicos();
+    const datosPersonales = FormDataService.obtenerDatosPersonales();
+    
+    // Solo validar que existan los datos básicos y personales
+    if (!datosBasicos || !datosPersonales) {
+      toast.error("Faltan datos del registro. Porr favor, comience el proceso nuevamente.");
+      router.push("/reparto");
     } else {
-      setRepartoRegistroId(id);
       // Cargar datos existentes
       cargarDatosExistentes(id);
     }
-  }, [router]);
+  }
+}, [router]);
 
   const cargarDatosExistentes = async (id: string) => {
     try {
@@ -500,14 +512,26 @@ export function FormularioBancario() {
       // Guardar en el servicio
       FormDataService.guardarCuentaBancaria(datosBancarios);
 
-      // Actualizar el paso actual
-      sessionStorage.setItem(
-        "repartoCurrentStep",
-        "/reparto/documento-motorizado"
-      );
+     // Obtener el tipo de vehículo de los datos básicos
+    const datosBasicos = FormDataService.obtenerDatosBasicos();
+    const vehiculo = datosBasicos?.vehiculo;
+
+    // Si es bicicleta o moto eléctrica, saltar documento-motorizado
+    if (vehiculo === "BICICLETA" || vehiculo === "MOTO ELECTRICA") {
+      sessionStorage.setItem("repartoCurrentStep", "/reparto/registro-exitoso");
+      router.push("/reparto/registro-exitoso");
+    } else {
+      sessionStorage.setItem("repartoCurrentStep", "/reparto/documento-motorizado");
+      router.push("/reparto/documento-motorizado");
+    }
+      // // Actualizar el paso actual
+      // sessionStorage.setItem(
+      //   "repartoCurrentStep",
+      //   "/reparto/documento-motorizado"
+      // );
 
       // Redireccionar al siguiente paso
-      router.push("/reparto/documento-motorizado");
+      // router.push("/reparto/documento-motorizado");
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);

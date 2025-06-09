@@ -72,5 +72,11 @@ export const FormDataService = {
     sessionStorage.removeItem(this.KEYS.DATOS_PERSONALES);
     sessionStorage.removeItem(this.KEYS.CUENTA_BANCARIA);
     sessionStorage.removeItem(this.KEYS.VEHICULO);
-  }
+  },
+  // Agregar esta función al final del objeto FormDataService
+esVehiculoSinDocumentoMotorizado() {
+  const datosBasicos = this.obtenerDatosBasicos();
+  const vehiculo = datosBasicos?.vehiculo;
+  return vehiculo === "BICICLETA" || vehiculo === "MOTO ELECTRICA";
+}
 };

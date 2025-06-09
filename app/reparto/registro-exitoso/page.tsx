@@ -1,3 +1,4 @@
+// app\reparto\registro-exitoso\page.tsx
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -15,33 +16,37 @@ export default function RegistroExitoso() {
   const [loadingMessage, setLoadingMessage] = useState("Procesando datos")
   const [currentRegistroId, setCurrentRegistroId] = useState<string | null>(null)
 
-  useEffect(() => {
-    const id = sessionStorage.getItem("repartoRegistroId")
-    if (id) {
-      setCurrentRegistroId(id)
-      
-      const datosBasicos = FormDataService.obtenerDatosBasicos()
-      const datosPersonales = FormDataService.obtenerDatosPersonales()
-      const cuentaBancaria = FormDataService.obtenerCuentaBancaria()
-      const vehiculo = FormDataService.obtenerVehiculo()
-      
-      if (!datosBasicos || !datosPersonales || !cuentaBancaria || !vehiculo) {
-        toast({
-          title: "Error",
-          description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
-          variant: "destructive",
-        })
-        router.push("/reparto")
-      }
-    } else {
+useEffect(() => {
+  const id = sessionStorage.getItem("repartoRegistroId")
+  if (id) {
+    setCurrentRegistroId(id)
+    
+    const datosBasicos = FormDataService.obtenerDatosBasicos()
+    const datosPersonales = FormDataService.obtenerDatosPersonales()
+    const cuentaBancaria = FormDataService.obtenerCuentaBancaria()
+    const vehiculo = FormDataService.obtenerVehiculo()
+    
+    // Usar la función helper para verificar si es bicicleta o moto eléctrica
+    const esVehiculoSinDocumento = FormDataService.esVehiculoSinDocumentoMotorizado()
+    
+    // Modificar la validación para considerar vehículos sin documentos
+    if (!datosBasicos || !datosPersonales || !cuentaBancaria || (!vehiculo && !esVehiculoSinDocumento)) {
       toast({
         title: "Error",
-        description: "No se encontró el ID del registro",
+        description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
         variant: "destructive",
       })
       router.push("/reparto")
     }
-  }, [router])
+  } else {
+    toast({
+      title: "Error",
+      description: "No se encontró el ID del registro",
+      variant: "destructive",
+    })
+    router.push("/reparto")
+  }
+}, [router])
 
   const enviarRegistroCompleto = async () => {
     if (!currentRegistroId) {
@@ -57,7 +62,30 @@ export default function RegistroExitoso() {
     setLoadingMessage("Enviando datos al servidor")
     
     try {
-      const datosCompletos = FormDataService.obtenerTodosLosDatos()
+      // const datosCompletos = FormDataService.obtenerTodosLosDatos()
+      const datosBasicos = FormDataService.obtenerDatosBasicos()
+const datosPersonales = FormDataService.obtenerDatosPersonales()
+const cuentaBancaria = FormDataService.obtenerCuentaBancaria()
+const vehiculo = FormDataService.obtenerVehiculo()
+
+// Para bicicletas y motos eléctricas, no se requieren datos de vehículo motorizado
+const esVehiculoSinDocumento = FormDataService.esVehiculoSinDocumentoMotorizado()
+
+if (!datosBasicos || !datosPersonales || !cuentaBancaria || (!vehiculo && !esVehiculoSinDocumento)) {
+  toast({
+    title: "Error",
+    description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
+    variant: "destructive",
+  })
+  router.push("/reparto")
+  return
+}
+const datosCompletos = {
+  datosBasicos,
+  datosPersonales, 
+  cuentaBancaria,
+  vehiculo: esVehiculoSinDocumento ? null : vehiculo
+}
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro-completo`, {
         method: "POST",
