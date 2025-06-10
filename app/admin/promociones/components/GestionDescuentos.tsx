@@ -78,7 +78,7 @@ export default function GestionDescuentos() {
   // Función para buscar clientes
   const handleSearchClientes = async (query: string) => {
     setClienteSearchQuery(query)
-    if (query.length < 3) {
+    if (query.length < 1) {
       setClienteSearchResults([])
       return
     }
@@ -463,8 +463,8 @@ export default function GestionDescuentos() {
 
                             {clienteSearchLoading ? (
                               <div className="text-center py-4">Buscando...</div>
-                            ) : clienteSearchQuery.length < 3 ? (
-                              <div className="text-center py-4">Ingrese al menos 3 caracteres para buscar</div>
+                            ) : clienteSearchQuery.length < 1 ? (
+                              <div className="text-center py-4">Ingrese al menos 1 caracteres para buscar</div>
                             ) : clienteSearchResults.length === 0 ? (
                               <div className="text-center py-4">No se encontraron clientes</div>
                             ) : (
