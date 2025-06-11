@@ -33,6 +33,7 @@ import { DeleteMotorizadoDialog } from "./DeleteMotorizadoDialog";
 
 const MotorizadoList: React.FC = () => {
   const queryClient = useQueryClient();
+  const [motorizadoAprobado, setMotorizadoAprobado] = useState<number | null>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [selectedMotorizadoId, setSelectedMotorizadoId] = useState<
     number | null
@@ -172,6 +173,14 @@ const MotorizadoList: React.FC = () => {
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+const handleAprobarMotorizado = (id: number) => {
+    const motorizado = motorizados.find(m => m.id === id);
+    // Solo aprobar si no está aprobado Y no hemos intentado aprobarlo ya
+    if (motorizado && !motorizado.aprobado && motorizadoAprobado !== id) {
+      setMotorizadoAprobado(id); // Marcar como "en proceso de aprobación"
+      mutationAprobar.mutate(id);
+    }
   };
 
   // Aplicar filtros de estado y búsqueda
@@ -512,28 +521,22 @@ const MotorizadoList: React.FC = () => {
           motorizadoName={motorizadoToDelete.name}
         />
       )}
-    {motorizadoToApprove && (
+{motorizadoToApprove && (
   <AsignarPedidosModal
     isOpen={showAsignarPedidosModal}
-    onClose={(shouldApprove = true) => {
+    onClose={(pedidosAsignados = false) => {
       setShowAsignarPedidosModal(false);
-      // Solo aprobar si shouldApprove es true (tanto para "Asignar más tarde" como para cuando no se asignan pedidos)
-      if (shouldApprove) {
-        const motorizado = motorizados.find(m => m.id === motorizadoToApprove.id);
-        if (motorizado && !motorizado.aprobado) {
-          mutationAprobar.mutate(motorizadoToApprove.id);
-        }
+      // Solo aprobar si no se asignaron pedidos (botón "Asignar más tarde")
+      if (!pedidosAsignados) {
+        handleAprobarMotorizado(motorizadoToApprove.id);
       }
       setMotorizadoToApprove(null);
     }}
     motorizadoId={motorizadoToApprove.id}
     motorizadoNombre={motorizadoToApprove.nombre}
     onSuccess={() => {
-      // Cuando se asignan pedidos exitosamente, también aprobar
-      const motorizado = motorizados.find(m => m.id === motorizadoToApprove.id);
-      if (motorizado && !motorizado.aprobado) {
-        mutationAprobar.mutate(motorizadoToApprove.id);
-      }
+      // Aprobar cuando se guardan los pedidos exitosamente
+      handleAprobarMotorizado(motorizadoToApprove.id);
       setMotorizadoToApprove(null);
     }}
   />

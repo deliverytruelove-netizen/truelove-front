@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query"
 
 interface AsignarPedidosModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (pedidosAsignados?: boolean) => void;
   motorizadoId: number;
   motorizadoNombre: string;
   onSuccess: () => void;
@@ -30,31 +30,29 @@ export function AsignarPedidosModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    try {
-      await actualizarCantidadPedidos(motorizadoId, cantidadPedidos);
-      
-      // Invalidar la consulta con la sintaxis correcta
-      queryClient.invalidateQueries({ queryKey: ["motorizado-details", motorizadoId] });
-      
-      toast({
-        title: "Éxito",
-        description: "Cantidad de pedidos asignada correctamente",
-      });
-      onSuccess();
-      onClose();
-    } catch  {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudo asignar la cantidad de pedidos",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+const handleSubmit = async () => {
+  setIsLoading(true);
+  try {
+    await actualizarCantidadPedidos(motorizadoId, cantidadPedidos);
+    
+    queryClient.invalidateQueries({ queryKey: ["motorizado-details", motorizadoId] });
+    
+    toast({
+      title: "Éxito",
+      description: "Cantidad de pedidos asignada correctamente",
+    });
+    onSuccess();
+    onClose(true); // Indicar que se asignaron pedidos
+  } catch {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "No se pudo asignar la cantidad de pedidos",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
@@ -77,9 +75,9 @@ export function AsignarPedidosModal({
         </div>
         
         <div className="flex justify-end gap-3 mt-6">
-          <Button variant="outline" onClick={onClose}>
-            Asignar más tarde
-          </Button>
+       <Button variant="outline" onClick={() => onClose(false)}>
+  Asignar más tarde
+</Button>
           <Button 
             onClick={handleSubmit} 
             disabled={isLoading}
