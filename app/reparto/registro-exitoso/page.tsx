@@ -1,4 +1,4 @@
-// app\reparto\registro-exitoso\page.tsx
+// app\reparto\registro-exitoso\page.tsxzzz
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -137,9 +137,8 @@ const datosCompletos = {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar>
-        <div className="flex items-center gap-2 md:gap-4"></div>
-      </Navbar>
+      <Navbar/>
+     
 
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full mx-auto p-6">
