@@ -1,4 +1,3 @@
-// app\reparto\documentos\components\formulario-bancario.tsx 3re paso
 "use client";
 
 import type React from "react";
@@ -6,7 +5,7 @@ import type React from "react";
 import { useState, type FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -575,339 +574,342 @@ useEffect(() => {
   }
 
   return (
-    <ScrollArea className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
-      <form
-        onSubmit={handleSubmit}
-        className="p-4 md:p-8 max-w-xl mx-auto space-y-6 md:space-y-8"
-      >
-        <div className="hidden md:block">
-          <h1 className="text-xl md:text-2xl font-bold">
-            Imagen cuenta bancaria
-          </h1>
-          <p className="text-sm md:text-base text-gray-500 mt-2">
-            Necesitamos verificar tu información.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="titular" className="text-sm md:text-base">
-              Titular de Cuenta Bancaria *
-            </Label>
-            <Input
-              id="titular"
-              value={formData.titular}
-              onChange={handleInputChange}
-              placeholder="Ingresa el nombre del titular"
-              className="text-sm md:text-base"
-              required
-            />
-            {errors.titular && (
-              <p className="text-red-500 text-xs mt-1">{errors.titular}</p>
-            )}
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      {/* Contenido del formulario con scroll */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 md:p-8 max-w-xl mx-auto space-y-6 md:space-y-8">
+          <div className="hidden md:block">
+            <h1 className="text-xl md:text-2xl font-bold">
+              Imagen cuenta bancaria
+            </h1>
+            <p className="text-sm md:text-base text-gray-500 mt-2">
+              Necesitamos verificar tu información.
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dni" className="text-sm md:text-base">
-              {obtenerLabelDocumento(tipoDocumentoOriginal)} *
-            </Label>
-            <Input
-              id="dni"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={formData.dni}
-              onChange={handleInputChange}
-              placeholder={obtenerPlaceholderDocumento(tipoDocumentoOriginal)}
-              className="text-sm md:text-base"
-              required
-              maxLength={obtenerMaxLengthDocumento(tipoDocumentoOriginal)}
-            />
-            {errors.dni && (
-              <p className="text-red-500 text-xs mt-1">{errors.dni}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="banco_id" className="text-sm md:text-base">
-              Nombre del banco *
-            </Label>
-            <Select
-              value={formData.banco_id}
-              onValueChange={(value) => handleSelectChange("banco_id", value)}
-              required
-            >
-              <SelectTrigger className="text-sm md:text-base">
-                <SelectValue placeholder="Selecciona tu banco" />
-              </SelectTrigger>
-              <SelectContent>
-                {bancos.map((banco) => (
-                  <SelectItem key={banco.id} value={String(banco.id)}>
-                    {banco.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.banco_id && (
-              <p className="text-red-500 text-xs mt-1">{errors.banco_id}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tipo_cuenta_id" className="text-sm md:text-base">
-              Tipo de Cuenta Bancaria *
-            </Label>
-            <Select
-              value={formData.tipo_cuenta_id}
-              onValueChange={(value) =>
-                handleSelectChange("tipo_cuenta_id", value)
-              }
-              required
-            >
-              <SelectTrigger className="text-sm md:text-base">
-                <SelectValue placeholder="Selecciona el tipo de cuenta" />
-              </SelectTrigger>
-              <SelectContent>
-                {tiposCuenta.map((tipo) => (
-                  <SelectItem key={tipo.id} value={String(tipo.id)}>
-                    {tipo.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.tipo_cuenta_id && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.tipo_cuenta_id}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="numero_cuenta" className="text-sm md:text-base">
-              Número de Cuenta Bancaria *
-            </Label>
-            <Input
-              id="numero_cuenta"
-              value={formData.numero_cuenta}
-              onChange={handleInputChange}
-              placeholder="Ingresa el número de cuenta"
-              className="text-sm md:text-base"
-              required
-            />
-            {errors.numero_cuenta && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.numero_cuenta}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm md:text-base">
-              Documento bancario {!cuentaBancariaId && "*"}
-            </Label>
-
-            {/* Selector de tipo de archivo */}
-            <div className="flex gap-2 mb-4">
-              <Button
-                type="button"
-                variant={fileType === "image" ? "default" : "outline"}
-                onClick={() => {
-                  setFileType("image");
-                  setSelectedFiles(null);
-                  setFilePreview([]);
-                  setCapturedImage(null);
-                  setShowFileSelector(true);
-                }}
-                className={`flex items-center gap-2 ${
-                  fileType === "image" ? "bg-[#f34739] hover:bg-[#d63c30]" : ""
-                }`}
-              >
-                <ImageIcon className="w-4 h-4" />
-                Imagen
-              </Button>
-              <Button
-                type="button"
-                variant={fileType === "pdf" ? "default" : "outline"}
-                onClick={() => {
-                  setFileType("pdf");
-                  setSelectedFiles(null);
-                  setFilePreview([]);
-                  setCapturedImage(null);
-                  setShowFileSelector(true);
-                }}
-                className={`flex items-center gap-2 ${
-                  fileType === "pdf" ? "bg-[#f34739] hover:bg-[#d63c30]" : ""
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                PDF
-              </Button>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="titular" className="text-sm md:text-base">
+                Titular de Cuenta Bancaria *
+              </Label>
+              <Input
+                id="titular"
+                value={formData.titular}
+                onChange={handleInputChange}
+                placeholder="Ingresa el nombre del titular"
+                className="text-sm md:text-base"
+                required
+              />
+              {errors.titular && (
+                <p className="text-red-500 text-xs mt-1">{errors.titular}</p>
+              )}
             </div>
 
-            <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
-              {/* Mostrar selector de archivos solo si no hay archivos seleccionados */}
-              {showFileSelector && (
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs md:text-sm text-gray-500">
-                    {fileType === "image"
-                      ? "Adjuntar en formato JPEG o PNG"
-                      : "Adjuntar en formato PDF"}
-                  </p>
-
-                  <Input
-                    type="file"
-                    onChange={handleFileSelect}
-                    accept={
-                      fileType === "image"
-                        ? ".jpg,.jpeg,.png,image/jpeg,image/png"
-                        : "application/pdf"
-                    }
-                    multiple={fileType === "image"}
-                    className="hidden"
-                    id="file-upload"
-                  />
-
-                  <Label
-                    htmlFor="file-upload"
-                    className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
-                  >
-                    Seleccionar archivo
-                  </Label>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="dni" className="text-sm md:text-base">
+                {obtenerLabelDocumento(tipoDocumentoOriginal)} *
+              </Label>
+              <Input
+                id="dni"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={formData.dni}
+                onChange={handleInputChange}
+                placeholder={obtenerPlaceholderDocumento(tipoDocumentoOriginal)}
+                className="text-sm md:text-base"
+                required
+                maxLength={obtenerMaxLengthDocumento(tipoDocumentoOriginal)}
+              />
+              {errors.dni && (
+                <p className="text-red-500 text-xs mt-1">{errors.dni}</p>
               )}
+            </div>
 
-              {/* Mostrar opción de cámara solo si está en modo imagen y no hay archivos seleccionados */}
-              {isMobile && fileType === "image" && showFileSelector && (
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs md:text-sm text-gray-500">
-                    O captura una imagen con tu cámara
-                  </p>
-                  <CapturarImagen onCapture={handleCapture} />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="banco_id" className="text-sm md:text-base">
+                Nombre del banco *
+              </Label>
+              <Select
+                value={formData.banco_id}
+                onValueChange={(value) => handleSelectChange("banco_id", value)}
+                required
+              >
+                <SelectTrigger className="text-sm md:text-base">
+                  <SelectValue placeholder="Selecciona tu banco" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bancos.map((banco) => (
+                    <SelectItem key={banco.id} value={String(banco.id)}>
+                      {banco.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.banco_id && (
+                <p className="text-red-500 text-xs mt-1">{errors.banco_id}</p>
               )}
+            </div>
 
-              {/* Vista previa de archivos PDF */}
-              {filePreview.length > 0 &&
-                fileType === "pdf" &&
-                selectedFiles && (
-                  <div className="mt-4">
-                    {filePreview.map((preview, index) => {
-                      if (preview === "pdf") {
-                        const file = Array.from(selectedFiles)[index];
-                        return (
-                          <PdfPreview
-                            key={index}
-                            file={file}
-                            onDelete={() => {
-                              const updatedFiles = Array.from(
-                                selectedFiles
-                              ).filter((_, i) => i !== index);
-                              const newFileList = new DataTransfer();
-                              updatedFiles.forEach((file) =>
-                                newFileList.items.add(file)
-                              );
-                              setSelectedFiles(
-                                updatedFiles.length > 0
-                                  ? newFileList.files
-                                  : null
-                              );
-                              setFilePreview(
-                                filePreview.filter((_, i) => i !== index)
-                              );
-                              if (updatedFiles.length === 0) {
-                                setShowFileSelector(true);
-                              }
-                            }}
-                          />
-                        );
+            <div className="space-y-2">
+              <Label htmlFor="tipo_cuenta_id" className="text-sm md:text-base">
+                Tipo de Cuenta Bancaria *
+              </Label>
+              <Select
+                value={formData.tipo_cuenta_id}
+                onValueChange={(value) =>
+                  handleSelectChange("tipo_cuenta_id", value)
+                }
+                required
+              >
+                <SelectTrigger className="text-sm md:text-base">
+                  <SelectValue placeholder="Selecciona el tipo de cuenta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposCuenta.map((tipo) => (
+                    <SelectItem key={tipo.id} value={String(tipo.id)}>
+                      {tipo.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.tipo_cuenta_id && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.tipo_cuenta_id}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="numero_cuenta" className="text-sm md:text-base">
+                Número de Cuenta Bancaria *
+              </Label>
+              <Input
+                id="numero_cuenta"
+                value={formData.numero_cuenta}
+                onChange={handleInputChange}
+                placeholder="Ingresa el número de cuenta"
+                className="text-sm md:text-base"
+                required
+              />
+              {errors.numero_cuenta && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.numero_cuenta}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm md:text-base">
+                Documento bancario {!cuentaBancariaId && "*"}
+              </Label>
+
+              {/* Selector de tipo de archivo */}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant={fileType === "image" ? "default" : "outline"}
+                  onClick={() => {
+                    setFileType("image");
+                    setSelectedFiles(null);
+                    setFilePreview([]);
+                    setCapturedImage(null);
+                    setShowFileSelector(true);
+                  }}
+                  className={`flex items-center gap-2 text-xs md:text-sm px-3 py-2 h-8 md:h-9 ${
+                    fileType === "image" ? "bg-[#f34739] hover:bg-[#d63c30]" : ""
+                  }`}
+                >
+                  <ImageIcon className="w-3 h-3 md:w-4 md:h-4" />
+                  Imagen
+                </Button>
+                <Button
+                  type="button"
+                  variant={fileType === "pdf" ? "default" : "outline"}
+                  onClick={() => {
+                    setFileType("pdf");
+                    setSelectedFiles(null);
+                    setFilePreview([]);
+                    setCapturedImage(null);
+                    setShowFileSelector(true);
+                  }}
+                  className={`flex items-center gap-2 text-xs md:text-sm px-3 py-2 h-8 md:h-9 ${
+                    fileType === "pdf" ? "bg-[#f34739] hover:bg-[#d63c30]" : ""
+                  }`}
+                >
+                  <FileText className="w-3 h-3 md:w-4 md:h-4" />
+                  PDF
+                </Button>
+              </div>
+
+              <div className="border-2 border-dashed rounded-lg p-3 md:p-4 text-center space-y-3 md:space-y-4">
+                {/* Mostrar selector de archivos solo si no hay archivos seleccionados */}
+                {showFileSelector && (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-xs md:text-sm text-gray-500">
+                      {fileType === "image"
+                        ? "Adjuntar en formato JPEG o PNG"
+                        : "Adjuntar en formato PDF"}
+                    </p>
+
+                    <Input
+                      type="file"
+                      onChange={handleFileSelect}
+                      accept={
+                        fileType === "image"
+                          ? ".jpg,.jpeg,.png,image/jpeg,image/png"
+                          : "application/pdf"
                       }
-                      return null;
-                    })}
+                      multiple={fileType === "image"}
+                      className="hidden"
+                      id="file-upload"
+                    />
+
+                    <Label
+                      htmlFor="file-upload"
+                      className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
+                    >
+                      Seleccionar archivo
+                    </Label>
                   </div>
                 )}
 
-              {/* Vista previa de imágenes */}
-              {filePreview.length > 0 && fileType === "image" && (
-                <div className="mt-4">
-                  {filePreview.map((preview, index) => (
-                    <ImagePreview
-                      key={index}
-                      src={preview || "/placeholder.svg"}
-                      alt={`Vista previa ${index + 1}`}
-                      onDelete={() => {
-                        if (selectedFiles) {
-                          const updatedFiles = Array.from(selectedFiles).filter(
-                            (_, i) => i !== index
+                {/* Mostrar opción de cámara solo si está en modo imagen y no hay archivos seleccionados */}
+                {isMobile && fileType === "image" && showFileSelector && (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-xs md:text-sm text-gray-500">
+                      O captura una imagen con tu cámara
+                    </p>
+                    <CapturarImagen onCapture={handleCapture} />
+                  </div>
+                )}
+
+                {/* Vista previa de archivos PDF */}
+                {filePreview.length > 0 &&
+                  fileType === "pdf" &&
+                  selectedFiles && (
+                    <div className="mt-3 md:mt-4">
+                      {filePreview.map((preview, index) => {
+                        if (preview === "pdf") {
+                          const file = Array.from(selectedFiles)[index];
+                          return (
+                            <PdfPreview
+                              key={index}
+                              file={file}
+                              onDelete={() => {
+                                const updatedFiles = Array.from(
+                                  selectedFiles
+                                ).filter((_, i) => i !== index);
+                                const newFileList = new DataTransfer();
+                                updatedFiles.forEach((file) =>
+                                  newFileList.items.add(file)
+                                );
+                                setSelectedFiles(
+                                  updatedFiles.length > 0
+                                    ? newFileList.files
+                                    : null
+                                );
+                                setFilePreview(
+                                  filePreview.filter((_, i) => i !== index)
+                                );
+                                if (updatedFiles.length === 0) {
+                                  setShowFileSelector(true);
+                                }
+                              }}
+                            />
                           );
-                          const newFileList = new DataTransfer();
-                          updatedFiles.forEach((file) =>
-                            newFileList.items.add(file)
-                          );
-                          setSelectedFiles(
-                            updatedFiles.length > 0 ? newFileList.files : null
-                          );
-                          setFilePreview(
-                            filePreview.filter((_, i) => i !== index)
-                          );
-                          if (updatedFiles.length === 0) {
-                            setShowFileSelector(true);
-                          }
                         }
-                      }}
+                        return null;
+                      })}
+                    </div>
+                  )}
+
+                {/* Vista previa de imágenes */}
+                {filePreview.length > 0 && fileType === "image" && (
+                  <div className="mt-3 md:mt-4">
+                    {filePreview.map((preview, index) => (
+                      <ImagePreview
+                        key={index}
+                        src={preview || "/placeholder.svg"}
+                        alt={`Vista previa ${index + 1}`}
+                        onDelete={() => {
+                          if (selectedFiles) {
+                            const updatedFiles = Array.from(selectedFiles).filter(
+                              (_, i) => i !== index
+                            );
+                            const newFileList = new DataTransfer();
+                            updatedFiles.forEach((file) =>
+                              newFileList.items.add(file)
+                            );
+                            setSelectedFiles(
+                              updatedFiles.length > 0 ? newFileList.files : null
+                            );
+                            setFilePreview(
+                              filePreview.filter((_, i) => i !== index)
+                            );
+                            if (updatedFiles.length === 0) {
+                              setShowFileSelector(true);
+                            }
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Vista previa de imagen capturada */}
+                {capturedImage && (
+                  <div className="mt-3 md:mt-4">
+                    <ImagePreview
+                      src={capturedImage || "/placeholder.svg"}
+                      alt="Imagen capturada"
+                      onDelete={handleRemoveImage}
                     />
-                  ))}
-                </div>
-              )}
-
-              {/* Vista previa de imagen capturada */}
-              {capturedImage && (
-                <div className="mt-4">
-                  <ImagePreview
-                    src={capturedImage || "/placeholder.svg"}
-                    alt="Imagen capturada"
-                    onDelete={handleRemoveImage}
-                  />
-                </div>
+                  </div>
+                )}
+              </div>
+              {errors.imagen && (
+                <p className="text-red-500 text-xs mt-1">{errors.imagen}</p>
               )}
             </div>
-            {errors.imagen && (
-              <p className="text-red-500 text-xs mt-1">{errors.imagen}</p>
-            )}
-          </div>
-        </div>
 
-        <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                <p className="text-xs md:text-sm text-blue-800 font-medium">
-                  El justificante bancario debe incluir los cinco datos
-                  anteriores
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                <p className="text-xs md:text-sm text-blue-800">
-                  Puede cargar varias imágenes si los datos están en pantallas
-                  separadas
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                <p className="text-xs md:text-sm text-blue-800">
-                  Asegúrese que la información sea claramente legible
-                </p>
+            <div className="bg-blue-50 p-3 md:p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Info className="h-4 w-4 md:h-5 md:w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                    <p className="text-xs md:text-sm text-blue-800 font-medium">
+                      El justificante bancario debe incluir los cinco datos
+                      anteriores
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                    <p className="text-xs md:text-sm text-blue-800">
+                      Puede cargar varias imágenes si los datos están en pantallas
+                      separadas
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
+                    <p className="text-xs md:text-sm text-blue-800">
+                      Asegúrese que la información sea claramente legible
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex justify-end pt-4">
+      {/* Botón fijo en la parte inferior */}
+      <div className="border-t bg-white p-4 md:p-6">
+        <div className="max-w-xl mx-auto">
           <Button
-            type="submit"
-            className="bg-[#f34739] text-white hover:bg-[#d63c30]"
+            onClick={handleSubmit}
+            className="w-full bg-[#f34739] text-white hover:bg-[#d63c30] h-10 md:h-11 text-sm md:text-base"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -920,7 +922,7 @@ useEffect(() => {
             )}
           </Button>
         </div>
-      </form>
-    </ScrollArea>
+      </div>
+    </div>
   );
 }

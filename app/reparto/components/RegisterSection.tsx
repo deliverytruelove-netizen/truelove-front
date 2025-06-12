@@ -44,8 +44,12 @@ export default function RegisterSection() {
           </motion.h1>
         </div>
 
-        {/* Formulario a la derecha */}
-        <div className="absolute right-4 md:right-16 lg:right-24 top-1/2 transform -translate-y-1/2 w-full max-w-md">
+        {/* Formulario - Centrado en móvil, a la derecha en desktop */}
+        <div className="absolute 
+          left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2
+          md:left-auto md:right-16 md:transform md:-translate-y-1/2 md:translate-x-0
+          lg:right-24 
+          w-full max-w-md px-4 md:px-0">
           <Suspense fallback={<Loading />}>
             <RegistrationForm />
           </Suspense>
