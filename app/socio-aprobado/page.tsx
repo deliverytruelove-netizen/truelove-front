@@ -1,3 +1,4 @@
+// esgvsd
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
@@ -63,15 +64,8 @@ function SocioAprobadoContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-red-50 to-white">
-      <Navbar>
-        <Button
-          asChild
-          variant="default"
-          className="bg-[#f34739] text-white hover:bg-[#d63c30] transition-all duration-300 shadow-lg hover:shadow-xl"
-        >
-          <Link href="/">Guardar y salir</Link>
-        </Button>
-      </Navbar>
+      <Navbar/>
+       
 
       <div className="flex flex-col md:flex-row flex-1">
         <motion.div
