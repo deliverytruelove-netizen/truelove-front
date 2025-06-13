@@ -1,3 +1,4 @@
+// app\admin\horarios\components\GrupoForm.tsx
 "use client"
 
 import type React from "react"
@@ -5,26 +6,20 @@ import { useState, useEffect } from "react"
 import { TimeSelectorMejorado } from "./TimeSelector"
 import { createGrupoHorario, updateGrupoHorario, fetchMotorizadosDisponibles } from "../services/horarios.service"
 import type { HorarioGrupo, HorarioBloque, Motorizado, DiaSemana } from "../types/horarios.types"
-import {
-  ArrowLeft,
-  Trash2,
-  Clock,
-  Users,
-  User,
-  Save,
-  X,
-  Info,
-  Calendar,
-  Coffee,
-  Briefcase,
-  Moon,
-  AlertCircle,
-} from "lucide-react"
+import { ArrowLeft, Trash2, Clock, Users, User, Save, X, Info, Calendar, Coffee, Briefcase, Moon, AlertCircle, Sunrise, Check } from 'lucide-react'
 
 interface GrupoFormProps {
   grupo?: HorarioGrupo
   onCancel: () => void
   onSave: () => void
+}
+
+// Interfaces para los bloques de verificación de solapamiento
+interface BloqueVerificacion {
+  inicio: string
+  fin: string
+  index: number
+  tipo: string
 }
 
 export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
@@ -115,16 +110,44 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
     let horaInicio = "08:00"
     let horaFin = "17:00"
 
-    if (tipo === "almuerzo") {
-      horaInicio = "12:00"
-      horaFin = "13:00"
-    } else if (tipo === "descanso") {
-      horaInicio = "15:00"
-      horaFin = "15:15"
+    // Si hay bloques existentes, usar la hora final del último bloque como hora inicial
+    if (formData.bloques.length > 0) {
+      const ultimoBloque = formData.bloques[formData.bloques.length - 1]
+      horaInicio = ultimoBloque.hora_fin
+
+      // Calcular hora final basada en el tipo de bloque
+      if (tipo === "almuerzo") {
+        // Para almuerzo, agregar 1 hora
+        horaFin = calcularHoraFin(horaInicio, 60)
+      } else if (tipo === "descanso") {
+        // Para descanso, agregar 15 minutos
+        horaFin = calcularHoraFin(horaInicio, 15)
+      } else {
+        // Para trabajo, agregar 8 horas o hasta las 17:00 si es antes
+        horaFin = calcularHoraFin(horaInicio, 480)
+      }
+    } else {
+      // Si no hay bloques, usar valores predeterminados
+      if (tipo === "almuerzo") {
+        horaInicio = "12:00"
+        horaFin = "13:00"
+      } else if (tipo === "descanso") {
+        horaInicio = "15:00"
+        horaFin = "15:15"
+      }
+    }
+
+    // Usar los días del último bloque si existe, o todos los días si es el primer bloque
+    let diasSeleccionados: DiaSemana[] = ["lunes"]
+    if (formData.bloques.length > 0) {
+      const ultimoBloque = formData.bloques[formData.bloques.length - 1]
+      diasSeleccionados = Array.isArray(ultimoBloque.dia_semana) 
+        ? ultimoBloque.dia_semana as DiaSemana[]
+        : [ultimoBloque.dia_semana as DiaSemana]
     }
 
     const nuevoBloque: Omit<HorarioBloque, "id" | "grupo_id"> = {
-      dia_semana: ["lunes"],
+      dia_semana: diasSeleccionados,
       hora_inicio: horaInicio,
       hora_fin: horaFin,
       tipo: tipo,
@@ -139,6 +162,21 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
     }))
   }
 
+  // Función auxiliar para calcular la hora final
+  const calcularHoraFin = (horaInicio: string, minutosAgregar: number): string => {
+    const [horas, minutos] = horaInicio.split(":").map(Number)
+
+    let totalMinutos = horas * 60 + minutos + minutosAgregar
+
+    // Manejar el desbordamiento de 24 horas
+    totalMinutos = totalMinutos % (24 * 60)
+
+    const nuevasHoras = Math.floor(totalMinutos / 60)
+    const nuevosMinutos = totalMinutos % 60
+
+    return `${nuevasHoras.toString().padStart(2, "0")}:${nuevosMinutos.toString().padStart(2, "0")}`
+  }
+
   const handleRemoveBloque = (index: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -146,28 +184,130 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
     }))
   }
 
-const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: string | string[] | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      bloques: prev.bloques.map((bloque, i) => (i === index ? { ...bloque, [field]: value } : bloque)),
-    }))
+  const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: string | string[] | undefined) => {
+    setFormData((prev) => {
+      const newBloques = [...prev.bloques]
+      
+      // Si estamos cambiando la hora de fin de un bloque, actualizar la hora de inicio del siguiente
+      if (field === "hora_fin" && index < newBloques.length - 1) {
+        newBloques[index + 1] = {
+          ...newBloques[index + 1],
+          hora_inicio: value as string
+        }
+        
+        // Recalcular las horas de fin de los bloques siguientes
+        for (let i = index + 1; i < newBloques.length; i++) {
+          const bloque = newBloques[i]
+          const duracion = calcularDuracion(bloque.hora_inicio, bloque.hora_fin)
+          newBloques[i] = {
+            ...bloque,
+            hora_fin: calcularHoraFin(bloque.hora_inicio, duracion)
+          }
+          
+          // Actualizar la hora de inicio del siguiente bloque si existe
+          if (i < newBloques.length - 1) {
+            newBloques[i + 1] = {
+              ...newBloques[i + 1],
+              hora_inicio: newBloques[i].hora_fin
+            }
+          }
+        }
+      }
+      
+      // Si estamos cambiando la hora de inicio de un bloque, recalcular su hora de fin
+      if (field === "hora_inicio" && typeof value === "string") {
+        const bloque = newBloques[index]
+        const duracion = calcularDuracion(bloque.hora_inicio, bloque.hora_fin)
+        newBloques[index] = {
+          ...bloque,
+          [field]: value,
+          hora_fin: calcularHoraFin(value, duracion)
+        }
+        
+        // Actualizar los bloques siguientes
+        for (let i = index + 1; i < newBloques.length; i++) {
+          newBloques[i] = {
+            ...newBloques[i],
+            hora_inicio: i === index + 1 ? newBloques[index].hora_fin : newBloques[i - 1].hora_fin
+          }
+          
+          // Recalcular la hora de fin
+          const duracionSiguiente = calcularDuracion(newBloques[i].hora_inicio, newBloques[i].hora_fin)
+          newBloques[i] = {
+            ...newBloques[i],
+            hora_fin: calcularHoraFin(newBloques[i].hora_inicio, duracionSiguiente)
+          }
+        }
+      } else {
+        // Para otros campos, simplemente actualizar el valor
+        newBloques[index] = {
+          ...newBloques[index],
+          [field]: value
+        }
+      }
+      
+      return {
+        ...prev,
+        bloques: newBloques
+      }
+    })
   }
 
   const handleDiaChange = (bloqueIndex: number, dia: DiaSemana, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      bloques: prev.bloques.map((bloque, i) => {
-        if (i === bloqueIndex) {
-          const diasActuales = Array.isArray(bloque.dia_semana) ? bloque.dia_semana : [bloque.dia_semana]
-          if (checked) {
-            return { ...bloque, dia_semana: [...diasActuales, dia] }
-          } else {
-            return { ...bloque, dia_semana: diasActuales.filter((d) => d !== dia) }
+    setFormData((prev) => {
+      const newBloques = [...prev.bloques]
+      
+      // Obtener los días actuales del bloque
+      const bloque = newBloques[bloqueIndex]
+      const diasActuales = Array.isArray(bloque.dia_semana) ? bloque.dia_semana : [bloque.dia_semana]
+      
+      // Actualizar los días del bloque actual
+      const nuevosDias = checked 
+        ? [...diasActuales, dia] 
+        : diasActuales.filter(d => d !== dia)
+      
+      newBloques[bloqueIndex] = {
+        ...bloque,
+        dia_semana: nuevosDias
+      }
+      
+      // Aplicar los mismos días a todos los demás bloques
+      return {
+        ...prev,
+        bloques: newBloques.map((b, i) => {
+          if (i !== bloqueIndex) {
+            return {
+              ...b,
+              dia_semana: nuevosDias
+            }
           }
-        }
-        return bloque
-      }),
-    }))
+          return b
+        })
+      }
+    })
+  }
+
+  // Función para seleccionar o deseleccionar todos los días
+  const handleToggleAllDias = (bloqueIndex: number) => {
+    setFormData((prev) => {
+      const newBloques = [...prev.bloques]
+      const bloque = newBloques[bloqueIndex]
+      const diasActuales = Array.isArray(bloque.dia_semana) ? bloque.dia_semana : [bloque.dia_semana]
+      
+      // Si ya están todos seleccionados, deseleccionar todos
+      const nuevosDias = diasActuales.length === diasSemana.length 
+        ? [] 
+        : diasSemana.map(d => d.key)
+      
+      // Aplicar a todos los bloques
+      return {
+        ...prev,
+        bloques: newBloques.map(b => ({
+          ...b,
+          dia_semana: nuevosDias
+        }))
+      }
+    })
   }
 
   const handleMotorizadoToggle = (motorizadoId: number) => {
@@ -177,6 +317,57 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
         ? prev.motorizados.filter((id) => id !== motorizadoId)
         : [...prev.motorizados, motorizadoId],
     }))
+  }
+
+  // Función auxiliar para convertir hora a minutos desde medianoche
+  const horaAMinutos = (hora: string): number => {
+    const [hours, minutes] = hora.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+
+  // Función auxiliar para verificar si un horario cruza medianoche
+  const cruzaMedianoche = (horaInicio: string, horaFin: string): boolean => {
+    const inicioMinutos = horaAMinutos(horaInicio)
+    const finMinutos = horaAMinutos(horaFin)
+    return finMinutos < inicioMinutos
+  }
+
+  // Función auxiliar para calcular duración de un bloque (considerando cruce de medianoche)
+  const calcularDuracion = (horaInicio: string, horaFin: string): number => {
+    const inicioMinutos = horaAMinutos(horaInicio)
+    const finMinutos = horaAMinutos(horaFin)
+    
+    if (cruzaMedianoche(horaInicio, horaFin)) {
+      // Si cruza medianoche: (24:00 - inicio) + fin
+      return (24 * 60 - inicioMinutos) + finMinutos
+    } else {
+      return finMinutos - inicioMinutos
+    }
+  }
+
+  // Función auxiliar para verificar solapamiento considerando cruce de medianoche
+  const verificarSolapamiento = (bloque1: BloqueVerificacion, bloque2: BloqueVerificacion): boolean => {
+    const inicio1 = horaAMinutos(bloque1.inicio)
+    const fin1 = horaAMinutos(bloque1.fin)
+    const inicio2 = horaAMinutos(bloque2.inicio)
+    const fin2 = horaAMinutos(bloque2.fin)
+
+    const cruza1 = cruzaMedianoche(bloque1.inicio, bloque1.fin)
+    const cruza2 = cruzaMedianoche(bloque2.inicio, bloque2.fin)
+
+    if (!cruza1 && !cruza2) {
+      // Ninguno cruza medianoche - validación normal
+      return fin1 > inicio2 && fin2 > inicio1
+    } else if (cruza1 && !cruza2) {
+      // Solo el primero cruza medianoche
+      return (fin1 > inicio2) || (inicio1 <= fin2)
+    } else if (!cruza1 && cruza2) {
+      // Solo el segundo cruza medianoche
+      return (fin2 > inicio1) || (inicio2 <= fin1)
+    } else {
+      // Ambos cruzan medianoche - siempre se solapan
+      return true
+    }
   }
 
   // Validación mejorada del frontend
@@ -206,13 +397,24 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
         newErrors[`bloque_${index}_dias`] = "Debe seleccionar al menos un día"
       }
 
-      if (bloque.hora_inicio >= bloque.hora_fin) {
-        newErrors[`bloque_${index}_horas`] = "La hora de inicio debe ser menor a la hora de fin"
+      // Validar duración mínima (15 minutos)
+      const duracion = calcularDuracion(bloque.hora_inicio, bloque.hora_fin)
+      if (duracion < 15) {
+        if (cruzaMedianoche(bloque.hora_inicio, bloque.hora_fin)) {
+          newErrors[`bloque_${index}_horas`] = `Horario nocturno demasiado corto. Duración actual: ${Math.floor(duracion / 60)}h ${duracion % 60}min (mínimo 15 minutos)`
+        } else {
+          newErrors[`bloque_${index}_horas`] = `Duración demasiado corta: ${duracion} minutos (mínimo 15 minutos)`
+        }
+      }
+
+      // Validar duración máxima (18 horas para evitar horarios excesivos)
+      if (duracion > 18 * 60) {
+        newErrors[`bloque_${index}_horas`] = `Duración demasiado larga: ${Math.floor(duracion / 60)}h ${duracion % 60}min (máximo 18 horas)`
       }
     })
 
     // Validar solapamientos en el frontend
-    const bloquesPorDia: Record<string, Array<{ inicio: string; fin: string; index: number }>> = {}
+    const bloquesPorDia: Record<string, Array<BloqueVerificacion>> = {}
 
     formData.bloques.forEach((bloque, index) => {
       const diasArray = Array.isArray(bloque.dia_semana) ? bloque.dia_semana : [bloque.dia_semana]
@@ -224,21 +426,25 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
           inicio: bloque.hora_inicio,
           fin: bloque.hora_fin,
           index,
+          tipo: bloque.tipo
         })
       })
     })
 
     // Verificar solapamientos
     Object.entries(bloquesPorDia).forEach(([dia, bloques]) => {
-      const bloquesOrdenados = bloques.sort((a, b) => a.inicio.localeCompare(b.inicio))
+      for (let i = 0; i < bloques.length - 1; i++) {
+        for (let j = i + 1; j < bloques.length; j++) {
+          const bloque1 = bloques[i]
+          const bloque2 = bloques[j]
 
-      for (let i = 0; i < bloquesOrdenados.length - 1; i++) {
-        const actual = bloquesOrdenados[i]
-        const siguiente = bloquesOrdenados[i + 1]
-
-        if (actual.fin > siguiente.inicio) {
-          newErrors[`solapamiento_${dia}`] =
-            `Hay solapamiento de horarios en ${dia}: ${actual.inicio}-${actual.fin} se superpone con ${siguiente.inicio}-${siguiente.fin}`
+          if (verificarSolapamiento(bloque1, bloque2)) {
+            const duracion1 = calcularDuracion(bloque1.inicio, bloque1.fin)
+            const duracion2 = calcularDuracion(bloque2.inicio, bloque2.fin)
+            
+            newErrors[`solapamiento_${dia}`] = 
+              `Conflicto en ${dia}: Bloque ${bloque1.tipo} (${bloque1.inicio}-${bloque1.fin}, ${Math.floor(duracion1 / 60)}h ${duracion1 % 60}min) se superpone con bloque ${bloque2.tipo} (${bloque2.inicio}-${bloque2.fin}, ${Math.floor(duracion2 / 60)}h ${duracion2 % 60}min)`
+          }
         }
       }
     })
@@ -278,8 +484,8 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
       }
 
       onSave()
-} catch (error: unknown) {
-  const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Error al guardar el grupo de horario"
+    } catch (error: unknown) {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Error al guardar el grupo de horario"
       alert(errorMessage)
       console.error("Error:", error)
     } finally {
@@ -302,6 +508,21 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Información sobre horarios nocturnos */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-blue-800 mb-2">
+            <Sunrise className="h-5 w-5" />
+            <span className="font-medium">Información sobre horarios nocturnos:</span>
+          </div>
+          <p className="text-sm text-blue-700">
+            ✓ Puedes crear horarios que crucen la medianoche (ej: 6:00 AM a 12:00 AM del día siguiente)
+            <br />
+            ✓ El sistema calculará automáticamente la duración correcta para horarios nocturnos
+            <br />
+            ✓ Duración mínima: 15 minutos | Duración máxima: 18 horas
+          </p>
+        </div>
+
         {/* Mostrar errores de solapamiento */}
         {Object.entries(errors).some(([key]) => key.startsWith("solapamiento_")) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -433,7 +654,7 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
                 Horarios de Trabajo *
               </label>
               <p className="text-xs text-gray-500 mt-1">
-                Define los diferentes períodos de trabajo, descansos y almuerzo
+                Define los diferentes períodos de trabajo, descansos y almuerzo. Soporta horarios nocturnos.
               </p>
             </div>
           </div>
@@ -448,7 +669,7 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
                   <button
                     key={tipo.key}
                     type="button"
-                  onClick={() => handleAddBloque(tipo.key as "trabajo" | "descanso" | "almuerzo")}
+                    onClick={() => handleAddBloque(tipo.key as "trabajo" | "descanso" | "almuerzo")}
                     className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-brand-400 hover:bg-brand-50 transition-colors group"
                   >
                     <div className="p-2 rounded-lg" style={{ backgroundColor: `${tipo.color}20`, color: tipo.color }}>
@@ -470,6 +691,10 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
             {formData.bloques.map((bloque, index) => {
               const tipoInfo = tiposBloques.find((t) => t.key === bloque.tipo)
               const IconComponent = tipoInfo?.icon || Clock
+              const duracion = calcularDuracion(bloque.hora_inicio, bloque.hora_fin)
+              const cruzaMedianocheBloque = cruzaMedianoche(bloque.hora_inicio, bloque.hora_fin)
+              const diasActuales = Array.isArray(bloque.dia_semana) ? bloque.dia_semana : [bloque.dia_semana]
+              const todosDiasSeleccionados = diasActuales.length === diasSemana.length
 
               return (
                 <div key={index} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
@@ -486,6 +711,11 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
                           {tipoInfo?.label} #{index + 1}
                         </h4>
                         <p className="text-sm text-gray-500">{tipoInfo?.description}</p>
+                        {/* Mostrar duración calculada */}
+                        <p className="text-xs text-gray-600 mt-1">
+                          Duración: {Math.floor(duracion / 60)}h {duracion % 60}min
+                          {cruzaMedianocheBloque && <span className="text-blue-600 ml-2">(cruza medianoche)</span>}
+                        </p>
                       </div>
                     </div>
                     <button
@@ -514,13 +744,35 @@ const handleBloqueChange = (index: number, field: keyof HorarioBloque, value: st
 
                   {/* Días de la semana */}
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      <Calendar className="inline h-4 w-4 mr-1" />
-                      Días de la semana
-                    </label>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        <Calendar className="inline h-4 w-4 mr-1" />
+                        Días de la semana
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAllDias(index)}
+                        className={`text-xs px-3 py-1 rounded-full flex items-center gap-1 ${
+                          todosDiasSeleccionados 
+                            ? "bg-brand-100 text-brand-700 hover:bg-brand-200" 
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {todosDiasSeleccionados ? (
+                          <>
+                            <X className="h-3 w-3" />
+                            Deseleccionar todos
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-3 w-3" />
+                            Seleccionar todos
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <div className="grid grid-cols-7 gap-2">
                       {diasSemana.map((dia) => {
-                        const diasActuales = Array.isArray(bloque.dia_semana) ? bloque.dia_semana : [bloque.dia_semana]
                         const isSelected = diasActuales.includes(dia.key)
 
                         return (
