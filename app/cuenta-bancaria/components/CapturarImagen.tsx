@@ -1,3 +1,4 @@
+// app\cuenta-bancaria\components\CapturarImagen.tsx
 "use client"
 
 import type React from "react"

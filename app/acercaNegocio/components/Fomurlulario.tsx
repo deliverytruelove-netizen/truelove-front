@@ -33,7 +33,7 @@ interface BusinessFormProps {
 export function BusinessForm({ form, tiposNegocio, categorias, fetchCategorias }: BusinessFormProps) {
   return (
     <Form {...form}>
-      <form className="space-y-6 h-screen  ">
+      <form className="space-y-4 overflow">
         <FormField
           control={form.control}
           name="businessName"

@@ -9,7 +9,7 @@ import DeliveryAboutUs from "@/components/DeliveryAbout";
 import Navbar from "@/components/Navbar";
 
 export default function Home() {
-  const { scrollYProgress } = useScroll(); // Hook para obtener el progreso de scroll
+  const { scrollYProgress } = useScroll(); 
 
   return (
     <>

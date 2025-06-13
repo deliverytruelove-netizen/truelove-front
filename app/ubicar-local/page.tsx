@@ -8,13 +8,13 @@ import Image from "next/image"
 import ImaDelivery from "@/public/img/deli-ubicacion.jpg"
 // import { Button } from "@/components/ui/button"
 import Navbar from "@/components/ui/navbar"
-import { ScrollArea } from "@/components/ui/scroll-area"
+// import { ScrollArea } from "@/components/ui/scroll-area"
 import MapComponent from "./components/BusinessMap"
 import SearchComponent from "./components/Search"
 import BusinessForm from "./components/BussinessForm"
 import StepNavigation from "@/components/ui/StepNavigation"
 import { useToast } from "@/hooks/use-toast"
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+// import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
 
 // Actualización de la interfaz para Google Maps
@@ -38,7 +38,7 @@ type FormData = {
 }
 
 export default function BusinessLocation() {
-  useBodyScrollLock()
+  // useBodyScrollLock()
   const router = useRouter()
   const { toast } = useToast()
   const [selectedLocation, setSelectedLocation] = useState<GoogleMapsLocation | null>(null)
@@ -198,67 +198,65 @@ export default function BusinessLocation() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar/>
-        {/* <Button
-          asChild
-          variant="default"
-          className="bg-[#f34739] text-white hover:bg-[#d63c30]"
-        >
-          <Link href="/">Guardar y salir</Link>
-        </Button>
-      </Navbar> */}
+ return (
+  <div className="flex flex-col h-screen bg-white ">
+    {/* Navbar fijo */}
+    <div className="flex-shrink-0">
+      <Navbar />
+    </div>
 
-      <div className="flex flex-1 flex-col md:flex-row">
-        <div className="hidden md:flex w-full md:w-1/2 p-4 bg-gray-100">
-          <div className="h-full flex justify-center items-center">
-            <Image
-             src={ImaDelivery || "/placeholder.svg"}
-              alt="delivery"
-              layout="responsive"
-              width={500}
-              height={500}
-              loading="lazy" // Usar lazy loading en su lugar
-            />
-          </div>
-        </div>
-
-        <div className="w-full md:w-1/2 bg-gray-50">
-          <ScrollArea className="h-[calc(100vh-8rem)]">
-            <div className="p-4 md:p-8 space-y-6">
-              <div className="text-center max-w-md mx-auto">
-                <h2 className="text-2xl font-bold">Ubicación del negocio</h2>
-                <p className="text-muted-foreground mt-2">
-                  Ingresa la dirección exacta de tu establecimiento para que tus
-                  clientes puedan encontrarte fácilmente.
-                </p>
-              </div>
-
-              <div className="max-w-md mx-auto">
-                <SearchComponent onLocationSelect={handleLocationSelect} />
-              </div>
-
-              <div className="space-y-6 max-w-md mx-auto">
-                <MapComponent 
-                  selectedLocation={selectedLocation}
-                  onLocationUpdate={handleLocationSelect}
-                />
-
-                {showForm && selectedLocation && (
-                  <div className="mt-6 border rounded-lg bg-white p-6">
-                    <BusinessForm
-                      selectedLocation={selectedLocation}
-                      onSubmit={handleFormSubmit}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </ScrollArea>
+    {/* Contenido principal con scroll */}
+    <div className="flex flex-1 overflow-hidden">
+      {/* Imagen fija en desktop */}
+      <div className="hidden md:flex w-1/2 p-4 bg-gray-100 flex-shrink-0">
+        <div className="h-full flex justify-center items-center">
+          <Image
+            src={ImaDelivery || "/placeholder.svg"}
+            alt="delivery"
+            layout="responsive"
+            width={500}
+            height={500}
+            loading="lazy"
+          />
         </div>
       </div>
 
+      {/* Área del contenido con scroll */}
+      <div className="w-full md:w-1/2 bg-gray-50 overflow-y-auto pb-16">
+        <div className="p-4 md:p-8 space-y-6 pb-32">
+          <div className="text-center max-w-md mx-auto">
+            <h2 className="text-2xl font-bold">Ubicación del negocio</h2>
+            <p className="text-muted-foreground mt-2">
+              Ingresa la dirección exacta de tu establecimiento para que tus
+              clientes puedan encontrarte fácilmente.
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto">
+            <SearchComponent onLocationSelect={handleLocationSelect} />
+          </div>
+
+          <div className="space-y-6 max-w-md mx-auto">
+            <MapComponent 
+              selectedLocation={selectedLocation}
+              onLocationUpdate={handleLocationSelect}
+            />
+
+            {showForm && selectedLocation && (
+              <div className="mt-6 border rounded-lg bg-white p-6">
+                <BusinessForm
+                  selectedLocation={selectedLocation}
+                  onSubmit={handleFormSubmit}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* StepNavigation fijo en la parte inferior */}
+    <div className="flex-shrink-0 bg-white border-t">
       <StepNavigation
         currentStep={2}
         totalSteps={7}
@@ -267,5 +265,7 @@ export default function BusinessLocation() {
         isNextDisabled={!(selectedLocation && formData) || isSubmitting}
       />
     </div>
-  )
+  </div>
+)
+
 }
