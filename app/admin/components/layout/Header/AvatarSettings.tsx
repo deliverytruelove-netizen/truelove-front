@@ -105,7 +105,7 @@ const AvatarSettings: React.FC = () => {
   useEffect(() => {
     fetchRequests();
     // Actualizar cada 30 segundos
-    const interval = setInterval(fetchRequests, 300000);
+    const interval = setInterval(fetchRequests, 30000);
     return () => clearInterval(interval);
   }, []);
 
