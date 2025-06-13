@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+// import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import dynamic from 'next/dynamic'
 import Navbar from "@/components/ui/navbar"
 import StepNavigation from '@/components/ui/StepNavigation'
@@ -23,7 +23,7 @@ function PlanPrecios() {
   const currentStep = 5
   const totalSteps = 7
 
-  useBodyScrollLock();
+  // useBodyScrollLock();
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';

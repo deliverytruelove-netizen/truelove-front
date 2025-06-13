@@ -102,7 +102,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({ selectedLocation, onSubmit 
   return (
     <Form {...form}>
       <form
-        className="space-y-4 max-w-[430px] w-full mx-auto"
+        className="space-y-4 max-w-[430px] w-full mx-auto pb-20"
         onSubmit={(e) => {
           e.preventDefault()
           if (form.formState.isValid) {

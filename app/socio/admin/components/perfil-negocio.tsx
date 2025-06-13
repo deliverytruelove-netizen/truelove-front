@@ -44,7 +44,11 @@ export function PerfilNegocio({
   const [subiendoBanner, setSubiendoBanner] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [bannerUrl, setBannerUrl] = useState<string | undefined>(undefined);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Estados de error separados para logo y banner
+  const [errorLogo, setErrorLogo] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  
   const [horarios, setHorarios] = useState<HorarioNegocio[]>(horariosIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
 
@@ -95,8 +99,30 @@ export function PerfilNegocio({
   ) => {
     if (evento.target.files && evento.target.files[0]) {
       const archivo = evento.target.files[0];
+      
+      // Validar archivo antes de subirlo
+      const tiposPermitidos = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
+      if (!tiposPermitidos.includes(archivo.type)) {
+        setErrorLogo("Solo se permiten archivos JPG, PNG y GIF.");
+        evento.target.value = ""; // Limpiar el input
+        return;
+      }
+
+      // Verificar tamaño del archivo (2MB para logo)
+      const tamañoMaximo = 2 * 1024 * 1024; // 2MB
+      if (archivo.size > tamañoMaximo) {
+        setErrorLogo("El archivo es demasiado grande. Máximo 2MB permitido.");
+        evento.target.value = ""; // Limpiar el input
+        return;
+      }
+
       setSubiendoLogo(true);
-      setError(null);
+      setErrorLogo(null);
 
       try {
         const formData = new FormData();
@@ -122,20 +148,26 @@ export function PerfilNegocio({
 
         if (!respuesta.ok) {
           const errorData = await respuesta.json();
-          throw new Error(errorData.message || "Error al subir el logo");
+          console.error("Error del servidor:", errorData);
+          // Priorizar el mensaje específico del error
+          const mensajeError = errorData.error || errorData.message || "Error al subir el logo";
+          throw new Error(mensajeError);
         }
 
         const datos = await respuesta.json();
         setLogoUrl(datos.ruta_logo);
+        setErrorLogo(null);
       } catch (error: unknown) {
         console.error("Error al subir el logo:", error);
         if (error instanceof Error) {
-          setError(error.message);
+          setErrorLogo(error.message);
         } else {
-          setError("Error al subir el logo");
+          setErrorLogo("Error al subir el logo");
         }
       } finally {
         setSubiendoLogo(false);
+        // Limpiar el input
+        evento.target.value = "";
       }
     }
   };
@@ -154,21 +186,21 @@ export function PerfilNegocio({
         "image/gif",
       ];
       if (!tiposPermitidos.includes(archivo.type)) {
-        setError("Solo se permiten archivos JPG, PNG y GIF.");
+        setErrorBanner("Solo se permiten archivos JPG, PNG y GIF.");
         evento.target.value = ""; // Limpiar el input
         return;
       }
 
-      // Verificar tamaño del archivo (4MB)
+      // Verificar tamaño del archivo (4MB para banner)
       const tamañoMaximo = 4 * 1024 * 1024; // 4MB
       if (archivo.size > tamañoMaximo) {
-        setError("El archivo es demasiado grande. Máximo 4MB permitido.");
+        setErrorBanner("El archivo es demasiado grande. Máximo 4MB permitido.");
         evento.target.value = ""; // Limpiar el input
         return;
       }
 
       setSubiendoBanner(true);
-      setError(null);
+      setErrorBanner(null);
 
       try {
         const formData = new FormData();
@@ -201,18 +233,20 @@ export function PerfilNegocio({
         if (!respuesta.ok) {
           const errorData = await respuesta.json();
           console.error("Error del servidor:", errorData);
-          throw new Error(errorData.message || "Error al subir el banner");
+          // Priorizar el mensaje específico del error
+          const mensajeError = errorData.error || errorData.message || "Error al subir el banner";
+          throw new Error(mensajeError);
         }
 
         const datos = await respuesta.json();
         setBannerUrl(datos.banner);
-        setError(null);
+        setErrorBanner(null);
       } catch (error: unknown) {
         console.error("Error al subir el banner:", error);
         if (error instanceof Error) {
-          setError(error.message);
+          setErrorBanner(error.message);
         } else {
-          setError("Error al subir el banner");
+          setErrorBanner("Error al subir el banner");
         }
       } finally {
         setSubiendoBanner(false);
@@ -339,9 +373,10 @@ export function PerfilNegocio({
                   </Button>
                 </div>
 
-                {error && (
+                {/* Error específico del logo */}
+                {errorLogo && (
                   <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-                    {error}
+                    {errorLogo}
                   </p>
                 )}
               </div>
@@ -363,7 +398,8 @@ export function PerfilNegocio({
                 </p>
               </div>
 
-              <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gradient-to-br from-background to-muted/50 border-2 border-muted/20 shadow-sm group hover:border-primary/20 hover:shadow-md transition-all duration-300">
+              {/* Banner más alto - cambié de h-48 a h-64 */}
+              <div className="relative w-full h-64 rounded-xl overflow-hidden bg-gradient-to-br from-background to-muted/50 border-2 border-muted/20 shadow-sm group hover:border-primary/20 hover:shadow-md transition-all duration-300">
                 {bannerUrl ? (
                   <Image
                     src={bannerUrl || "/placeholder.svg"}
@@ -398,6 +434,13 @@ export function PerfilNegocio({
                   {subiendoBanner ? "Subiendo..." : "Actualizar Banner"}
                 </Button>
               </div>
+
+              {/* Error específico del banner */}
+              {errorBanner && (
+                <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
+                  {errorBanner}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

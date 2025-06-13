@@ -1,3 +1,4 @@
+// app\layout.tsx
 "use client";
 
 import localFont from "next/font/local";
