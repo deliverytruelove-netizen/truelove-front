@@ -1,5 +1,5 @@
 // app\admin\motorizado\services\motorizado.service.ts
-import type { Motorizado, DetallesMotorizado } from "../types/motorizado.types";
+import type { Motorizado, DetallesMotorizado, EntregaCalendario } from "../types/motorizado.types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
@@ -46,6 +46,48 @@ export const fetchMotorizadoDetails = async (
 
   const data = await response.json();
   return data.data;
+};
+
+export const fetchEntregaCalendarios = async (motorizadoId: number): Promise<EntregaCalendario[]> => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("No se encontró el token");
+  }
+
+  const response = await fetch(`${API_URL}/admin/motorizado/${motorizadoId}/entrega-calendario`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al obtener el calendario de entregas");
+  }
+
+  return response.json();
+};
+
+export const actualizarEstadoEntrega = async (entregaId: number, estado: string): Promise<void> => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("No se encontró el token");
+  }
+
+  const response = await fetch(`${API_URL}/admin/entrega-calendario/${entregaId}/estado`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ estado }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al actualizar el estado de la entrega");
+  }
 };
 
 export const changeStateMotorizado = async (id: number): Promise<void> => {
@@ -155,6 +197,7 @@ export const deleteMotorizado = async (id: number): Promise<void> => {
     throw new Error("Error al eliminar el motorizado");
   }
 };
+
 export const actualizarCantidadPedidos = async (id: number, cantidadPedidos: number): Promise<void> => {
   const token = localStorage.getItem("authToken");
 

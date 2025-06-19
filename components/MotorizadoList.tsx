@@ -3,8 +3,9 @@
 
 import type React from "react";
 import { AsignarPedidosModal } from "./modals/AsignarPedidosModal";
+import { EntregaCalendarioModal } from "./EntregaCalendarioModal";
 import { useState } from "react";
-import { Eye, Check, Search, RefreshCw, X, Filter, Trash2 } from "lucide-react";
+import { Eye, Check, Search, RefreshCw, X, Filter, Trash2, Calendar } from "lucide-react";
 import Section from "@/components/layout/Section";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -39,6 +40,11 @@ const MotorizadoList: React.FC = () => {
     number | null
   >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCalendarioModalOpen, setIsCalendarioModalOpen] = useState(false);
+  const [selectedMotorizadoCalendario, setSelectedMotorizadoCalendario] = useState<{
+    id: number;
+    nombre: string;
+  } | null>(null);
   const [pagination, setPagination] = useState({
     pageSize: DEFAULT_PAGE_SIZE,
     pageIndex: 0,
@@ -159,6 +165,11 @@ const MotorizadoList: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleVerCalendario = (id: number, nombre: string) => {
+    setSelectedMotorizadoCalendario({ id, nombre });
+    setIsCalendarioModalOpen(true);
+  };
+
   const confirmDelete = () => {
     if (motorizadoToDelete) {
       mutationDelete.mutate(motorizadoToDelete.id);
@@ -275,12 +286,6 @@ const handleAprobarMotorizado = (id: number) => {
                 <th scope="col" className="px-4 py-3 text-center w-12">
                   #
                 </th>
-                {/* <th scope="col" className="px-4 py-3">
-                  Nombre
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Apellidos
-                </th> */}
                 <th scope="col" className="px-4 py-3">
                   Datos
                 </th>
@@ -293,7 +298,6 @@ const handleAprobarMotorizado = (id: number) => {
                 <th scope="col" className="px-4 py-3">
                   Correo
                 </th>
-
                 <th scope="col" className="px-4 py-3 text-center">
                   Fecha de Registro
                 </th>
@@ -314,7 +318,7 @@ const handleAprobarMotorizado = (id: number) => {
                       key={index}
                       className="bg-white border-b hover:bg-gray-50"
                     >
-                      <td colSpan={9} className="px-4 py-3">
+                      <td colSpan={8} className="px-4 py-3">
                         <div className="animate-pulse flex items-center space-x-4">
                           <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                           <div className="flex-1 space-y-2">
@@ -327,7 +331,7 @@ const handleAprobarMotorizado = (id: number) => {
                   ))
               ) : filteredMotorizados.length === 0 ? (
                 <tr className="bg-white">
-                  <td colSpan={9} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                     </div>
@@ -370,17 +374,6 @@ const handleAprobarMotorizado = (id: number) => {
                       <td className="px-4 py-3 font-medium text-gray-800">
                         {motorizado.nombres} {motorizado.apellidos}
                       </td>
-                      {/* <td className="px-4 py-3">
-  <div>
-    <div className="font-medium text-gray-800">
-      {motorizado.nombres} {motorizado.apellidos}
-    </div>
-    <div className="text-xs text-gray-500">
-      {motorizado.tipo_documento}: {motorizado.nro_documento}
-    </div>
-  </div>
-</td> */}
-
                       <td className="px-4 py-3 text-gray-600">{`${motorizado.tipo_documento}: ${motorizado.nro_documento}`}</td>
                       <td className="px-4 py-3 text-gray-600">
                         {motorizado.celular}
@@ -388,7 +381,6 @@ const handleAprobarMotorizado = (id: number) => {
                       <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">
                         {motorizado.email}
                       </td>
-
                       <td className="px-4 py-3 text-center text-gray-600">
                         {formatDate(motorizado.created_at)}
                       </td>
@@ -405,7 +397,7 @@ const handleAprobarMotorizado = (id: number) => {
                         )}
                       </td>
                       <td className="px-3 py-2">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           {!motorizado.aprobado && (
                             <Button
                               variant="outline"
@@ -419,6 +411,7 @@ const handleAprobarMotorizado = (id: number) => {
                                 : "Aprobar"}
                             </Button>
                           )}
+                          
                           <Button
                             variant="ghost"
                             size="icon"
@@ -429,14 +422,28 @@ const handleAprobarMotorizado = (id: number) => {
                             className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                             title="Ver detalles"
                           >
-                            <Eye className="w-5 h-5" />
+                            <Eye className="w-4 h-4" />
                           </Button>
 
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() =>
-                              // handleDelete(motorizado.id, motorizado.nombres)
+                              handleVerCalendario(
+                                motorizado.id,
+                                `${motorizado.nombres} ${motorizado.apellidos}`
+                              )
+                            }
+                            className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                            title="Ver calendario de entregas"
+                          >
+                            <Calendar className="w-4 h-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
                               handleDelete(
                                 motorizado.id,
                                 `${motorizado.nombres} ${motorizado.apellidos}`
@@ -445,7 +452,7 @@ const handleAprobarMotorizado = (id: number) => {
                             className="text-red-600 hover:text-red-800 hover:bg-red-50"
                             title="Eliminar motorizado"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>
@@ -512,6 +519,19 @@ const handleAprobarMotorizado = (id: number) => {
         isApproving={mutationAprobar.isPending}
       />
 
+      {/* Modal de calendario de entregas */}
+      {selectedMotorizadoCalendario && (
+        <EntregaCalendarioModal
+          isOpen={isCalendarioModalOpen}
+          onClose={() => {
+            setIsCalendarioModalOpen(false);
+            setSelectedMotorizadoCalendario(null);
+          }}
+          motorizadoId={selectedMotorizadoCalendario.id}
+          motorizadoNombre={selectedMotorizadoCalendario.nombre}
+        />
+      )}
+
       {/* Diálogo de confirmación para eliminar */}
       {motorizadoToDelete && (
         <DeleteMotorizadoDialog
@@ -521,26 +541,27 @@ const handleAprobarMotorizado = (id: number) => {
           motorizadoName={motorizadoToDelete.name}
         />
       )}
-{motorizadoToApprove && (
-  <AsignarPedidosModal
-    isOpen={showAsignarPedidosModal}
-    onClose={(pedidosAsignados = false) => {
-      setShowAsignarPedidosModal(false);
-      // Solo aprobar si no se asignaron pedidos (botón "Asignar más tarde")
-      if (!pedidosAsignados) {
-        handleAprobarMotorizado(motorizadoToApprove.id);
-      }
-      setMotorizadoToApprove(null);
-    }}
-    motorizadoId={motorizadoToApprove.id}
-    motorizadoNombre={motorizadoToApprove.nombre}
-    onSuccess={() => {
-      // Aprobar cuando se guardan los pedidos exitosamente
-      handleAprobarMotorizado(motorizadoToApprove.id);
-      setMotorizadoToApprove(null);
-    }}
-  />
-)}
+
+      {motorizadoToApprove && (
+        <AsignarPedidosModal
+          isOpen={showAsignarPedidosModal}
+          onClose={(pedidosAsignados = false) => {
+            setShowAsignarPedidosModal(false);
+            // Solo aprobar si no se asignaron pedidos (botón "Asignar más tarde")
+            if (!pedidosAsignados) {
+              handleAprobarMotorizado(motorizadoToApprove.id);
+            }
+            setMotorizadoToApprove(null);
+          }}
+          motorizadoId={motorizadoToApprove.id}
+          motorizadoNombre={motorizadoToApprove.nombre}
+          onSuccess={() => {
+            // Aprobar cuando se guardan los pedidos exitosamente
+            handleAprobarMotorizado(motorizadoToApprove.id);
+            setMotorizadoToApprove(null);
+          }}
+        />
+      )}
     </Section>
   );
 };

@@ -13,6 +13,15 @@ export interface Motorizado {
   documento_imagen?: string;
 }
 
+export interface EntregaCalendario {
+  id: number;
+  fecha: string;
+  hora: string;
+  estado: 'pendiente' | 'entregado' | 'cancelado';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DetallesMotorizado {
   id: number;
   personal: {
@@ -61,6 +70,7 @@ export interface DetallesMotorizado {
     imagen_seguro: string;
     imagen_tarjeta_propiedad: string;
   } | null;
+  entregaCalendario?: EntregaCalendario[];
   aprobado: boolean;
   cantidad_pedidos_dias?: number;
 }
