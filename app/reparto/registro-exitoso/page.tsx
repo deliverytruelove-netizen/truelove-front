@@ -1,4 +1,4 @@
-// app\reparto\registro-exitoso\page.tsxzzz
+// app\reparto\registro-exitoso\page.tsx
 "use client"
 
 import { Button } from "@/components/ui/button"

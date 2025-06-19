@@ -5,7 +5,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowRight } from "lucide-react"
+import { Loader2, ArrowRight, ArrowLeft } from "lucide-react"
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
 import { ValidationAlert } from "@/components/ValidationAlert"
@@ -27,7 +27,8 @@ export default function RegistrationForm() {
     businessType: "",
     phone: "+51",
     email: "",
-    posToDriver: false,
+    posToDriver: 0,
+    entrega_documento_venta: 0,
   })
   const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
@@ -95,7 +96,8 @@ export default function RegistrationForm() {
       formDataToSend.append("businessType", formData.businessType)
       formDataToSend.append("phone", formData.phone.replace(/\D/g, ""))
       formDataToSend.append("email", formData.email)
-      formDataToSend.append("posToDriver",formData.posToDriver ? "1" : "0")
+      formDataToSend.append("posToDriver", formData.posToDriver.toString())
+      formDataToSend.append("entrega_documento_venta", formData.entrega_documento_venta.toString())
 
       // Agregar documentos si es Carnet de Extranjería
       if (formData.documentType === "CARNET_EXTRANJERIA") {
@@ -202,9 +204,14 @@ export default function RegistrationForm() {
     }
   }
 
+  const isMultiStep = formData.documentType === "CARNET_EXTRANJERIA"
+  const isFirstStep = currentStep === 1
+  const showNextButton = isMultiStep && isFirstStep
+  const showSubmitButton = !isMultiStep || currentStep === 2
+
   return (
-    <div className="w-full bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-xl">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">¡Registra tu local ahora!</h2>
+    <div className="w-full bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-lg shadow-xl">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">¡Registra tu local ahora!</h2>
 
       {/* Modal de cambio de correo */}
       {originalEmail && (
@@ -217,8 +224,8 @@ export default function RegistrationForm() {
       )}
 
       <form
-        onSubmit={formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 1 ? handleNext : handleSubmit}
-        className="space-y-4"
+        onSubmit={showNextButton ? handleNext : handleSubmit}
+      className="space-y-4 sm:space-y-6"
       >
         <FormFields
           formData={formData}
@@ -238,43 +245,68 @@ export default function RegistrationForm() {
           ) : error.includes("registrado como repartidor") ? (
             <ValidationAlert message={error} onClose={() => setError(null)} />
           ) : (
-            <p className="text-red-600 text-sm">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-700 text-sm font-medium">{error}</p>
+            </div>
           ))}
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full px-4 py-2 rounded-lg bg-red-500 text-white font-semibold 
-                   focus:ring-2 focus:ring-[#f34739] focus:ring-opacity-50 
-                   hover:bg-[#d33729] disabled:bg-gray-300 disabled:text-gray-500 
-                   transition-colors duration-200 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <Loader2 className="animate-spin h-5 w-5" />
-          ) : (
-            <>
-              {formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 1 ? (
+        <div className="space-y-3">
+          {showSubmitButton && (
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full px-4 py-3 rounded-lg bg-red-500 text-white font-semibold 
+                       focus:ring-2 focus:ring-red-400 focus:ring-opacity-50 
+                       hover:bg-red-600 disabled:bg-gray-300 disabled:text-gray-500 
+                       transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
                 <>
-                  Siguiente
-                  <ArrowRight className="h-5 w-5" />
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  <span>Procesando...</span>
                 </>
               ) : (
-                "Registrar"
+                "Registrar Negocio"
               )}
-            </>
+            </button>
           )}
-        </button>
 
-        {formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 2 && (
-          <button
-            type="button"
-            onClick={() => setCurrentStep(1)}
-            className="w-full mt-2 px-4 py-2 rounded-lg border border-red-500 text-red-500 font-semibold 
-                     hover:bg-red-50 transition-colors duration-200"
-          >
-            Volver
-          </button>
-        )}
+          {showNextButton && (
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full px-4 py-3 rounded-lg bg-blue-500 text-white font-semibold 
+                       focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 
+                       hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 
+                       transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  <span>Validando...</span>
+                </>
+              ) : (
+                <>
+                  <span>Continuar</span>
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
+            </button>
+          )}
+
+          {isMultiStep && currentStep === 2 && (
+            <button
+              type="button"
+              onClick={() => setCurrentStep(1)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-700 font-semibold 
+                       hover:bg-gray-50 transition-colors duration-200 
+                       flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span>Volver</span>
+            </button>
+          )}
+        </div>
       </form>
     </div>
   )

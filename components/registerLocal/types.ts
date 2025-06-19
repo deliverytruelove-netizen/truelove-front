@@ -9,7 +9,9 @@ export interface FormData {
     email: string
     antecedentesPenales?: File
     antecedentesPoliciales?: File
-    posToDriver?: boolean
+    // posToDriver?: boolean
+     posToDriver: number
+       entrega_documento_venta: number; 
   }
   
   export interface BusinessType {

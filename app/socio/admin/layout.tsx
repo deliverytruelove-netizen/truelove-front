@@ -27,6 +27,7 @@ const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
   { name: "Menú", href: "/socio/admin/menu", icon: Utensils },
   { name: "Pedidos", href: "/socio/admin/pedidos", icon: ShoppingBag },
+  { name: "POS", href: "/socio/admin/pos", icon: ShoppingBag },
   { name: "Configuración", href: "/socio/admin/configuracion", icon: Settings },
 ];
 
