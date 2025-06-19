@@ -500,14 +500,12 @@ return imagenesRequeridas
                 Ingrese la placa de su vehículo sin espacios
               </FormDescription>
               <FormMessage />
-              <div className="flex gap-2 mt-2">
-                <DocumentUpload
-                  field="placa"
-                  image={images.placa}
-                  onCapture={handleCapture}
-                  onFileUpload={handleFileUpload}
-                />
-              </div>
+              <DocumentUpload
+                field="placa"
+                image={images.placa}
+                onCapture={handleCapture}
+                onFileUpload={handleFileUpload}
+              />
             </FormItem>
           )}
         />
@@ -529,14 +527,12 @@ return imagenesRequeridas
                 Ingrese el número de su licencia de conducir
               </FormDescription>
               <FormMessage />
-              <div className="flex gap-2 mt-2">
-                <DocumentUpload
-                  field="licenciaConducir"
-                  image={images.licenciaConducir}
-                  onCapture={handleCapture}
-                  onFileUpload={handleFileUpload}
-                />
-              </div>
+              <DocumentUpload
+                field="licenciaConducir"
+                image={images.licenciaConducir}
+                onCapture={handleCapture}
+                onFileUpload={handleFileUpload}
+              />
             </FormItem>
           )}
         />
@@ -554,14 +550,12 @@ return imagenesRequeridas
                 Ingrese el número de póliza del seguro
               </FormDescription>
               <FormMessage />
-              <div className="flex gap-2 mt-2">
-                <DocumentUpload
-                  field="seguro"
-                  image={images.seguro}
-                  onCapture={handleCapture}
-                  onFileUpload={handleFileUpload}
-                />
-              </div>
+              <DocumentUpload
+                field="seguro"
+                image={images.seguro}
+                onCapture={handleCapture}
+                onFileUpload={handleFileUpload}
+              />
             </FormItem>
           )}
         />
@@ -579,14 +573,12 @@ return imagenesRequeridas
                 Ingrese el número de la tarjeta de propiedad
               </FormDescription>
               <FormMessage />
-              <div className="flex gap-2 mt-2">
-                <DocumentUpload
-                  field="tarjetaPropiedad"
-                  image={images.tarjetaPropiedad}
-                  onCapture={handleCapture}
-                  onFileUpload={handleFileUpload}
-                />
-              </div>
+              <DocumentUpload
+                field="tarjetaPropiedad"
+                image={images.tarjetaPropiedad}
+                onCapture={handleCapture}
+                onFileUpload={handleFileUpload}
+              />
             </FormItem>
           )}
         />
@@ -642,6 +634,7 @@ return imagenesRequeridas
     </Form>
   );
 }
+
 function DocumentUpload({
   field,
   image,
@@ -662,55 +655,61 @@ function DocumentUpload({
   // };
 
   return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onCapture(field)}
-      >
-        <Camera className="w-4 h-4 mr-2" />
-        Tomar Foto
-      </Button>
-      <div className="relative">
-        <Button type="button" variant="outline" size="sm" className="relative">
-          <Upload className="w-4 h-4 mr-2" />
-          Subir Archivo
-          <input
-            type="file"
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            accept="image/jpeg,image/jpg,image/png"
-            onChange={(e) => onFileUpload(field, e)}
-          />
+    <div className="mt-3 space-y-3">
+      {/* Botones de acción - Mejorado para móvil */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onCapture(field)}
+          className="flex-1 sm:flex-none"
+        >
+          <Camera className="w-4 h-4 mr-2" />
+          Tomar Foto
         </Button>
+        <div className="relative flex-1 sm:flex-none">
+          <Button type="button" variant="outline" size="sm" className="relative w-full sm:w-auto">
+            <Upload className="w-4 h-4 mr-2" />
+            Subir Archivo
+            <input
+              type="file"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              accept="image/jpeg,image/jpg,image/png"
+              onChange={(e) => onFileUpload(field, e)}
+            />
+          </Button>
+        </div>
+        
+        {/* Indicador de estado - Solo mostrar en móvil si hay imagen */}
+        {image && (
+          <div className="flex items-center sm:ml-2">
+            <span className="text-xs text-green-600 font-medium">
+              ✅ Subida
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* ✅ QUITAR LOS MENSAJES INDIVIDUALES DE REQUERIDO */}
-      
-      {/* ✅ SOLO MOSTRAR INDICADOR VISUAL DE ESTADO */}
-      {image && (
-        <span className="text-xs text-green-600 font-medium ml-2">
-          ✅
-        </span>
-      )}
-
-      <div className="text-xs text-gray-500 mt-1">
+      {/* Información de formato - Oculto en móvil */}
+      <div className="hidden sm:block text-xs text-gray-500">
         Solo JPG, JPEG, PNG (máx. 2MB)
       </div>
 
+      {/* Vista previa de imagen */}
       {image && (
-        <Card className="mt-2">
+        <Card className="mt-3">
           <CardContent className="p-2">
             <Image
               src={image || "/placeholder.svg"}
               alt="Documento"
               width={200}
               height={200}
-              className="max-h-32 object-contain"
+              className="max-h-32 w-full object-contain rounded"
             />
           </CardContent>
         </Card>
       )}
-    </>
+    </div>
   );
 }

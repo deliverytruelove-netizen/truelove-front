@@ -1,11 +1,14 @@
 // components\modals\DetallesSocioModal.tsx
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useRef } from "react"
-import type { DetallesSocio, DocumentosPdfExtranjero } from "@/app/admin/socios/types/Socios.types"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect, useRef } from "react";
+import type {
+  DetallesSocio,
+  DocumentosPdfExtranjero,
+} from "@/app/admin/socios/types/Socios.types";
+import { Button } from "@/components/ui/button";
 import {
   User,
   Briefcase,
@@ -20,22 +23,22 @@ import {
   CheckCircle,
   SquareTerminal,
   X,
-} from "lucide-react"
-import NextImage from "next/image"
-import { PDFViewer } from "../PDFViewer"
+} from "lucide-react";
+import NextImage from "next/image";
+import { PDFViewer } from "../PDFViewer";
 
 interface DetallesSocioModalProps {
-  isOpen: boolean
-  onClose: () => void
-  data: DetallesSocio | undefined | null
-  onAprobar: (id: number) => void
-  documentosPdfExtranjero?: DocumentosPdfExtranjero
+  isOpen: boolean;
+  onClose: () => void;
+  data: DetallesSocio | undefined | null;
+  onAprobar: (id: number) => void;
+  documentosPdfExtranjero?: DocumentosPdfExtranjero;
 }
 
 interface InfoItemProps {
-  icon: React.ReactNode
-  label: string
-  value: string | number
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
 }
 
 const InfoItem = ({ icon, label, value }: InfoItemProps) => (
@@ -48,7 +51,7 @@ const InfoItem = ({ icon, label, value }: InfoItemProps) => (
       <p className="text-sm font-medium">{value}</p>
     </div>
   </div>
-)
+);
 
 const TabButton = ({
   isActive,
@@ -56,151 +59,184 @@ const TabButton = ({
   label,
   onClick,
 }: {
-  isActive: boolean
-  icon: React.ReactNode
-  label: string
-  onClick: () => void
+  isActive: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
 }) => (
   <button
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-      isActive ? "bg-white shadow-md text-red-600" : "hover:bg-white/50 text-gray-600"
+      isActive
+        ? "bg-white shadow-md text-red-600"
+        : "hover:bg-white/50 text-gray-600"
     }`}
   >
     {icon}
     <span>{label}</span>
   </button>
-)
+);
 
 // Función para determinar si un archivo es un PDF basado en su extensión
 const isPdfFile = (url: string): boolean => {
-  return url.toLowerCase().endsWith(".pdf")
-}
+  return url.toLowerCase().endsWith(".pdf");
+};
 
 // Función para formatear el tipo de documento
 const formatDocumentType = (type: string): string => {
   switch (type) {
     case "DNI":
-      return "DNI"
+      return "DNI";
     case "CARNET_EXTRANJERIA":
-      return "Carnet de Extranjería"
+      return "Carnet de Extranjería";
     case "PASAPORTE":
-      return "Pasaporte"
+      return "Pasaporte";
     default:
-      return type
+      return type;
   }
-}
+};
 
 // Añadir esta función después de las funciones existentes y antes del componente principal
 const useAnimatedUnmount = (show: boolean, duration = 300) => {
-  const [shouldRender, setShouldRender] = useState(show)
-  const [isLeaving, setIsLeaving] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [shouldRender, setShouldRender] = useState(show);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (show) {
-      setShouldRender(true)
-      setIsLeaving(false)
+      setShouldRender(true);
+      setIsLeaving(false);
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     } else {
-      setIsLeaving(true)
+      setIsLeaving(true);
       timeoutRef.current = setTimeout(() => {
-        setShouldRender(false)
-        timeoutRef.current = null
-      }, duration)
+        setShouldRender(false);
+        timeoutRef.current = null;
+      }, duration);
     }
 
     return () => {
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+        clearTimeout(timeoutRef.current);
       }
-    }
-  }, [show, duration])
+    };
+  }, [show, duration]);
 
-  return { shouldRender, isLeaving }
-}
+  return { shouldRender, isLeaving };
+};
 
-export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: DetallesSocioModalProps) {
+export function DetallesSocioModal({
+  isOpen,
+  onClose,
+  data,
+  onAprobar,
+}: DetallesSocioModalProps) {
   const [activeTab, setActiveTab] = useState<
-    "personal" | "negocio" | "establecimiento" | "bancarios" | "cuenta_bancaria" | "documentos"
-  >("personal")
-  const [error, setError] = useState<string | null>(null)
-  const [showImageModal, setShowImageModal] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const [isAprobado, setIsAprobado] = useState<boolean>(false)
-  const [showNotification, setShowNotification] = useState<boolean>(false)
-  const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } = useAnimatedUnmount(
-    showNotification,
-    300,
-  )
+    | "personal"
+    | "negocio"
+    | "establecimiento"
+    | "bancarios"
+    | "cuenta_bancaria"
+    | "documentos"
+  >("personal");
+  const [error, setError] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isAprobado, setIsAprobado] = useState<boolean>(false);
+  const [showNotification, setShowNotification] = useState<boolean>(false);
+  const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } =
+    useAnimatedUnmount(showNotification, 300);
 
   // Actualizar el estado local de aprobación cuando cambian los datos
   useEffect(() => {
     if (data) {
-      console.log("Estado de aprobación del socio:", data.aprobado)
-      const aprobadoStatus = Boolean(data.aprobado)
-      setIsAprobado(aprobadoStatus)
-      setShowNotification(aprobadoStatus)
+      console.log("Estado de aprobación del socio:", data.aprobado);
+      const aprobadoStatus = Boolean(data.aprobado);
+      setIsAprobado(aprobadoStatus);
+      setShowNotification(aprobadoStatus);
     }
-  }, [data])
+  }, [data]);
 
   // Resetear el tab activo cuando cambia el socio
   useEffect(() => {
     if (isOpen) {
-      setActiveTab("personal")
+      setActiveTab("personal");
     }
-  }, [isOpen, data?.id])
+  }, [isOpen, data?.id]);
 
   // Bloquear el scroll del body cuando el modal está abierto
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "auto"
+      document.body.style.overflow = "auto";
     }
 
     return () => {
-      document.body.style.overflow = "auto"
-    }
-  }, [isOpen])
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen]);
 
-  const { shouldRender, isLeaving } = useAnimatedUnmount(isOpen)
+  const { shouldRender, isLeaving } = useAnimatedUnmount(isOpen);
 
-  if (!shouldRender || !data) return null
+  if (!shouldRender || !data) return null;
 
   const handleAprobar = () => {
     if (!data.id) {
-      setError("Error: ID de socio no encontrado")
-      return
+      setError("Error: ID de socio no encontrado");
+      return;
     }
-    onAprobar(data.id)
+    onAprobar(data.id);
     // Actualizar el estado local inmediatamente para reflejar el cambio en la UI
-    setIsAprobado(true)
-    setShowNotification(true)
-    onClose()
-  }
+    setIsAprobado(true);
+    setShowNotification(true);
+    onClose();
+  };
 
   const handleCloseError = () => {
-    setError(null)
-  }
+    setError(null);
+  };
 
   const handleCloseNotification = () => {
-    setShowNotification(false)
-  }
+    setShowNotification(false);
+  };
 
   const handleImageClick = (imageSrc: string) => {
     // Solo permitir ampliar imágenes, no PDFs
     if (!isPdfFile(imageSrc)) {
-      setSelectedImage(imageSrc)
-      setShowImageModal(true)
+      setSelectedImage(imageSrc);
+      setShowImageModal(true);
     }
-  }
+  };
+  const formatPosType = (posValue: number): string => {
+    switch (posValue) {
+      case 0:
+        return "No facilita POS";
+      case 1:
+        return "POS Estilos";
+      case 2:
+        return "POS Visa";
+      default:
+        return "No especificado";
+    }
+  };
+
+  const formatDocumentSale = (value: number): string => {
+    switch (value) {
+      case 0:
+        return "No emite documentos de venta";
+      case 1:
+        return "Sí emite documentos de venta";
+      default:
+        return "No especificado";
+    }
+  };
 
   // Verificar si el socio tiene carnet de extranjería para mostrar la pestaña de documentos
-  const isExtranjero = data.documentType === "CARNET_EXTRANJERIA"
+  const isExtranjero = data.documentType === "CARNET_EXTRANJERIA";
 
   const renderContent = () => {
     switch (activeTab) {
@@ -211,7 +247,9 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               <InfoItem
                 icon={<FileCheck className="w-5 h-5" />}
                 label="Documento"
-                value={`${formatDocumentType(data.documentType)}: ${data.documentNumber}`}
+                value={`${formatDocumentType(data.documentType)}: ${
+                  data.documentNumber
+                }`}
               />
             )}
             {data.personal && (
@@ -219,14 +257,20 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
                 <InfoItem
                   icon={<User className="w-5 h-5" />}
                   label="Nombre Completo"
-                  value={`${data.personal.name || ""} ${data.personal.lastName || ""}`}
+                  value={`${data.personal.name || ""} ${
+                    data.personal.lastName || ""
+                  }`}
                 />
                 <InfoItem
                   icon={<Mail className="w-5 h-5" />}
                   label="Correo Electrónico"
                   value={data.personal.email || ""}
                 />
-                <InfoItem icon={<Phone className="w-5 h-5" />} label="Teléfono" value={data.personal.phone || ""} />
+                <InfoItem
+                  icon={<Phone className="w-5 h-5" />}
+                  label="Teléfono"
+                  value={data.personal.phone || ""}
+                />
                 <InfoItem
                   icon={<Building className="w-5 h-5" />}
                   label="Tipo de Negocio"
@@ -239,11 +283,22 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
                     value={new Date(data.personal.created_at).toLocaleString()}
                   />
                 )}
-                <InfoItem icon={<SquareTerminal />} label="POS" value={data.personal.posToDriver ? "Sí" : "No"} />
+                <InfoItem
+                  icon={<SquareTerminal className="w-5 h-5" />}
+                  label="POS"
+                  value={formatPosType(data.personal.posToDriver)}
+                />
+                <InfoItem
+                  icon={<FileText className="w-5 h-5" />}
+                  label="Emite documentos de venta (facturas/boletas)"
+                  value={formatDocumentSale(
+                    data.personal.entrega_documento_venta
+                  )}
+                />
               </>
             )}
           </div>
-        )
+        );
       case "negocio":
         return data.business && data.businessData ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,7 +322,11 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               label="Teléfono del Negocio"
               value={data.business.telefono || ""}
             />
-            <InfoItem icon={<Briefcase className="w-5 h-5" />} label="RUC" value={data.businessData.ruc || ""} />
+            <InfoItem
+              icon={<Briefcase className="w-5 h-5" />}
+              label="RUC"
+              value={data.businessData.ruc || ""}
+            />
             <InfoItem
               icon={<Briefcase className="w-5 h-5" />}
               label="Razón Social"
@@ -275,8 +334,10 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
             />
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No hay datos del negocio disponibles</p>
-        )
+          <p className="text-gray-500 text-center py-4">
+            No hay datos del negocio disponibles
+          </p>
+        );
       case "establecimiento":
         return data.establishment ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -290,7 +351,11 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               label="Dirección"
               value={data.establishment.direccion_completa || ""}
             />
-            <InfoItem icon={<MapPin className="w-5 h-5" />} label="Ciudad" value={data.establishment.ciudad || ""} />
+            <InfoItem
+              icon={<MapPin className="w-5 h-5" />}
+              label="Ciudad"
+              value={data.establishment.ciudad || ""}
+            />
             <InfoItem
               icon={<MapPin className="w-5 h-5" />}
               label="Código Postal"
@@ -298,8 +363,10 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
             />
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No hay datos del establecimiento disponibles</p>
-        )
+          <p className="text-gray-500 text-center py-4">
+            No hay datos del establecimiento disponibles
+          </p>
+        );
       case "bancarios":
         return data.bankData ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,7 +380,11 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
               label="Número de Cuenta"
               value={data.bankData.numero_cuenta || ""}
             />
-            <InfoItem icon={<Building className="w-5 h-5" />} label="Banco" value={data.bankData.nombre_banco || ""} />
+            <InfoItem
+              icon={<Building className="w-5 h-5" />}
+              label="Banco"
+              value={data.bankData.nombre_banco || ""}
+            />
             <InfoItem
               icon={<CreditCard className="w-5 h-5" />}
               label="Tipo de Cuenta"
@@ -321,8 +392,10 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
             />
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No hay datos bancarios disponibles</p>
-        )
+          <p className="text-gray-500 text-center py-4">
+            No hay datos bancarios disponibles
+          </p>
+        );
       case "cuenta_bancaria":
         return data.cuentaBancaria ? (
           <div className="space-y-6">
@@ -332,8 +405,16 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
                 label="Titular de la Cuenta"
                 value={data.cuentaBancaria.titular_cuenta || ""}
               />
-              <InfoItem icon={<CreditCard className="w-5 h-5" />} label="DNI" value={data.cuentaBancaria.dni || ""} />
-              <InfoItem icon={<Building className="w-5 h-5" />} label="Banco" value={data.cuentaBancaria.banco || ""} />
+              <InfoItem
+                icon={<CreditCard className="w-5 h-5" />}
+                label="DNI"
+                value={data.cuentaBancaria.dni || ""}
+              />
+              <InfoItem
+                icon={<Building className="w-5 h-5" />}
+                label="Banco"
+                value={data.cuentaBancaria.banco || ""}
+              />
               <InfoItem
                 icon={<CreditCard className="w-5 h-5" />}
                 label="Tipo de Cuenta"
@@ -345,43 +426,56 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
                 value={data.cuentaBancaria.numero_cuenta || ""}
               />
             </div>
-            {data.cuentaBancaria.imagenes_cuenta && data.cuentaBancaria.imagenes_cuenta.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-center">Imágenes de la Cuenta</h3>
-                <div className="flex flex-col items-center">
-                  {data.cuentaBancaria.imagenes_cuenta.map((imagen, index) => {
-                    // Verificar si es un PDF o una imagen
-                    if (isPdfFile(imagen)) {
-                      return (
-                        <div key={index} className="w-full max-w-3xl mx-auto">
-                          <PDFViewer url={`/storage/${imagen}`} title="Documento Bancario" />
-                        </div>
-                      )
-                    } else {
-                      return (
-                        <div
-                          key={index}
-                          className="relative aspect-square w-full max-w-md mx-auto cursor-pointer mb-4"
-                          onClick={() => handleImageClick(imagen)}
-                        >
-                          <NextImage
-                            src={`/storage/${imagen}`}
-                            alt={`Imagen de cuenta bancaria ${index + 1}`}
-                            width={800}
-                            height={600}
-                            className="object-cover rounded-lg"
-                          />
-                        </div>
-                      )
-                    }
-                  })}
+            {data.cuentaBancaria.imagenes_cuenta &&
+              data.cuentaBancaria.imagenes_cuenta.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-center">
+                    Imágenes de la Cuenta
+                  </h3>
+                  <div className="flex flex-col items-center">
+                    {data.cuentaBancaria.imagenes_cuenta.map(
+                      (imagen, index) => {
+                        // Verificar si es un PDF o una imagen
+                        if (isPdfFile(imagen)) {
+                          return (
+                            <div
+                              key={index}
+                              className="w-full max-w-3xl mx-auto"
+                            >
+                              <PDFViewer
+                                url={`/storage/${imagen}`}
+                                title="Documento Bancario"
+                              />
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div
+                              key={index}
+                              className="relative aspect-square w-full max-w-md mx-auto cursor-pointer mb-4"
+                              onClick={() => handleImageClick(imagen)}
+                            >
+                              <NextImage
+                                src={`/storage/${imagen}`}
+                                alt={`Imagen de cuenta bancaria ${index + 1}`}
+                                width={800}
+                                height={600}
+                                className="object-cover rounded-lg"
+                              />
+                            </div>
+                          );
+                        }
+                      }
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No hay datos de la cuenta bancaria disponibles</p>
-        )
+          <p className="text-gray-500 text-center py-4">
+            No hay datos de la cuenta bancaria disponibles
+          </p>
+        );
       case "documentos":
         return data.documentosPdfExtranjero ? (
           <div className="space-y-6">
@@ -398,19 +492,23 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No hay documentos disponibles</p>
-        )
+          <p className="text-gray-500 text-center py-4">
+            No hay documentos disponibles
+          </p>
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <>
       {/* Modal principal */}
       {isOpen && (
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${isLeaving ? "opacity-0" : "opacity-100"}`}
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${
+            isLeaving ? "opacity-0" : "opacity-100"
+          }`}
         >
           <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col relative">
             {/* Encabezado fijo */}
@@ -422,14 +520,18 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
             {isAprobado && renderNotification && (
               <div
                 className={`absolute z-[60] top-8 right-6 max-w-md w-auto bg-green-50 border border-green-200 shadow-lg rounded-md p-3 flex items-center transition-all duration-300 ${
-                  isNotificationLeaving ? "opacity-0 translate-y-[-10px]" : "opacity-100 translate-y-0"
+                  isNotificationLeaving
+                    ? "opacity-0 translate-y-[-10px]"
+                    : "opacity-100 translate-y-0"
                 }`}
               >
                 <div className="bg-green-100 rounded-full p-2 mr-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-green-800 font-medium">Este socio ya ha sido aprobado</p>
+                  <p className="text-green-800 font-medium">
+                    Este socio ya ha sido aprobado
+                  </p>
                 </div>
                 <button
                   onClick={handleCloseNotification}
@@ -496,7 +598,10 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
                 Cerrar
               </Button>
               {!isAprobado && (
-                <Button onClick={handleAprobar} className="bg-red-500 hover:bg-red-600 text-white">
+                <Button
+                  onClick={handleAprobar}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
                   Aprobar Socio
                 </Button>
               )}
@@ -538,5 +643,5 @@ export function DetallesSocioModal({ isOpen, onClose, data, onAprobar }: Detalle
         </div>
       )}
     </>
-  )
+  );
 }
