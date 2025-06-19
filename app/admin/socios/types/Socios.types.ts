@@ -51,7 +51,8 @@ export interface DetallesSocio {
     phone: string
     businessType: string
     created_at: string
-    posToDriver: boolean
+    posToDriver: number
+    entrega_documento_venta: number
   }
   documentosPdfExtranjero: DocumentosPdfExtranjero | null
   business: {
