@@ -1,10 +1,11 @@
+// hooks\use-verificacion-email.tsx este es del paso de verificación del email
 "use client"
 
 import type React from "react"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData, clearAllRegistrationData } from "@/services/registrationTokenService"
 
 export function useVerificacionEmail() {
   const router = useRouter()
@@ -53,6 +54,8 @@ export function useVerificacionEmail() {
 
       const data = await getRegistrationData()
       if (!data || data.current_step !== "/email" || !email) {
+        // Limpiar datos antes de redirigir
+        clearAllRegistrationData()
         router.push("/")
         return
       }
@@ -70,8 +73,10 @@ export function useVerificacionEmail() {
       window.history.pushState(null, "", window.location.href)
     }
 
-    window.history.pushState(null, "", window.location.href)
-    window.addEventListener("popstate", handlePopState)
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, "", window.location.href)
+      window.addEventListener("popstate", handlePopState)
+    }
 
     // Temporizador de cuenta regresiva para reenvío de código
     let temporizador: NodeJS.Timeout
@@ -83,7 +88,9 @@ export function useVerificacionEmail() {
 
     // Función de limpieza
     return () => {
-      window.removeEventListener("popstate", handlePopState)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener("popstate", handlePopState)
+      }
       if (temporizador) clearInterval(temporizador)
     }
   }, [email, router, tiempoReenvio, bypass, urlRegistrationId])

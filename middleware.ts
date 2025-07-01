@@ -268,6 +268,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // NUEVA EXCEPCIÓN: Permitir acceso directo a la página principal sin token
+  // Esto es importante para cuando se hace reset del registro
+  if (path === "/") {
+    console.log("Permitiendo acceso directo a la página principal")
+    return NextResponse.next()
+  }
+
   // Lógica para las rutas protegidas del proceso de registro
   if (RUTAS_PROTEGIDAS.includes(path) && path !== "/socio-aprobado") {
     // Excepción especial para la página de email cuando viene de un reinicio de registro
@@ -341,8 +348,6 @@ async function updateRegistrationToken(token: string, newStep: string): Promise<
 
   return updatedToken
 }
-
-
 
 export const config = {
   matcher: [

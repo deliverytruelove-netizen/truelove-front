@@ -1,4 +1,4 @@
-// services\registrationTokenService.ts 
+// services/registrationTokenService.ts 
 import { jwtVerify, SignJWT } from "jose"
 
 // Interfaz que define la estructura del token decodificado
@@ -7,12 +7,6 @@ interface DecodedToken {
   registration_id: string // ID único del registro
   current_step: string // Paso actual del proceso de registro
   token?: string // Token de autorización
-}
-
-// Interfaz para los datos almacenados en localStorage
-interface LocalStorageData {
-  registration_id: string // ID único del registro
-  step: string // Paso actual del proceso de registro
 }
 
 // Función para obtener la clave secreta
@@ -26,33 +20,59 @@ const getSecretKey = () => {
 
 // Guarda el token en una cookie del navegador
 export const setRegistrationToken = (token: string) => {
-  document.cookie = `registrationToken=${token}; path=/; max-age=3600; SameSite=Strict; Secure`
-}
-
-// Guarda los datos del registro en localStorage como respaldo
-export const setLocalStorageData = (registration_id: string, step: string) => {
-  try {
-    localStorage.setItem("registrationData", JSON.stringify({ registration_id, step }))
-  } catch (error) {
-    console.error("Error al guardar datos en localStorage:", error)
+  if (typeof document !== 'undefined') {
+    document.cookie = `registrationToken=${token}; path=/; max-age=3600; SameSite=Strict; Secure`
   }
 }
 
 // Obtiene el token almacenado en las cookies
 export const getRegistrationToken = (): string | null => {
+  if (typeof document === 'undefined') return null
+  
   const cookies = document.cookie.split(";")
   const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith("registrationToken="))
   return tokenCookie ? tokenCookie.split("=")[1] : null
 }
 
-// Elimina el token de las cookies
-export const removeRegistrationToken = () => {
-  document.cookie = "registrationToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure"
-  // También eliminar de localStorage
-  try {
-    localStorage.removeItem("registrationData")
-  } catch (error) {
-    console.error("Error al eliminar datos de localStorage:", error)
+// Elimina TODOS los datos de registro (cookies y localStorage)
+export const clearAllRegistrationData = () => {
+  if (typeof document !== 'undefined') {
+    // Eliminar cookie del token
+    document.cookie = "registrationToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure"
+  }
+  
+  if (typeof window !== 'undefined') {
+    try {
+      // Eliminar TODOS los datos relacionados con el registro
+      localStorage.removeItem("registrationData")
+      localStorage.removeItem("businessFormData")
+      localStorage.removeItem("locationData")
+      localStorage.removeItem("keyData")
+      localStorage.removeItem("bankData")
+      localStorage.removeItem("planData")
+      localStorage.removeItem("reviewData")
+      
+      // Limpiar cualquier otro dato que pueda estar almacenado
+      const keys = Object.keys(localStorage)
+      keys.forEach(key => {
+        if (key.includes('registration') || key.includes('business') || key.includes('form')) {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch (error) {
+      console.error("Error al limpiar localStorage:", error)
+    }
+  }
+}
+
+// NUEVA FUNCIÓN: Guarda datos en localStorage (solo para casos específicos)
+export const setLocalStorageData = (registration_id: string, step: string) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem("registrationData", JSON.stringify({ registration_id, step }))
+    } catch (error) {
+      console.error("Error al guardar datos en localStorage:", error)
+    }
   }
 }
 
@@ -78,26 +98,12 @@ export const getRegistrationIdFromUrl = (): string | null => {
   return null
 }
 
-// Obtiene los datos almacenados en localStorage
-export const getLocalStorageData = (): LocalStorageData | null => {
-  try {
-    const data = localStorage.getItem("registrationData")
-    if (!data) return null
-    return JSON.parse(data) as LocalStorageData
-  } catch (error) {
-    console.error("Error al obtener datos de localStorage:", error)
-    return null
-  }
-}
-
-// Obtiene los datos decodificados del token
+// Obtiene los datos decodificados del token (SIN usar localStorage como respaldo)
 export const getRegistrationData = async (): Promise<DecodedToken | null> => {
   // Primero intentamos obtener de la URL
   const urlRegistrationId = getRegistrationIdFromUrl()
   if (urlRegistrationId) {
     console.log("Usando registration_id de la URL:", urlRegistrationId)
-    // Guardar en localStorage para futuras referencias
-    setLocalStorageData(urlRegistrationId, "/email")
     return {
       exp: Math.floor(Date.now() / 1000) + 3600, // 1 hora de expiración
       registration_id: urlRegistrationId,
@@ -126,26 +132,20 @@ export const getRegistrationData = async (): Promise<DecodedToken | null> => {
       }
     } catch (error) {
       console.error("Error al decodificar token JWT:", error)
-    }
-  }
-
-  // Si no se encuentra en el token, intentamos obtener de localStorage
-  const localData = getLocalStorageData()
-  if (localData) {
-    console.log("Usando datos de localStorage:", localData)
-    return {
-      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hora de expiración
-      registration_id: localData.registration_id,
-      current_step: localData.step,
+      // Si el token es inválido, limpiar todos los datos
+      clearAllRegistrationData()
     }
   }
 
   return null
 }
 
-// Crea un nuevo token de registro
+// Crea un nuevo token de registro (SIN guardar en localStorage)
 export const createRegistrationToken = async (registration_id: string, current_step: string): Promise<string> => {
   try {
+    // Limpiar datos anteriores antes de crear nuevo token
+    clearAllRegistrationData()
+    
     // Creamos un nuevo token con los datos proporcionados
     const token = await new SignJWT({
       registration_id,
@@ -155,11 +155,8 @@ export const createRegistrationToken = async (registration_id: string, current_s
       .setExpirationTime("1h")
       .sign(getSecretKey())
 
-    // Guardamos el token en las cookies
+    // Guardamos SOLO el token en las cookies
     setRegistrationToken(token)
-
-    // También guardamos en localStorage como respaldo
-    setLocalStorageData(registration_id, current_step)
 
     return token
   } catch (error) {
@@ -180,3 +177,8 @@ export const updateRegistrationStep = async (current_step: string): Promise<stri
   return newToken
 }
 
+// Función para limpiar datos al iniciar un nuevo registro
+export const startNewRegistration = () => {
+  clearAllRegistrationData()
+  console.log("Datos de registro anteriores limpiados")
+}
