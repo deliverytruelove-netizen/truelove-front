@@ -9,7 +9,7 @@ import { Loader2, ArrowRight, ArrowLeft } from "lucide-react"
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
 import { ValidationAlert } from "@/components/ValidationAlert"
-import { createRegistrationToken } from "@/services/registrationTokenService"
+import { createRegistrationToken, startNewRegistration } from "@/services/registrationTokenService"
 import type { FormData, BusinessType } from "./types"
 import { useFormHandlers } from "./useFormHandlers"
 import { FormFields } from "./FormFields"
@@ -46,6 +46,9 @@ export default function RegistrationForm() {
   )
 
   useEffect(() => {
+    // Limpiar datos anteriores al montar el componente
+    startNewRegistration()
+    
     const fetchBusinessTypes = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-negocio`)
@@ -225,7 +228,7 @@ export default function RegistrationForm() {
 
       <form
         onSubmit={showNextButton ? handleNext : handleSubmit}
-      className="space-y-4 sm:space-y-6"
+        className="space-y-4 sm:space-y-6"
       >
         <FormFields
           formData={formData}

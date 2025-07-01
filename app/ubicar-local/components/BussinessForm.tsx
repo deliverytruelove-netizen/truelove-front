@@ -1,4 +1,4 @@
-// app\ubicar-local\components\BussinessForm.tsx
+// app\ubicar-local\components\BussinessForm.tsx este es del otro proyecto
 "use client"
 
 import type React from "react"

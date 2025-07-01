@@ -14,12 +14,9 @@ import Loading from "./components/Loading";
 import { BusinessForm } from "./components/Fomurlulario";
 import { formSchema, type BusinessFormValues } from "./schemas/business-form";
 import type { TipoNegocio, Categoria } from "./types/business";
-// import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import { getRegistrationToken, updateRegistrationStep, getRegistrationData } from '@/services/registrationTokenService'
-import {   removeLocalStorage } from '@/utils/saveStorage'
+import { getRegistrationToken, updateRegistrationStep, getRegistrationData, clearAllRegistrationData } from '@/services/registrationTokenService'
 
 function FormularioDetallesNegocioContent() {
-  // useBodyScrollLock();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tiposNegocio, setTiposNegocio] = useState<TipoNegocio[]>([]);
@@ -76,6 +73,8 @@ function FormularioDetallesNegocioContent() {
           description: "Por favor complete el registro primero",
           variant: "destructive",
         });
+        // Limpiar datos antes de redirigir
+        clearAllRegistrationData()
         router.push('/');
         return;
       }
@@ -95,12 +94,6 @@ function FormularioDetallesNegocioContent() {
         
         // Cargar las categorías correspondientes
         await fetchCategorias(negocioData.tipo_negocio_id.toString());
-      // } else {
-      //   // Si no hay datos, cargar del localStorage
-      //   const savedData = getLocalStorage<BusinessFormValues>("businessFormData");
-      //   if (savedData) {
-      //     form.reset(savedData);
-      //   }
       }
 
       setIsLoading(false);
@@ -109,13 +102,6 @@ function FormularioDetallesNegocioContent() {
     checkToken();
     fetchTiposNegocio();
   }, [form, router]);
-
-  // useEffect(() => {
-  //   const subscription = form.watch((value) => {
-  //     setLocalStorage("businessFormData", value)
-  //   })
-  //   return () => subscription.unsubscribe()
-  // }, [form])
 
   const fetchTiposNegocio = async () => {
     try {
@@ -190,11 +176,8 @@ function FormularioDetallesNegocioContent() {
         throw new Error(responseData.message || "Error al guardar los datos");
       }
 
-      // Eliminar los datos del almacenamiento local
-      removeLocalStorage("businessFormData")
       // Actualizar el paso del registro
       await updateRegistrationStep('/ubicar-local');
-
       
       router.push("/ubicar-local");
     } catch (error) {
@@ -215,68 +198,65 @@ function FormularioDetallesNegocioContent() {
     return <Loading />;
   }
 
- return (
-  <div className="flex flex-col h-screen bg-white">
-    {/* Navbar fijo */}
-    <div className="flex-shrink-0">
-      <Navbar />
-    </div>
-    
-    {/* Contenido principal con scroll */}
-    <div className="flex flex-1 overflow-hidden">
-      {/* Imagen fija en desktop */}
-      <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
-        <div className="absolute inset-0">
-          <Image
-            src={Negocio}
-            alt="Ilustración de Negocio"
-            fill
-            className="object-cover"
-            priority
-            sizes="50vw"
-          />
-        </div>
+  return (
+    <div className="flex flex-col h-screen bg-white">
+      {/* Navbar fijo */}
+      <div className="flex-shrink-0">
+        <Navbar />
       </div>
-
-      {/* Área del formulario con scroll */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-md mx-auto p-8 pb-32">
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-2xl font-bold mb-2">
-                Cuéntenos sobre su negocio
-              </h1>
-              <p className="text-muted-foreground">
-                Esta información se mostrará en la aplicación para que los
-                clientes puedan encontrarlo y contactarlo si tienen preguntas.
-              </p>
-            </div>
-
-            <BusinessForm
-              form={form}
-              tiposNegocio={tiposNegocio}
-              categorias={categorias}
-              fetchCategorias={fetchCategorias}
+      
+      {/* Contenido principal con scroll */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Imagen fija en desktop */}
+        <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
+          <div className="absolute inset-0">
+            <Image
+              src={Negocio}
+              alt="Ilustración de Negocio"
+              fill
+              className="object-cover"
+              priority
+              sizes="50vw"
             />
           </div>
         </div>
+
+        {/* Área del formulario con scroll */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-md mx-auto p-8 pb-32">
+            <div className="space-y-8">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">
+                  Cuéntenos sobre su negocio
+                </h1>
+                <p className="text-muted-foreground">
+                  Esta información se mostrará en la aplicación para que los
+                  clientes puedan encontrarlo y contactarlo si tienen preguntas.
+                </p>
+              </div>
+
+              <BusinessForm
+                form={form}
+                tiposNegocio={tiposNegocio}
+                categorias={categorias}
+                fetchCategorias={fetchCategorias}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* StepNavigation fijo en la parte inferior */}
+      <div className="flex-shrink-0 bg-white border-t">
+        <StepNavigation
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          onNext={handleNext}
+          isNextDisabled={!form.formState.isValid || isSubmitting}
+        />
       </div>
     </div>
-
-    {/* StepNavigation fijo en la parte inferior */}
-    <div className="flex-shrink-0 bg-white border-t">
-      <StepNavigation
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        onNext={handleNext}
-        isNextDisabled={!form.formState.isValid || isSubmitting}
-      />
-    </div>
-  </div>
-);
-
-
-
+  );
 }
 
 export default function FormularioDetallesNegocio() {
@@ -286,4 +266,3 @@ export default function FormularioDetallesNegocio() {
     </Suspense>
   );
 }
-

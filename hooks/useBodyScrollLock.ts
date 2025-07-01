@@ -1,3 +1,4 @@
+// hooks\useBodyScrollLock.ts
 import { useEffect, useCallback } from 'react';
 
 export function useBodyScrollLock() {

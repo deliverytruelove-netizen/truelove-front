@@ -11,7 +11,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Badge } from "@/components/ui/badge"
-// import { ScrollArea } from "@/components/ui/scroll-area" // Removed import
 
 interface FormularioPlanesProps {
   onPlanSelect: (selected: boolean) => void
@@ -30,98 +29,128 @@ export default function FormularioPlanes({ onPlanSelect }: FormularioPlanesProps
   ]
 
   return (
-    <Card className="w-full max-w-md -mt-8"> {/* Updated Card className */}
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold">
+    <Card className="w-full shadow-lg border-0 bg-white/95 backdrop-blur-sm">
+      <CardHeader className="pb-4 relative">
+        <Badge className="absolute -right-3 top-6 rotate-45 bg-red-600 px-8 py-1 text-white text-xs font-medium shadow-md">
+          Popular
+        </Badge>
+        <CardTitle className="text-xl font-bold text-gray-900 pr-12">
           Planes ideales para tu negocio de delivery
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-600 leading-relaxed">
           Optimiza tus entregas y gestiona tus pedidos sin complicaciones.
         </p>
       </CardHeader>
-      {/* Removed ScrollArea */}
-        <CardContent className="relative space-y-4"> {/* Removed height class */}
-          <Badge className="absolute right-[-35px] top-[25px] rotate-45 bg-red-600 px-10 py-1 text-white">
-            Popular
-          </Badge>
-
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-red-100 p-2">
-              <Smartphone className="h-5 w-5 text-red-600" />
-            </div>
-            <h3 className="text-base font-semibold">
+      
+      <CardContent className="space-y-6">
+        {/* Header del plan */}
+        <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+          <div className="rounded-lg bg-red-100 p-2 flex-shrink-0">
+            <Smartphone className="h-5 w-5 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">
               App para Delivery en Android
             </h3>
+            <p className="text-xs text-gray-600 mt-1">
+              Gestiona pedidos desde cualquier lugar
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Descarga nuestra app en tu celular Android para gestionar
-            pedidos desde cualquier lugar.
-          </p>
+        </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-medium">Beneficios</h3>
-            <ul className="space-y-2">
-              {benefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <Check className="mt-1 h-4 w-4 text-red-600" />
-                  <span className="text-xs">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Descripción */}
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Descarga nuestra app en tu celular Android para gestionar
+          pedidos desde cualquier lugar.
+        </p>
 
+        {/* Beneficios */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">Beneficios incluidos</h3>
+          <ul className="space-y-2">
+            {benefits.map((benefit, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <Check className="mt-0.5 h-4 w-4 text-red-600 flex-shrink-0" />
+                <span className="text-xs text-gray-700 leading-relaxed">{benefit}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Precios */}
+        <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Detalles de precios</h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b py-2">
-              <span className="text-sm">Comisión por uso</span>
-              <span className="font-medium">21 %</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+              <span className="text-sm text-gray-600">Comisión por uso</span>
+              <span className="font-semibold text-gray-900">21%</span>
             </div>
-            <div className="flex items-center justify-between border-b py-2">
-              <span className="text-sm">Costo de instalación</span>
-              <span className="font-medium">175 PEN</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+              <span className="text-sm text-gray-600">Costo de instalación</span>
+              <span className="font-semibold text-gray-900">175 PEN</span>
             </div>
-            <div className="flex items-center justify-between border-b py-2">
-              <span className="text-sm">Tarifa de plataforma</span>
-              <span className="font-medium">50 PEN</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+              <span className="text-sm text-gray-600">Tarifa de plataforma</span>
+              <span className="font-semibold text-gray-900">50 PEN</span>
             </div>
-            <div className="flex items-center justify-between border-b py-2">
-              <span className="text-sm">Uso de la app</span>
-              <span className="font-medium">0 PEN</span>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-gray-600">Uso de la app</span>
+              <span className="font-semibold text-green-600">0 PEN</span>
             </div>
           </div>
+        </div>
 
-          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-              >
-                <span>Ver requisitos técnicos</span>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <ul className="list-inside list-disc space-y-2 text-xs text-muted-foreground">
-                <li>Dispositivo móvil con GPS habilitado</li>
-                <li>Aplicación de seguimiento instalada y configurada</li>
-                <li>Conexión a internet estable durante las entregas</li>
-                <li>Conocimiento básico de las rutas locales</li>
-                <li>Disponibilidad de un medio de transporte adecuado</li>
+        {/* Requisitos técnicos colapsables */}
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-sm">Ver requisitos técnicos</span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <ul className="space-y-2 text-xs text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Dispositivo móvil con GPS habilitado</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Aplicación de seguimiento instalada y configurada</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Conexión a internet estable durante las entregas</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Conocimiento básico de las rutas locales</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Disponibilidad de un medio de transporte adecuado</span>
+                </li>
               </ul>
-            </CollapsibleContent>
-          </Collapsible>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-          <Button
-            className="w-full bg-red-600 hover:bg-red-700"
-            onClick={() => onPlanSelect(true)}
-          >
-            Seleccionar
-          </Button>
-        </CardContent>
+        {/* Botón de selección */}
+        <Button
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 transition-colors duration-200 shadow-md hover:shadow-lg"
+          onClick={() => onPlanSelect(true)}
+        >
+          Seleccionar Plan
+        </Button>
+      </CardContent>
     </Card>
   )
 }
-
