@@ -2,12 +2,15 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { TimeSelectorMejorado } from "./TimeSelector"
-import { createGrupoHorario, updateGrupoHorario, fetchMotorizadosDisponibles } from "../services/horarios.service"
+import { createGrupoHorario, updateGrupoHorario, fetchMotorizadosDisponibles, fetchTodosMotorizados } from "../services/horarios.service"
 import type { HorarioGrupo, HorarioBloque, Motorizado, DiaSemana } from "../types/horarios.types"
-import { ArrowLeft, Trash2, Clock, Users, User, Save, X, Info, Calendar, Coffee, Briefcase, Moon, AlertCircle, Sunrise, Check } from 'lucide-react'
-
+import { ArrowLeft, Trash2, Clock, Users, User, Save, X, Info, Calendar, Coffee, Briefcase, Moon, AlertCircle, Sunrise, Check, RefreshCw } from 'lucide-react'
+ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { showAlert } from "@/components/ui/DataTable/Alert"
 interface GrupoFormProps {
   grupo?: HorarioGrupo
   onCancel: () => void
@@ -33,8 +36,46 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
   })
 
   const [motorizadosDisponibles, setMotorizadosDisponibles] = useState<Motorizado[]>([])
+  const [todosMotorizados, setTodosMotorizados] = useState<Motorizado[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingMotorizados, setLoadingMotorizados] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Cargar motorizados disponibles (para horarios nuevos)
+  const loadMotorizadosDisponibles = useCallback(async () => {
+    try {
+      setLoadingMotorizados(true)
+      const motorizados = await fetchMotorizadosDisponibles(grupo?.id)
+      setMotorizadosDisponibles(motorizados)
+    } catch (error) {
+      console.error("Error al cargar motorizados disponibles:", error)
+      showAlert({
+        title: "Error",
+        text: "No se pudieron cargar los motorizados disponibles",
+        icon: "error",
+      })
+    } finally {
+      setLoadingMotorizados(false)
+    }
+  }, [grupo?.id])
+
+  // Cargar todos los motorizados (para edición de horarios)
+  const loadTodosMotorizados = useCallback(async () => {
+    try {
+      setLoadingMotorizados(true)
+      const motorizados = await fetchTodosMotorizados()
+      setTodosMotorizados(motorizados)
+    } catch (error) {
+      console.error("Error al cargar todos los motorizados:", error)
+      showAlert({
+        title: "Error",
+        text: "No se pudieron cargar los motorizados",
+        icon: "error",
+      })
+    } finally {
+      setLoadingMotorizados(false)
+    }
+  }, [])
 
   const diasSemana: { key: DiaSemana; label: string; short: string }[] = [
     { key: "lunes", label: "Lunes", short: "Lun" },
@@ -71,9 +112,18 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
   ]
 
   useEffect(() => {
-    loadMotorizadosDisponibles()
+    // Si estamos editando un grupo existente, cargar todos los motorizados
+    // Si estamos creando uno nuevo, cargar solo los disponibles
+    if (grupo) {
+      loadTodosMotorizados()
+    } else {
+      loadMotorizadosDisponibles()
+    }
 
     if (grupo) {
+      console.log('Cargando datos del grupo:', grupo)
+      console.log('Motorizados del grupo:', grupo.motorizados)
+      
       setFormData({
         nombre: grupo.nombre,
         descripcion: grupo.descripcion || "",
@@ -92,15 +142,33 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
         motorizados: grupo.motorizados?.map((m) => m.id) || [],
       })
     }
-  }, [grupo])
+  }, [grupo, loadMotorizadosDisponibles, loadTodosMotorizados])
 
-  const loadMotorizadosDisponibles = async () => {
-    try {
-      const motorizados = await fetchMotorizadosDisponibles()
-      setMotorizadosDisponibles(motorizados)
-    } catch (error) {
-      console.error("Error al cargar motorizados:", error)
+  // Obtener la lista de motorizados a mostrar según el contexto
+  const getMotorizadosParaMostrar = () => {
+    if (grupo) {
+      // Si estamos editando, mostrar todos los motorizados
+      return todosMotorizados
+    } else {
+      // Si estamos creando, mostrar solo disponibles
+      return motorizadosDisponibles
     }
+  }
+
+  // Verificar si un motorizado está disponible (no asignado a otro horario)
+  const isMotorizadoDisponible = (motorizadoId: number) => {
+    if (!grupo) {
+      // Para horarios nuevos, todos los motorizados en la lista están disponibles
+      return true
+    }
+    
+    // Para edición: el motorizado está disponible si:
+    // 1. Ya está asignado a este horario, O
+    // 2. Está en la lista de disponibles
+    const yaAsignado = formData.motorizados.includes(motorizadoId)
+    const estaDisponible = motorizadosDisponibles.some(m => m.id === motorizadoId)
+    
+    return yaAsignado || estaDisponible
   }
 
   const handleAddBloque = (tipo: "trabajo" | "descanso" | "almuerzo") => {
@@ -311,6 +379,16 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
   }
 
   const handleMotorizadoToggle = (motorizadoId: number) => {
+    // Verificar si el motorizado está disponible antes de permitir el toggle
+    if (!isMotorizadoDisponible(motorizadoId) && !formData.motorizados.includes(motorizadoId)) {
+      showAlert({
+        title: "Motorizado no disponible",
+        text: "Este motorizado ya tiene un horario asignado y no puede ser agregado a otro grupo.",
+        icon: "warning",
+      })
+      return
+    }
+
     setFormData((prev) => ({
       ...prev,
       motorizados: prev.motorizados.includes(motorizadoId)
@@ -470,7 +548,11 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
           bloques: formData.bloques as HorarioBloque[],
           motorizados: formData.tipo === "grupal" ? formData.motorizados : undefined,
         })
-        alert("Grupo actualizado exitosamente")
+        showAlert({
+          title: "Éxito",
+          text: "Grupo actualizado exitosamente",
+          icon: "success",
+        })
       } else {
         await createGrupoHorario({
           nombre: formData.nombre,
@@ -480,16 +562,33 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
           bloques: formData.bloques,
           motorizados: formData.tipo === "grupal" ? formData.motorizados : undefined,
         })
-        alert("Grupo creado exitosamente")
+        showAlert({
+          title: "Éxito",
+          text: "Grupo creado exitosamente",
+          icon: "success",
+        })
       }
 
       onSave()
     } catch (error: unknown) {
       const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Error al guardar el grupo de horario"
-      alert(errorMessage)
+      showAlert({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+      })
       console.error("Error:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Recargar motorizados manualmente
+  const handleRecargarMotorizados = async () => {
+    if (grupo) {
+      await loadTodosMotorizados()
+    } else {
+      await loadMotorizadosDisponibles()
     }
   }
 
@@ -544,11 +643,11 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del horario *</label>
-            <input
+            <Input
               type="text"
               value={formData.nombre}
               onChange={(e) => setFormData((prev) => ({ ...prev, nombre: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              className="w-full"
               placeholder="Ej: Turno Mañana, Horario Fin de Semana..."
             />
             {errors.nombre && <p className="text-red-600 text-sm mt-1">{errors.nombre}</p>}
@@ -556,32 +655,36 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de horario *</label>
-            <select
+            <Select
               value={formData.tipo}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setFormData((prev) => ({
                   ...prev,
-                  tipo: e.target.value as "grupal" | "individual",
-                  motorizados: e.target.value === "individual" ? [] : prev.motorizados,
-                  motorizado_individual_id: e.target.value === "grupal" ? 0 : prev.motorizado_individual_id,
+                  tipo: value as "grupal" | "individual",
+                  motorizados: value === "individual" ? [] : prev.motorizados,
+                  motorizado_individual_id: value === "grupal" ? 0 : prev.motorizado_individual_id,
                 }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               disabled={!!grupo}
             >
-              <option value="grupal">Grupal (varios motorizados)</option>
-              <option value="individual">Individual (un motorizado)</option>
-            </select>
+              <SelectTrigger className="w-full px-3 py-2 ">
+                <SelectValue placeholder="Seleccionar tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="grupal">Grupal (varios motorizados)</SelectItem>
+                <SelectItem value="individual">Individual (un motorizado)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-          <textarea
+          <Textarea
             value={formData.descripcion}
             onChange={(e) => setFormData((prev) => ({ ...prev, descripcion: e.target.value }))}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            className="w-full"
             placeholder="Descripción opcional del horario de trabajo..."
           />
         </div>
@@ -593,20 +696,24 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
               <User className="inline h-4 w-4 mr-1" />
               Motorizado asignado *
             </label>
-            <select
-              value={formData.motorizado_individual_id}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, motorizado_individual_id: Number.parseInt(e.target.value) }))
+            <Select
+              value={formData.motorizado_individual_id.toString()}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, motorizado_individual_id: Number.parseInt(value) }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             >
-              <option value={0}>Seleccionar motorizado...</option>
-              {motorizadosDisponibles.map((motorizado) => (
-                <option key={motorizado.id} value={motorizado.id}>
-                  {motorizado.nombres} {motorizado.apellidos} - {motorizado.celular}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full px-3">
+                <SelectValue placeholder="Seleccionar motorizado..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Seleccionar motorizado...</SelectItem>
+                {getMotorizadosParaMostrar().map((motorizado) => (
+                  <SelectItem key={motorizado.id} value={motorizado.id.toString()}>
+                    {motorizado.nombres} {motorizado.apellidos} - {motorizado.celular}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.motorizado_individual_id && (
               <p className="text-red-600 text-sm mt-1">{errors.motorizado_individual_id}</p>
             )}
@@ -616,28 +723,85 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
         {/* Selección de motorizados grupales */}
         {formData.tipo === "grupal" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Users className="inline h-4 w-4 mr-1" />
-              Motorizados asignados *
-            </label>
-            <div className="border border-gray-300 rounded-lg p-4 max-h-40 overflow-y-auto">
-              {motorizadosDisponibles.length === 0 ? (
-                <p className="text-gray-500 text-sm">No hay motorizados disponibles</p>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                <Users className="inline h-4 w-4 mr-1" />
+                Motorizados asignados *
+                {grupo && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    (Editando horario: se muestran todos los motorizados)
+                  </span>
+                )}
+              </label>
+              <button
+                type="button"
+                onClick={handleRecargarMotorizados}
+                disabled={loadingMotorizados}
+                className="text-sm text-brand-600 hover:text-brand-700 flex items-center gap-1 disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingMotorizados ? 'animate-spin' : ''}`} />
+                Recargar
+              </button>
+            </div>
+            
+            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
+              {loadingMotorizados ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600 mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-500">Cargando motorizados...</p>
+                </div>
+              ) : getMotorizadosParaMostrar().length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-4">
+                  {grupo ? "No se pudieron cargar los motorizados" : "No hay motorizados disponibles"}
+                </p>
               ) : (
-                <div className="space-y-2">
-                  {motorizadosDisponibles.map((motorizado) => (
-                    <label key={motorizado.id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.motorizados.includes(motorizado.id)}
-                        onChange={() => handleMotorizadoToggle(motorizado.id)}
-                        className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                      />
-                      <span className="ml-2 text-sm">
-                        {motorizado.nombres} {motorizado.apellidos} - {motorizado.celular}
-                      </span>
-                    </label>
-                  ))}
+                <div className="space-y-3">
+                  {getMotorizadosParaMostrar().map((motorizado) => {
+                    const isSelected = formData.motorizados.includes(motorizado.id)
+                    const isAvailable = isMotorizadoDisponible(motorizado.id)
+                    const canToggle = isAvailable || isSelected
+
+                    return (
+                      <label 
+                        key={motorizado.id} 
+                        className={`flex items-center p-3 rounded-lg border transition-colors ${
+                          isSelected 
+                            ? "bg-brand-50 border-brand-200" 
+                            : canToggle
+                            ? "bg-white border-gray-200 hover:bg-gray-50"
+                            : "bg-gray-50 border-gray-200"
+                        } ${canToggle ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleMotorizadoToggle(motorizado.id)}
+                          disabled={!canToggle}
+                          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50"
+                        />
+                        <div className="ml-3 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-900">
+                              {motorizado.nombres} {motorizado.apellidos}
+                            </span>
+                            {!isAvailable && !isSelected && (
+                              <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
+                                No disponible
+                              </span>
+                            )}
+                            {isSelected && (
+                              <span className="text-xs text-brand-600 bg-brand-100 px-2 py-1 rounded">
+                                Asignado
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {motorizado.celular} • {motorizado.email}
+                          </div>
+                        </div>
+                      </label>
+                    )
+                  })}
                 </div>
               )}
             </div>

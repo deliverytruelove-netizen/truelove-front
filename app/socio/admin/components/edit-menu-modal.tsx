@@ -222,7 +222,7 @@ export function EditMenuModal({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="w-full h-full rounded-none p-4 flex flex-col overflow-y-auto sm:max-w-[550px] sm:rounded-lg sm:h-auto sm:max-h-[90vh] sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <Edit className="h-5 w-5 text-red-600" />

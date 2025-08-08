@@ -9,12 +9,17 @@ import Image from "next/image";
 import Navbar from "@/components/ui/navbar";
 import Negocio from "@/public/img/imagen2.png";
 import { toast } from "@/hooks/use-toast";
-import StepNavigation from '@/components/ui/StepNavigation'
+import StepNavigation from "@/components/ui/StepNavigation";
 import Loading from "./components/Loading";
 import { BusinessForm } from "./components/Fomurlulario";
 import { formSchema, type BusinessFormValues } from "./schemas/business-form";
 import type { TipoNegocio, Categoria } from "./types/business";
-import { getRegistrationToken, updateRegistrationStep, getRegistrationData, clearAllRegistrationData } from '@/services/registrationTokenService'
+import {
+  getRegistrationToken,
+  updateRegistrationStep,
+  getRegistrationData,
+  clearAllRegistrationData,
+} from "@/services/registrationTokenService";
 
 function FormularioDetallesNegocioContent() {
   const router = useRouter();
@@ -35,6 +40,8 @@ function FormularioDetallesNegocioContent() {
       isStreetLocation: "Si",
       contactMethod: "WhatsApp",
       phoneNumber: "+51",
+      digitalWallet: "0",
+      useSamePhone: true,
     },
   });
 
@@ -67,15 +74,19 @@ function FormularioDetallesNegocioContent() {
   useEffect(() => {
     const checkToken = async () => {
       const data = await getRegistrationData();
-      if (!data || (data.current_step !== '/acercaNegocio' && data.current_step !== '/ubicar-local')) {
+      if (
+        !data ||
+        (data.current_step !== "/acercaNegocio" &&
+          data.current_step !== "/ubicar-local")
+      ) {
         toast({
           title: "Error",
           description: "Por favor complete el registro primero",
           variant: "destructive",
         });
         // Limpiar datos antes de redirigir
-        clearAllRegistrationData()
-        router.push('/');
+        clearAllRegistrationData();
+        router.push("/");
         return;
       }
 
@@ -90,8 +101,10 @@ function FormularioDetallesNegocioContent() {
           isStreetLocation: negocioData.es_local_calle ? "Si" : "No",
           contactMethod: negocioData.metodo_contacto,
           phoneNumber: negocioData.telefono,
+          digitalWallet: negocioData.tipo_pago_digital || "0",
+          useSamePhone: true,
         });
-        
+
         // Cargar las categorías correspondientes
         await fetchCategorias(negocioData.tipo_negocio_id.toString());
       }
@@ -105,12 +118,14 @@ function FormularioDetallesNegocioContent() {
 
   const fetchTiposNegocio = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-negocio`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_WEB}/tipos-negocio`
+      );
       if (!response.ok) throw new Error("Error al obtener tipos de negocio");
       const data = await response.json();
       setTiposNegocio(data);
     } catch (error) {
-      console.error('Error fetching business types:', error);
+      console.error("Error fetching business types:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los tipos de negocio",
@@ -128,7 +143,7 @@ function FormularioDetallesNegocioContent() {
       const data = await response.json();
       setCategorias(data);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las categorías",
@@ -137,60 +152,77 @@ function FormularioDetallesNegocioContent() {
     }
   };
 
-  const onSubmit = useCallback(async (data: BusinessFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const registrationData = await getRegistrationData();
-      if (!registrationData) {
-        throw new Error('Datos de registro no encontrados');
-      }
+  const onSubmit = useCallback(
+    async (data: BusinessFormValues) => {
+      setIsSubmitting(true);
+      try {
+        const registrationData = await getRegistrationData();
+        if (!registrationData) {
+          throw new Error("Datos de registro no encontrados");
+        }
 
-      // Verificar si ya existe un negocio
-      const existingBusiness = await fetchNegocioData(registrationData.registration_id);
-      const method = existingBusiness ? 'PUT' : 'POST';
-      const url = existingBusiness 
-        ? `${process.env.NEXT_PUBLIC_API_WEB}/negocios/${existingBusiness.id}`
-        : `${process.env.NEXT_PUBLIC_API_WEB}/negocios`;
+        // Verificar si ya existe un negocio
+        const existingBusiness = await fetchNegocioData(
+          registrationData.registration_id
+        );
+        const method = existingBusiness ? "PUT" : "POST";
+        const url = existingBusiness
+          ? `${process.env.NEXT_PUBLIC_API_WEB}/negocios/${existingBusiness.id}`
+          : `${process.env.NEXT_PUBLIC_API_WEB}/negocios`;
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${getRegistrationToken()}`
-        },
-        body: JSON.stringify({
+        const businessData = {
           nombre: data.businessName,
           tipo_negocio_id: parseInt(data.businessType),
           categoria_id: parseInt(data.category),
           total_sucursales: data.branches,
           es_local_calle: data.isStreetLocation === "Si",
           metodo_contacto: data.contactMethod,
-          telefono: data.phoneNumber.replace(/\s/g, ''),
+          telefono: data.phoneNumber.replace(/\s/g, ""),
           business_registration_id: registrationData.registration_id,
-        }),
-      });
+          tipo_pago_digital: parseInt(data.digitalWallet),
+          numero_pago_digital:
+            data.digitalWallet !== "0"
+              ? data.useSamePhone
+                ? data.phoneNumber.replace(/\s/g, "").substring(3)
+                : data.walletNumber
+              : null,
+        };
 
-      const responseData = await response.json();
+        const response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getRegistrationToken()}`,
+          },
+          body: JSON.stringify(businessData),
+        });
 
-      if (!response.ok) {
-        throw new Error(responseData.message || "Error al guardar los datos");
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          throw new Error(responseData.message || "Error al guardar los datos");
+        }
+
+        // Actualizar el paso del registro
+        await updateRegistrationStep("/ubicar-local");
+
+        router.push("/ubicar-local");
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Error al guardar los datos del negocio",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
       }
-
-      // Actualizar el paso del registro
-      await updateRegistrationStep('/ubicar-local');
-      
-      router.push("/ubicar-local");
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al guardar los datos del negocio",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [router]);
+    },
+    [router]
+  );
 
   const handleNext = form.handleSubmit(onSubmit);
 
@@ -204,7 +236,7 @@ function FormularioDetallesNegocioContent() {
       <div className="flex-shrink-0">
         <Navbar />
       </div>
-      
+
       {/* Contenido principal con scroll */}
       <div className="flex flex-1 overflow-hidden">
         {/* Imagen fija en desktop */}

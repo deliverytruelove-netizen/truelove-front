@@ -14,6 +14,7 @@ import {
   
   AlertTriangle
 } from 'lucide-react';
+import { confirmAlert, showAlert } from '@/components/ui/DataTable/Alert';
 
 interface GruposListProps {
   onEdit: (grupo: HorarioGrupo) => void;
@@ -25,8 +26,6 @@ interface GruposListProps {
 export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: GruposListProps) {
   const [grupos, setGrupos] = useState<HorarioGrupo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [, setDeleteDialogOpen] = useState(false);
-  const [grupoToDelete, setGrupoToDelete] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadGrupos = useCallback(async () => {
@@ -47,26 +46,32 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
     loadGrupos();
   }, [refreshTrigger, loadGrupos]);
 
-  const handleDelete = async () => {
-    if (grupoToDelete === null) return;
+  const confirmDelete = async (id: number, nombre: string) => {
+    const result = await confirmAlert({
+      title: 'Confirmar eliminación',
+      text: `¿Estás seguro de eliminar el grupo "${nombre}"? Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    });
 
-    try {
-      await deleteGrupoHorario(grupoToDelete);
-      setGrupos(prev => prev.filter(g => g.id !== grupoToDelete));
-      alert('Grupo de horario eliminado correctamente');
-    } catch (error) {
-      alert('No se pudo eliminar el grupo de horario');
-      console.error(error);
-    } finally {
-      setDeleteDialogOpen(false);
-      setGrupoToDelete(null);
-    }
-  };
-
-  const confirmDelete = (id: number, nombre: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar el grupo "${nombre}"? Esta acción no se puede deshacer.`)) {
-      setGrupoToDelete(id);
-      handleDelete();
+    if (result.isConfirmed) {
+      try {
+        await deleteGrupoHorario(id);
+        setGrupos(prev => prev.filter(g => g.id !== id));
+        showAlert({
+          title: 'Éxito',
+          text: 'Grupo de horario eliminado correctamente',
+          icon: 'success',
+        });
+      } catch (error) {
+        showAlert({
+          title: 'Error',
+          text: 'No se pudo eliminar el grupo de horario',
+          icon: 'error',
+        });
+        console.error(error);
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-// app\reparto\components\RegisterSection.tsx
+// appeparto\components\RegisterSection.tsx
 "use client"
 import { Suspense } from "react"
 import Image from "next/image"
@@ -28,8 +28,27 @@ export default function RegisterSection() {
         />
       </div>
 
-      {/* Contenedor principal */}
-      <div className="relative z-10 w-full min-h-screen">
+      {/* Contenedor para móviles */}
+      <div className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center p-4 md:hidden">
+        <motion.h1
+          className="text-4xl font-extrabold text-white text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          ¡Regístrate Ya!
+          <br />
+          <span className="text-gray-300 text-2xl mt-2 font-light block">Es rápido y sencillo.</span>
+        </motion.h1>
+        <div className="w-full max-w-md">
+          <Suspense fallback={<Loading />}>
+            <RegistrationForm />
+          </Suspense>
+        </div>
+      </div>
+
+      {/* Contenedor para escritorio */}
+      <div className="hidden md:block relative z-10 w-full min-h-screen">
         {/* Título en el espacio negro central */}
         <div className="absolute top-32 left-[17%] md:left-[20%] lg:left-[18%] max-w-xl">
           <motion.h1
