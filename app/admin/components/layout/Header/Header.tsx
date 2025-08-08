@@ -17,7 +17,7 @@ export const Header: React.FC<Props> = ({ setShowSidebar, openSidebarRef, collap
     <header
       className={`bg-white fixed ${
         collapsed ? "lg:left-20" : "lg:left-64"
-      } left-0 top-0 right-0 z-10 px-2 sm:px-4 py-2 sm:py-3 flex items-center shadow-sm border-b border-gray-100 transition-all duration-300`}
+      } left-0 top-0 right-0 z-50 px-2 sm:px-4 py-2 sm:py-3 flex items-center shadow-sm border-b border-gray-100 transition-all duration-300`}
     >
       <button
         ref={openSidebarRef}

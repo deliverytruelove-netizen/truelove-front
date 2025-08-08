@@ -129,15 +129,33 @@ export const deleteGrupoHorario = async (id: number): Promise<void> => {
 };
 
 /**
- * Obtiene todos los motorizados disponibles
+ * Obtiene motorizados disponibles + los ya asignados al horario (para edición)
  */
-export const fetchMotorizadosDisponibles = async (): Promise<Motorizado[]> => {
+export const fetchMotorizadosDisponibles = async (horarioId?: number): Promise<Motorizado[]> => {
   try {
     const headers = getAuthHeaders();
-    const response = await axios.get(`${API_URL}/admin/horarios/motorizados/disponibles`, { headers });
+    const params = horarioId ? { horario_id: horarioId } : {};
+    const response = await axios.get(`${API_URL}/admin/horarios/motorizados/disponibles`, { 
+      headers,
+      params 
+    });
     return response.data.data || [];
   } catch (error) {
     console.error("Error al obtener motorizados disponibles:", error);
+    throw error;
+  }
+};
+
+/**
+ * NUEVA: Obtiene todos los motorizados (activos y aprobados) para edición de horarios
+ */
+export const fetchTodosMotorizados = async (): Promise<Motorizado[]> => {
+  try {
+    const headers = getAuthHeaders();
+    const response = await axios.get(`${API_URL}/admin/horarios/motorizados/todos`, { headers });
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error al obtener todos los motorizados:", error);
     throw error;
   }
 };

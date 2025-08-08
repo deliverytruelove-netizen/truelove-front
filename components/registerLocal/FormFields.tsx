@@ -313,6 +313,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
               <SelectItem value="0">No facilitar POS</SelectItem>
               <SelectItem value="1">POS Estilos</SelectItem>
               <SelectItem value="2">POS Visa</SelectItem>
+              <SelectItem value="3">Ambos POS </SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-500 mt-1">

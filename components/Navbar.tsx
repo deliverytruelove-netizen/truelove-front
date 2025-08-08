@@ -35,7 +35,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button asChild variant="default" className="bg-[#D9043D] text-white hover:bg-[#d63c30]">
+            <Button asChild variant="default" className="bg-[#D9043D] text-white hover:bg-[#d63c30] hidden md:inline-flex">
               <Link href="/login">Iniciar Sesión</Link>
             </Button>
 
@@ -49,6 +49,7 @@ export default function Navbar() {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <DialogTitle className="sr-only">Menú de navegación</DialogTitle>
                 <nav className="flex flex-col space-y-4">
+                  <NavLink href="/login">Iniciar Sesión</NavLink>
                   <NavLink href="#">Acerca De Nosotros</NavLink>
                   {/* <NavLink href="#">Contact</NavLink> */}
                   <NavLink href="/reparto">Repartos</NavLink>

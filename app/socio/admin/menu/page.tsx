@@ -131,7 +131,7 @@ function MenuContent() {
   }, [categories, menuItems, searchTerm])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 dark:text-gray-200">
+    <div className="bg-gray-50 dark:bg-gray-800 dark:text-gray-200">
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Menú</h1>
@@ -181,7 +181,7 @@ function MenuContent() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Card className="border border-gray-200 dark:border-gray-900 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100 dark:bg-gray-700 dark:border-gray-800 ">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100 dark:bg-gray-700 dark:border-gray-800 sticky top-[4rem] z-20">
                 <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
                   {activeView === "menu" ? "Secciones y productos" : "Opciones y adicionales"}
                 </CardTitle>

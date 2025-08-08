@@ -1,6 +1,7 @@
 // app\acercaNegocio\components\Fomurlulario.tsx
 "use client";
 
+import { useEffect } from "react";
 import {
   Form,
   FormControl,
@@ -18,10 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { type BusinessFormValues } from "../schemas/business-form";
 import type { TipoNegocio, Categoria } from "../types/business";
 import { UseFormReturn } from "react-hook-form";
-import { PhoneInput } from "./phone-input"
+import { PhoneInput } from "./phone-input";
 
 interface BusinessFormProps {
   form: UseFormReturn<BusinessFormValues>;
@@ -30,7 +32,29 @@ interface BusinessFormProps {
   fetchCategorias: (tipoNegocioId: string) => void;
 }
 
-export function BusinessForm({ form, tiposNegocio, categorias, fetchCategorias }: BusinessFormProps) {
+export function BusinessForm({
+  form,
+  tiposNegocio,
+  categorias,
+  fetchCategorias,
+}: BusinessFormProps) {
+  const { watch, setValue } = form;
+  const digitalWallet = watch("digitalWallet");
+  const useSamePhone = watch("useSamePhone");
+  const mainPhoneNumber = watch("phoneNumber");
+
+  useEffect(() => {
+   if (digitalWallet && digitalWallet !== "0") {
+
+      if (form.getValues("useSamePhone") === undefined) {
+        setValue("useSamePhone", true);
+      }
+    } else {
+      setValue("useSamePhone", undefined);
+      setValue("walletNumber", undefined);
+    }
+  }, [digitalWallet, setValue, form]);
+
   return (
     <Form {...form}>
       <form className="space-y-4 overflow">
@@ -186,26 +210,101 @@ export function BusinessForm({ form, tiposNegocio, categorias, fetchCategorias }
           )}
         />
 
-<FormField
-  control={form.control}
-  name="phoneNumber"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Número de Teléfono del Negocio *</FormLabel>
-      <FormControl>
-        <PhoneInput 
-          value={field.value} 
-          onChange={field.onChange}
-          placeholder="+51 999-999-999" 
+        <FormField
+          control={form.control}
+          name="phoneNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Número de Teléfono del Negocio *</FormLabel>
+              <FormControl>
+                <PhoneInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="+51 999-999-999"
+                />
+              </FormControl>
+              <FormMessage />
+              <p className="text-sm text-muted-foreground">
+                El número debe comenzar con +51 seguido de 9 dígitos
+              </p>
+            </FormItem>
+          )}
         />
-      </FormControl>
-      <FormMessage />
-      <p className="text-sm text-muted-foreground">
-        El número debe comenzar con +51 seguido de 9 dígitos
-      </p>
-    </FormItem>
-  )}
-/>
+
+        <div className="space-y-2 pt-4 border-t">
+          <h3 className="text-md font-semibold">Pagos con Billetera Digital</h3>
+          <p className="text-sm text-muted-foreground">
+            Configure si acepta pagos a través de Yape o Plin.
+          </p>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="digitalWallet"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>¿Aceptas pagos con billeteras digitales?</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione una opción" />
+                  </SelectTrigger>
+                </FormControl>
+             <SelectContent>
+  <SelectItem value="0">No acepto</SelectItem>
+  <SelectItem value="1">Yape</SelectItem>
+  <SelectItem value="2">Plin</SelectItem>
+</SelectContent>
+
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {digitalWallet && digitalWallet !== "0" && (
+          <>
+            <FormField
+              control={form.control}
+              name="useSamePhone"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Usar mi número de teléfono registrado ({mainPhoneNumber})
+                      para recibir los pagos.
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {!useSamePhone && (
+              <FormField
+                control={form.control}
+                name="walletNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                   Número de {digitalWallet === "1" ? "Yape" : "Plin"}
+
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="999999999" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </>
+        )}
       </form>
     </Form>
   );

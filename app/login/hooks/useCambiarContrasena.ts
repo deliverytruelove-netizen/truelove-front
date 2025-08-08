@@ -10,6 +10,7 @@ import { postData, verifyEmail, verifyCode } from "../../../services/apiService"
 interface DatosCambioContrasena {
   email: string
   newPassword: string
+  confirmPassword: string
   verificationCode: string
 }
 
@@ -24,9 +25,11 @@ export const useCambiarContrasena = () => {
   const [formData, setFormData] = useState<DatosCambioContrasena>({
     email: "",
     newPassword: "",
+    confirmPassword: "",
     verificationCode: "",
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -36,6 +39,7 @@ export const useCambiarContrasena = () => {
     hasLowerCase: false,
     hasNumber: false,
   })
+  const [passwordMatch, setPasswordMatch] = useState(false)
   const [isEmailVerified, setIsEmailVerified] = useState(false)
   const [isCodeSent, setIsCodeSent] = useState(false)
   const [isCodeVerified, setIsCodeVerified] = useState(false)
@@ -43,12 +47,22 @@ export const useCambiarContrasena = () => {
   const router = useRouter()
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword)
+  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    
     if (name === "newPassword") {
       validatePassword(value)
+      // También validar coincidencia con confirmPassword si ya existe
+      if (formData.confirmPassword) {
+        setPasswordMatch(value === formData.confirmPassword)
+      }
+    }
+    
+    if (name === "confirmPassword") {
+      setPasswordMatch(value === formData.newPassword)
     }
   }
 
@@ -131,6 +145,12 @@ export const useCambiarContrasena = () => {
       return
     }
 
+    if (!passwordMatch) {
+      setErrorMessage("Las contraseñas no coinciden")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const formDataToSend = new FormData()
       formDataToSend.append("email", formData.email)
@@ -166,18 +186,20 @@ export const useCambiarContrasena = () => {
   return {
     formData,
     showPassword,
+    showConfirmPassword,
     isLoading,
     errorMessage,
     successMessage,
     togglePasswordVisibility,
+    toggleConfirmPasswordVisibility,
     handleChange,
     handleSubmit,
     handleVerifyEmail,
     handleVerifyCode,
     passwordValidation,
+    passwordMatch,
     isEmailVerified,
     isCodeSent,
     isCodeVerified,
   }
 }
-

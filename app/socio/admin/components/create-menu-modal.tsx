@@ -175,7 +175,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px] dark:bg-gray-800 ">
+      <DialogContent className="w-full h-full rounded-none p-4 flex flex-col overflow-y-auto sm:max-w-[550px] sm:rounded-lg sm:h-auto sm:max-h-[90vh] sm:p-6 dark:bg-gray-800">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <Plus className="h-5 w-5 text-red-600" />
