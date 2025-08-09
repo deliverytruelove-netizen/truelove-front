@@ -2,7 +2,7 @@
 "use client"
 
 import type React from "react"
-import { CircleHelp, Loader2 } from "lucide-react"
+import { HelpCircle as CircleHelp, Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -48,11 +48,11 @@ export default function FormularioDatosBancarios({
   establecimientoDireccion,
 }: FormularioDatosBancariosProps) {
   return (
-    <Card className="w-full shadow-sm border border-gray-200 bg-white">
-    <CardHeader className="pb-4">
-      <CardTitle className="text-2xl font-bold text-gray-900">Datos Bancarios</CardTitle>
-    </CardHeader>
-      <CardContent>
+    <Card className="w-full shadow-lg border-0 sm:shadow-lg sm:border sm:border-gray-200">
+      <CardHeader>
+        <CardTitle className="text-xl sm:text-2xl font-bold text-center sm:text-left">Datos Bancarios</CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 sm:px-6">
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
           <div className="space-y-2">
             <Label htmlFor="accountHolder">
@@ -65,7 +65,7 @@ export default function FormularioDatosBancarios({
                 required
                 value={formData.accountHolder}
                 onChange={handleInputChange}
-                className="pr-10"
+                className="pr-10 h-12 text-base"
                 disabled={isLoading || isSaving}
               />
               <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -83,7 +83,7 @@ export default function FormularioDatosBancarios({
                 required
                 value={formData.accountNumber}
                 onChange={handleInputChange}
-                className="pr-10"
+                className="pr-10 h-12 text-base"
                 disabled={isLoading || isSaving}
               />
               <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -100,7 +100,7 @@ export default function FormularioDatosBancarios({
               value={formData.bankName}
               defaultValue={formData.bankName}
             >
-              <SelectTrigger id="bankName">
+              <SelectTrigger id="bankName" className="h-12 text-base">
                 <SelectValue placeholder="Seleccionar banco" />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ export default function FormularioDatosBancarios({
               value={formData.accountType}
               defaultValue={formData.accountType}
             >
-              <SelectTrigger id="accountType">
+              <SelectTrigger id="accountType" className="h-12 text-base">
                 <SelectValue placeholder="Seleccionar tipo de cuenta" />
               </SelectTrigger>
               <SelectContent>
@@ -143,7 +143,7 @@ export default function FormularioDatosBancarios({
                 required
                 value={formData.documentNumber}
                 onChange={handleInputChange}
-                className="pr-10"
+                className="pr-10 h-12 text-base"
                 disabled={isLoading || isSaving}
               />
               <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -161,7 +161,7 @@ export default function FormularioDatosBancarios({
                 required
                 value={formData.cci}
                 onChange={handleInputChange}
-                className="pr-10"
+                className="pr-10 h-12 text-base"
                 disabled={isLoading || isSaving}
               />
               <CircleHelp className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

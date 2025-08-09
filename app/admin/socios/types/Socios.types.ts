@@ -60,6 +60,8 @@ export interface DetallesSocio {
     total_sucursales: number
     metodo_contacto: string
     telefono: string
+    tipo_pago_digital: number
+    numero_pago_digital: string
   } | null
 
   businessData: DatosNegocio | null

@@ -43,7 +43,7 @@ export default function RepartoDocumento() {
         <div className="w-full md:w-1/2 bg-white">
           <ScrollArea className="h-[calc(100vh-4rem)]">
             <div className="p-4 md:p-8 max-w-xl mx-auto space-y-6 md:space-y-8">
-              <div className="md:block hidden">
+              <div>
                 <h1 className="text-xl md:text-2xl font-bold">Datos Personales</h1>
                 <p className="text-sm md:text-base text-gray-500 mt-2">
                   Necesitamos verificar tu información.

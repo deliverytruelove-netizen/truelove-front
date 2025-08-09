@@ -78,11 +78,11 @@ export default function FormularioDatosClave({
   }
 
   return (
-    <Card className="w-full max-w-md shadow-lg border-0">
+    <Card className="w-full max-w-md shadow-lg border-0 sm:shadow-lg sm:border sm:border-gray-200">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Algunos datos clave</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-bold text-center sm:text-left">Algunos datos clave</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <form className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="ruc">RUC</Label>
@@ -95,7 +95,7 @@ export default function FormularioDatosClave({
                 maxLength={11}
                 value={formData.ruc}
                 onChange={handleInputChange}
-                className={isLoading ? "pr-10" : ""}
+                className={`${isLoading ? "pr-10" : ""} h-12 text-base`}
                 disabled={isLoading || isSaving}
               />
               {isLoading && <Loader2 className="absolute right-3 top-2.5 h-5 w-5 animate-spin text-muted-foreground" />}
@@ -112,6 +112,7 @@ export default function FormularioDatosClave({
               onChange={handleInputChange}
               readOnly={isLoading}
               disabled={isLoading || isSaving}
+              className="h-12 text-base"
             />
           </div>
         </form>
