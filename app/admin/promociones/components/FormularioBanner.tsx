@@ -81,10 +81,17 @@ export function FormularioBanner({ isOpen, onOpenChange, banner, onClose }: Form
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       const fileSizeKB = file.size / 1024 // Convertir a KB
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/svg+xml"]
+
+      if (!allowedTypes.includes(file.type)) {
+        setImageError("Formato de imagen no válido. Por favor, usa JPG, PNG, GIF o SVG.")
+        e.target.value = "" // Limpiar el input
+        return
+      }
 
       if (fileSizeKB > MAX_FILE_SIZE) {
         setImageError(`La imagen no debe superar los ${MAX_FILE_SIZE / 1024}MB`)
-        e.target.value = '' // Limpiar el input
+        e.target.value = "" // Limpiar el input
         return
       }
 
@@ -238,7 +245,7 @@ export function FormularioBanner({ isOpen, onOpenChange, banner, onClose }: Form
               id="url_imagen" 
               name="url_imagen" 
               type="file" 
-              accept="image/*" 
+              accept="image/jpeg, image/png, image/gif, image/svg+xml" 
               onChange={handleImageChange} 
             />
 
