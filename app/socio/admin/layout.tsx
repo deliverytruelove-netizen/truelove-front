@@ -11,6 +11,10 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarSettings from "./components/AvatarSettings";
@@ -27,18 +31,38 @@ const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
   { name: "Menú", href: "/socio/admin/menu", icon: Utensils },
   { name: "Pedidos", href: "/socio/admin/pedidos", icon: ShoppingBag },
-  { name: "POS", href: "/socio/admin/pos", icon: ShoppingBag },
+  { 
+    name: "Acerca negocio", 
+    icon: ShoppingBag,
+    submenu: [
+      { name: "POS", href: "/socio/admin/pos", icon: CreditCard },
+      { name: "Número Digital", href: "/socio/admin/num-negocio", icon: Smartphone },
+    ]
+  },
   { name: "Configuración", href: "/socio/admin/configuracion", icon: Settings },
 ];
 
 function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const pathname = usePathname();
 
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
+
+  const toggleSubmenu = (menuName: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuName) 
+        ? prev.filter(name => name !== menuName)
+        : [...prev, menuName]
+    );
+  };
+
+  const isSubmenuExpanded = (menuName: string) => {
+    return expandedMenus.includes(menuName);
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors">
@@ -91,35 +115,110 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
         <nav className="p-3">
           <ul className="space-y-1.5">
             {menuItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (pathname.startsWith(`${item.href}/`) &&
-                  item.href !== "/socio/admin");
+              // Si el item tiene submenu, verificamos si algún subitem está activo
+              const isActive = item.submenu 
+                ? item.submenu.some(subitem => 
+                    pathname === subitem.href || 
+                    (pathname.startsWith(`${subitem.href}/`) && subitem.href !== "/socio/admin")
+                  )
+                : pathname === item.href ||
+                  (pathname.startsWith(`${item.href}/`) && item.href !== "/socio/admin");
+              
+              const hasSubmenu = !!item.submenu;
+              const isExpanded = isSubmenuExpanded(item.name);
+              
               return (
                 <li key={item.name}>
-                  <Link href={item.href}>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200",
-                        isCollapsed
-                          ? "px-0 justify-center h-10 w-10 mx-auto"
-                          : "px-3",
-                        isActive &&
-                          "bg-brand-50 dark:bg-brand-950 text-brand-700  hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200"
-                      )}
-                    >
-                      <item.icon
+                  {hasSubmenu ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        onClick={() => !isCollapsed && toggleSubmenu(item.name)}
                         className={cn(
-                          "h-5 w-5 shrink-0",
-                          isActive && "text-brand-600 dark:text-brand-400"
+                          "w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200",
+                          isCollapsed
+                            ? "px-0 justify-center h-10 w-10 mx-auto"
+                            : "px-3",
+                          isActive &&
+                            "bg-brand-50 dark:bg-brand-950 text-brand-700 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200"
                         )}
-                      />
-                      {!isCollapsed && (
-                        <span className="ml-3 truncate">{item.name}</span>
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 shrink-0",
+                            isActive && "text-brand-600 dark:text-brand-400"
+                          )}
+                        />
+                        {!isCollapsed && (
+                          <>
+                            <span className="ml-3 truncate flex-1 text-left">{item.name}</span>
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 ml-2" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 ml-2" />
+                            )}
+                          </>
+                        )}
+                      </Button>
+                      
+                      {/* Submenu */}
+                      {!isCollapsed && hasSubmenu && isExpanded && (
+                        <ul className="mt-1 ml-4 space-y-1">
+                          {item.submenu.map((subitem) => {
+                            const isSubActive = pathname === subitem.href ||
+                              (pathname.startsWith(`${subitem.href}/`) && subitem.href !== "/socio/admin");
+                            
+                            return (
+                              <li key={subitem.name}>
+                                <Link href={subitem.href}>
+                                  <Button
+                                    variant="ghost"
+                                    className={cn(
+                                      "w-full justify-start text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 px-3 py-2 h-9",
+                                      isSubActive &&
+                                        "bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                                    )}
+                                  >
+                                    <subitem.icon
+                                      className={cn(
+                                        "h-4 w-4 shrink-0",
+                                        isSubActive && "text-brand-600 dark:text-brand-400"
+                                      )}
+                                    />
+                                    <span className="ml-3 truncate text-sm">{subitem.name}</span>
+                                  </Button>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       )}
-                    </Button>
-                  </Link>
+                    </>
+                  ) : (
+                    <Link href={item.href}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200",
+                          isCollapsed
+                            ? "px-0 justify-center h-10 w-10 mx-auto"
+                            : "px-3",
+                          isActive &&
+                            "bg-brand-50 dark:bg-brand-950 text-brand-700 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200"
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 shrink-0",
+                            isActive && "text-brand-600 dark:text-brand-400"
+                          )}
+                        />
+                        {!isCollapsed && (
+                          <span className="ml-3 truncate">{item.name}</span>
+                        )}
+                      </Button>
+                    </Link>
+                  )}
                 </li>
               );
             })}

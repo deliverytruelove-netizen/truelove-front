@@ -231,14 +231,14 @@ function FormularioDetallesNegocioContent() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Navbar fijo */}
       <div className="flex-shrink-0">
         <Navbar />
       </div>
 
       {/* Contenido principal con scroll */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-y-auto">
         {/* Imagen fija en desktop */}
         <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
           <div className="absolute inset-0">
@@ -254,7 +254,7 @@ function FormularioDetallesNegocioContent() {
         </div>
 
         {/* Área del formulario con scroll */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
           <div className="max-w-md mx-auto p-8 pb-32">
             <div className="space-y-8">
               <div>

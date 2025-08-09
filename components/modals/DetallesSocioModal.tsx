@@ -235,6 +235,17 @@ export function DetallesSocioModal({
     }
   };
 
+  const formatTipoPagoDigital = (tipo?: number) => {
+    switch (tipo) {
+      case 1:
+        return "Yape";
+      case 2:
+        return "Plin";
+      default:
+        return "No especificado";
+    }
+  };
+
   // Verificar si el socio tiene carnet de extranjería para mostrar la pestaña de documentos
   const isExtranjero = data.documentType === "CARNET_EXTRANJERIA";
 
@@ -332,6 +343,18 @@ export function DetallesSocioModal({
               label="Razón Social"
               value={data.businessData.razon_social || ""}
             />
+            <InfoItem
+              icon={<CreditCard className="w-5 h-5" />}
+              label="Método de Pago Digital"
+              value={formatTipoPagoDigital(data.business.tipo_pago_digital)}
+            />
+            {data.business.tipo_pago_digital !== 0 && data.business.numero_pago_digital && (
+              <InfoItem
+                icon={<Phone className="w-5 h-5" />}
+                label="Número de Pago Digital"
+                value={data.business.numero_pago_digital}
+              />
+            )}
           </div>
         ) : (
           <p className="text-gray-500 text-center py-4">

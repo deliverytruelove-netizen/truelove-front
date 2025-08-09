@@ -109,8 +109,9 @@ const POSAdminPage: React.FC = () => {
   const getPOSLabel = (value: number) => {
     switch (value) {
       case 0: return 'No facilitar POS';
-      case 1: return 'POS Estilos';
       case 2: return 'POS Visa';
+      case 1: return 'POS Estilos';
+      case 2: return 'Ambos POS';
       default: return 'No especificado';
     }
   };
@@ -225,8 +226,9 @@ const POSAdminPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 >
                   <option value="0">No facilitar POS</option>
-                  <option value="1">POS Estilos</option>
-                  <option value="2">POS Visa</option>
+                  <option value="1">POS Visa</option>
+                  <option value="2">POS Estilos</option>
+                  <option value="3">Ambos</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
                   Esta opción permite que el repartidor use tu dispositivo para cobros con tarjeta a los clientes.

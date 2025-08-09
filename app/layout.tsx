@@ -32,14 +32,14 @@ export default function RootLayout({
    
         <meta name="description" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {/* {pathname === "/admin" ? null : <Navbar />} */}
         
         <main 
           className="h-full"
          
         >
-          <div className=" overflow-hidden">
+          <div className="">
             {children}
             <Toaster/>
           </div>

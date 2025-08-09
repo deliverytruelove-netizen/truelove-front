@@ -730,7 +730,7 @@ const manejarEnvio = async (e: React.FormEvent) => {
         </div>
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-4 mb-20">
         <Button
           type="submit"
           className="bg-red-500 hover:bg-red-600 text-white"
