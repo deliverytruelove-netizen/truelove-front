@@ -92,6 +92,17 @@ export default function GestionPromociones() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/svg+xml"];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+            title: "Error de formato",
+            description: "Formato de imagen no válido. Por favor, usa JPG, PNG, GIF o SVG.",
+            variant: "destructive",
+        })
+        e.target.value = ''
+        return;
+      }
+
       setCurrentPromocion({ ...currentPromocion, imagen: file });
 
       // Crear preview de la imagen
@@ -328,7 +339,7 @@ export default function GestionPromociones() {
                   <Input
                     id="imagen"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg, image/png, image/gif, image/svg+xml"
                     onChange={handleImageChange}
                     className="mb-2"
                   />
