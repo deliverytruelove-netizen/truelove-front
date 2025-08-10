@@ -20,8 +20,10 @@ import {
   getRegistrationData,
   clearAllRegistrationData,
 } from "@/services/registrationTokenService";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 function FormularioDetallesNegocioContent() {
+  useBodyScrollLock();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tiposNegocio, setTiposNegocio] = useState<TipoNegocio[]>([]);
@@ -231,14 +233,14 @@ function FormularioDetallesNegocioContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col h-dvh bg-white overflow-hidden">
       {/* Navbar fijo */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 bg-white">
         <Navbar />
       </div>
 
-      {/* Contenido principal con scroll */}
-      <div className="flex flex-1 overflow-y-auto">
+      {/* Contenido principal con flex-grow */}
+      <div className="flex flex-grow overflow-hidden">
         {/* Imagen fija en desktop */}
         <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
           <div className="absolute inset-0">
@@ -253,9 +255,9 @@ function FormularioDetallesNegocioContent() {
           </div>
         </div>
 
-        {/* Área del formulario con scroll */}
-        <div className="flex-1">
-          <div className="max-w-md mx-auto p-8 pb-32">
+        {/* Área del formulario con scroll interno */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-8 pb-32">
             <div className="space-y-8">
               <div>
                 <h1 className="text-2xl font-bold mb-2">
@@ -278,8 +280,8 @@ function FormularioDetallesNegocioContent() {
         </div>
       </div>
 
-      {/* StepNavigation fijo en la parte inferior */}
-      <div className="flex-shrink-0 bg-white border-t">
+      {/* StepNavigation fijo */}
+      <div className="flex-shrink-0 border-t">
         <StepNavigation
           currentStep={currentStep}
           totalSteps={totalSteps}

@@ -57,20 +57,22 @@ export function BusinessForm({
 
   return (
     <Form {...form}>
-      <form className="space-y-4 overflow">
-        <FormField
-          control={form.control}
-          name="businessName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre del Negocio *</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div className="md:col-span-2">
+          <FormField
+            control={form.control}
+            name="businessName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nombre del Negocio *</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -92,10 +94,7 @@ export function BusinessForm({
                 </FormControl>
                 <SelectContent>
                   {tiposNegocio.map((tipo) => (
-                    <SelectItem
-                      key={tipo.id}
-                      value={tipo.id.toString()}
-                    >
+                    <SelectItem key={tipo.id} value={tipo.id.toString()}>
                       {tipo.nombre}
                     </SelectItem>
                   ))}
@@ -112,10 +111,7 @@ export function BusinessForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Categoría *</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione categoría" />
@@ -153,47 +149,11 @@ export function BusinessForm({
 
         <FormField
           control={form.control}
-          name="isStreetLocation"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>
-                ¿Es un local con acceso a la calle? *
-              </FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex space-x-4"
-                >
-                  <FormItem className="flex items-center space-x-2">
-                    <FormControl>
-                      <RadioGroupItem value="Si" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Sí</FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-2">
-                    <FormControl>
-                      <RadioGroupItem value="No" />
-                    </FormControl>
-                    <FormLabel className="font-normal">No</FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="contactMethod"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Método de contacto preferido *</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione método de contacto" />
@@ -210,60 +170,96 @@ export function BusinessForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Número de Teléfono del Negocio *</FormLabel>
-              <FormControl>
-                <PhoneInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="+51 999-999-999"
-                />
-              </FormControl>
-              <FormMessage />
-              <p className="text-sm text-muted-foreground">
-                El número debe comenzar con +51 seguido de 9 dígitos
-              </p>
-            </FormItem>
-          )}
-        />
+        <div className="md:col-span-2">
+          <FormField
+            control={form.control}
+            name="isStreetLocation"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel>¿Es un local con acceso a la calle? *</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex space-x-4"
+                  >
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <RadioGroupItem value="Si" />
+                      </FormControl>
+                      <FormLabel className="font-normal">Sí</FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <RadioGroupItem value="No" />
+                      </FormControl>
+                      <FormLabel className="font-normal">No</FormLabel>
+                    </FormItem>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <div className="space-y-2 pt-4 border-t">
+        <div className="md:col-span-2">
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Número de Teléfono del Negocio *</FormLabel>
+                <FormControl>
+                  <PhoneInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="+51 999-999-999"
+                  />
+                </FormControl>
+                <FormMessage />
+                <p className="text-sm text-muted-foreground">
+                  El número debe comenzar con +51 seguido de 9 dígitos
+                </p>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="md:col-span-2 space-y-2 pt-4 border-t">
           <h3 className="text-md font-semibold">Pagos con Billetera Digital</h3>
           <p className="text-sm text-muted-foreground">
             Configure si acepta pagos a través de Yape o Plin.
           </p>
         </div>
 
-        <FormField
-          control={form.control}
-          name="digitalWallet"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>¿Aceptas pagos con billeteras digitales?</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione una opción" />
-                  </SelectTrigger>
-                </FormControl>
-             <SelectContent>
-  <SelectItem value="0">No acepto</SelectItem>
-  <SelectItem value="1">Yape</SelectItem>
-  <SelectItem value="2">Plin</SelectItem>
-</SelectContent>
-
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="md:col-span-2">
+          <FormField
+            control={form.control}
+            name="digitalWallet"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>¿Aceptas pagos con billeteras digitales?</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione una opción" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="0">No acepto</SelectItem>
+                    <SelectItem value="1">Yape</SelectItem>
+                    <SelectItem value="2">Plin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {digitalWallet && digitalWallet !== "0" && (
-          <>
+          <div className="md:col-span-2 space-y-4">
             <FormField
               control={form.control}
               name="useSamePhone"
@@ -277,8 +273,8 @@ export function BusinessForm({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Usar mi número de teléfono registrado ({mainPhoneNumber})
-                      para recibir los pagos.
+                      Usar mi número de teléfono registrado ({mainPhoneNumber}) para
+                      recibir los pagos.
                     </FormLabel>
                   </div>
                 </FormItem>
@@ -292,8 +288,7 @@ export function BusinessForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                   Número de {digitalWallet === "1" ? "Yape" : "Plin"}
-
+                      Número de {digitalWallet === "1" ? "Yape" : "Plin"}
                     </FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="999999999" />
@@ -303,7 +298,7 @@ export function BusinessForm({
                 )}
               />
             )}
-          </>
+          </div>
         )}
       </form>
     </Form>

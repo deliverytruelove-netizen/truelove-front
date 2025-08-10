@@ -198,74 +198,73 @@ export default function BusinessLocation() {
     }
   }
 
- return (
-  <div className="flex flex-col h-screen bg-white ">
-    {/* Navbar fijo */}
-    <div className="flex-shrink-0">
-      <Navbar />
-    </div>
-
-    {/* Contenido principal con scroll */}
-    <div className="flex flex-1 overflow-hidden">
-      {/* Imagen fija en desktop */}
-      <div className="hidden md:flex w-1/2 p-4 bg-gray-100 flex-shrink-0">
-        <div className="h-full flex justify-center items-center">
-          <Image
-            src={ImaDelivery || "/placeholder.svg"}
-            alt="delivery"
-            layout="responsive"
-            width={500}
-            height={500}
-            loading="lazy"
-          />
-        </div>
+  return (
+    <div className="flex flex-col h-dvh bg-white overflow-hidden">
+      {/* Navbar fijo */}
+      <div className="flex-shrink-0 bg-white">
+        <Navbar />
       </div>
 
-      {/* Área del contenido con scroll */}
-      <div className="w-full md:w-1/2 bg-gray-50 overflow-y-auto pb-16">
-        <div className="p-4 md:p-8 space-y-6 pb-32">
-          <div className="text-center max-w-md mx-auto">
-            <h2 className="text-2xl font-bold">Ubicación del negocio</h2>
-            <p className="text-muted-foreground mt-2">
-              Ingresa la dirección exacta de tu establecimiento para que tus
-              clientes puedan encontrarte fácilmente.
-            </p>
-          </div>
-
-          <div className="max-w-md mx-auto">
-            <SearchComponent onLocationSelect={handleLocationSelect} />
-          </div>
-
-          <div className="space-y-6 max-w-md mx-auto">
-            <MapComponent 
-              selectedLocation={selectedLocation}
-              onLocationUpdate={handleLocationSelect}
+      {/* Contenido principal con flex-grow */}
+      <div className="flex flex-grow overflow-hidden">
+        {/* Imagen fija en desktop */}
+        <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
+          <div className="absolute inset-0">
+            <Image
+              src={ImaDelivery}
+              alt="Ilustración de delivery"
+              fill
+              className="object-cover"
+              priority
+              sizes="50vw"
             />
+          </div>
+        </div>
 
-            {showForm && selectedLocation && (
-              <div className="mt-6 border rounded-lg bg-white p-6">
-                <BusinessForm
-                  selectedLocation={selectedLocation}
-                  onSubmit={handleFormSubmit}
-                />
+        {/* Área del formulario con scroll interno */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-8 pb-32">
+            <div className="space-y-8">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-2">Ubicación del negocio</h2>
+                <p className="text-muted-foreground">
+                  Ingresa la dirección exacta de tu establecimiento para que tus
+                  clientes puedan encontrarte fácilmente.
+                </p>
               </div>
-            )}
+
+              <div className="space-y-6">
+                <SearchComponent onLocationSelect={handleLocationSelect} />
+
+                <MapComponent 
+                  selectedLocation={selectedLocation}
+                  onLocationUpdate={handleLocationSelect}
+                />
+
+                {showForm && selectedLocation && (
+                  <div className="border rounded-lg bg-white p-6">
+                    <BusinessForm
+                      selectedLocation={selectedLocation}
+                      onSubmit={handleFormSubmit}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {/* StepNavigation fijo en la parte inferior */}
-    <div className="flex-shrink-0 bg-white border-t">
-      <StepNavigation
-        currentStep={2}
-        totalSteps={7}
-        onNext={handleNext}
-        onBack={handleBack}
-        isNextDisabled={!(selectedLocation && formData) || isSubmitting}
-      />
+      {/* StepNavigation fijo */}
+      <div className="flex-shrink-0 border-t">
+        <StepNavigation
+          currentStep={2}
+          totalSteps={7}
+          onNext={handleNext}
+          onBack={handleBack}
+          isNextDisabled={!(selectedLocation && formData) || isSubmitting}
+        />
+      </div>
     </div>
-  </div>
-)
-
+  )
 }

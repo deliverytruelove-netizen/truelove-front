@@ -1,12 +1,10 @@
-// app/revisarDatos/page.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { AlertCircle } from "lucide-react"
@@ -19,7 +17,7 @@ import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import DeliveryImage from "@/public/img/revisaDtos.jpg"
 import { updateRegistrationStep, getRegistrationData } from "@/services/registrationTokenService"
 
-export default function ReviewData() {
+function ReviewDataContent() {
   useBodyScrollLock()
   const router = useRouter()
   const { toast } = useToast()
@@ -110,6 +108,20 @@ export default function ReviewData() {
     }
   }
 
+  const handleBack = async () => {
+    try {
+      await updateRegistrationStep("/planes")
+      router.push("/planes")
+    } catch (error) {
+      console.error("Error al volver hacia atrás:", error)
+      toast({
+        title: "Error",
+        description: "Error al volver hacia atrás",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (error) {
     return (
       <div className="flex h-screen items-center justify-center bg-background p-4">
@@ -154,96 +166,124 @@ export default function ReviewData() {
   }
 
   return (
-    <section className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="flex-1 grid lg:grid-cols-2">
-        {/* Columna de imagen */}
-        <div className="relative hidden lg:block">
-          <Image
-            alt="Delivery service illustration"
-            src={DeliveryImage || "/placeholder.svg"}
-            className="absolute inset-0 h-full w-full object-cover"
-            width={1920}
-            height={1080}
-            priority
-          />
-        </div>
-        
-        {/* Columna del formulario */}
-        <div className="flex flex-col justify-center px-6 py-12 lg:px-8">
-          <div className="w-full max-w-2xl mx-auto">
-            <Card className="shadow-lg border-0">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-2xl font-bold text-gray-900">Revisa tus datos</CardTitle>
-                <p className="text-sm text-gray-500">Por favor verifica que la información sea correcta.</p>
-              </CardHeader>
-              
-              <ScrollArea className="h-[60vh] md:h-[65vh] lg:h-[70vh] overflow-y-auto">
-                <CardContent className="space-y-6">
-                  <DatosSeccion
-                    title="Datos del negocio"
-                    onEdit={() => handleEdit("business")}
-                    data={data.datos_negocio}
-                  />
-                  <DatosSeccion
-                    title="Dirección del Negocio"
-                    onEdit={() => handleEdit("address")}
-                    data={data.direccion_negocio}
-                  />
-                  <DatosSeccion 
-                    title="Datos legales" 
-                    onEdit={() => handleEdit("legal")} 
-                    data={data.datos_legales} 
-                  />
-                  <DatosSeccion 
-                    title="Datos bancarios" 
-                    onEdit={() => handleEdit("bank")} 
-                    data={data.datos_bancarios} 
-                  />
+    <div className="flex flex-col h-dvh bg-white overflow-hidden">
+      {/* Navbar fijo */}
+      <div className="flex-shrink-0 bg-white">
+        <Navbar />
+      </div>
 
-                  <div className="space-y-4 pb-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-900">Relación comercial</h3>
-                      <Button
-                        variant="link"
-                        className="text-pink-600 hover:text-pink-700 font-medium"
-                        onClick={() => handleEdit("commercial")}
-                      >
-                        Cambiar
-                      </Button>
-                    </div>
-                    <div className="space-y-4">
-                      <p className="text-sm font-medium text-gray-700">Logistica + Pelican Admin (Shop)</p>
-                      <div className="flex items-start space-x-3 bg-gray-50 p-4 rounded-lg">
-                        <Checkbox
-                          id="terms"
-                          checked={acceptedTerms}
-                          onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
-                          className="mt-1"
-                        />
-                        <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
-                          Para finalizar el registro, te pedimos que leas y aceptes los{" "}
-                          <a href="#" className="text-pink-600 hover:text-pink-700 underline font-medium">
-                            términos y condiciones
-                          </a>{" "}
-                          con los que trabajaremos juntos.
-                        </Label>
-                      </div>
+      {/* Contenido principal con flex-grow */}
+      <div className="flex flex-grow overflow-hidden">
+        {/* Imagen fija en desktop */}
+        <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
+          <div className="absolute inset-0">
+            <Image
+              src={DeliveryImage}
+              alt="Delivery service illustration"
+              fill
+              className="object-cover"
+              priority
+              sizes="50vw"
+            />
+          </div>
+        </div>
+
+        {/* Área del formulario con scroll interno */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-8 pb-32">
+            <div className="space-y-8">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">
+                  Revisa tus datos
+                </h1>
+                <p className="text-muted-foreground">
+                  Por favor verifica que la información sea correcta antes de continuar.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <DatosSeccion
+                  title="Datos del negocio"
+                  onEdit={() => handleEdit("business")}
+                  data={data.datos_negocio}
+                />
+                <DatosSeccion
+                  title="Dirección del Negocio"
+                  onEdit={() => handleEdit("address")}
+                  data={data.direccion_negocio}
+                />
+                <DatosSeccion 
+                  title="Datos legales" 
+                  onEdit={() => handleEdit("legal")} 
+                  data={data.datos_legales} 
+                />
+                <DatosSeccion 
+                  title="Datos bancarios" 
+                  onEdit={() => handleEdit("bank")} 
+                  data={data.datos_bancarios} 
+                />
+
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">Relación comercial</h3>
+                    <Button
+                      variant="link"
+                      className="text-pink-600 hover:text-pink-700 font-medium"
+                      onClick={() => handleEdit("commercial")}
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    <p className="text-sm font-medium text-gray-700">Logistica + Pelican Admin (Shop)</p>
+                    <div className="flex items-start space-x-3 bg-gray-50 p-4 rounded-lg border">
+                      <Checkbox
+                        id="terms"
+                        checked={acceptedTerms}
+                        onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                        className="mt-1"
+                      />
+                      <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed cursor-pointer">
+                        Para finalizar el registro, te pedimos que leas y aceptes los{" "}
+                        <a href="#" className="text-pink-600 hover:text-pink-700 underline font-medium">
+                          términos y condiciones
+                        </a>{" "}
+                        con los que trabajaremos juntos.
+                      </Label>
                     </div>
                   </div>
-                </CardContent>
-              </ScrollArea>
-            </Card>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <StepNavigation
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        onNext={handleNext}
-        isNextDisabled={!acceptedTerms || isSubmitting}
-      />
-    </section>
+      {/* StepNavigation fijo */}
+      <div className="flex-shrink-0 border-t">
+        <StepNavigation
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          onNext={handleNext}
+          onBack={handleBack}
+          isNextDisabled={!acceptedTerms || isSubmitting}
+        />
+      </div>
+    </div>
+  )
+}
+
+export default function ReviewData() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <ReviewDataContent />
+    </Suspense>
   )
 }

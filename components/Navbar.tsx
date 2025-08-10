@@ -1,3 +1,4 @@
+// components\Navbar.tsx
 "use client";
 
 import * as React from "react";
@@ -14,7 +15,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <nav className="bg-[#fff] py-2  fixed w-full top-0 z-50 shadow-md">
+    <nav className="bg-[#fff] py-2 w-full top-0  shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex-shrink-0">

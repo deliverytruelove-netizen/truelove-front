@@ -116,53 +116,55 @@ export function LocalRatingsDetail({ localId, onClose }: LocalRatingsDetailProps
           </TabsList>
           
           <TabsContent value="stars">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data.ratingCounts}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="star" />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value) => [`${value} calificaciones`, "Cantidad"]}
-                    labelFormatter={(star) => `${star} estrellas`}
-                  />
-                  <Bar dataKey="count" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {data.ratingCounts.length > 0 ? (
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={data.ratingCounts}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="star" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value) => [`${value} calificaciones`, "Cantidad"]}
+                      labelFormatter={(star) => `${star} estrellas`}
+                    />
+                    <Bar dataKey="count" fill="#ef4444" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[250px] w-full flex items-center justify-center">
+                <p className="text-muted-foreground">No hay datos de estrellas para mostrar.</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="dates">
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data.ratingsByDate}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value) => [`${value} calificaciones`, "Cantidad"]}
-                    labelFormatter={(date) => `Fecha: ${date}`}
-                  />
-                  <Bar dataKey="count" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {data.ratingsByDate.length > 0 ? (
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={data.ratingsByDate}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value) => [`${value} calificaciones`, "Cantidad"]}
+                      labelFormatter={(date) => `Fecha: ${date}`}
+                    />
+                    <Bar dataKey="count" fill="#ef4444" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[250px] w-full flex items-center justify-center">
+                <p className="text-muted-foreground">No hay datos de fechas para mostrar.</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
         

@@ -161,7 +161,7 @@ const Dashboard = () => {
                 recentActivity={recentActivity}
                 lastLogin={lastLoginTime}
               />
-            </>
+            </> 
           )}
         </div>
         {/* NUEVOS GRÁFICOS DE RANKINGS */}
