@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { SkipForward, Info } from "lucide-react";
@@ -35,7 +35,7 @@ interface EstablecimientoDireccion {
   direccion_completa: string;
 }
 
-export default function DatosBancarios() {
+function DatosBancariosContent() {
   useBodyScrollLock();
   const router = useRouter();
   const { toast } = useToast();
@@ -276,92 +276,115 @@ export default function DatosBancarios() {
   };
 
   return (
-    <section className="min-h-screen w-full bg-gray-50">
-      <Navbar />
-      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-140px)]">
-        {/* Imagen - oculta en móvil */}
-        <div className="relative hidden h-full lg:block overflow-hidden">
-          <Image
-            alt="Business person working on a laptop"
-            className="absolute inset-0 h-full w-full object-cover"
-            height={1080}
-            src={Persona || "/placeholder.svg"}
-            width={1920}
-            priority
-          />
+    <div className="flex flex-col h-dvh bg-white overflow-hidden">
+      {/* Navbar fijo */}
+      <div className="flex-shrink-0 bg-white">
+        <Navbar />
+      </div>
+
+      {/* Contenido principal con flex-grow */}
+      <div className="flex flex-grow overflow-hidden">
+        {/* Imagen fija en desktop */}
+        <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
+          <div className="absolute inset-0">
+            <Image
+              src={Persona}
+              alt="Persona trabajando con laptop"
+              fill
+              className="object-cover"
+              priority
+              sizes="50vw"
+            />
+          </div>
         </div>
 
-        {/* Contenido del formulario */}
-        <div className="flex flex-col p-4 sm:p-6 lg:p-8 relative min-h-[calc(100vh-140px)]">
-          {/* Botón de saltar paso - responsive */}
-          <div className="flex flex-col items-end mb-4 lg:absolute lg:top-0 lg:right-0 lg:mb-0 lg:z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSkip}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-100 rounded-full px-3 py-2 sm:px-4 transition-all shadow-sm text-sm"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></span>
-                  <span>Procesando...</span>
-                </>
-              ) : (
-                <>
-                  <SkipForward className="h-4 w-4" />
-                  <span>Saltar este paso</span>
-                </>
-              )}
-            </Button>
-            <p className="text-xs text-gray-500 mt-2 max-w-[200px] sm:max-w-[180px] text-right lg:text-right text-center">
-              Puede completar esta información más tarde desde su panel de control
-            </p>
-          </div>
-
-          {/* Contenedor principal del formulario */}
-          <div className="flex-1 flex flex-col items-center pt-4 lg:pt-0">
-            <div className="w-full max-w-md flex flex-col h-full">
-              {/* Área scrolleable del formulario */}
-              <div className="flex-1 overflow-y-auto pr-2 max-h-[calc(100vh-280px)]">
-                <FormularioDatosBancarios
-                  formData={formData}
-                  handleInputChange={handleInputChange}
-                  handleSelectChange={handleSelectChange}
-                  handleCheckboxChange={handleCheckboxChange}
-                  isLoading={isLoading}
-                  isSaving={isSaving}
-                  establecimientoDireccion={establecimientoDireccion}
-                />
-              </div>
-              
-              {/* Texto informativo fijo en la parte inferior */}
-              <div className="mt-4 flex items-start gap-3 w-full text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm flex-shrink-0">
-                <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                <p>
-                  Puede ingresar sus datos bancarios para recibir pagos. Esta información puede ser completada más tarde si
-                  lo prefiere.
+        {/* Área del formulario con scroll interno */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-8 pb-32 relative">
+            {/* Botón saltar paso - posicionado mejor */}
+            <div className="absolute top-0 right-0 mb-8">
+              <div className="flex flex-col items-end space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSkip}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 transition-all shadow-sm"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></span>
+                      <span>Procesando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <SkipForward className="h-4 w-4" />
+                      <span>Saltar este paso</span>
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground max-w-[200px] text-right">
+                  Puede completar esta información más tarde
                 </p>
               </div>
             </div>
-          </div>
-          {/* Contenedor principal del formulario con scroll */}
-          <div className="flex-1 flex flex-col justify-start items-center overflow-hidden">
-            <div className="w-full max-w-md h-full flex flex-col">
-              {/* Área scrolleable del formulario */}
-              <div className="flex-1 overflow-y-auto pr-2">
+
+            <div className="space-y-8 mt-16">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">
+                  Datos Bancarios
+                </h1>
+                <p className="text-muted-foreground">
+                  Ingrese su información bancaria para recibir pagos. Esta
+                  información puede ser completada más tarde si lo prefiere.
+                </p>
+              </div>
+
+              <FormularioDatosBancarios
+                formData={formData}
+                handleInputChange={handleInputChange}
+                handleSelectChange={handleSelectChange}
+                handleCheckboxChange={handleCheckboxChange}
+                isLoading={isLoading}
+                isSaving={isSaving}
+                establecimientoDireccion={establecimientoDireccion}
+              />
+
+              {/* Información importante */}
+              <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Información Importante</p>
+                  <p>
+                    Esta información será utilizada únicamente para procesar los pagos 
+                    de sus clientes de manera segura. Puede omitir este paso y 
+                    completarlo más tarde desde su panel de control.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-          <StepNavigation
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            onNext={handleNext}
-            onBack={handleBack}
-            isNextDisabled={!isFormValid || isLoading || isSaving}
-          />
         </div>
       </div>
-    </section>
+
+      {/* StepNavigation fijo */}
+      <div className="flex-shrink-0 border-t">
+        <StepNavigation
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          onNext={handleNext}
+          onBack={handleBack}
+          isNextDisabled={!isFormValid || isLoading || isSaving}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function DatosBancarios() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <DatosBancariosContent />
+    </Suspense>
   );
 }

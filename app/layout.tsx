@@ -32,17 +32,12 @@ export default function RootLayout({
    
         <meta name="description" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col`}>
         {/* {pathname === "/admin" ? null : <Navbar />} */}
         
-        <main 
-          className="h-full"
-         
-        >
-          <div className="">
-            {children}
-            <Toaster/>
-          </div>
+        <main className="flex-grow">
+          {children}
+          <Toaster/>
         </main>
       </body>
     </html>

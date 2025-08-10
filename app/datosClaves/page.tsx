@@ -15,7 +15,10 @@ import { updateRegistrationStep, getRegistrationData } from "@/services/registra
 import { saveBusinessKeyData, fetchExistingBusinessData } from "./services/serviciosDatosNegocio"
 import FormularioDatosClave from "./components/FormularioDatosClave"
 
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 export default function DatosClaveNegocio() {
+  useBodyScrollLock();
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -114,67 +117,71 @@ export default function DatosClaveNegocio() {
   }
 
   return (
-    <section className="min-h-screen w-full bg-gray-50">
-      <Navbar />
-      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-140px)]">
-        <div className="relative hidden h-full lg:block overflow-hidden">
+    <div className="flex flex-col h-dvh bg-white overflow-hidden">
+      <div className="flex-shrink-0 bg-white">
+        <Navbar />
+      </div>
+
+      <div className="flex flex-grow overflow-hidden">
+        {/* Columna de la imagen */}
+        <div className="relative hidden lg:block w-1/2 overflow-hidden">
           <Image
             alt="Persona de negocios trabajando en una laptop"
-            className="absolute inset-0 h-full w-full object-cover"
-            height={1080}
+            className="h-full w-full object-cover"
             src={Persona || "/placeholder.svg"}
-            style={{
-              objectFit: "cover",
-            }}
-            width={1920}
+            layout="fill"
           />
         </div>
-        <div className="flex flex-col p-4 sm:p-6 lg:p-8 relative min-h-[calc(100vh-140px)]">
-          {/* Botón de saltar paso mejorado */}
-          <div className="flex flex-col items-end mb-4 lg:absolute lg:top-8 lg:right-8 lg:mb-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSkip}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-100 rounded-full px-3 py-2 sm:px-4 transition-all shadow-sm text-sm"
-            >
-              <SkipForward className="h-4 w-4" />
-              <span>Saltar este paso</span>
-            </Button>
-            <p className="text-xs text-gray-500 mt-2 max-w-[200px] sm:max-w-[180px] text-right lg:text-right ">
-              Puede saltar este paso y completarlo más tarde
-            </p>
-          </div>
 
-          {/* Contenedor principal del formulario */}
-          <div className="flex-1 flex flex-col justify-center items-center">
-            <FormularioDatosClave
-              formData={formData}
-              setFormData={setFormData}
-              isLoading={isLoading}
-              setIsLoading={setIsLoading}
-              isSaving={isSaving}
-            />
+        {/* Columna del formulario */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col justify-center p-4 sm:p-6 lg:p-8 h-full">
+            <div className="flex justify-end mb-4">
+              <div className="flex flex-col items-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSkip}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-100 rounded-full px-3 py-2 sm:px-4 transition-all shadow-sm text-sm"
+                >
+                  <SkipForward className="h-4 w-4" />
+                  <span>Saltar este paso</span>
+                </Button>
+                <p className="text-xs text-gray-500 mt-2 max-w-[200px] sm:max-w-[180px] text-right">
+                  Puede saltar este paso y completarlo más tarde
+                </p>
+              </div>
+            </div>
 
-            {/* Texto informativo mejorado */}
-            <div className="mt-6 flex items-start gap-3 w-full max-w-md text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
-              <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-              <p>
-                Puede ingresar algunos datos clave de su negocio en este paso. Esta información nos ayudará a personalizar
-                su experiencia, pero puede completarla más adelante si lo prefiere.
-              </p>
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <FormularioDatosClave
+                formData={formData}
+                setFormData={setFormData}
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+                isSaving={isSaving}
+              />
+
+              <div className="mt-6 flex items-start gap-3 w-full max-w-md text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                <p>
+                  Puede ingresar algunos datos clave de su negocio en este paso. Esta información nos ayudará a personalizar su experiencia, pero puede completarla más adelante si lo prefiere.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <StepNavigation
-        currentStep={4}
-        totalSteps={6}
-        onNext={handleNext}
-        onBack={handleBack}
-        isNextDisabled={!isFormValid || isLoading || isSaving}
-      />
-    </section>
+      <div className="flex-shrink-0 border-t">
+        <StepNavigation
+          currentStep={4}
+          totalSteps={6}
+          onNext={handleNext}
+          onBack={handleBack}
+          isNextDisabled={!isFormValid || isLoading || isSaving}
+        />
+      </div>
+    </div>
   )
 }

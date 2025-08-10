@@ -2,14 +2,11 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
-// import Link from "next/link"
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/ui/navbar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import ImagenCuenta from "@/public/img/negocio.jpg";
 import { CapturarImagen } from "./components/CapturarImagen";
 import {
@@ -30,7 +28,8 @@ import {
   getRegistrationToken,
 } from "@/services/registrationTokenService";
 
-export default function CuentaBancariaPage() {
+function CuentaBancariaContent() {
+  useBodyScrollLock();
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +46,24 @@ export default function CuentaBancariaPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Función para manejar el click del botón
+  const handleButtonClick = () => {
+    // Crear un evento sintético para el formulario
+    const form = document.querySelector("form");
+    if (form) {
+      const syntheticEvent = new Event("submit", {
+        bubbles: true,
+        cancelable: true,
+      });
+      // Prevenir el comportamiento por defecto
+      syntheticEvent.preventDefault = () => {};
+      // Llamar a handleSubmit con el evento sintético
+      handleSubmit(
+        syntheticEvent as unknown as React.FormEvent<HTMLFormElement>
+      );
+    }
+  };
 
   useEffect(() => {
     const checkRegistrationStep = async () => {
@@ -163,19 +180,19 @@ export default function CuentaBancariaPage() {
       submitData.append(key, value);
     });
 
-if (selectedFiles) {
-  Array.from(selectedFiles).forEach((file, index) => {
-    // Asegurar que el archivo tenga el nombre correcto
-    const fileName = file.name || `file_${index}.${file.type.split('/')[1]}`;
-    submitData.append("imagenes_cuenta[]", file, fileName);
-  });
-} else if (capturedImage) {
-  const response = await fetch(capturedImage);
-  const blob = await response.blob();
-  const jpegBlob = new Blob([blob], { type: 'image/jpeg' });
-  submitData.append("imagenes_cuenta[]", jpegBlob, "captured_image.jpg");
-}
-
+    if (selectedFiles) {
+      Array.from(selectedFiles).forEach((file, index) => {
+        // Asegurar que el archivo tenga el nombre correcto
+        const fileName =
+          file.name || `file_${index}.${file.type.split("/")[1]}`;
+        submitData.append("imagenes_cuenta[]", file, fileName);
+      });
+    } else if (capturedImage) {
+      const response = await fetch(capturedImage);
+      const blob = await response.blob();
+      const jpegBlob = new Blob([blob], { type: "image/jpeg" });
+      submitData.append("imagenes_cuenta[]", jpegBlob, "captured_image.jpg");
+    }
 
     try {
       const registrationData = await getRegistrationData();
@@ -268,67 +285,75 @@ if (selectedFiles) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      {/* <div className="flex items-center gap-2 md:gap-4">
-          <Button asChild variant="ghost" className="text-xs md:text-sm">
-            <Link href="/">¿Tienes preguntas?</Link>
-          </Button>
-          <Button asChild variant="default" className="bg-[#f34739] text-white hover:bg-[#d63c30] text-xs md:text-sm">
-            <Link href="/">Guardar y salir</Link>
-          </Button>
+    <div className="flex flex-col h-dvh bg-white overflow-hidden">
+      {/* Navbar fijo */}
+      <div className="flex-shrink-0 bg-white">
+        <Navbar />
+      </div>
+
+      {/* Contenido principal con flex-grow */}
+      <div className="flex flex-grow overflow-hidden">
+        {/* Imagen fija en desktop */}
+        <div className="hidden md:block w-1/2 relative bg-muted flex-shrink-0">
+          <div className="absolute inset-0">
+            <Image
+              src={ImagenCuenta}
+              alt="Imagen cuenta bancaria"
+              fill
+              className="object-cover"
+              priority
+              sizes="50vw"
+            />
+          </div>
         </div>
-      </Navbar> */}
 
-      <div className="flex flex-col md:flex-row flex-1">
-        <div className="hidden md:block w-full md:w-1/2 h-48 md:h-auto relative">
-          <Image
-            src={ImagenCuenta || "/placeholder.svg"}
-            alt="Banco"
-            layout="fill"
-            objectFit="cover"
-          />
-        </div>
-
-        <div className="w-full md:w-1/2 bg-white">
-          <ScrollArea className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
-            <form
-              onSubmit={handleSubmit}
-              className="p-4 md:p-8 max-w-xl mx-auto space-y-6 md:space-y-8"
-            >
-              {Object.keys(formErrors).length > 0 && (
-                <div
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-                  role="alert"
-                >
-                  <strong className="font-bold">
-                    Por favor, corrija los errores en el formulario.
-                  </strong>
-                </div>
-              )}
-
-              {apiError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{apiError}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="md:block hidden">
-                <h1 className="text-xl md:text-2xl font-bold">
+        {/* Área del formulario con scroll interno */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-8 pb-32">
+            <div className="space-y-8">
+              {/* Título y descripción - ahora visible en móvil */}
+              <div>
+                <h1 className="text-2xl font-bold mb-2">
                   Imagen cuenta bancaria
                 </h1>
-                <p className="text-sm md:text-base text-gray-500 mt-2">
-                  Necesitamos verificar tu información.
+                <p className="text-muted-foreground">
+                  Necesitamos verificar tu información bancaria para procesar
+                  los pagos correctamente.
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
+              <form
+                onSubmit={handleSubmit}
+                className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"
+              >
+                {/* Alertas de error */}
+                {Object.keys(formErrors).length > 0 && (
+                  <div className="md:col-span-2">
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error en el formulario</AlertTitle>
+                      <AlertDescription>
+                        Por favor, corrija los errores marcados en rojo.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+
+                {apiError && (
+                  <div className="md:col-span-2">
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{apiError}</AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+
+                {/* Titular de Cuenta */}
+                <div className="md:col-span-2">
                   <Label
                     htmlFor="titular_cuenta"
-                    className="text-sm md:text-base"
+                    className="text-sm font-medium"
                   >
                     Titular de Cuenta Bancaria *
                   </Label>
@@ -336,7 +361,7 @@ if (selectedFiles) {
                     id="titular_cuenta"
                     name="titular_cuenta"
                     placeholder="Ingresa el nombre del titular"
-                    className={`text-sm md:text-base ${
+                    className={`mt-1 ${
                       formErrors.titular_cuenta ? "border-red-500" : ""
                     }`}
                     value={formData.titular_cuenta}
@@ -350,17 +375,16 @@ if (selectedFiles) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="dni" className="text-sm md:text-base">
+                {/* DNI */}
+                <div>
+                  <Label htmlFor="dni" className="text-sm font-medium">
                     DNI *
                   </Label>
                   <Input
                     id="dni"
                     name="dni"
                     placeholder="Ingresa el número de DNI"
-                    className={`text-sm md:text-base ${
-                      formErrors.dni ? "border-red-500" : ""
-                    }`}
+                    className={`mt-1 ${formErrors.dni ? "border-red-500" : ""}`}
                     value={formData.dni}
                     onChange={handleInputChange}
                     required
@@ -372,8 +396,9 @@ if (selectedFiles) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="banco_id" className="text-sm md:text-base">
+                {/* Banco */}
+                <div>
+                  <Label htmlFor="banco_id" className="text-sm font-medium">
                     Nombre del banco *
                   </Label>
                   <Select
@@ -381,7 +406,11 @@ if (selectedFiles) {
                       handleSelectChange("banco_id", value)
                     }
                   >
-                    <SelectTrigger className="text-sm md:text-base">
+                    <SelectTrigger
+                      className={`mt-1 ${
+                        formErrors.banco_id ? "border-red-500" : ""
+                      }`}
+                    >
                       <SelectValue placeholder="Selecciona tu banco" />
                     </SelectTrigger>
                     <SelectContent>
@@ -399,10 +428,11 @@ if (selectedFiles) {
                   )}
                 </div>
 
-                <div className="space-y-2">
+                {/* Tipo de Cuenta */}
+                <div>
                   <Label
                     htmlFor="tipo_cuenta_id"
-                    className="text-sm md:text-base"
+                    className="text-sm font-medium"
                   >
                     Tipo de Cuenta Bancaria *
                   </Label>
@@ -411,7 +441,11 @@ if (selectedFiles) {
                       handleSelectChange("tipo_cuenta_id", value)
                     }
                   >
-                    <SelectTrigger className="text-sm md:text-base">
+                    <SelectTrigger
+                      className={`mt-1 ${
+                        formErrors.tipo_cuenta_id ? "border-red-500" : ""
+                      }`}
+                    >
                       <SelectValue placeholder="Selecciona el tipo de cuenta" />
                     </SelectTrigger>
                     <SelectContent>
@@ -426,10 +460,11 @@ if (selectedFiles) {
                   )}
                 </div>
 
-                <div className="space-y-2">
+                {/* Número de Cuenta */}
+                <div>
                   <Label
                     htmlFor="numero_cuenta"
-                    className="text-sm md:text-base"
+                    className="text-sm font-medium"
                   >
                     Número de Cuenta Bancaria *
                   </Label>
@@ -437,7 +472,7 @@ if (selectedFiles) {
                     id="numero_cuenta"
                     name="numero_cuenta"
                     placeholder="Ingresa el número de cuenta"
-                    className={`text-sm md:text-base ${
+                    className={`mt-1 ${
                       formErrors.numero_cuenta ? "border-red-500" : ""
                     }`}
                     value={formData.numero_cuenta}
@@ -451,13 +486,14 @@ if (selectedFiles) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm md:text-base">
+                {/* Imagen de cuenta bancaria */}
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium">
                     Imagen de cuenta bancaria *
                   </Label>
 
                   {fileSizeError && (
-                    <div className="mb-3">
+                    <div className="mt-2">
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Error de tamaño de archivo</AlertTitle>
@@ -470,14 +506,16 @@ if (selectedFiles) {
                   )}
 
                   <div
-                    className={`border-2 ${
-                      fileSizeError ? "border-red-500" : "border-dashed"
-                    } rounded-lg p-4 text-center space-y-4`}
+                    className={`mt-2 border-2 ${
+                      fileSizeError
+                        ? "border-red-500"
+                        : "border-dashed border-gray-300"
+                    } rounded-lg p-6 text-center space-y-4`}
                   >
                     {/* Si no hay archivos seleccionados ni imagen capturada, mostrar instrucciones */}
                     {!selectedFiles && !capturedImage && (
-                      <div className="flex flex-col items-center gap-2">
-                        <p className="text-xs md:text-sm text-gray-500">
+                      <div className="flex flex-col items-center gap-4">
+                        <p className="text-sm text-gray-600">
                           Adjuntar en formato JPEG, PDF o PNG.{" "}
                           <strong>Tamaño máximo del archivo: 4 MB</strong>.
                           Puedes subir un máximo de 2 archivos
@@ -494,7 +532,7 @@ if (selectedFiles) {
                         />
                         <Label
                           htmlFor="file-upload"
-                          className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs md:text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 md:h-9 px-3 md:px-4 py-2"
+                          className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                         >
                           Seleccionar archivo
                         </Label>
@@ -515,11 +553,11 @@ if (selectedFiles) {
                             key={index}
                             className={`relative border ${
                               isOversize ? "border-red-500" : "border-gray-200"
-                            } rounded-lg p-2 mt-2`}
+                            } rounded-lg p-4 mt-2`}
                           >
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-4">
                               {isImage ? (
-                                <div className="flex-shrink-0 relative h-16 w-16 md:h-20 md:w-20">
+                                <div className="flex-shrink-0 relative h-20 w-20">
                                   <Image
                                     src={fileUrl || "/placeholder.svg"}
                                     alt={file.name}
@@ -528,7 +566,7 @@ if (selectedFiles) {
                                   />
                                 </div>
                               ) : isPdf ? (
-                                <div className="flex-shrink-0 flex items-center justify-center h-16 w-16 md:h-20 md:w-20 bg-red-100 rounded-md">
+                                <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 bg-red-100 rounded-md">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"
@@ -547,7 +585,7 @@ if (selectedFiles) {
                                   </svg>
                                 </div>
                               ) : (
-                                <div className="flex-shrink-0 flex items-center justify-center h-16 w-16 md:h-20 md:w-20 bg-gray-100 rounded-md">
+                                <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 bg-gray-100 rounded-md">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"
@@ -566,7 +604,7 @@ if (selectedFiles) {
                               )}
                               <div className="flex-1 min-w-0 pr-2">
                                 <p
-                                  className="text-sm font-medium text-gray-900 truncate max-w-[140px] md:max-w-none"
+                                  className="text-sm font-medium text-gray-900 truncate"
                                   title={file.name}
                                 >
                                   {file.name}
@@ -585,7 +623,7 @@ if (selectedFiles) {
                               <button
                                 type="button"
                                 onClick={clearSelectedFiles}
-                                className="flex-shrink-0 bg-white rounded-full p-1 text-gray-400 hover:text-gray-500 border"
+                                className="flex-shrink-0 bg-white rounded-full p-2 text-gray-400 hover:text-gray-500 border"
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -609,9 +647,9 @@ if (selectedFiles) {
 
                     {/* Vista previa de imagen capturada */}
                     {capturedImage && (
-                      <div className="relative border rounded-lg p-2 mt-2">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0 relative h-16 w-16 md:h-20 md:w-20">
+                      <div className="relative border rounded-lg p-4 mt-2">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0 relative h-20 w-20">
                             <Image
                               src={capturedImage || "/placeholder.svg"}
                               alt="Imagen capturada"
@@ -627,7 +665,7 @@ if (selectedFiles) {
                           <button
                             type="button"
                             onClick={clearCapturedImage}
-                            className="flex-shrink-0 bg-white rounded-full p-1 text-gray-400 hover:text-gray-500 border"
+                            className="flex-shrink-0 bg-white rounded-full p-2 text-gray-400 hover:text-gray-500 border"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -653,8 +691,8 @@ if (selectedFiles) {
                       !capturedImage &&
                       typeof window !== "undefined" &&
                       isMobile() && (
-                        <div className="flex flex-col items-center gap-2 mt-4">
-                          <p className="text-xs md:text-sm text-gray-500">
+                        <div className="flex flex-col items-center gap-4 mt-4">
+                          <p className="text-sm text-gray-600">
                             O captura una imagen con tu cámara
                           </p>
                           <CapturarImagen onCapture={handleCapture} />
@@ -667,32 +705,70 @@ if (selectedFiles) {
                     </p>
                   )}
                 </div>
-              </div>
 
-              <div className="bg-blue-50 p-3 md:p-4 rounded-lg space-y-2">
-                <p className="text-xs md:text-sm text-blue-800">
-                  El justificante bancario debe incluir los cinco datos
-                  anteriores. Consulte el ejemplo siguiente como referencia.
-                </p>
-                <p className="text-xs md:text-sm text-blue-800">
-                  Puede seleccionar y cargar varias imágenes o documentos si los
-                  cinco datos están en páginas o pantallas separadas.
-                </p>
-              </div>
+                {/* Información importante */}
+                <div className="md:col-span-2">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="space-y-2">
+                      <p className="text-sm text-blue-800 font-medium">
+                        📋 Información importante:
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        El justificante bancario debe incluir los cinco datos
+                        anteriores. Consulte el ejemplo siguiente como
+                        referencia.
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        Puede seleccionar y cargar varias imágenes o documentos
+                        si los cinco datos están en páginas o pantallas
+                        separadas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <div className="flex justify-end pt-4">
-                <Button
-                  type="submit"
-                  className="bg-red-500 hover:bg-pink-600 text-xs md:text-sm"
-                  disabled={isSubmitting || fileSizeError}
-                >
-                  {isSubmitting ? "Enviando..." : "Continuar"}
-                </Button>
+      {/* Botón de continuar fijo en la parte inferior - MUY VISIBLE */}
+      <div className="flex-shrink-0 border-t bg-white p-4 md:p-6">
+        <div className="max-w-2xl ml-auto flex justify-end">
+          <Button
+            type="button"
+            onClick={handleButtonClick}
+            className="w-full md:w-auto md:min-w-[200px] bg-red-500 hover:bg-red-600 text-white font-medium py-4 md:py-3 text-lg md:text-base shadow-lg hover:shadow-xl transition-all duration-200 md:px-8"
+            disabled={isSubmitting || fileSizeError}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <span>Enviando...</span>
               </div>
-            </form>
-          </ScrollArea>
+            ) : (
+              "Continuar"
+            )}
+          </Button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CuentaBancariaPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Cargando...</p>
+          </div>
+        </div>
+      }
+    >
+      <CuentaBancariaContent />
+    </Suspense>
   );
 }
