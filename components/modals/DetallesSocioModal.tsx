@@ -311,7 +311,7 @@ export function DetallesSocioModal({
           </div>
         );
       case "negocio":
-        return data.business && data.businessData ? (
+        return data.business ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoItem
               icon={<Building className="w-5 h-5" />}
@@ -334,26 +334,31 @@ export function DetallesSocioModal({
               value={data.business.telefono || ""}
             />
             <InfoItem
-              icon={<Briefcase className="w-5 h-5" />}
-              label="RUC"
-              value={data.businessData.ruc || ""}
-            />
-            <InfoItem
-              icon={<Briefcase className="w-5 h-5" />}
-              label="Razón Social"
-              value={data.businessData.razon_social || ""}
-            />
-            <InfoItem
               icon={<CreditCard className="w-5 h-5" />}
               label="Método de Pago Digital"
               value={formatTipoPagoDigital(data.business.tipo_pago_digital)}
             />
-            {data.business.tipo_pago_digital !== 0 && data.business.numero_pago_digital && (
-              <InfoItem
-                icon={<Phone className="w-5 h-5" />}
-                label="Número de Pago Digital"
-                value={data.business.numero_pago_digital}
-              />
+            {data.business.tipo_pago_digital !== 0 &&
+              data.business.numero_pago_digital && (
+                <InfoItem
+                  icon={<Phone className="w-5 h-5" />}
+                  label="Número de Pago Digital"
+                  value={data.business.numero_pago_digital}
+                />
+              )}
+            {data.businessData && (
+              <>
+                <InfoItem
+                  icon={<Briefcase className="w-5 h-5" />}
+                  label="RUC"
+                  value={data.businessData.ruc || ""}
+                />
+                <InfoItem
+                  icon={<Briefcase className="w-5 h-5" />}
+                  label="Razón Social"
+                  value={data.businessData.razon_social || ""}
+                />
+              </>
             )}
           </div>
         ) : (
@@ -361,6 +366,7 @@ export function DetallesSocioModal({
             No hay datos del negocio disponibles
           </p>
         );
+
       case "establecimiento":
         return data.establishment ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
