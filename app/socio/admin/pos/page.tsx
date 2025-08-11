@@ -109,9 +109,9 @@ const POSAdminPage: React.FC = () => {
   const getPOSLabel = (value: number) => {
     switch (value) {
       case 0: return 'No facilitar POS';
-      case 2: return 'POS Visa';
-      case 1: return 'POS Estilos';
-      case 2: return 'Ambos POS';
+      case 1: return 'POS Visa';
+      case 2: return 'POS Estilos';
+      case 3: return 'Ambos POS';
       default: return 'No especificado';
     }
   };
