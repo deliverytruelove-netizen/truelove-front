@@ -3,16 +3,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Clock, Upload, Plus, Calendar, ImageIcon } from "lucide-react";
+import { Clock, Upload, Plus, Calendar, ImageIcon, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { HorarioModal } from "./horario-modal";
 import logoPerfil from "@/src/assets/img/logotipo.png";
+import Swal from "sweetalert2";
 
-interface HorarioNegocio {
-  id: number;
+export interface HorarioNegocio {
+  id?: number; // Hacemos el ID opcional para la creación y edición
   nombre: string;
   lunes: boolean;
   martes: boolean;
@@ -51,6 +53,7 @@ export function PerfilNegocio({
   
   const [horarios, setHorarios] = useState<HorarioNegocio[]>(horariosIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [horarioAEditar, setHorarioAEditar] = useState<HorarioNegocio | undefined>(undefined);
 
   const obtenerPerfil = useCallback(async () => {
     try {
@@ -256,7 +259,7 @@ export function PerfilNegocio({
     }
   };
 
-  const guardarHorario = async (horarioNuevo: Omit<HorarioNegocio, "id">) => {
+  const guardarHorario = async (horarioData: HorarioNegocio) => {
     try {
       const token = document.cookie
         .split("; ")
@@ -267,15 +270,30 @@ export function PerfilNegocio({
         throw new Error("No se encontró el token de autenticación");
       }
 
-      const respuesta = await fetch(`${API_URL}/negocio/horarios`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-        body: JSON.stringify(horarioNuevo),
-      });
+      let respuesta;
+      if (horarioAEditar) {
+        // Actualizar horario existente
+        respuesta = await fetch(`${API_URL}/negocio/horarios/${horarioAEditar.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          body: JSON.stringify(horarioData),
+        });
+      } else {
+        // Crear nuevo horario
+        respuesta = await fetch(`${API_URL}/negocio/horarios`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          body: JSON.stringify(horarioData),
+        });
+      }
 
       if (!respuesta.ok) {
         const errorData = await respuesta.json();
@@ -283,14 +301,104 @@ export function PerfilNegocio({
       }
 
       const horarioGuardado = await respuesta.json();
-      setHorarios([...horarios, horarioGuardado]);
+
+      if (horarioAEditar) {
+        // Reemplazar el horario actualizado en la lista
+        setHorarios(horarios.map(h => h.id === horarioGuardado.id ? horarioGuardado : h));
+        Swal.fire({
+          icon: 'success',
+          title: '¡Éxito!',
+          text: 'Horario actualizado correctamente.',
+          confirmButtonColor: '#dc2626'
+        });
+      } else {
+        // Agregar el nuevo horario a la lista
+        setHorarios([...horarios, horarioGuardado]);
+        Swal.fire({
+          icon: 'success',
+          title: '¡Éxito!',
+          text: 'Horario guardado correctamente.',
+          confirmButtonColor: '#dc2626'
+        });
+      }
+
       setModalAbierto(false);
+      setHorarioAEditar(undefined); // Resetear el horario a editar
     } catch (error: unknown) {
       console.error("Error al guardar horario:", error);
+      let errorMessage = "Error al guardar el horario";
       if (error instanceof Error) {
-        throw new Error(error.message);
+        errorMessage = error.message;
       }
-      throw new Error("Error al guardar el horario");
+      Swal.fire({
+        icon: 'error',
+        title: '¡Error!',
+        text: errorMessage,
+        confirmButtonColor: '#dc2626'
+      });
+    }
+  };
+
+  const handleEditHorario = (horario: HorarioNegocio) => {
+    setHorarioAEditar(horario);
+    setModalAbierto(true);
+  };
+
+  const handleDeleteHorario = async (id: number) => {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: "¡No podrás revertir esto!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminarlo!',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const token = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("authToken="))
+          ?.split("=")[1];
+
+        if (!token) {
+          throw new Error("No se encontró el token de autenticación");
+        }
+
+        const respuesta = await fetch(`${API_URL}/negocio/horarios/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (!respuesta.ok) {
+          const errorData = await respuesta.json();
+          throw new Error(errorData.message || "Error al eliminar el horario");
+        }
+
+        // Eliminar el horario de la lista
+        setHorarios(horarios.filter(h => h.id !== id));
+        Swal.fire(
+          '¡Eliminado!',
+          'El horario ha sido eliminado.',
+          'success'
+        );
+      } catch (error: unknown) {
+        console.error("Error al eliminar horario:", error);
+        let errorMessage = "Error al eliminar el horario";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        Swal.fire(
+          '¡Error!',
+          errorMessage,
+          'error'
+        );
+      }
     }
   };
 
@@ -519,19 +627,37 @@ export function PerfilNegocio({
                             </Badge>
                           </div>
                         </div>
-                        <Badge
-                          variant={horario.activo ? "default" : "secondary"}
-                          className={`
-                            rounded-lg px-4 py-1.5 text-sm font-medium transition-colors
-                            ${
-                              horario.activo
-                                ? "border-green-500/20 bg-green-500/10 text-green-500 group-hover:bg-green-500/20"
-                                : "bg-muted text-muted-foreground"
-                            }
-                          `}
-                        >
-                          {horario.activo ? "Activo" : "Inactivo"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={horario.activo ? "default" : "secondary"}
+                            className={`
+                              rounded-lg px-4 py-1.5 text-sm font-medium transition-colors
+                              ${
+                                horario.activo
+                                  ? "border-green-500/20 bg-green-500/10 text-green-500 group-hover:bg-green-500/20"
+                                  : "bg-muted text-muted-foreground"
+                              }
+                            `}
+                          >
+                            {horario.activo ? "Activo" : "Inactivo"}
+                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="rounded-full">
+                                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditHorario(horario)}>
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleDeleteHorario(horario.id!)}>
+                                Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -559,8 +685,14 @@ export function PerfilNegocio({
 
       <HorarioModal
         open={modalAbierto}
-        onOpenChange={setModalAbierto}
+        onOpenChange={(open) => {
+          setModalAbierto(open);
+          if (!open) {
+            setHorarioAEditar(undefined); // Resetear al cerrar el modal
+          }
+        }}
         onGuardar={guardarHorario}
+        initialData={horarioAEditar}
       />
     </div>
   );

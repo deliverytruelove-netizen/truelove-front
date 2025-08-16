@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PerfilNegocio } from "./components/perfil-negocio"
 import Link from "next/link"
-import { Store, Clock, FileText, HeadphonesIcon } from "lucide-react"
+import { Store, FileText, HeadphonesIcon } from "lucide-react"
 
 const horariosEjemplo = [
   {
@@ -77,7 +77,8 @@ export default function SocioDashboard() {
                 </Link>
 
                 <Link href="/socio/admin/configuracion" className="block">
-                  <Button
+                  {/* <Button
+
                     variant="outline"
                     className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-gray-800 dark:text-white"
                   >
@@ -91,7 +92,7 @@ export default function SocioDashboard() {
                         <span className="text-xs text-gray-500 dark:text-gray-200">Configura tus horarios</span>
                       </div>
                     </div>
-                  </Button>
+                  </Button> */}
                 </Link>
 
                 <Button

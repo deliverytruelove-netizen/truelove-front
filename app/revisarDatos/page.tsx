@@ -64,7 +64,7 @@ function ReviewDataContent() {
     checkTokenAndFetchData()
   }, [fetchData, router, toast])
 
-  const handleEdit = (section: string) => {
+  const handleEdit = async (section: string) => {
     const routes = {
       business: "/acercaNegocio",
       address: "/ubicar-local",
@@ -75,7 +75,17 @@ function ReviewDataContent() {
 
     const route = routes[section as keyof typeof routes]
     if (route) {
-      router.push(route)
+      try {
+        await updateRegistrationStep(route)
+        router.push(route)
+      } catch (error) {
+        console.error("Error al actualizar el paso:", error)
+        toast({
+          title: "Error",
+          description: "No se pudo navegar a la sección de edición.",
+          variant: "destructive",
+        })
+      }
     }
   }
 

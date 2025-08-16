@@ -44,6 +44,7 @@ function FormularioDetallesNegocioContent() {
       phoneNumber: "+51",
       digitalWallet: "0",
       useSamePhone: true,
+      walletOwnerName: "",
     },
   });
 
@@ -105,6 +106,7 @@ function FormularioDetallesNegocioContent() {
           phoneNumber: negocioData.telefono,
           digitalWallet: negocioData.tipo_pago_digital || "0",
           useSamePhone: true,
+          walletOwnerName: negocioData.nombre_titular_pago_digital || "",
         });
 
         // Cargar las categorías correspondientes
@@ -187,6 +189,10 @@ function FormularioDetallesNegocioContent() {
               ? data.useSamePhone
                 ? data.phoneNumber.replace(/\s/g, "").substring(3)
                 : data.walletNumber
+              : null,
+          nombre_titular_pago_digital:
+            data.digitalWallet !== "0" && !data.useSamePhone
+              ? data.walletOwnerName
               : null,
         };
 

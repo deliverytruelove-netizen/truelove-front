@@ -13,24 +13,14 @@ import { Clock, Calendar, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 
-interface HorarioModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onGuardar: (horario: HorarioFormData) => Promise<void>
-}
+import { useEffect } from "react"
+import { HorarioNegocio } from "./perfil-negocio";
 
-interface HorarioFormData {
-  nombre: string
-  lunes: boolean
-  martes: boolean
-  miercoles: boolean
-  jueves: boolean
-  viernes: boolean
-  sabado: boolean
-  domingo: boolean
-  hora_apertura: string
-  hora_cierre: string
-  activo: boolean
+interface HorarioModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onGuardar: (horario: HorarioNegocio) => Promise<void>;
+  initialData?: HorarioNegocio; // Datos iniciales para edición
 }
 
 const diasSemana = [
@@ -41,23 +31,46 @@ const diasSemana = [
   { key: "viernes", label: "Viernes" },
   { key: "sabado", label: "Sábado" },
   { key: "domingo", label: "Domingo" },
-]
+];
 
-export function HorarioModal({ open, onOpenChange, onGuardar }: HorarioModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<HorarioFormData>({
-    nombre: "",
-    lunes: false,
-    martes: false,
-    miercoles: false,
-    jueves: false,
-    viernes: false,
-    sabado: false,
-    domingo: false,
-    hora_apertura: "",
-    hora_cierre: "",
-    activo: true,
-  })
+export function HorarioModal({ open, onOpenChange, onGuardar, initialData }: HorarioModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<HorarioNegocio>(
+    initialData || {
+      nombre: "",
+      lunes: false,
+      martes: false,
+      miercoles: false,
+      jueves: false,
+      viernes: false,
+      sabado: false,
+      domingo: false,
+      hora_apertura: "",
+      hora_cierre: "",
+      activo: true,
+    }
+  );
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      // Reset form when modal is opened for new creation
+      setFormData({
+        nombre: "",
+        lunes: false,
+        martes: false,
+        miercoles: false,
+        jueves: false,
+        viernes: false,
+        sabado: false,
+        domingo: false,
+        hora_apertura: "",
+        hora_cierre: "",
+        activo: true,
+      });
+    }
+  }, [initialData, open]); // Depend on initialData and open prop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

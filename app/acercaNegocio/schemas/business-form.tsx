@@ -11,7 +11,9 @@ export const formSchema = z.object({
   phoneNumber: z.string().regex(/^\+51\d{9}$/, "Número de teléfono inválido"),
   digitalWallet: z.enum(["0", "1", "2"]),
   useSamePhone: z.boolean().optional(),
-  walletNumber: z.string().optional(),
+walletNumber: z.string().optional(),
+walletOwnerName: z.string().optional(),
+
 }).refine(data => {
   if ((data.digitalWallet === '1' || data.digitalWallet === '2') && !data.useSamePhone) {
     return data.walletNumber && /^\d{9}$/.test(data.walletNumber);
@@ -20,7 +22,14 @@ export const formSchema = z.object({
 }, {
   message: "El número de billetera es requerido y debe tener 9 dígitos",
   path: ["walletNumber"],
+}).refine(data => {
+  if (data.digitalWallet === '1' || data.digitalWallet === '2') {
+    return data.walletOwnerName && data.walletOwnerName.trim().length >= 2;
+  }
+  return true;
+}, {
+  message: "El nombre del titular es requerido y debe tener al menos 2 caracteres",
+  path: ["walletOwnerName"],
 });
-
 export type BusinessFormValues = z.infer<typeof formSchema>;
 

@@ -39,6 +39,8 @@ const menuItems = [
       { name: "Número Digital", href: "/socio/admin/num-negocio", icon: Smartphone },
     ]
   },
+  { name: "Información", href: "/socio/admin/info-socio", icon: ShoppingBag },
+
   { name: "Configuración", href: "/socio/admin/configuracion", icon: Settings },
 ];
 

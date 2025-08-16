@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useAdminTheme } from "../components/theme-provider"
+import ChangePasswordForm from "./components/ChangePasswordForm"
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB
 
@@ -87,6 +88,11 @@ export default function ConfiguracionPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Formulario para cambiar contraseña */}
+      <div className="mt-6">
+        <ChangePasswordForm />
+      </div>
     </div>
   )
 }

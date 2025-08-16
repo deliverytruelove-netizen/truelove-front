@@ -42,6 +42,22 @@ export interface DocumentosPdfExtranjero {
   antecedentes_policiales_pdf: string
 }
 
+export interface ApiResponse<T> {
+  status: string;
+  data: T;
+  message?: string;
+}
+
+export interface BusinessInfo {
+  nombre: string;
+  total_sucursales: number;
+  metodo_contacto: string;
+  telefono: string;
+  tipo_pago_digital: number;
+  numero_pago_digital: string | null;
+  nombre_titular_pago_digital: string | null;
+}
+
 export interface DetallesSocio {
   id: number
   personal: {
@@ -55,14 +71,7 @@ export interface DetallesSocio {
     entrega_documento_venta: number
   }
   documentosPdfExtranjero: DocumentosPdfExtranjero | null
-  business: {
-    nombre: string
-    total_sucursales: number
-    metodo_contacto: string
-    telefono: string
-    tipo_pago_digital: number
-    numero_pago_digital: string
-  } | null
+  business: BusinessInfo | null
 
   businessData: DatosNegocio | null
   establishment: DatosEstablecimiento | null
@@ -87,4 +96,48 @@ export interface SocioCompleto extends Socio {
   establishment: boolean //establecimiento
   bankData: boolean
   cuentaBancaria: boolean
+}
+export type BankAccountFormData = {
+  titular_cuenta: string;
+  dni: string;
+  banco_id: number;
+  tipo_cuenta_id: number;
+  numero_cuenta: string;
+  imagenes_cuenta?: File[];
+};
+
+
+export interface BankAccountUpdateData {
+  titular_cuenta: string;
+  dni: string;
+  banco_id: number;
+  tipo_cuenta_id: number;
+  numero_cuenta: string;
+  documentos?: File[];
+}
+// Agregar al final del archivo, antes de la última llave de cierre
+export interface BusinessInfoFormData {
+  nombre: string;
+  total_sucursales: number;
+  metodo_contacto: string;
+  telefono: string;
+  tipo_pago_digital: number;
+  numero_pago_digital?: string;
+  nombre_titular_pago_digital?: string;
+}
+
+
+
+export interface DatosNegocioFormData {
+  ruc: string;
+  razon_social: string;
+}
+
+export interface DatosBancariosFormData {
+  titular_cuenta: string;
+  numero_cuenta: string;
+  nombre_banco: string;
+  tipo_cuenta: string;
+  documento_titular: string;
+  codigo_cci?: string;
 }
