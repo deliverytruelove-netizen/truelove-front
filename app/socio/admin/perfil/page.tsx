@@ -2,11 +2,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MapPin, Phone, Mail, Calendar, Building2, Camera, Upload, Edit } from "lucide-react"
+import { MapPin, Phone, Mail, Calendar, Building2, Camera, Upload } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import AddressEditor from "../components/AddressEditor"
+// import AddressEditor from "../components/AddressEditor"
 import Image from "next/image"
 
 interface UserProfile {
@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profileKey, setProfileKey] = useState(Date.now())
-  const [currentView, setCurrentView] = useState<'profile' | 'address'>('profile')
+  // const [currentView, setCurrentView] = useState<'profile' | 'address'>('profile')
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -171,17 +171,17 @@ export default function ProfilePage() {
     }
   }
 
-  const handleAddressUpdate = (newAddress: string) => {
-    if (user) {
-      const updatedUser = {
-        ...user,
-        direccion: newAddress,
-      }
-      setUser(updatedUser)
-      localStorage.setItem("userProfile", JSON.stringify(updatedUser))
-      localStorage.setItem("lastProfileUpdate", new Date().getTime().toString())
-    }
-  }
+  // const handleAddressUpdate = (newAddress: string) => {
+  //   if (user) {
+  //     const updatedUser = {
+  //       ...user,
+  //       direccion: newAddress,
+  //     }
+  //     setUser(updatedUser)
+  //     localStorage.setItem("userProfile", JSON.stringify(updatedUser))
+  //     localStorage.setItem("lastProfileUpdate", new Date().getTime().toString())
+  //   }
+  // }
 
   const getImageUrl = (path: string | null) => {
     if (!path) return null
@@ -218,15 +218,15 @@ export default function ProfilePage() {
   }
 
   // Show Address Editor View
-  if (currentView === 'address') {
-    return (
-      <AddressEditor
-        currentAddress={user.direccion}
-        onAddressUpdate={handleAddressUpdate}
-        onBack={() => setCurrentView('profile')}
-      />
-    )
-  }
+  // if (currentView === 'address') {
+  //   return (
+  //     <AddressEditor
+  //       currentAddress={user.direccion}
+  //       onAddressUpdate={handleAddressUpdate}
+  //       onBack={() => setCurrentView('profile')}
+  //     />
+  //   )
+  // }
 
   // Show Profile View
   return (
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                         <MapPin className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
                         <span className="break-words">{user.direccion}</span>
                       </p>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setCurrentView('address')}
@@ -296,7 +296,7 @@ export default function ProfilePage() {
                         title="Editar dirección"
                       >
                         <Edit className="h-4 w-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                   <div>

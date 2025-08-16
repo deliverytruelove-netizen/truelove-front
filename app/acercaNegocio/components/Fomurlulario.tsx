@@ -281,23 +281,39 @@ export function BusinessForm({
               )}
             />
 
-            {!useSamePhone && (
-              <FormField
-                control={form.control}
-                name="walletNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Número de {digitalWallet === "1" ? "Yape" : "Plin"}
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="999999999" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+         {!useSamePhone && (
+  <FormField
+    control={form.control}
+    name="walletNumber"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>
+          Número de {digitalWallet === "1" ? "Yape" : "Plin"}
+        </FormLabel>
+        <FormControl>
+          <Input {...field} placeholder="999999999" />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)}
+
+<FormField
+  control={form.control}
+  name="walletOwnerName"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>
+        Nombre del titular de {digitalWallet === "1" ? "Yape" : "Plin"}
+      </FormLabel>
+      <FormControl>
+        <Input {...field} placeholder="Ingrese el nombre completo del titular" />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
           </div>
         )}
       </form>

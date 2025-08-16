@@ -1,3 +1,4 @@
+// app\socio\admin\components\Search.tsx
 "use client"
 
 import type React from "react"
