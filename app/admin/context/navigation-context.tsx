@@ -72,6 +72,11 @@ export const navigationItems: NavItem [] = [
         path: "/admin/coutas-drivers",
         icon: RiAncientGateLine,
     },
+    {
+        title : "kilómetros de la tarifa",
+        path: "/admin/kilometros-tarifa",
+        icon: RiAncientGateLine,
+    },
 ]
 
 export const NavigationProvider = ({children}: {children: ReactNode})=> {
