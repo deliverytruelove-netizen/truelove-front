@@ -138,7 +138,7 @@ const KilometrosTarifaModal: React.FC<KilometrosTarifaModalProps> = ({
       activo: formData.activo,
     }
 
-    onSubmit(submitData)
+    onSubmit(submitData) //cambio aqui
   }
 
   if (!isOpen) return null
