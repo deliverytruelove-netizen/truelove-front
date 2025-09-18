@@ -129,7 +129,7 @@ const KilometrosTarifaModal: React.FC<KilometrosTarifaModalProps> = ({
 
     const submitData = {
       nombre: formData.nombre,
-      descripcion: formData.descripcion || null,
+      descripcion: formData.descripcion === "" ? undefined : formData.descripcion,
       precio_base_diurno: Number(formData.precio_base_diurno),
       precio_base_nocturno: Number(formData.precio_base_nocturno),
       precio_maximo: Number(formData.precio_maximo),
