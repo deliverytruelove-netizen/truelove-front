@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Pencil, Trash2, Plus, Gift, Award, Truck, Percent, Search, X, DollarSign } from "lucide-react"
+import { Pencil, Trash2, Plus, Gift, Award, Truck, Percent, X } from "lucide-react"
 import {
   getDescuentos,
   getTopClientes,
