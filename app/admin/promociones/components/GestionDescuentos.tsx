@@ -162,6 +162,20 @@ export default function GestionDescuentos() {
       return
     }
 
+    // Validar que la fecha de fin sea posterior a la fecha de inicio
+    if (
+      currentDescuento.fecha_fin &&
+      currentDescuento.fecha_inicio &&
+      new Date(currentDescuento.fecha_fin) < new Date(currentDescuento.fecha_inicio)
+    ) {
+      toast({
+        title: "Error",
+        description: "La fecha de fin debe ser mayor a la fecha de inicio",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       if (isEditing && currentDescuento.id) {
         await updateDescuento(currentDescuento.id, currentDescuento)
@@ -219,7 +233,7 @@ export default function GestionDescuentos() {
       case "porcentaje":
         return <Percent className="h-4 w-4 text-blue-500" />
       case "monto_fijo":
-        return <DollarSign className="h-4 w-4 text-green-500" />
+        return <Gift className="h-4 w-4 text-green-500" />
       case "delivery_gratis":
         return <Truck className="h-4 w-4 text-purple-500" />
       default:
@@ -415,24 +429,50 @@ export default function GestionDescuentos() {
                   </Label>
                   <div className="col-span-3 relative">
                     <div className="relative">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Buscar cliente por documento o nombre..."
-                          value={clienteSearchQuery}
-                          onChange={(e) => handleSearchClientes(e.target.value)}
-                          className="w-full"
-                        />
-                        <Button variant="outline" type="button" onClick={() => setOpenClienteSearch(true)}>
-                          <Search className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {!currentDescuento.cliente_nombre ? (
+                        <>
+                          <Input
+                            placeholder="Buscar cliente por documento o nombre..."
+                            value={clienteSearchQuery}
+                            onChange={(e) => handleSearchClientes(e.target.value)}
+                            className="w-full"
+                          />
 
-                      {currentDescuento.cliente_nombre && (
-                        <div className="mt-2 p-2 border rounded flex justify-between items-center">
+                          {/* Dropdown de resultados */}
+                          {clienteSearchQuery.length >= 1 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                              {clienteSearchLoading ? (
+                                <div className="p-3 text-center text-gray-500">Buscando...</div>
+                              ) : clienteSearchResults.length === 0 ? (
+                                <div className="p-3 text-center text-gray-500">No se encontraron clientes</div>
+                              ) : (
+                                clienteSearchResults.map((cliente) => (
+                                  <div
+                                    key={cliente.id}
+                                    className="p-3 border-b hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => {
+                                      handleSelectCliente(cliente)
+                                      setClienteSearchQuery("")
+                                      setClienteSearchResults([])
+                                    }}
+                                  >
+                                    <div className="font-medium">{cliente.nombre}</div>
+                                    <div className="text-sm text-gray-500">
+                                      Doc: {cliente.documento} | Pedidos: {cliente.total_pedidos}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="p-2 border rounded flex justify-between items-center bg-gray-50">
                           <span>{currentDescuento.cliente_nombre}</span>
                           <Button
                             variant="ghost"
                             size="icon"
+                            type="button"
                             onClick={() => {
                               setCurrentDescuento({
                                 ...currentDescuento,
@@ -440,6 +480,8 @@ export default function GestionDescuentos() {
                                 cliente_nombre: undefined,
                                 cliente_documento: undefined,
                               })
+                              setClienteSearchQuery("")
+                              setClienteSearchResults([])
                             }}
                           >
                             <X className="h-4 w-4" />
@@ -575,18 +617,33 @@ export default function GestionDescuentos() {
                 <Label htmlFor="fecha_fin" className="text-right">
                   Fecha Fin
                 </Label>
-                <Input
-                  id="fecha_fin"
-                  type="date"
-                  value={currentDescuento.fecha_fin || ""}
-                  onChange={(e) =>
-                    setCurrentDescuento({
-                      ...currentDescuento,
-                      fecha_fin: e.target.value || null,
-                    })
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <Input
+                    id="fecha_fin"
+                    type="date"
+                    value={currentDescuento.fecha_fin || ""}
+                    onChange={(e) =>
+                      setCurrentDescuento({
+                        ...currentDescuento,
+                        fecha_fin: e.target.value || null,
+                      })
+                    }
+                    className={`w-full ${
+                      currentDescuento.fecha_fin &&
+                      currentDescuento.fecha_inicio &&
+                      new Date(currentDescuento.fecha_fin) < new Date(currentDescuento.fecha_inicio)
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                  {currentDescuento.fecha_fin &&
+                    currentDescuento.fecha_inicio &&
+                    new Date(currentDescuento.fecha_fin) < new Date(currentDescuento.fecha_inicio) && (
+                      <p className="text-red-500 text-sm mt-1">
+                        La fecha de fin debe ser mayor a la fecha de inicio
+                      </p>
+                    )}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="usos_disponibles" className="text-right">
