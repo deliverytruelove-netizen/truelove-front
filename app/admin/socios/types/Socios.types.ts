@@ -69,6 +69,8 @@ export interface DetallesSocio {
     created_at: string
     posToDriver: number
     entrega_documento_venta: number
+    cuota_socio_id?: number | null
+    fecha_asignacion_cuota?: string | null
   }
   documentosPdfExtranjero: DocumentosPdfExtranjero | null
   business: BusinessInfo | null

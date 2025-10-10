@@ -77,6 +77,11 @@ export const navigationItems: NavItem [] = [
         path: "/admin/kilometros-tarifa",
         icon: RiAncientGateLine,
     },
+    {
+        title : "Cuotas Socios",
+        path: "/admin/cuotas-socios",
+        icon: RiShieldUserLine,
+    }
 ]
 
 export const NavigationProvider = ({children}: {children: ReactNode})=> {

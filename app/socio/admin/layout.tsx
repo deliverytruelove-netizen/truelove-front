@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   Menu,
   Home,
@@ -15,17 +15,23 @@ import {
   ChevronUp,
   CreditCard,
   Smartphone,
+  AlertCircle,
+  Clock,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarSettings from "./components/AvatarSettings";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Providers from "./providers";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AdminThemeProvider } from "./components/theme-provider";
 import { ThemeToggle } from "./components/theme-toggle";
 // Importamos el CSS para el modo oscuro
 import "./admin-dark-mode.css";
+import { verificarAcceso, fetchMisPeriodos } from "./cuotas/services/pago-cuota.service";
+import type { VerificarAccesoResponse, Periodo } from "./cuotas/types/pago-cuota.types";
+import PantallaBloqueoCuota from "./cuotas/components/PantallaBloqueoCuota";
 
 const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
@@ -42,17 +48,44 @@ const menuItems = [
   { name: "Información", href: "/socio/admin/info-socio", icon: ShoppingBag },
 
   { name: "Configuración", href: "/socio/admin/configuracion", icon: Settings },
+  { name: "Cuota", href: "/socio/admin/cuotas", icon: Settings },
 ];
 
 function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const [accesoInfo, setAccesoInfo] = useState<VerificarAccesoResponse | null>(null);
+  const [periodos, setPeriodos] = useState<Periodo[]>([]);
+  const [loadingAcceso, setLoadingAcceso] = useState(true);
+  const [showBannerVencimiento, setShowBannerVencimiento] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
+
+  // Verificar acceso cuando se monta el layout
+  useEffect(() => {
+    const verificarAccesoSocio = async () => {
+      try {
+        const [accesoData, periodosData] = await Promise.all([
+          verificarAcceso(),
+          fetchMisPeriodos()
+        ]);
+        setAccesoInfo(accesoData);
+        setPeriodos(periodosData);
+      } catch (error) {
+        console.error("Error al verificar acceso:", error);
+      } finally {
+        setLoadingAcceso(false);
+      }
+    };
+
+    verificarAccesoSocio();
+  }, []);
 
   const toggleSubmenu = (menuName: string) => {
     setExpandedMenus(prev => 
@@ -65,6 +98,69 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const isSubmenuExpanded = (menuName: string) => {
     return expandedMenus.includes(menuName);
   };
+
+  // Mostrar loading mientras verifica acceso
+  if (loadingAcceso) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando acceso...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar pantalla de bloqueo si no tiene acceso
+  // PERO permitir acceso temporal a la página de cuotas para que pueda pagar
+  if (accesoInfo && !accesoInfo.can_access) {
+    const enPaginaCuotas = pathname === "/socio/admin/cuotas";
+    const tieneAccesoTemporal = searchParams.get("acceso_temporal") === "true";
+
+    // Si está en la página de cuotas Y tiene acceso temporal, mostrar el contenido
+    if (enPaginaCuotas && tieneAccesoTemporal) {
+      // Permitir ver la página de cuotas con un banner de advertencia
+      return (
+        <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors">
+          {/* Main Content sin sidebar */}
+          <div className="flex-1 w-full">
+            {/* Header con advertencia */}
+            <header className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-4 sm:px-6 lg:px-8 py-4 shadow-lg">
+              <div className="max-w-7xl mx-auto">
+                <div className="flex items-start gap-4">
+                  <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h2 className="text-lg sm:text-xl font-bold mb-1">⚠️ Acceso Temporal para Pagos</h2>
+                    <p className="text-sm sm:text-base text-red-50">
+                      Tu acceso está suspendido. Sube tu comprobante de pago aquí. Una vez aprobado, tu acceso será restaurado.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            {/* Page Content */}
+            <main className="p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)]">
+              <Providers>{children}</Providers>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    // Si NO está en cuotas O no tiene acceso temporal, mostrar pantalla de bloqueo
+    const periodosVencidos = periodos.filter((p) => p.estado === "vencido");
+    return (
+      <PantallaBloqueoCuota
+        periodosVencidos={periodosVencidos}
+        mensaje={accesoInfo.message ?? ''}
+        diasVencimiento={accesoInfo.dias_vencimiento ?? 0}
+        onIrAPagar={() => {
+          router.push("/socio/admin/cuotas?acceso_temporal=true");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors">
@@ -279,6 +375,45 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        {/* Banner de Vencimiento Próximo */}
+        {accesoInfo?.motivo === 'proximo_vencimiento' && showBannerVencimiento && (
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-b border-yellow-200 dark:border-yellow-800 sticky top-16 z-20">
+            <div className="px-4 py-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/40 rounded-full flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
+                      ⏰ Tu cuota vence en {accesoInfo.dias_vencimiento} {accesoInfo.dias_vencimiento === 1 ? 'día' : 'días'}
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-0.5">
+                      Recuerda realizar tu pago antes del vencimiento para evitar suspensión de acceso.
+                    </p>
+                  </div>
+                  <Link href="/socio/admin/cuotas">
+                    <Button
+                      size="sm"
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-600"
+                    >
+                      Pagar Ahora
+                    </Button>
+                  </Link>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-shrink-0 h-8 w-8 p-0 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 rounded-full"
+                  onClick={() => setShowBannerVencimiento(false)}
+                >
+                  <X className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Page Content */}
         <main className="p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)]">
           <Providers>{children}</Providers>
@@ -295,7 +430,16 @@ export default function SocioAdminLayout({
 }) {
   return (
     <AdminThemeProvider defaultTheme="light">
-      <SocioAdminLayoutContent>{children}</SocioAdminLayoutContent>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando...</p>
+          </div>
+        </div>
+      }>
+        <SocioAdminLayoutContent>{children}</SocioAdminLayoutContent>
+      </Suspense>
     </AdminThemeProvider>
   );
 }

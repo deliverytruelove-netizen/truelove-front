@@ -108,3 +108,27 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #64748b !important;
 }
+
+/* Scrollbar para pantalla de bloqueo de cuotas */
+.scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: #dc2626 #fef2f2;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: #fef2f2;
+  border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
