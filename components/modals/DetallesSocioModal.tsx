@@ -23,9 +23,14 @@ import {
   CheckCircle,
   SquareTerminal,
   X,
+  Coins,
+  AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
 import NextImage from "next/image";
 import { PDFViewer } from "../PDFViewer";
+import { verPeriodosDeSocio, obtenerEstadoPagosSocio, type EstadoPagosSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service";
+import type { Periodo } from "@/app/socio/admin/cuotas/types/pago-cuota.types";
 
 interface DetallesSocioModalProps {
   isOpen: boolean;
@@ -141,12 +146,16 @@ export function DetallesSocioModal({
     | "bancarios"
     | "cuenta_bancaria"
     | "documentos"
+    | "cuotas"
   >("personal");
   const [error, setError] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAprobado, setIsAprobado] = useState<boolean>(false);
   const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [periodos, setPeriodos] = useState<Periodo[]>([]);
+  const [estadoPagos, setEstadoPagos] = useState<EstadoPagosSocio | null>(null);
+  const [loadingCuotas, setLoadingCuotas] = useState(false);
   const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } =
     useAnimatedUnmount(showNotification, 300);
 
@@ -156,9 +165,46 @@ export function DetallesSocioModal({
       console.log("Estado de aprobación del socio:", data.aprobado);
       const aprobadoStatus = Boolean(data.aprobado);
       setIsAprobado(aprobadoStatus);
-      setShowNotification(aprobadoStatus);
+
+      // Cargar estado de pagos si está aprobado
+      if (aprobadoStatus && data.id) {
+        cargarEstadoPagos(data.id);
+      } else {
+        setShowNotification(false);
+      }
     }
   }, [data]);
+
+  // Cargar períodos y estado de pagos
+  const cargarEstadoPagos = async (socioId: number) => {
+    try {
+      const estado = await obtenerEstadoPagosSocio(socioId);
+      setEstadoPagos(estado);
+      setShowNotification(true);
+    } catch (error) {
+      console.error("Error al cargar estado de pagos:", error);
+      setEstadoPagos(null);
+      setShowNotification(false);
+    }
+  };
+
+  // Cargar períodos cuando se cambia al tab de cuotas
+  useEffect(() => {
+    if (activeTab === "cuotas" && data?.id && data.personal?.cuota_socio_id) {
+      const cargarPeriodos = async () => {
+        setLoadingCuotas(true);
+        try {
+          const periodosData = await verPeriodosDeSocio(data.id);
+          setPeriodos(periodosData);
+        } catch (error) {
+          console.error("Error al cargar períodos:", error);
+        } finally {
+          setLoadingCuotas(false);
+        }
+      };
+      cargarPeriodos();
+    }
+  }, [activeTab, data?.id, data?.personal?.cuota_socio_id]);
 
   // Resetear el tab activo cuando cambia el socio
   useEffect(() => {
@@ -525,6 +571,122 @@ export function DetallesSocioModal({
             No hay documentos disponibles
           </p>
         );
+      case "cuotas":
+        if (!data.personal?.cuota_socio_id) {
+          return (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Coins className="w-16 h-16 text-gray-300 mb-4" />
+              <p className="text-gray-500 text-center">
+                Este socio no tiene una cuota asignada
+              </p>
+            </div>
+          );
+        }
+
+        if (loadingCuotas) {
+          return (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            </div>
+          );
+        }
+
+        const formatFecha = (fecha: string) => {
+          // Parsear la fecha como fecha local, no UTC
+          const [year, month, day] = fecha.split('T')[0].split('-');
+          const dateLocal = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return dateLocal.toLocaleDateString("es-PE", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          });
+        };
+
+        const getEstadoBadge = (estado: string) => {
+          switch (estado) {
+            case "pendiente":
+              return "bg-yellow-100 text-yellow-800 border-yellow-200";
+            case "vencido":
+              return "bg-red-100 text-red-800 border-red-200";
+            case "pagado":
+              return "bg-green-100 text-green-800 border-green-200";
+            default:
+              return "bg-gray-100 text-gray-800 border-gray-200";
+          }
+        };
+
+        return (
+          <div className="space-y-4">
+            {/* Resumen */}
+            {estadoPagos && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-sm font-medium text-green-900">Pagados</span>
+                  </div>
+                  <p className="text-2xl font-bold text-green-700">{estadoPagos.periodos_pagados}</p>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <span className="text-sm font-medium text-yellow-900">Pendientes</span>
+                  </div>
+                  <p className="text-2xl font-bold text-yellow-700">{estadoPagos.periodos_pendientes}</p>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                    <span className="text-sm font-medium text-red-900">Vencidos</span>
+                  </div>
+                  <p className="text-2xl font-bold text-red-700">{estadoPagos.periodos_vencidos}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de períodos */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Períodos de Pago</h3>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {periodos.sort((a, b) => a.numero_periodo - b.numero_periodo).map((periodo) => (
+                  <div
+                    key={periodo.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-700 font-bold text-sm">#{periodo.numero_periodo}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">Período {periodo.numero_periodo}</p>
+                          <p className="text-sm text-gray-600">
+                            {formatFecha(periodo.periodo_inicio)} - {formatFecha(periodo.fecha_vencimiento)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex items-center gap-3">
+                        <div>
+                          <p className="text-sm text-gray-500">Monto</p>
+                          <p className="text-lg font-bold text-gray-900">
+                            S/ {Number(periodo.monto_esperado).toFixed(2)}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getEstadoBadge(
+                            periodo.estado
+                          )}`}
+                        >
+                          {periodo.estado}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -545,26 +707,89 @@ export function DetallesSocioModal({
               <h2 className="text-2xl font-bold">Detalles del Socio</h2>
             </div>
 
-            {/* Notificación de socio aprobado - Posicionada en la esquina superior derecha con animaciones */}
+            {/* Notificación de estado - Posicionada en la esquina superior derecha con animaciones */}
             {isAprobado && renderNotification && (
               <div
-                className={`absolute z-[60] top-8 right-6 max-w-md w-auto bg-green-50 border border-green-200 shadow-lg rounded-md p-3 flex items-center transition-all duration-300 ${
+                className={`absolute z-[60] top-8 right-6 max-w-md w-auto ${
+                  estadoPagos?.esta_al_dia
+                    ? "bg-green-50 border-green-200"
+                    : (estadoPagos?.periodos_vencidos ?? 0) > 0
+                    ? "bg-red-50 border-red-200"
+                    : (estadoPagos?.periodos_pendientes ?? 0) > 0
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-blue-50 border-blue-200"
+                } border shadow-lg rounded-md p-3 flex items-center transition-all duration-300 ${
                   isNotificationLeaving
                     ? "opacity-0 translate-y-[-10px]"
                     : "opacity-100 translate-y-0"
                 }`}
               >
-                <div className="bg-green-100 rounded-full p-2 mr-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                <div
+                  className={`${
+                    estadoPagos?.esta_al_dia
+                      ? "bg-green-100"
+                      : (estadoPagos?.periodos_vencidos ?? 0) > 0
+                      ? "bg-red-100"
+                      : (estadoPagos?.periodos_pendientes ?? 0) > 0
+                      ? "bg-yellow-100"
+                      : "bg-blue-100"
+                  } rounded-full p-2 mr-3`}
+                >
+                  {estadoPagos?.esta_al_dia ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (estadoPagos?.periodos_vencidos ?? 0) > 0 ? (
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                  ) : (estadoPagos?.periodos_pendientes ?? 0) > 0 ? (
+                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  ) : (
+                    <Coins className="h-5 w-5 text-blue-600" />
+                  )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-green-800 font-medium">
-                    Este socio ya ha sido aprobado
+                  <p
+                    className={`font-medium ${
+                      estadoPagos?.esta_al_dia
+                        ? "text-green-800"
+                        : (estadoPagos?.periodos_vencidos ?? 0) > 0
+                        ? "text-red-800"
+                        : (estadoPagos?.periodos_pendientes ?? 0) > 0
+                        ? "text-yellow-800"
+                        : "text-blue-800"
+                    }`}
+                  >
+                    {estadoPagos?.esta_al_dia
+                      ? "Socio al día con sus pagos"
+                      : (estadoPagos?.periodos_vencidos ?? 0) > 0
+                      ? `Socio tiene ${estadoPagos?.periodos_vencidos} período${
+                          (estadoPagos?.periodos_vencidos ?? 0) > 1 ? "s" : ""
+                        } vencido${(estadoPagos?.periodos_vencidos ?? 0) > 1 ? "s" : ""}`
+                      : (estadoPagos?.periodos_pendientes ?? 0) > 0
+                      ? `Socio tiene ${estadoPagos?.periodos_pendientes} período${
+                          (estadoPagos?.periodos_pendientes ?? 0) > 1 ? "s" : ""
+                        } pendiente${(estadoPagos?.periodos_pendientes ?? 0) > 1 ? "s" : ""}`
+                      : "Socio sin cuota asignada"}
                   </p>
+                  {(estadoPagos?.total_adeudado ?? 0) > 0 && (
+                    <p
+                      className={`text-sm ${
+                        (estadoPagos?.periodos_vencidos ?? 0) > 0 ? "text-red-600" : "text-yellow-600"
+                      }`}
+                    >
+                      Total adeudado: S/ {estadoPagos?.total_adeudado?.toFixed(2)}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={handleCloseNotification}
-                  className="ml-3 text-green-600 hover:text-green-800 focus:outline-none transition-transform hover:scale-110"
+                  className={`ml-3 ${
+                    estadoPagos?.esta_al_dia
+                      ? "text-green-600 hover:text-green-800"
+                      : (estadoPagos?.periodos_vencidos ?? 0) > 0
+                      ? "text-red-600 hover:text-red-800"
+                      : (estadoPagos?.periodos_pendientes ?? 0) > 0
+                      ? "text-yellow-600 hover:text-yellow-800"
+                      : "text-blue-600 hover:text-blue-800"
+                  } focus:outline-none transition-transform hover:scale-110`}
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -575,7 +800,7 @@ export function DetallesSocioModal({
             <div className="flex-1 overflow-y-auto">
               <div className="p-6">
                 {/* Pestañas de navegación */}
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-2 bg-gray-100 rounded-lg mb-6">
+                <div className={`grid grid-cols-1 ${isExtranjero ? 'md:grid-cols-7' : 'md:grid-cols-6'} gap-2 p-2 bg-gray-100 rounded-lg mb-6`}>
                   <TabButton
                     isActive={activeTab === "personal"}
                     icon={<User className="w-5 h-5" />}
@@ -615,6 +840,12 @@ export function DetallesSocioModal({
                       onClick={() => setActiveTab("documentos")}
                     />
                   )}
+                  <TabButton
+                    isActive={activeTab === "cuotas"}
+                    icon={<Coins className="w-5 h-5" />}
+                    label="Cuotas"
+                    onClick={() => setActiveTab("cuotas")}
+                  />
                 </div>
 
                 <div className="mt-6">{renderContent()}</div>

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X, Filter, Trash2 } from "lucide-react"
+import { Eye, Check, Search, RefreshCw, X, Filter, Trash2, Coins } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -14,6 +14,7 @@ import {
   deleteSocio,
 } from "@/app/admin/socios/services/Socios.service"
 import type { DetallesSocio, Socio } from "@/app/admin/socios/types/Socios.types"
+import { obtenerDetalleCuota, type CuotaSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service"
 // import type { ColumnSort } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { showAlert } from "@/components/ui/DataTable/Alert"
@@ -21,9 +22,15 @@ import { DetallesSocioModal } from "./modals/DetallesSocioModal"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DeleteSocioDialog } from "@/components/DeleteSocioDialog"
+import AsignarCuotaModal from "./modals/AsignarCuotaModal"
 
 // Definir los tipos de filtro
 type FilterType = "todos" | "completos" | "incompletos" | "aprobados" | "pendientes"
+
+// Extender DetallesSocio con información de cuota
+interface DetallesSocioConCuota extends DetallesSocio {
+  cuotaDetalle?: CuotaSocio
+}
 
 const SocioList: React.FC = () => {
   const queryClient = useQueryClient()
@@ -38,13 +45,15 @@ const SocioList: React.FC = () => {
   })
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [socioToDelete, setSocioToDelete] = useState<{ id: number; name: string } | null>(null)
+  const [isAsignarCuotaModalOpen, setIsAsignarCuotaModalOpen] = useState(false)
+  const [socioParaCuota, setSocioParaCuota] = useState<{ id: number; nombre: string } | null>(null)
 
   // Consulta para obtener los socios y sus detalles
   const {
     data: sociosConDetalles = [],
     isLoading,
     refetch,
-  } = useQuery<DetallesSocio[], Error>({
+  } = useQuery<DetallesSocioConCuota[], Error>({
     queryKey: ["socios-detalles"],
     queryFn: async () => {
       const socios = await fetchSocios()
@@ -55,22 +64,36 @@ const SocioList: React.FC = () => {
       console.log("Socios con detalles (antes del filtro):", detalles)
 
       // Mapear los valores de aprobado desde los socios originales a los detalles
-      const detallesConAprobado = detalles.map((detalle, index) => {
-        // Asegurarse de que el detalle tenga la propiedad aprobado del socio original
-        if (detalle && socios[index]) {
-          const socioOriginal = socios[index] as Socio
-          return {
-            ...detalle,
-            aprobado: socioOriginal.aprobado,
-            // Añadir documentType y documentNumber a los detalles
-            documentType: socioOriginal.documentType,
-            documentNumber: socioOriginal.documentNumber,
-          }
-        }
-        return detalle
-      })
+      const detallesConAprobado = await Promise.all(
+        detalles.map(async (detalle, index) => {
+          // Asegurarse de que el detalle tenga la propiedad aprobado del socio original
+          if (detalle && socios[index]) {
+            const socioOriginal = socios[index] as Socio
+            const detalleBase: DetallesSocioConCuota = {
+              ...detalle,
+              aprobado: socioOriginal.aprobado,
+              // Añadir documentType y documentNumber a los detalles
+              documentType: socioOriginal.documentType,
+              documentNumber: socioOriginal.documentNumber,
+            }
 
-      console.log("Detalles con aprobado mapeado:", detallesConAprobado)
+            // Si tiene cuota asignada, obtener sus detalles
+            if (detalle.personal?.cuota_socio_id) {
+              try {
+                const cuotaDetalle = await obtenerDetalleCuota(detalle.personal.cuota_socio_id)
+                detalleBase.cuotaDetalle = cuotaDetalle
+              } catch (error) {
+                console.error(`Error al obtener cuota ${detalle.personal.cuota_socio_id}:`, error)
+              }
+            }
+
+            return detalleBase
+          }
+          return detalle
+        })
+      )
+
+      console.log("Detalles con aprobado y cuotas mapeado:", detallesConAprobado)
 
       // Mostrar todos los registros, no solo los completos
       return detallesConAprobado
@@ -336,6 +359,9 @@ const SocioList: React.FC = () => {
                   Aprobado
                 </th>
                 <th scope="col" className="px-4 py-3 text-center">
+                  Cuota Asignada
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
                   Acciones
                 </th>
               </tr>
@@ -346,7 +372,7 @@ const SocioList: React.FC = () => {
                   .fill(0)
                   .map((_, index) => (
                     <tr key={index} className="bg-white border-b hover:bg-gray-50">
-                      <td colSpan={9} className="px-4 py-3">
+                      <td colSpan={10} className="px-4 py-3">
                         <div className="animate-pulse flex items-center space-x-4">
                           <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                           <div className="flex-1 space-y-2">
@@ -359,7 +385,7 @@ const SocioList: React.FC = () => {
                   ))
               ) : filteredSocios.length === 0 ? (
                 <tr className="bg-white">
-                  <td colSpan={9} className="px-4 py-12 text-center">
+                  <td colSpan={10} className="px-4 py-12 text-center">
                     <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                     </div>
@@ -423,6 +449,38 @@ const SocioList: React.FC = () => {
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                             Pendiente
                           </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {socio.personal?.cuota_socio_id && socio.cuotaDetalle ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+                              <Coins className="w-3 h-3 mr-1" />
+                              {socio.cuotaDetalle.periodicidad}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              S/ {Number(socio.cuotaDetalle.monto_cuota).toFixed(2)}
+                            </span>
+                          </div>
+                        ) : socio.personal?.cuota_socio_id ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                            <Coins className="w-3 h-3 mr-1" />
+                            Asignada
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSocioParaCuota({
+                                id: socio.id,
+                                nombre: `${socio.personal?.name || ""} ${socio.personal?.lastName || ""}`.trim(),
+                              })
+                              setIsAsignarCuotaModalOpen(true)
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-xs"
+                          >
+                            Asignar Cuota
+                          </Button>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -524,6 +582,22 @@ const SocioList: React.FC = () => {
           onClose={() => setIsDeleteDialogOpen(false)}
           onConfirm={confirmDelete}
           socioName={socioToDelete.name}
+        />
+      )}
+
+      {/* Modal de asignar cuota */}
+      {socioParaCuota && (
+        <AsignarCuotaModal
+          isOpen={isAsignarCuotaModalOpen}
+          socioId={socioParaCuota.id}
+          socioNombre={socioParaCuota.nombre}
+          onClose={() => {
+            setIsAsignarCuotaModalOpen(false)
+            setSocioParaCuota(null)
+          }}
+          onSuccess={() => {
+            refetch()
+          }}
         />
       )}
 
