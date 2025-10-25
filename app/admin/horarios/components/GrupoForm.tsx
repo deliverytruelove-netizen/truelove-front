@@ -595,18 +595,18 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <button onClick={onCancel} className="text-white hover:bg-brand-600 p-2 rounded-lg transition-colors">
-            <ArrowLeft className="h-5 w-5" />
+      <div className="bg-gradient-to-r from-brand-600 to-brand-700 px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button onClick={onCancel} className="text-white hover:bg-brand-600 p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0">
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-base sm:text-xl font-semibold text-white break-words">
             {grupo ? "Editar Horario de Trabajo" : "Crear Nuevo Horario de Trabajo"}
           </h2>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Información sobre horarios nocturnos */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center gap-2 text-blue-800 mb-2">
@@ -826,7 +826,7 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
           {/* Botones para agregar diferentes tipos de bloques */}
           <div className="mb-6">
             <p className="text-sm font-medium text-gray-700 mb-3">Agregar período de tiempo:</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {tiposBloques.map((tipo) => {
                 const IconComponent = tipo.icon
                 return (
@@ -834,14 +834,14 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
                     key={tipo.key}
                     type="button"
                     onClick={() => handleAddBloque(tipo.key as "trabajo" | "descanso" | "almuerzo")}
-                    className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-brand-400 hover:bg-brand-50 transition-colors group"
+                    className="flex items-center gap-3 p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-brand-400 hover:bg-brand-50 transition-colors group"
                   >
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: `${tipo.color}20`, color: tipo.color }}>
-                      <IconComponent className="h-5 w-5" />
+                    <div className="p-2 rounded-lg flex-shrink-0" style={{ backgroundColor: `${tipo.color}20`, color: tipo.color }}>
+                      <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900 group-hover:text-brand-700">{tipo.label}</div>
-                      <div className="text-xs text-gray-500">{tipo.description}</div>
+                    <div className="text-left min-w-0">
+                      <div className="font-medium text-sm sm:text-base text-gray-900 group-hover:text-brand-700 break-words">{tipo.label}</div>
+                      <div className="text-xs text-gray-500 break-words">{tipo.description}</div>
                     </div>
                   </button>
                 )
@@ -851,7 +851,7 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
 
           {errors.bloques && <p className="text-red-600 text-sm mb-4">{errors.bloques}</p>}
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {formData.bloques.map((bloque, index) => {
               const tipoInfo = tiposBloques.find((t) => t.key === bloque.tipo)
               const IconComponent = tipoInfo?.icon || Clock
@@ -861,31 +861,31 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
               const todosDiasSeleccionados = diasActuales.length === diasSemana.length
 
               return (
-                <div key={index} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
+                <div key={index} className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-gray-50">
+                  <div className="flex items-start sm:items-center justify-between mb-4 gap-2">
+                    <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <div
-                        className="p-2 rounded-lg"
+                        className="p-1.5 sm:p-2 rounded-lg flex-shrink-0"
                         style={{ backgroundColor: `${tipoInfo?.color}20`, color: tipoInfo?.color }}
                       >
-                        <IconComponent className="h-5 w-5" />
+                        <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-sm sm:text-base text-gray-900 break-words">
                           {tipoInfo?.label} #{index + 1}
                         </h4>
-                        <p className="text-sm text-gray-500">{tipoInfo?.description}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 break-words">{tipoInfo?.description}</p>
                         {/* Mostrar duración calculada */}
                         <p className="text-xs text-gray-600 mt-1">
                           Duración: {Math.floor(duracion / 60)}h {duracion % 60}min
-                          {cruzaMedianocheBloque && <span className="text-blue-600 ml-2">(cruza medianoche)</span>}
+                          {cruzaMedianocheBloque && <span className="text-blue-600 ml-1 sm:ml-2">(cruza medianoche)</span>}
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveBloque(index)}
-                      className="text-red-600 hover:bg-red-100 p-2 rounded-lg transition-colors"
+                      className="text-red-600 hover:bg-red-100 p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -908,7 +908,7 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
 
                   {/* Días de la semana */}
                   <div className="mt-6">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mb-3">
                       <label className="block text-sm font-medium text-gray-700">
                         <Calendar className="inline h-4 w-4 mr-1" />
                         Días de la semana
@@ -916,7 +916,7 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
                       <button
                         type="button"
                         onClick={() => handleToggleAllDias(index)}
-                        className={`text-xs px-3 py-1 rounded-full flex items-center gap-1 ${
+                        className={`text-xs px-3 py-1.5 rounded-full flex items-center justify-center gap-1 self-start xs:self-auto whitespace-nowrap ${
                           todosDiasSeleccionados 
                             ? "bg-brand-100 text-brand-700 hover:bg-brand-200" 
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -924,18 +924,20 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
                       >
                         {todosDiasSeleccionados ? (
                           <>
-                            <X className="h-3 w-3" />
-                            Deseleccionar todos
+                            <X className="h-3 w-3 flex-shrink-0" />
+                            <span className="hidden xs:inline">Deseleccionar todos</span>
+                            <span className="xs:hidden">Deseleccionar</span>
                           </>
                         ) : (
                           <>
-                            <Check className="h-3 w-3" />
-                            Seleccionar todos
+                            <Check className="h-3 w-3 flex-shrink-0" />
+                            <span className="hidden xs:inline">Seleccionar todos</span>
+                            <span className="xs:hidden">Seleccionar</span>
                           </>
                         )}
                       </button>
                     </div>
-                    <div className="grid grid-cols-7 gap-2">
+                    <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-2">
                       {diasSemana.map((dia) => {
                         const isSelected = diasActuales.includes(dia.key)
 
@@ -948,14 +950,14 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
                               className="sr-only"
                             />
                             <div
-                              className={`w-full py-3 px-2 text-center text-sm font-medium rounded-lg cursor-pointer transition-all ${
+                              className={`w-full py-2.5 sm:py-3 px-1.5 sm:px-2 text-center text-xs sm:text-sm font-medium rounded-lg cursor-pointer transition-all ${
                                 isSelected
                                   ? "bg-brand-600 text-white shadow-md transform scale-105"
                                   : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400"
                               }`}
                             >
-                              <div className="font-bold">{dia.short}</div>
-                              <div className="text-xs opacity-75">{dia.label.slice(0, 3)}</div>
+                              <div className="font-bold text-xs sm:text-sm">{dia.short}</div>
+                              <div className="text-[10px] sm:text-xs opacity-75 hidden xs:block">{dia.label.slice(0, 3)}</div>
                             </div>
                           </label>
                         )
@@ -990,26 +992,26 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
         </div>
 
         {/* Botones de acción */}
-        <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+        <div className="flex flex-col-reverse xs:flex-row xs:justify-end gap-2 xs:gap-3 pt-4 sm:pt-6 border-t border-gray-200">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+            className="w-full xs:w-auto px-4 sm:px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
           >
-            <X className="h-4 w-4" />
-            Cancelar
+            <X className="h-4 w-4 flex-shrink-0" />
+            <span>Cancelar</span>
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-8 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="w-full xs:w-auto px-6 sm:px-8 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
             ) : (
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 flex-shrink-0" />
             )}
-            {loading ? "Guardando..." : grupo ? "Actualizar Horario" : "Crear Horario"}
+            <span>{loading ? "Guardando..." : grupo ? "Actualizar Horario" : "Crear Horario"}</span>
           </button>
         </div>
       </form>
