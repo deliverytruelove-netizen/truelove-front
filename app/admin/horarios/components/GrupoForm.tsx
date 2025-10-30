@@ -485,9 +485,9 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
         }
       }
 
-      // Validar duración máxima (18 horas para evitar horarios excesivos)
-      if (duracion > 18 * 60) {
-        newErrors[`bloque_${index}_horas`] = `Duración demasiado larga: ${Math.floor(duracion / 60)}h ${duracion % 60}min (máximo 18 horas)`
+      // Validar duración máxima (24 horas para permitir trabajo de día completo)
+      if (duracion > 24 * 60) {
+        newErrors[`bloque_${index}_horas`] = `Duración demasiado larga: ${Math.floor(duracion / 60)}h ${duracion % 60}min (máximo 24 horas)`
       }
     })
 
@@ -614,11 +614,11 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
             <span className="font-medium">Información sobre horarios nocturnos:</span>
           </div>
           <p className="text-sm text-blue-700">
-            ✓ Puedes crear horarios que crucen la medianoche (ej: 6:00 AM a 12:00 AM del día siguiente)
+            ✓ Puedes crear horarios que crucen la medianoche (ej: 06:00 a 00:00 del día siguiente)
             <br />
             ✓ El sistema calculará automáticamente la duración correcta para horarios nocturnos
             <br />
-            ✓ Duración mínima: 15 minutos | Duración máxima: 18 horas
+            ✓ Duración mínima: 15 minutos | Duración máxima: 24 horas (día completo)
           </p>
         </div>
 

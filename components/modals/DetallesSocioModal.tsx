@@ -31,6 +31,7 @@ import NextImage from "next/image";
 import { PDFViewer } from "../PDFViewer";
 import { verPeriodosDeSocio, obtenerEstadoPagosSocio, type EstadoPagosSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service";
 import type { Periodo } from "@/app/socio/admin/cuotas/types/pago-cuota.types";
+import EditarDiaPagoModal from "./EditarDiaPagoModal";
 
 interface DetallesSocioModalProps {
   isOpen: boolean;
@@ -156,6 +157,7 @@ export function DetallesSocioModal({
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [estadoPagos, setEstadoPagos] = useState<EstadoPagosSocio | null>(null);
   const [loadingCuotas, setLoadingCuotas] = useState(false);
+  const [showEditarDiaPagoModal, setShowEditarDiaPagoModal] = useState(false);
   const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } =
     useAnimatedUnmount(showNotification, 300);
 
@@ -617,6 +619,56 @@ export function DetallesSocioModal({
 
         return (
           <div className="space-y-4">
+            {/* Información de la cuota y día de pago */}
+            {estadoPagos?.cuota && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Coins className="w-6 h-6 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold text-blue-900">Información de Cuota</h3>
+                      <p className="text-sm text-blue-700">
+                        {estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)} - 
+                        S/ {Number(estadoPagos.cuota.monto_cuota).toFixed(2)}
+                      </p>
+                      {estadoPagos.cuota.dia_pago && (
+                        <p className="text-sm text-blue-700 font-medium">
+                          <Calendar className="w-4 h-4 inline mr-1" />
+                          Día de pago: {(() => {
+                            const diaPago = estadoPagos.cuota.dia_pago
+                            const periodicidad = estadoPagos.cuota.periodicidad
+                            
+                            switch (periodicidad) {
+                              case "semanal":
+                                const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+                                return `${diasSemana[diaPago]} de cada semana`
+                              
+                              case "quincenal":
+                                return `Día ${diaPago} de cada quincena`
+                              
+                              case "mensual":
+                              case "diario":
+                              default:
+                                return `${diaPago} de cada mes`
+                            }
+                          })()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowEditarDiaPagoModal(true)}
+                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Editar Día de Pago
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Resumen */}
             {estadoPagos && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -646,7 +698,12 @@ export function DetallesSocioModal({
 
             {/* Lista de períodos */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Períodos de Pago</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {estadoPagos?.cuota ? 
+                  `Períodos ${estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)}es` : 
+                  'Períodos de Pago'
+                }
+              </h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {periodos.sort((a, b) => a.numero_periodo - b.numero_periodo).map((periodo) => (
                   <div
@@ -901,6 +958,23 @@ export function DetallesSocioModal({
             />
           </div>
         </div>
+      )}
+
+      {/* Modal de editar día de pago */}
+      {showEditarDiaPagoModal && estadoPagos?.cuota && data && (
+        <EditarDiaPagoModal
+          isOpen={showEditarDiaPagoModal}
+          cuota={estadoPagos.cuota}
+          socioNombre={`${data.personal?.name || ""} ${data.personal?.lastName || ""}`.trim()}
+          onClose={() => setShowEditarDiaPagoModal(false)}
+          onSuccess={() => {
+            setShowEditarDiaPagoModal(false);
+            // Recargar el estado de pagos para mostrar los cambios
+            if (data.id) {
+              cargarEstadoPagos(data.id);
+            }
+          }}
+        />
       )}
     </>
   );

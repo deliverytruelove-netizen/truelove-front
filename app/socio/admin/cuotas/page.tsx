@@ -12,8 +12,10 @@ import SubirComprobanteForm from "./components/SubirComprobanteForm"
 import HistorialPagos from "./components/HistorialPagos"
 import PeriodosList from "./components/PeriodosList"
 import AdvertenciaVencimientoModal from "./components/AdvertenciaVencimientoModal"
+import RecordatorioPagoCard from "./components/RecordatorioPagoCard"
 import type { CuotaActiva, MiPago, PeriodoActual, Periodo } from "./types/pago-cuota.types"
 import { AlertCircle } from "lucide-react"
+import { calcularDiasHastaPago } from "./utils/fecha-pago.utils"
 
 export default function CuotasSocioPage() {
   const [cuota, setCuota] = useState<CuotaActiva | null>(null)
@@ -99,6 +101,14 @@ export default function CuotasSocioPage() {
         </div>
 
         <div className="space-y-8">
+          {/* Recordatorio de Pago */}
+          {cuota && cuota.dia_pago && (
+            <RecordatorioPagoCard 
+              cuota={cuota} 
+              diasRestantes={calcularDiasHastaPago(cuota.dia_pago)} 
+            />
+          )}
+
           {/* Información de la Cuota */}
           {cuota && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

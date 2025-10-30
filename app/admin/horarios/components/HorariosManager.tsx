@@ -38,14 +38,14 @@ export function HorariosManager() {
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
            Horarios de Motorizados
         </h1>
         <p className="text-gray-600">
           Administra los horarios de trabajo de motorizados 
         </p>
-      </div>
+      </div> */}
 
       {currentView === 'list' && (
         <GruposList 

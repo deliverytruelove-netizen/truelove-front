@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DeleteSocioDialog } from "@/components/DeleteSocioDialog"
 import AsignarCuotaModal from "./modals/AsignarCuotaModal"
+import EditarDiaPagoModal from "./modals/EditarDiaPagoModal"
 
 // Definir los tipos de filtro
 type FilterType = "todos" | "completos" | "incompletos" | "aprobados" | "pendientes"
@@ -47,6 +48,8 @@ const SocioList: React.FC = () => {
   const [socioToDelete, setSocioToDelete] = useState<{ id: number; name: string } | null>(null)
   const [isAsignarCuotaModalOpen, setIsAsignarCuotaModalOpen] = useState(false)
   const [socioParaCuota, setSocioParaCuota] = useState<{ id: number; nombre: string } | null>(null)
+  const [isEditarDiaPagoModalOpen, setIsEditarDiaPagoModalOpen] = useState(false)
+  const [socioParaEditarDiaPago, setSocioParaEditarDiaPago] = useState<{ socio: DetallesSocioConCuota; cuota: CuotaSocio } | null>(null)
 
   // Consulta para obtener los socios y sus detalles
   const {
@@ -461,6 +464,11 @@ const SocioList: React.FC = () => {
                             <span className="text-xs text-gray-500">
                               S/ {Number(socio.cuotaDetalle.monto_cuota).toFixed(2)}
                             </span>
+                            {socio.cuotaDetalle.dia_pago && (
+                              <span className="text-xs text-blue-600 font-medium">
+                                Día {socio.cuotaDetalle.dia_pago}
+                              </span>
+                            )}
                           </div>
                         ) : socio.personal?.cuota_socio_id ? (
                           <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
@@ -508,6 +516,8 @@ const SocioList: React.FC = () => {
                               Aprobar
                             </Button>
                           )}
+
+
 
                           <Button
                             variant="ghost"
@@ -594,6 +604,22 @@ const SocioList: React.FC = () => {
           onClose={() => {
             setIsAsignarCuotaModalOpen(false)
             setSocioParaCuota(null)
+          }}
+          onSuccess={() => {
+            refetch()
+          }}
+        />
+      )}
+
+      {/* Modal de editar día de pago */}
+      {socioParaEditarDiaPago && (
+        <EditarDiaPagoModal
+          isOpen={isEditarDiaPagoModalOpen}
+          cuota={socioParaEditarDiaPago.cuota}
+          socioNombre={`${socioParaEditarDiaPago.socio.personal?.name || ""} ${socioParaEditarDiaPago.socio.personal?.lastName || ""}`.trim()}
+          onClose={() => {
+            setIsEditarDiaPagoModalOpen(false)
+            setSocioParaEditarDiaPago(null)
           }}
           onSuccess={() => {
             refetch()

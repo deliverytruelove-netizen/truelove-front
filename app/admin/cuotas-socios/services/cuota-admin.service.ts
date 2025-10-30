@@ -27,6 +27,8 @@ export interface CuotaSocio {
   fecha_fin?: string
   descripcion?: string
   estado: "activo" | "inactivo"
+  dia_pago?: number // Día del mes para realizar el pago (1-31)
+  dia_pago_nota?: string // Notas explicativas sobre el día de pago
 }
 
 export const fetchCuotasActivas = async (): Promise<CuotaSocio[]> => {
@@ -42,7 +44,7 @@ export const fetchCuotasActivas = async (): Promise<CuotaSocio[]> => {
   return data.data
 }
 
-export const asignarCuotaASocio = async (socioId: number, cuotaId: number, cantidadPeriodos: number = 12, fechaInicio?: string): Promise<void> => {
+export const asignarCuotaASocio = async (socioId: number, cuotaId: number, cantidadPeriodos: number = 12, fechaInicio?: string, diaPago?: number): Promise<void> => {
   const response = await fetch(`${API_URL}/admin/cuotas-socios/asignar-cuota`, {
     method: "POST",
     headers: getAuthHeaders(),
@@ -51,6 +53,7 @@ export const asignarCuotaASocio = async (socioId: number, cuotaId: number, canti
       cuota_socio_id: cuotaId,
       cantidad_periodos: cantidadPeriodos,
       fecha_inicio: fechaInicio,
+      dia_pago: diaPago,
     }),
   })
 
@@ -116,6 +119,25 @@ export const obtenerEstadoPagosSocio = async (socioId: number): Promise<EstadoPa
 
   if (!response.ok) {
     throw new Error("Error al obtener el estado de pagos del socio")
+  }
+
+  const data = await response.json()
+  return data.data
+}
+
+export const actualizarDiaPago = async (cuotaId: number, diaPago: number, diaPagoNota?: string): Promise<CuotaSocio> => {
+  const response = await fetch(`${API_URL}/admin/cuotas-socios/${cuotaId}/actualizar-dia-pago`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      dia_pago: diaPago,
+      dia_pago_nota: diaPagoNota,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Error al actualizar día de pago")
   }
 
   const data = await response.json()
