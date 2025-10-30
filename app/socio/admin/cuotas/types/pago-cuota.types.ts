@@ -11,6 +11,8 @@ export interface CuotaActiva {
   fecha_inicio: string
   fecha_fin?: string
   descripcion?: string
+  dia_pago?: number // Día del mes para realizar el pago (1-31)
+  dia_pago_nota?: string // Notas explicativas sobre el día de pago
 }
 
 export interface MiPago {

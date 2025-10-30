@@ -76,10 +76,8 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
   };
 
   const formatTimeDisplay = (time24: string): string => {
-    const [hours, minutes] = time24.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+    // Retornar directamente en formato 24 horas
+    return time24;
   };
 
   const formatDiasSemana = (dias: string | string[]) => {
@@ -141,14 +139,14 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-brand-600 to-brand-700 px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-3">
             <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
             <h2 className="text-base sm:text-xl font-semibold text-white">Grupos de Horarios</h2>
           </div>
           <button
             onClick={onNew}
-            className="bg-white text-brand-600 px-4 py-2 rounded-lg hover:bg-brand-50 transition-colors flex items-center justify-center gap-2 font-medium text-sm sm:text-base whitespace-nowrap"
+            className="bg-white text-brand-600 px-4 py-2 rounded-lg hover:bg-brand-50 transition-colors flex items-center justify-center sm:justify-start gap-2 font-medium text-sm sm:text-base whitespace-nowrap w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 flex-shrink-0" />
             <span>Nuevo Grupo</span>
@@ -157,7 +155,7 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
       </div>
 
       {/* Content */}
-      <div className="p-3 sm:p-6">
+      <div className="p-4">
         {grupos.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -172,16 +170,16 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
             {grupos.map((grupo) => (
-              <div key={grupo.id} className="border border-gray-200 rounded-lg p-4 sm:p-5 hover:shadow-md transition-shadow bg-gray-50">
+              <div key={grupo.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
                 {/* Header del grupo */}
-                <div className="mb-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                    <h3 className="font-semibold text-base sm:text-lg text-gray-900 break-words">{grupo.nombre}</h3>
+                <div className="mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
+                    <h3 className="font-semibold text-base text-gray-900 break-words">{grupo.nombre}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto whitespace-nowrap ${
-                      grupo.tipo === 'grupal' 
-                        ? 'bg-brand-100 text-brand-800' 
+                      grupo.tipo === 'grupal'
+                        ? 'bg-brand-100 text-brand-800'
                         : 'bg-purple-100 text-purple-800'
                     }`}>
                       {grupo.tipo === 'grupal' ? 'Grupal' : 'Individual'}
@@ -193,7 +191,7 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
                 </div>
 
                 {/* Información de motorizados */}
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="flex items-start sm:items-center gap-2 text-sm text-gray-700">
                     {grupo.tipo === 'grupal' ? (
                       <>
@@ -215,12 +213,12 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
                 </div>
 
                 {/* Bloques de horario */}
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-gray-600 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-700">Bloques de horario</span>
                   </div>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
                     {grupo.bloques?.slice(0, 3).map((bloque, index) => (
                       <div key={index} className="text-xs bg-white rounded p-2 border">
                         <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1 xs:gap-2 mb-1">
@@ -245,27 +243,27 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
                 </div>
 
                 {/* Acciones */}
-                <div className="flex flex-col xs:flex-row gap-2 pt-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-200">
                   <button
                     onClick={() => onView(grupo)}
-                    className="flex-1 bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                    className="flex-1 bg-green-100 text-green-700 px-2 py-1.5 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
                   >
-                    <Eye className="h-4 w-4 flex-shrink-0" />
+                    <Eye className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Ver</span>
                   </button>
                   <button
                     onClick={() => onEdit(grupo)}
-                    className="flex-1 bg-brand-100 text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                    className="flex-1 bg-brand-100 text-brand-700 px-2 py-1.5 rounded-lg hover:bg-brand-200 transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
                   >
-                    <Edit className="h-4 w-4 flex-shrink-0" />
+                    <Edit className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Editar</span>
                   </button>
                   <button
                     onClick={() => confirmDelete(grupo.id, grupo.nombre)}
-                    className="xs:flex-none bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                    className="flex-1 sm:flex-none bg-red-100 text-red-700 px-2 py-1.5 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
                   >
-                    <Trash2 className="h-4 w-4 flex-shrink-0" />
-                    <span className="xs:hidden">Eliminar</span>
+                    <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Eliminar</span>
                   </button>
                 </div>
               </div>

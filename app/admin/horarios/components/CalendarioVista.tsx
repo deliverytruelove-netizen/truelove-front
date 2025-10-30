@@ -30,14 +30,14 @@ export function CalendarioVista({ grupo, onBack }: CalendarioVistaProps) {
     domingo: "Domingo",
   };
 
-  // Generar las horas del día con soporte para horarios nocturnos (1:00 a 12:00 AM)
+  // Generar las horas del día con soporte para horarios nocturnos (01:00 a 00:00)
   const generateHours = () => {
     const hours = [];
-    // Empezamos desde 1 AM hasta 11 PM
+    // Empezamos desde 01:00 hasta 23:00
     for (let i = 1; i < 24; i++) {
       hours.push(i);
     }
-    // Agregamos 12 AM (hora 0) al final
+    // Agregamos 00:00 (medianoche) al final
     hours.push(0);
     return hours;
   };
@@ -45,10 +45,8 @@ export function CalendarioVista({ grupo, onBack }: CalendarioVistaProps) {
   const hours = generateHours();
 
   const formatTimeDisplay = (time24: string): string => {
-    const [hours, minutes] = time24.split(":").map(Number);
-    const period = hours >= 12 ? "PM" : "AM";
-    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    return `${displayHour}:${minutes.toString().padStart(2, "0")} ${period}`;
+    // Retornar directamente en formato 24 horas
+    return time24;
   };
 
   const getTipoColor = (tipo: string) => {
@@ -163,9 +161,9 @@ export function CalendarioVista({ grupo, onBack }: CalendarioVistaProps) {
     }
   };
 
-  // Reordenar las horas para que 12 AM aparezca al final
+  // Reordenar las horas para que 00:00 aparezca al final
   // const reorderHour = (hour: number): number => {
-  //   if (hour === 0) return 24; // 12 AM (hora 0) se muestra al final
+  //   if (hour === 0) return 24; // 00:00 (medianoche) se muestra al final
   //   return hour;
   // }
 
@@ -447,7 +445,7 @@ export function CalendarioVista({ grupo, onBack }: CalendarioVistaProps) {
                                   {formatTimeDisplay(bloque.hora_inicio)}
                                 </div>
                                 <div className="text-center text-xs opacity-90">
-                                  ↓ 12:00 AM
+                                  ↓ 00:00
                                 </div>
                                 <div className="text-center text-xs opacity-80 mt-1">
                                   🌙 ({Math.floor(duracion / 60)}h{" "}
@@ -471,7 +469,7 @@ export function CalendarioVista({ grupo, onBack }: CalendarioVistaProps) {
                             >
                               <div className="p-2 h-full flex flex-col justify-center">
                                 <div className="text-center text-xs opacity-90">
-                                  12:00 AM ↓
+                                  00:00 ↓
                                 </div>
                                 <div className="text-center text-xs opacity-90">
                                   {formatTimeDisplay(bloque.hora_fin)}

@@ -17,7 +17,7 @@ export function TimeSelectorMejorado({ label, value, onChange, className = "" }:
   // Generar opciones de tiempo cada 15 minutos
   const generateTimeOptions = () => {
     const options = []
-    // Empezamos desde 1 AM hasta 11 PM
+    // Empezamos desde 01:00 hasta 23:45
     for (let hour = 1; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
         const timeValue = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
@@ -25,7 +25,7 @@ export function TimeSelectorMejorado({ label, value, onChange, className = "" }:
         options.push({ value: timeValue, label: displayTime })
       }
     }
-    // Agregamos 12 AM (hora 0) al final
+    // Agregamos 00:00 (medianoche) al final
     for (let minute = 0; minute < 60; minute += 15) {
       const timeValue = `00:${minute.toString().padStart(2, '0')}`
       const displayTime = formatTimeDisplay(timeValue)
@@ -35,10 +35,8 @@ export function TimeSelectorMejorado({ label, value, onChange, className = "" }:
   }
 
   const formatTimeDisplay = (time24: string): string => {
-    const [hours, minutes] = time24.split(':').map(Number)
-    const period = hours >= 12 ? 'PM' : 'AM'
-    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
-    return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`
+    // Retornar directamente en formato 24 horas
+    return time24
   }
 
   const timeOptions = generateTimeOptions()
@@ -75,7 +73,7 @@ export function TimeSelectorMejorado({ label, value, onChange, className = "" }:
           <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
             <div className="p-2">
               <div className="text-xs text-gray-500 px-2 py-1 bg-gray-50 rounded mb-2">
-                💡 Tip: Puedes crear horarios nocturnos (ej: 6:00 AM a 12:00 AM)
+                💡 Tip: Puedes crear horarios nocturnos (ej: 06:00 a 00:00)
               </div>
               {timeOptions.map((option) => (
                 <button
@@ -89,20 +87,12 @@ export function TimeSelectorMejorado({ label, value, onChange, className = "" }:
                     option.value === value ? 'bg-brand-100 text-brand-700 font-medium' : 'text-gray-700'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span>{option.label}</span>
-                    <span className="text-xs text-gray-500">{option.value}</span>
-                  </div>
+                  <span>{option.label}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
-      </div>
-
-      {/* Mostrar formato 24h debajo */}
-      <div className="text-xs text-gray-500 mt-1">
-        Formato 24h: {value || "00:00"}
       </div>
     </div>
   )
