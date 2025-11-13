@@ -5,7 +5,7 @@ import type React from "react";
 import { AsignarPedidosModal } from "./modals/AsignarPedidosModal";
 import { EntregaCalendarioModal } from "./EntregaCalendarioModal";
 import { useState } from "react";
-import { Eye, Check, Search, RefreshCw, X, Filter, Trash2, Calendar } from "lucide-react";
+import { Eye, Check, Search, RefreshCw, X, Trash2, Calendar, Clock } from "lucide-react";
 import Section from "@/components/layout/Section";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -49,9 +49,7 @@ const MotorizadoList: React.FC = () => {
     pageSize: DEFAULT_PAGE_SIZE,
     pageIndex: 0,
   });
-  const [statusFilter, setStatusFilter] = useState<
-    "todos" | "aprobados" | "pendientes"
-  >("todos");
+  const [activeTab, setActiveTab] = useState<"aprobados" | "pendientes">("aprobados");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [motorizadoToDelete, setMotorizadoToDelete] = useState<{
     id: number;
@@ -194,13 +192,16 @@ const handleAprobarMotorizado = (id: number) => {
     }
   };
 
+  // Contar motorizados pendientes para el badge
+  const pendientesCount = motorizados.filter((m) => !m.aprobado).length;
+
   // Aplicar filtros de estado y búsqueda
   const filteredMotorizados = motorizados
     .filter((motorizado) => {
-      // Filtrar por estado
-      if (statusFilter === "aprobados") return motorizado.aprobado;
-      if (statusFilter === "pendientes") return !motorizado.aprobado;
-      return true; // "todos"
+      // Filtrar por tab activo
+      if (activeTab === "aprobados") return motorizado.aprobado;
+      if (activeTab === "pendientes") return !motorizado.aprobado;
+      return true;
     })
     .filter((motorizado) => {
       // Filtrar por término de búsqueda
@@ -229,24 +230,40 @@ const handleAprobarMotorizado = (id: number) => {
     <Section title="Listado de Motorizados">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
-          <div className="w-full sm:w-auto flex items-center gap-2">
-            <Filter className="h-5 w-5 text-gray-500" />
-            <Select
-              value={statusFilter}
-              onValueChange={(value: "todos" | "aprobados" | "pendientes") => {
-                setStatusFilter(value);
-                setPagination({ ...pagination, pageIndex: 0 }); // Resetear a la primera página
+          <div className="w-full sm:w-auto flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                setActiveTab("aprobados");
+                setPagination({ ...pagination, pageIndex: 0 });
               }}
+              className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm ${
+                activeTab === "aprobados"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="aprobados">Aprobados</SelectItem>
-                <SelectItem value="pendientes">Pendientes</SelectItem>
-              </SelectContent>
-            </Select>
+              <Check size={16} />
+              <span>Aprobados</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("pendientes");
+                setPagination({ ...pagination, pageIndex: 0 });
+              }}
+              className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm relative ${
+                activeTab === "pendientes"
+                  ? "bg-yellow-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Clock size={16} />
+              <span>Pendientes</span>
+              {pendientesCount > 0 && (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full ml-1">
+                  {pendientesCount}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -339,20 +356,21 @@ const handleAprobarMotorizado = (id: number) => {
                       No se encontraron motorizados
                     </h3>
                     <p className="text-gray-500 mt-2">
-                      {globalFilter || statusFilter !== "todos"
-                        ? "Intenta con otra búsqueda o elimina los filtros aplicados."
-                        : "No hay motorizados registrados en el sistema."}
+                      {globalFilter
+                        ? "Intenta con otra búsqueda."
+                        : activeTab === "aprobados"
+                        ? "No hay motorizados aprobados."
+                        : "No hay motorizados pendientes de aprobación."}
                     </p>
-                    {(globalFilter || statusFilter !== "todos") && (
+                    {globalFilter && (
                       <Button
                         variant="outline"
                         className="mt-4"
                         onClick={() => {
                           setGlobalFilter("");
-                          setStatusFilter("todos");
                         }}
                       >
-                        Limpiar filtros
+                        Limpiar búsqueda
                       </Button>
                     )}
                   </td>

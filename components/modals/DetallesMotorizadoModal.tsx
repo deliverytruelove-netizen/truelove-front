@@ -675,34 +675,49 @@ export function DetallesMotorizadoModal({
                   <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                     <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
                       <Clipboard className="h-5 w-5 text-red-600" />
-                      Configuración de Pedidos Diarios
+                      Configuración de Nivel y Pedidos
                     </h3>
 
-                    <div className="mb-6">
-                      <p className="text-sm text-gray-600 mb-2">
-                        Cantidad máxima de pedidos que este motorizado puede
-                        tomar :
-                      </p>
-
-                      <div className="flex items-center gap-4">
-                        <div className="bg-red-50 text-red-700 text-2xl font-bold py-3 px-6 rounded-lg border border-red-200 flex-grow text-center">
-                          {data.cantidad_pedidos_dias !== undefined
-                            ? data.cantidad_pedidos_dias
-                            : 0}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      {/* Nivel */}
+                      <div>
+                        <p className="text-sm text-gray-600 mb-2">Nivel de Experiencia</p>
+                        <div className="bg-purple-50 text-purple-700 text-xl font-bold py-3 px-6 rounded-lg border border-purple-200 text-center">
+                          Nivel {data.nivel || 1}
                         </div>
+                        <p className="text-xs text-gray-500 mt-1 text-center">
+                          {data.nivel === 1 && "Principiante"}
+                          {data.nivel === 2 && "Intermedio"}
+                          {data.nivel === 3 && "Avanzado"}
+                          {data.nivel === 4 && "Experto"}
+                          {data.nivel === 5 && "Master"}
+                        </p>
+                      </div>
 
-                        {isAprobado && (
-                          <Button
-                            onClick={() => setShowAsignarPedidosModal(true)}
-                            className="bg-red-500 hover:bg-red-600 text-white"
-                          >
-                            Editar cantidad
-                          </Button>
-                        )}
+                      {/* Pedidos Consecutivos */}
+                      <div>
+                        <p className="text-sm text-gray-600 mb-2">Pedidos Consecutivos</p>
+                        <div className="bg-red-50 text-red-700 text-xl font-bold py-3 px-6 rounded-lg border border-red-200 text-center">
+                          {data.pedidos_consecutivos || 0}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 text-center">
+                          Pedidos simultáneos máximos
+                        </p>
                       </div>
                     </div>
 
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    {isAprobado && (
+                      <div className="flex justify-center">
+                        <Button
+                          onClick={() => setShowAsignarPedidosModal(true)}
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                          Editar Nivel y Pedidos
+                        </Button>
+                      </div>
+                    )}
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
                       <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -719,10 +734,7 @@ export function DetallesMotorizadoModal({
                         Información
                       </h4>
                       <p className="text-sm text-blue-700">
-                        Esta configuración limita la cantidad de pedidos que el
-                        motorizado puede aceptar. Asegúrese de establecer un
-                        valor adecuado según la capacidad y disponibilidad del
-                        motorizado.
+                        El nivel determina la experiencia del motorizado. Los pedidos consecutivos indican cuántos pedidos puede tomar simultáneamente antes de tener que entregar alguno.
                       </p>
                     </div>
                   </div>

@@ -21,7 +21,7 @@ export interface Pedido {
   estado: string
 }
 
-export const fetchPedidos = async (): Promise<Pedido[]> => {
+export const fetchPedidos = async (fecha: string = "hoy"): Promise<Pedido[]> => {
   try {
     const token = localStorage.getItem("authToken")
 
@@ -64,7 +64,7 @@ export const fetchPedidos = async (): Promise<Pedido[]> => {
       throw new Error("No se encontró el ID del socio")
     }
 
-    const response = await fetch(`${API_URL}/socio/pedidos/${socioId}?tipo=finalizados&fecha=todas`, {
+    const response = await fetch(`${API_URL}/socio/pedidos/${socioId}?tipo=finalizados&fecha=${fecha}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

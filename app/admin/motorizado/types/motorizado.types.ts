@@ -72,5 +72,6 @@ export interface DetallesMotorizado {
   } | null;
   entregaCalendario?: EntregaCalendario[];
   aprobado: boolean;
-  cantidad_pedidos_dias?: number;
+  pedidos_consecutivos?: number;
+  nivel?: number;
 }

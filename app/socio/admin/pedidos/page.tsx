@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge"
 export default function PedidosPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
+  const [fechaFiltro, setFechaFiltro] = useState<string>("hoy")
 
   const {
     data: pedidos = [],
@@ -25,8 +26,8 @@ export default function PedidosPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["pedidos"],
-    queryFn: fetchPedidos,
+    queryKey: ["pedidos", fechaFiltro],
+    queryFn: () => fetchPedidos(fechaFiltro),
   })
 
   // Filtrar pedidos según búsqueda (solo pedidos entregados)
@@ -101,16 +102,48 @@ export default function PedidosPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Historial de Entregas</h1>
-          <p className="text-gray-600 mt-1">Pedidos entregados del día de hoy</p>
+          <p className="text-gray-600 mt-1">
+            {fechaFiltro === "hoy" && "Pedidos entregados del día de hoy"}
+            {fechaFiltro === "todas" && "Todos los pedidos entregados"}
+            {fechaFiltro !== "hoy" && fechaFiltro !== "todas" && `Pedidos del ${fechaFiltro}`}
+          </p>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          {/* Filtro de Fecha */}
+          <div className="flex gap-2">
+            <Button
+              variant={fechaFiltro === "hoy" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFechaFiltro("hoy")}
+              className={fechaFiltro === "hoy" ? "bg-green-600 hover:bg-green-700" : ""}
+            >
+              Hoy
+            </Button>
+            <Button
+              variant={fechaFiltro === "todas" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFechaFiltro("todas")}
+              className={fechaFiltro === "todas" ? "bg-green-600 hover:bg-green-700" : ""}
+            >
+              Todas
+            </Button>
+            <Input
+              type="date"
+              value={fechaFiltro !== "hoy" && fechaFiltro !== "todas" ? fechaFiltro : ""}
+              onChange={(e) => setFechaFiltro(e.target.value)}
+              className="w-[150px]"
+              placeholder="Fecha específica"
+            />
+          </div>
+
+          {/* Búsqueda */}
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Buscar entregas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-full sm:w-[250px]"
+              className="pl-9 w-full sm:w-[200px]"
             />
             {searchTerm && (
               <button
