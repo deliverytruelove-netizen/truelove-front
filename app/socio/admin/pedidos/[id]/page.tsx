@@ -1,16 +1,35 @@
 // app\socio\admin\pedidos\[id]\page.tsx
-"use client"
+"use client";
 
-import { Suspense } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
-import { fetchPedidos, getEstadoLabel, formatDate } from "../../services/pedido.service"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, User, Clock, Package, Truck } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
+import { Suspense } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchPedidos,
+  getEstadoLabel,
+  formatDate,
+} from "../../services/pedido.service";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertCircle,
+  ArrowLeft,
+  MapPin,
+  Phone,
+  User,
+  Clock,
+  Package,
+  Truck,
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 // Componente de carga para Suspense
 function LoadingPedido() {
@@ -40,17 +59,22 @@ function LoadingPedido() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 // Componente principal que maneja la lógica de datos
 function PedidoDetalleContent() {
-  const params = useParams()
-  const router = useRouter()
+  const params = useParams();
+  const router = useRouter();
 
   // Extraer el ID del pedido de los parámetros
-  const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : ""
-  const pedidoId = Number.parseInt(id)
+  const id =
+    typeof params.id === "string"
+      ? params.id
+      : Array.isArray(params.id)
+      ? params.id[0]
+      : "";
+  const pedidoId = Number.parseInt(id);
 
   const {
     data: pedidos = [],
@@ -58,14 +82,14 @@ function PedidoDetalleContent() {
     isError,
     error,
   } = useQuery({
-    queryKey: ["pedidos"],
-    queryFn: fetchPedidos,
-  })
+    queryKey: ["pedidos", "todas"],
+    queryFn: () => fetchPedidos("todas"),
+  });
 
-  const pedido = pedidos.find((p) => p.id === pedidoId)
+  const pedido = pedidos.find((p) => p.id === pedidoId);
 
   if (isLoading) {
-    return <LoadingPedido />
+    return <LoadingPedido />;
   }
 
   if (isError) {
@@ -85,7 +109,7 @@ function PedidoDetalleContent() {
           </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   if (!pedido) {
@@ -99,14 +123,15 @@ function PedidoDetalleContent() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Pedido no encontrado</AlertTitle>
           <AlertDescription>
-            No se encontró el pedido con ID {pedidoId}. Por favor, verifique el ID e intente nuevamente.
+            No se encontró el pedido con ID {pedidoId}. Por favor, verifique el
+            ID e intente nuevamente.
           </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
-  const estadoInfo = getEstadoLabel(pedido.estado)
+  const estadoInfo = getEstadoLabel(pedido.estado);
 
   return (
     <div className="space-y-6">
@@ -123,7 +148,9 @@ function PedidoDetalleContent() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver al historial
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight">Pedido #{pedido.id}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Pedido #{pedido.id}
+            </h1>
             <p className="text-brand-100 mt-1">Detalle de entrega completada</p>
           </div>
           <Badge className="bg-white text-brand-700 hover:bg-white shadow-md">
@@ -142,7 +169,9 @@ function PedidoDetalleContent() {
                 <User className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-brand-600">Información del Cliente</CardTitle>
+                <CardTitle className="text-brand-600">
+                  Información del Cliente
+                </CardTitle>
                 <CardDescription>Datos del destinatario</CardDescription>
               </div>
             </div>
@@ -152,20 +181,26 @@ function PedidoDetalleContent() {
               <User className="h-5 w-5 text-brand-600" />
               <div>
                 <p className="text-xs text-gray-500 font-medium">Cliente</p>
-                <p className="text-sm font-semibold text-gray-900">{pedido.cliente}</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {pedido.cliente}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
               <Phone className="h-5 w-5 text-brand-600" />
               <div>
                 <p className="text-xs text-gray-500 font-medium">Teléfono</p>
-                <p className="text-sm font-semibold text-gray-900">{pedido.celular}</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {pedido.celular}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-brand-50 rounded-lg">
               <MapPin className="h-5 w-5 text-brand-600 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-500 font-medium">Dirección de entrega</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Dirección de entrega
+                </p>
                 <p className="text-sm font-semibold text-gray-900">
                   {pedido.direccion_entrega || "No disponible"}
                 </p>
@@ -182,14 +217,18 @@ function PedidoDetalleContent() {
                 <Package className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-brand-600">Detalles del Pedido</CardTitle>
+                <CardTitle className="text-brand-600">
+                  Detalles del Pedido
+                </CardTitle>
                 <CardDescription>Productos y estado</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-4 bg-brand-50 rounded-lg border-2 border-dashed border-brand-200">
-              <p className="text-xs text-brand-600 font-medium mb-2">Productos entregados</p>
+              <p className="text-xs text-brand-600 font-medium mb-2">
+                Productos entregados
+              </p>
               <p className="text-sm font-semibold text-gray-900">
                 {pedido.detalle || "No hay detalles disponibles"}
               </p>
@@ -197,7 +236,9 @@ function PedidoDetalleContent() {
             <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
               <Clock className="h-5 w-5 text-brand-600" />
               <div>
-                <p className="text-xs text-gray-500 font-medium">Fecha de entrega</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Fecha de entrega
+                </p>
                 <p className="text-sm font-semibold text-gray-900">
                   {formatDate(pedido.created_at)}
                 </p>
@@ -206,8 +247,12 @@ function PedidoDetalleContent() {
             <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
               <Truck className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-xs text-green-700 font-medium">Estado de entrega</p>
-                <Badge className={`${estadoInfo.color} mt-1`}>{estadoInfo.label}</Badge>
+                <p className="text-xs text-green-700 font-medium">
+                  Estado de entrega
+                </p>
+                <Badge className={`${estadoInfo.color} mt-1`}>
+                  {estadoInfo.label}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -221,7 +266,9 @@ function PedidoDetalleContent() {
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-brand-600">Información del Local</CardTitle>
+                <CardTitle className="text-brand-600">
+                  Información del Local
+                </CardTitle>
                 <CardDescription>Datos del establecimiento</CardDescription>
               </div>
             </div>
@@ -231,15 +278,23 @@ function PedidoDetalleContent() {
               <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
                 <Package className="h-5 w-5 text-brand-600" />
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Nombre del local</p>
-                  <p className="text-sm font-semibold text-gray-900">{pedido.local}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Nombre del local
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {pedido.local}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-brand-50 rounded-lg">
                 <MapPin className="h-5 w-5 text-brand-600 mt-0.5" />
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Dirección del local</p>
-                  <p className="text-sm font-semibold text-gray-900">{pedido.direccion_local}</p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Dirección del local
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {pedido.direccion_local}
+                  </p>
                 </div>
               </div>
             </div>
@@ -259,7 +314,7 @@ function PedidoDetalleContent() {
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 // Página principal que usa Suspense
@@ -268,5 +323,5 @@ export default function Page() {
     <Suspense fallback={<LoadingPedido />}>
       <PedidoDetalleContent />
     </Suspense>
-  )
+  );
 }
