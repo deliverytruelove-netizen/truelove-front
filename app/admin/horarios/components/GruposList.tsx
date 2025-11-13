@@ -1,5 +1,6 @@
 // app\admin\horarios\components\GruposList.tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchGruposHorarios, deleteGrupoHorario } from '../services/horarios.service';
 import type { HorarioGrupo } from '../types/horarios.types';
 import { 
@@ -11,19 +12,12 @@ import {
   Calendar,
   Eye,
   User,
-  
   AlertTriangle
 } from 'lucide-react';
 import { confirmAlert, showAlert } from '@/components/ui/DataTable/Alert';
 
-interface GruposListProps {
-  onEdit: (grupo: HorarioGrupo) => void;
-  onView: (grupo: HorarioGrupo) => void;
-  onNew: () => void;
-  refreshTrigger?: number;
-}
-
-export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: GruposListProps) {
+export function GruposList() {
+  const router = useRouter();
   const [grupos, setGrupos] = useState<HorarioGrupo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +38,7 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
 
   useEffect(() => {
     loadGrupos();
-  }, [refreshTrigger, loadGrupos]);
+  }, [loadGrupos]);
 
   const confirmDelete = async (id: number, nombre: string) => {
     const result = await confirmAlert({
@@ -76,8 +70,15 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
   };
 
   const formatTimeDisplay = (time24: string): string => {
-    // Retornar directamente en formato 24 horas
-    return time24;
+    if (!time24) return time24;
+    
+    const [hours, minutes] = time24.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return time24;
+    
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${hours12.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`;
   };
 
   const formatDiasSemana = (dias: string | string[]) => {
@@ -145,7 +146,7 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
             <h2 className="text-base sm:text-xl font-semibold text-white">Grupos de Horarios</h2>
           </div>
           <button
-            onClick={onNew}
+            onClick={() => router.push('/admin/horarios/create')}
             className="bg-white text-brand-600 px-4 py-2 rounded-lg hover:bg-brand-50 transition-colors flex items-center justify-center sm:justify-start gap-2 font-medium text-sm sm:text-base whitespace-nowrap w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 flex-shrink-0" />
@@ -162,7 +163,7 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay grupos de horarios</h3>
             <p className="text-gray-600 mb-6">Crea tu primer grupo de horarios para comenzar</p>
             <button
-              onClick={onNew}
+              onClick={() => router.push('/admin/horarios/create')}
               className="bg-brand-600 text-white px-6 py-3 rounded-lg hover:bg-brand-700 transition-colors flex items-center gap-2 mx-auto"
             >
               <Plus className="h-5 w-5" />
@@ -245,14 +246,14 @@ export function GruposList({ onEdit, onView, onNew, refreshTrigger = 0 }: Grupos
                 {/* Acciones */}
                 <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-200">
                   <button
-                    onClick={() => onView(grupo)}
+                    onClick={() => router.push(`/admin/horarios/${grupo.id}`)}
                     className="flex-1 bg-green-100 text-green-700 px-2 py-1.5 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
                   >
                     <Eye className="h-3.5 w-3.5 flex-shrink-0" />
                     <span>Ver</span>
                   </button>
                   <button
-                    onClick={() => onEdit(grupo)}
+                    onClick={() => router.push(`/admin/horarios/${grupo.id}/edit`)}
                     className="flex-1 bg-brand-100 text-brand-700 px-2 py-1.5 rounded-lg hover:bg-brand-200 transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
                   >
                     <Edit className="h-3.5 w-3.5 flex-shrink-0" />

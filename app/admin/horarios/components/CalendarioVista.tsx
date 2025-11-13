@@ -45,8 +45,15 @@ export function CalendarioVista({ grupo, onBack }: CalendarioVistaProps) {
   const hours = generateHours();
 
   const formatTimeDisplay = (time24: string): string => {
-    // Retornar directamente en formato 24 horas
-    return time24;
+    if (!time24) return time24;
+    
+    const [hours, minutes] = time24.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return time24;
+    
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${hours12.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`;
   };
 
   const getTipoColor = (tipo: string) => {
