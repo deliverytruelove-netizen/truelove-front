@@ -21,13 +21,6 @@ import type {
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst";
 import { showAlert } from "@/components/ui/DataTable/Alert";
 import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "./ui/input";
 import { Button } from "@/components/ui/button";
 import { DeleteMotorizadoDialog } from "./DeleteMotorizadoDialog";
