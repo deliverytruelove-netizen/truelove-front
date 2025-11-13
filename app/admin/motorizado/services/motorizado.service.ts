@@ -198,7 +198,11 @@ export const deleteMotorizado = async (id: number): Promise<void> => {
   }
 };
 
-export const actualizarCantidadPedidos = async (id: number, cantidadPedidos: number): Promise<void> => {
+export const actualizarNivelYPedidos = async (
+  id: number, 
+  nivel: number, 
+  pedidosConsecutivos: number
+): Promise<void> => {
   const token = localStorage.getItem("authToken");
 
   if (!token) {
@@ -211,10 +215,17 @@ export const actualizarCantidadPedidos = async (id: number, cantidadPedidos: num
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ cantidad_pedidos_dias: cantidadPedidos }),
+    body: JSON.stringify({ 
+      nivel: nivel,
+      pedidos_consecutivos: pedidosConsecutivos 
+    }),
   });
 
   if (!response.ok) {
-    throw new Error("Error al actualizar la cantidad de pedidos");
+    const errorData = await response.json().catch(() => ({ message: "Error desconocido" }));
+    console.error("Error del servidor:", errorData);
+    throw new Error(errorData.message || "Error al actualizar nivel y pedidos");
   }
+
+  return response.json();
 };
