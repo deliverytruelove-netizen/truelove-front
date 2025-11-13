@@ -3,11 +3,12 @@
 
 import { useState } from "react"
 import { Clock } from 'lucide-react'
+import { format24to12 } from '../utils/timeFormat'
 
 interface TimeSelectorMejoradoProps {
   label: string
-  value: string
-  onChange: (time: string) => void
+  value: string // Siempre en formato 24h (HH:mm)
+  onChange: (time: string) => void // Siempre devuelve formato 24h
   className?: string
 }
 
@@ -20,23 +21,18 @@ export function TimeSelectorMejorado({ label, value, onChange, className = "" }:
     // Empezamos desde 01:00 hasta 23:45
     for (let hour = 1; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
-        const timeValue = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-        const displayTime = formatTimeDisplay(timeValue)
-        options.push({ value: timeValue, label: displayTime })
+        const timeValue24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+        const timeValue12 = format24to12(timeValue24)
+        options.push({ value: timeValue24, label: timeValue12 })
       }
     }
     // Agregamos 00:00 (medianoche) al final
     for (let minute = 0; minute < 60; minute += 15) {
-      const timeValue = `00:${minute.toString().padStart(2, '0')}`
-      const displayTime = formatTimeDisplay(timeValue)
-      options.push({ value: timeValue, label: displayTime })
+      const timeValue24 = `00:${minute.toString().padStart(2, '0')}`
+      const timeValue12 = format24to12(timeValue24)
+      options.push({ value: timeValue24, label: timeValue12 })
     }
     return options
-  }
-
-  const formatTimeDisplay = (time24: string): string => {
-    // Retornar directamente en formato 24 horas
-    return time24
   }
 
   const timeOptions = generateTimeOptions()

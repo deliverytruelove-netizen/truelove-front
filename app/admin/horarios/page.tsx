@@ -2,14 +2,14 @@
 "use client"
 
 import MainLayout from "../components/MainLayout"
-import { HorariosManager } from "./components/HorariosManager"
+import { GruposList } from "./components/GruposList"
 
-
-export default function Horarios() {
-
+export default function HorariosPage() {
   return (
     <MainLayout>
-      <HorariosManager/>
+      <div className="container mx-auto py-6 px-4">
+        <GruposList />
+      </div>
     </MainLayout>
   )
 }

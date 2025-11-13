@@ -64,9 +64,7 @@ export const fetchPedidos = async (): Promise<Pedido[]> => {
       throw new Error("No se encontró el ID del socio")
     }
 
-    console.log("Usando socioId:", socioId) // Para depuración
-
-    const response = await fetch(`${API_URL}/socio/pedidos/${socioId}`, {
+    const response = await fetch(`${API_URL}/socio/pedidos/${socioId}?tipo=finalizados&fecha=todas`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

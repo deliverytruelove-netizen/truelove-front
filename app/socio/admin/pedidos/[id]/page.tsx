@@ -1,28 +1,16 @@
 // app\socio\admin\pedidos\[id]\page.tsx
 "use client"
 
-import { useState, Suspense } from "react"
+import { Suspense } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { fetchPedidos, actualizarEstadoPedido, getEstadoLabel, formatDate } from "../../services/pedido.service"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useQuery } from "@tanstack/react-query"
+import { fetchPedidos, getEstadoLabel, formatDate } from "../../services/pedido.service"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, ArrowLeft, MapPin, Phone, User, Clock, Package, Truck, CheckCircle } from "lucide-react"
+import { AlertCircle, ArrowLeft, MapPin, Phone, User, Clock, Package, Truck } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 
 // Componente de carga para Suspense
 function LoadingPedido() {
@@ -57,10 +45,8 @@ function LoadingPedido() {
 
 // Componente principal que maneja la lógica de datos
 function PedidoDetalleContent() {
-    const queryClient = useQueryClient()
   const params = useParams()
   const router = useRouter()
-  const [isUpdating, setIsUpdating] = useState(false)
 
   // Extraer el ID del pedido de los parámetros
   const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : ""
@@ -77,58 +63,6 @@ function PedidoDetalleContent() {
   })
 
   const pedido = pedidos.find((p) => p.id === pedidoId)
-
-  const actualizarEstadoMutation = useMutation({
-    mutationFn: ({ pedidoId, estado }: { pedidoId: number; estado: number }) =>
-        actualizarEstadoPedido(pedidoId, estado),
-      onSuccess: async () => {
-        // Invalidar la consulta para refrescar los datos
-       await queryClient.invalidateQueries({
-        predicate: (query) => 
-          query.queryKey[0] === "pedidos" || 
-          (query.queryKey[0] === "pedido" && query.queryKey[1] === pedidoId)
-      })
-        setIsUpdating(false)
-      },
-    onError: (error) => {
-      console.error("Error al actualizar el estado:", error)
-      setIsUpdating(false)
-    },
-  })
-
-  const handleActualizarEstado = (estado: number) => {
-    setIsUpdating(true)
-    actualizarEstadoMutation.mutate({ pedidoId, estado })
-  }
-
-  // Mapeo de estados a números según el backend
-  const estadosDisponibles = [
-    { value: 1, label: "Pendiente" },
-    { value: 2, label: "Aceptado" },
-    { value: 3, label: "En preparación" },
-    { value: 4, label: "Listo para entrega" },
-    { value: 5, label: "En camino" },
-    { value: 6, label: "Entregado" },
-    { value: 7, label: "Cancelado" },
-  ]
-
-  // Determinar el siguiente estado lógico
-  const getNextState = (currentState: string): number | null => {
-    switch (currentState) {
-      case "Pendiente":
-        return 2 // Aceptado
-      case "Aceptado":
-        return 3 // En preparación
-      case "En preparación":
-        return 4 // Listo para entrega
-      case "Listo para entrega":
-        return 5 // En camino
-      case "En camino":
-        return 6 // Entregado
-      default:
-        return null
-    }
-  }
 
   if (isLoading) {
     return <LoadingPedido />
@@ -173,163 +107,157 @@ function PedidoDetalleContent() {
   }
 
   const estadoInfo = getEstadoLabel(pedido.estado)
-  const nextState = pedido ? getNextState(pedido.estado) : null
-  const nextStateLabel = nextState ? estadosDisponibles.find((e) => e.value === nextState)?.label : null
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Pedido #{pedido.id}</h1>
-          <Badge className={estadoInfo.color}>{estadoInfo.label}</Badge>
-        </div>
-        <div className="flex gap-2">
-          {nextState && pedido.estado !== "Entregado" && pedido.estado !== "Cancelado" && (
+      {/* Header con estilo TRUE LOVE */}
+      <div className="bg-brand-600 rounded-xl p-6 text-white shadow-xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
             <Button
-              onClick={() => handleActualizarEstado(nextState)}
-              disabled={isUpdating}
-              className="bg-green-600 hover:bg-green-700"
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="text-white hover:bg-white/20 -ml-3 mb-2"
             >
-              {isUpdating ? "Actualizando..." : `Marcar como ${nextStateLabel}`}
-              <CheckCircle className="ml-2 h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver al historial
             </Button>
-          )}
-          {pedido.estado !== "Cancelado" && pedido.estado !== "Entregado" && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">Cancelar pedido</Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción cancelará el pedido #{pedido.id} y no se puede deshacer.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleActualizarEstado(7)} className="bg-red-600 hover:bg-red-700">
-                    Confirmar cancelación
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+            <h1 className="text-3xl font-bold tracking-tight">Pedido #{pedido.id}</h1>
+            <p className="text-brand-100 mt-1">Detalle de entrega completada</p>
+          </div>
+          <Badge className="bg-white text-brand-700 hover:bg-white shadow-md">
+            {estadoInfo.label}
+          </Badge>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Detalles del pedido</CardTitle>
-          <CardDescription>Pedido realizado el {formatDate(pedido.created_at)}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+      {/* Tarjetas con diseño TRUE LOVE */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Información del Cliente */}
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-brand-500">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-full bg-brand-100 text-brand-600">
+                <User className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Información del cliente</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Nombre:</span> {pedido.cliente}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Teléfono:</span> {pedido.celular}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Dirección de entrega:</span>{" "}
-                    {pedido.direccion_entrega || "No disponible"}
-                  </div>
+                <CardTitle className="text-brand-600">Información del Cliente</CardTitle>
+                <CardDescription>Datos del destinatario</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
+              <User className="h-5 w-5 text-brand-600" />
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Cliente</p>
+                <p className="text-sm font-semibold text-gray-900">{pedido.cliente}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
+              <Phone className="h-5 w-5 text-brand-600" />
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Teléfono</p>
+                <p className="text-sm font-semibold text-gray-900">{pedido.celular}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-brand-50 rounded-lg">
+              <MapPin className="h-5 w-5 text-brand-600 mt-0.5" />
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Dirección de entrega</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {pedido.direccion_entrega || "No disponible"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Detalles del Pedido */}
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-brand-500">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-full bg-brand-100 text-brand-600">
+                <Package className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-brand-600">Detalles del Pedido</CardTitle>
+                <CardDescription>Productos y estado</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-brand-50 rounded-lg border-2 border-dashed border-brand-200">
+              <p className="text-xs text-brand-600 font-medium mb-2">Productos entregados</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {pedido.detalle || "No hay detalles disponibles"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
+              <Clock className="h-5 w-5 text-brand-600" />
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Fecha de entrega</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {formatDate(pedido.created_at)}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <Truck className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="text-xs text-green-700 font-medium">Estado de entrega</p>
+                <Badge className={`${estadoInfo.color} mt-1`}>{estadoInfo.label}</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Información del Local */}
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-t-4 border-brand-500 md:col-span-2">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-full bg-brand-100 text-brand-600">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-brand-600">Información del Local</CardTitle>
+                <CardDescription>Datos del establecimiento</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-brand-50 rounded-lg">
+                <Package className="h-5 w-5 text-brand-600" />
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">Nombre del local</p>
+                  <p className="text-sm font-semibold text-gray-900">{pedido.local}</p>
                 </div>
               </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Información del restaurante</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Nombre:</span> {pedido.local}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Dirección:</span> {pedido.direccion_local}
-                  </div>
+              <div className="flex items-start gap-3 p-3 bg-brand-50 rounded-lg">
+                <MapPin className="h-5 w-5 text-brand-600 mt-0.5" />
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">Dirección del local</p>
+                  <p className="text-sm font-semibold text-gray-900">{pedido.direccion_local}</p>
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Detalles del pedido</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Productos:</span>
-                  </div>
-                  <div className="pl-6">
-                    <p className="text-sm">{pedido.detalle || "No hay detalles disponibles"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Estado del pedido</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Fecha de creación:</span> {formatDate(pedido.created_at)}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">Estado actual:</span>
-                    <Badge className={estadoInfo.color}>{estadoInfo.label}</Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Cambiar estado</h3>
-                <div className="flex items-center gap-2">
-                  <Select
-                    onValueChange={(value) => handleActualizarEstado(Number.parseInt(value))}
-                    disabled={isUpdating || pedido.estado === "Entregado" || pedido.estado === "Cancelado"}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar nuevo estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {estadosDisponibles.map((estado) => (
-                        <SelectItem key={estado.value} value={estado.value.toString()}>
-                          {estado.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6">
-          <Button variant="outline" onClick={() => router.back()}>
-            Volver a la lista
-          </Button>
-          {pedido.estado !== "Entregado" && pedido.estado !== "Cancelado" && nextState && (
-            <Button
-              onClick={() => handleActualizarEstado(nextState)}
-              disabled={isUpdating}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isUpdating ? "Actualizando..." : `Marcar como ${nextStateLabel}`}
-            </Button>
-          )}
-        </CardFooter>
-      </Card>
+      {/* Botón de regreso con estilo TRUE LOVE */}
+      <div className="flex justify-center pt-4">
+        <Button
+          onClick={() => router.back()}
+          className="bg-brand-600 hover:bg-brand-700 text-white shadow-lg transition-all duration-300"
+          size="lg"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver al Historial de Entregas
+        </Button>
+      </div>
     </div>
   )
 }
