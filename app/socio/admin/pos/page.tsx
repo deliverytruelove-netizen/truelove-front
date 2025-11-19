@@ -119,7 +119,9 @@ const POSAdminPage: React.FC = () => {
   const getDocumentLabel = (value: number) => {
     switch (value) {
       case 0: return 'No emito documentos de venta';
-      case 1: return 'Sí emito documentos de venta';
+      case 1: return 'Sí emito Boleta de venta';
+      case 2: return 'Sí emito Factura de venta';
+      case 3: return 'Sí emito Ambos';
       default: return 'No especificado';
     }
   };
@@ -293,7 +295,9 @@ const POSAdminPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 >
                   <option value="0">No emito documentos de venta</option>
-                  <option value="1">Sí emito documentos de venta</option>
+                  <option value="1">Sí emito Boleta de venta</option>
+                  <option value="2">Sí emito Factura de venta</option>
+                  <option value="3">Sí emito Ambos</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
                   Esta opción indica si tu negocio puede emitir facturas o boletas para las entregas. 
