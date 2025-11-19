@@ -337,7 +337,9 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="0">No emito documentos de venta</SelectItem>
-              <SelectItem value="1">Sí emito documentos de venta</SelectItem>
+              <SelectItem value="1">Sí emito Boleta de venta</SelectItem>
+              <SelectItem value="2">Sí emito Factura de venta</SelectItem>
+              <SelectItem value="3">Sí emito Ambos</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-500 mt-1">
