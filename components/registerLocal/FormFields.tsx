@@ -3,9 +3,6 @@
 
 import type React from "react";
 import type { FormData, BusinessType } from "./types";
-import { useState } from "react";
-import { Upload, FileText, AlertCircle } from "lucide-react";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,7 +24,6 @@ interface FormFieldsProps {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   setFormData: (data: FormData) => void;
-  currentStep: number;
 }
 
 export const FormFields: React.FC<FormFieldsProps> = ({
@@ -37,13 +33,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
   handleInputChange,
   handlePhoneChange,
   setFormData,
-  currentStep,
 }) => {
-  const [fileErrors, setFileErrors] = useState({
-    antecedentesPenales: "",
-    antecedentesPoliciales: "",
-  });
-
   const handleDocumentTypeChange = (value: string) => {
     const nuevoTipoDocumento = value;
 
@@ -55,8 +45,6 @@ export const FormFields: React.FC<FormFieldsProps> = ({
       businessType: "",
       phone: "+51",
       email: "",
-      antecedentesPenales: undefined,
-      antecedentesPoliciales: undefined,
       posToDriver: 0,
       entrega_documento_venta: 0,
     };
@@ -69,108 +57,6 @@ export const FormFields: React.FC<FormFieldsProps> = ({
       target: { name, value },
     } as React.ChangeEvent<HTMLSelectElement>);
   };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target;
-    setFileErrors((prev) => ({ ...prev, [name]: "" }));
-
-    if (files && files.length > 0) {
-      const file = files[0];
-
-      if (file.type !== "application/pdf") {
-        setFileErrors((prev) => ({
-          ...prev,
-          [name]: "Solo se permiten archivos PDF",
-        }));
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        setFileErrors((prev) => ({
-          ...prev,
-          [name]: "El archivo no debe superar los 5MB",
-        }));
-        return;
-      }
-
-      handleInputChange({
-        target: { name, value: file },
-      } as unknown as React.ChangeEvent<HTMLInputElement>);
-    }
-  };
-
-  const renderFileInput = (
-    name: "antecedentesPenales" | "antecedentesPoliciales",
-    label: string
-  ) => {
-    const file = formData[name] as File | undefined;
-
-    return (
-      <div className="space-y-2">
-        <Label htmlFor={name}>{label} *</Label>
-        <div className="relative">
-          <div
-            className={`w-full min-h-[100px] border-2 border-dashed rounded-lg 
-                        ${
-                          fileErrors[name]
-                            ? "border-red-300 bg-red-50"
-                            : "border-gray-300 bg-gray-50"
-                        } 
-                        transition-colors duration-200 flex flex-col items-center justify-center p-4 gap-2
-                        hover:border-red-400 hover:bg-gray-100 cursor-pointer`}
-          >
-            <input
-              id={name}
-              type="file"
-              name={name}
-              onChange={handleFileChange}
-              accept=".pdf"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            />
-            {file ? (
-              <>
-                <FileText className="w-8 h-8 text-red-500" />
-                <div className="text-sm text-center">
-                  <p className="font-medium text-gray-900">{file.name}</p>
-                  <p className="text-gray-500">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <Upload className="w-8 h-8 text-gray-400" />
-                <div className="text-sm text-center">
-                  <p className="font-medium text-gray-900">
-                    Haz clic para subir o arrastra y suelta
-                  </p>
-                  <p className="text-gray-500">PDF (máx. 5MB)</p>
-                </div>
-              </>
-            )}
-          </div>
-          {fileErrors[name] && (
-            <div className="mt-2 flex items-center gap-1 text-sm text-red-600">
-              <AlertCircle className="w-4 h-4" />
-              <span>{fileErrors[name]}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  if (formData.documentType === "CARNET_EXTRANJERIA" && currentStep === 2) {
-    return (
-      <div className="space-y-6">
-        {renderFileInput("antecedentesPenales", "Antecedentes Penales (PDF)")}
-        {renderFileInput(
-          "antecedentesPoliciales",
-          "Antecedentes Policiales (PDF)"
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">

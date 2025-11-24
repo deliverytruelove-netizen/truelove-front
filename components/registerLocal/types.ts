@@ -7,11 +7,8 @@ export interface FormData {
     businessType: string
     phone: string
     email: string
-    antecedentesPenales?: File
-    antecedentesPoliciales?: File
-    // posToDriver?: boolean
-     posToDriver: number
-       entrega_documento_venta: number; 
+    posToDriver: number
+    entrega_documento_venta: number;
   }
   
   export interface BusinessType {

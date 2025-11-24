@@ -5,7 +5,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowRight, ArrowLeft } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { EmailAlert } from "./email-alert"
 import { DocumentAlert } from "./document-alert"
 import { ValidationAlert } from "@/components/ValidationAlert"
@@ -18,7 +18,6 @@ import { EmailChangeAlert } from "./email-change-alert"
 export default function RegistrationForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>({
     documentType: "DNI",
     documentNumber: "",
@@ -63,25 +62,6 @@ export default function RegistrationForm() {
     fetchBusinessTypes()
   }, [])
 
-  const handleNext = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Validar campos requeridos del primer paso
-    if (
-      !formData.documentNumber ||
-      !formData.name ||
-      !formData.lastName ||
-      !formData.businessType ||
-      !formData.phone ||
-      !formData.email
-    ) {
-      setError("Todos los campos son obligatorios")
-      return
-    }
-
-    setCurrentStep(2)
-    setError(null)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,18 +81,6 @@ export default function RegistrationForm() {
       formDataToSend.append("email", formData.email)
       formDataToSend.append("posToDriver", formData.posToDriver.toString())
       formDataToSend.append("entrega_documento_venta", formData.entrega_documento_venta.toString())
-
-      // Agregar documentos si es Carnet de Extranjería
-      if (formData.documentType === "CARNET_EXTRANJERIA") {
-        if (!formData.antecedentesPenales || !formData.antecedentesPoliciales) {
-          setError("Debe subir ambos documentos")
-          setIsLoading(false)
-          return
-        }
-
-        formDataToSend.append("antecedentesPenales", formData.antecedentesPenales)
-        formDataToSend.append("antecedentesPoliciales", formData.antecedentesPoliciales)
-      }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
         method: "POST",
@@ -207,11 +175,6 @@ export default function RegistrationForm() {
     }
   }
 
-  const isMultiStep = formData.documentType === "CARNET_EXTRANJERIA"
-  const isFirstStep = currentStep === 1
-  const showNextButton = isMultiStep && isFirstStep
-  const showSubmitButton = !isMultiStep || currentStep === 2
-
   return (
     <div className="w-full bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-lg shadow-xl">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">¡Registra tu local ahora!</h2>
@@ -227,7 +190,7 @@ export default function RegistrationForm() {
       )}
 
       <form
-        onSubmit={showNextButton ? handleNext : handleSubmit}
+        onSubmit={handleSubmit}
         className="space-y-4 sm:space-y-6"
       >
         <FormFields
@@ -237,7 +200,6 @@ export default function RegistrationForm() {
           isFieldsLocked={isFieldsLocked}
           handleInputChange={handleInputChange}
           handlePhoneChange={handlePhoneChange}
-          currentStep={currentStep}
         />
 
         {error &&
@@ -254,61 +216,23 @@ export default function RegistrationForm() {
           ))}
 
         <div className="space-y-3">
-          {showSubmitButton && (
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full px-4 py-3 rounded-lg bg-red-500 text-white font-semibold 
-                       focus:ring-2 focus:ring-red-400 focus:ring-opacity-50 
-                       hover:bg-red-600 disabled:bg-gray-300 disabled:text-gray-500 
-                       transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin h-5 w-5" />
-                  <span>Procesando...</span>
-                </>
-              ) : (
-                "Registrar Negocio"
-              )}
-            </button>
-          )}
-
-          {showNextButton && (
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full px-4 py-3 rounded-lg bg-blue-500 text-white font-semibold 
-                       focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 
-                       hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 
-                       transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin h-5 w-5" />
-                  <span>Validando...</span>
-                </>
-              ) : (
-                <>
-                  <span>Continuar</span>
-                  <ArrowRight className="h-5 w-5" />
-                </>
-              )}
-            </button>
-          )}
-
-          {isMultiStep && currentStep === 2 && (
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-700 font-semibold 
-                       hover:bg-gray-50 transition-colors duration-200 
-                       flex items-center justify-center gap-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span>Volver</span>
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full px-4 py-3 rounded-lg bg-red-500 text-white font-semibold
+                     focus:ring-2 focus:ring-red-400 focus:ring-opacity-50
+                     hover:bg-red-600 disabled:bg-gray-300 disabled:text-gray-500
+                     transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>Procesando...</span>
+              </>
+            ) : (
+              "Registrar Negocio"
+            )}
+          </button>
         </div>
       </form>
     </div>
