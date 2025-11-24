@@ -41,7 +41,6 @@ type SeccionDatosData =
   | DetallesSocio["businessData"]
   | DetallesSocio["bankData"]
   | DetallesSocio["cuentaBancaria"]
-  | DetallesSocio["documentosPdfExtranjero"]
   | null;
 
 // Componente para mostrar secciones de datos
@@ -621,16 +620,6 @@ const handleBankAccountUpdate = async (data: BankAccountFormData) => {
 />
       </div>
 
-      {socio.documentosPdfExtranjero && (
-        <div className="mt-6">
-          <SeccionDatos
-            title="Documentos PDF (Extranjero)"
-            data={socio.documentosPdfExtranjero}
-            icon={<FileText className="w-4 h-4" />}
-            isClient={isClient}
-          />
-        </div>
-      )}
       {/* Modal de editar dirección */}
 <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
   <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden p-0">

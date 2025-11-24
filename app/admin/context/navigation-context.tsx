@@ -90,6 +90,11 @@ export const navigationItems: NavItem[] = [
     path: "/admin/cuotas-socios",
     icon: RiShieldUserLine,
   },
+  {
+    title: "Tipos de Negocio",
+    path: "/admin/tiposNegocio",
+    icon: RiShieldUserLine,
+  },
 ];
 
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {

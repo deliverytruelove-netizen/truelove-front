@@ -6,7 +6,6 @@ import type React from "react";
 import { useState, useEffect, useRef } from "react";
 import type {
   DetallesSocio,
-  DocumentosPdfExtranjero,
 } from "@/app/admin/socios/types/Socios.types";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +37,6 @@ interface DetallesSocioModalProps {
   onClose: () => void;
   data: DetallesSocio | undefined | null;
   onAprobar: (id: number) => void;
-  documentosPdfExtranjero?: DocumentosPdfExtranjero;
 }
 
 interface InfoItemProps {
@@ -294,8 +292,6 @@ export function DetallesSocioModal({
     }
   };
 
-  // Verificar si el socio tiene carnet de extranjería para mostrar la pestaña de documentos
-  const isExtranjero = data.documentType === "CARNET_EXTRANJERIA";
 
   const renderContent = () => {
     switch (activeTab) {
@@ -551,26 +547,6 @@ export function DetallesSocioModal({
         ) : (
           <p className="text-gray-500 text-center py-4">
             No hay datos de la cuenta bancaria disponibles
-          </p>
-        );
-      case "documentos":
-        return data.documentosPdfExtranjero ? (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-2">Documentos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <PDFViewer
-                url={`/storage/${data.documentosPdfExtranjero.antecedentes_penales_pdf}`}
-                title="Antecedentes Penales"
-              />
-              <PDFViewer
-                url={`/storage/${data.documentosPdfExtranjero.antecedentes_policiales_pdf}`}
-                title="Antecedentes Policiales"
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No hay documentos disponibles
           </p>
         );
       case "cuotas":
@@ -857,7 +833,7 @@ export function DetallesSocioModal({
             <div className="flex-1 overflow-y-auto">
               <div className="p-6">
                 {/* Pestañas de navegación */}
-                <div className={`grid grid-cols-1 ${isExtranjero ? 'md:grid-cols-7' : 'md:grid-cols-6'} gap-2 p-2 bg-gray-100 rounded-lg mb-6`}>
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-2 bg-gray-100 rounded-lg mb-6">
                   <TabButton
                     isActive={activeTab === "personal"}
                     icon={<User className="w-5 h-5" />}
@@ -888,15 +864,6 @@ export function DetallesSocioModal({
                     label="Cuenta Bancaria"
                     onClick={() => setActiveTab("cuenta_bancaria")}
                   />
-                  {/* Solo mostrar la pestaña de documentos para extranjeros */}
-                  {isExtranjero && (
-                    <TabButton
-                      isActive={activeTab === "documentos"}
-                      icon={<FileText className="w-5 h-5" />}
-                      label="Documentos"
-                      onClick={() => setActiveTab("documentos")}
-                    />
-                  )}
                   <TabButton
                     isActive={activeTab === "cuotas"}
                     icon={<Coins className="w-5 h-5" />}

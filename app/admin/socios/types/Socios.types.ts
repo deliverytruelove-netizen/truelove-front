@@ -37,11 +37,6 @@ export interface DatosNegocio {
   razon_social: string
 }
 
-export interface DocumentosPdfExtranjero {
-  antecedentes_penales_pdf: string
-  antecedentes_policiales_pdf: string
-}
-
 export interface ApiResponse<T> {
   status: string;
   data: T;
@@ -72,9 +67,7 @@ export interface DetallesSocio {
     cuota_socio_id?: number | null
     fecha_asignacion_cuota?: string | null
   }
-  documentosPdfExtranjero: DocumentosPdfExtranjero | null
   business: BusinessInfo | null
-
   businessData: DatosNegocio | null
   establishment: DatosEstablecimiento | null
   bankData: DatosBancarios | null
