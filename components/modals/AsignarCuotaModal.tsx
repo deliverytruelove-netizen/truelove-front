@@ -146,7 +146,31 @@ export default function AsignarCuotaModal({
     }
 
     const diaPagoNumero = diaPago && diaPago !== "0" ? parseInt(diaPago) : undefined
-    const diaPagoTexto = diaPagoNumero ? ` El día de pago será el día ${diaPagoNumero} de cada mes.` : ""
+
+    // Obtener la cuota seleccionada para determinar la periodicidad
+    const cuota = cuotas.find((c) => c.id.toString() === cuotaSeleccionada)
+
+    // Generar el texto del día de pago según la periodicidad
+    let diaPagoTexto = ""
+    if (diaPagoNumero && cuota) {
+      switch (cuota.periodicidad) {
+        case "semanal":
+          const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+          diaPagoTexto = ` El día de pago será cada <strong>${diasSemana[diaPagoNumero]}</strong> de la semana.`
+          break
+        case "quincenal":
+          diaPagoTexto = ` El día de pago será el día <strong>${diaPagoNumero}</strong> de cada quincena.`
+          break
+        case "mensual":
+          diaPagoTexto = ` El día de pago será el día <strong>${diaPagoNumero}</strong> de cada mes.`
+          break
+        case "diario":
+          diaPagoTexto = ` El día de pago será el día <strong>${diaPagoNumero}</strong> de cada mes.`
+          break
+        default:
+          diaPagoTexto = ` El día de pago será el día <strong>${diaPagoNumero}</strong>.`
+      }
+    }
 
     const result = await Swal.fire({
       title: "¿Confirmar asignación?",
@@ -167,7 +191,7 @@ export default function AsignarCuotaModal({
 
       await Swal.fire({
         title: "¡Éxito!",
-        html: `Cuota asignada exitosamente<br><small>${cantidadPeriodos} período${cantidadPeriodos !== 1 ? "s" : ""} generado${cantidadPeriodos !== 1 ? "s" : ""}</small>${diaPagoTexto}`,
+        html: `Cuota asignada exitosamente<br><small>${cantidadPeriodos} período${cantidadPeriodos !== 1 ? "s" : ""} generado${cantidadPeriodos !== 1 ? "s" : ""}</small><br>${diaPagoTexto}`,
         icon: "success",
         confirmButtonColor: "#dc2626",
       })
