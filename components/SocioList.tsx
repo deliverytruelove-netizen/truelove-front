@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Eye, Check, Search, RefreshCw, X, Filter, Trash2, Coins } from "lucide-react"
+import { Eye, Check, Search, RefreshCw, X, Filter, Trash2, Coins, Clock } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -26,7 +26,7 @@ import AsignarCuotaModal from "./modals/AsignarCuotaModal"
 import EditarDiaPagoModal from "./modals/EditarDiaPagoModal"
 
 // Definir los tipos de filtro
-type FilterType = "todos" | "completos" | "incompletos" | "aprobados" | "pendientes"
+type FilterType = "todos" | "completos" | "incompletos"
 
 // Extender DetallesSocio con información de cuota
 interface DetallesSocioConCuota extends DetallesSocio {
@@ -50,6 +50,7 @@ const SocioList: React.FC = () => {
   const [socioParaCuota, setSocioParaCuota] = useState<{ id: number; nombre: string } | null>(null)
   const [isEditarDiaPagoModalOpen, setIsEditarDiaPagoModalOpen] = useState(false)
   const [socioParaEditarDiaPago, setSocioParaEditarDiaPago] = useState<{ socio: DetallesSocioConCuota; cuota: CuotaSocio } | null>(null)
+  const [activeTab, setActiveTab] = useState<"aprobados" | "pendientes">("aprobados")
 
   // Consulta para obtener los socios y sus detalles
   const {
@@ -220,34 +221,42 @@ const SocioList: React.FC = () => {
     return !!(socio.business && socio.businessData && socio.establishment && socio.bankData && socio.cuentaBancaria)
   }
 
-  // Aplicar filtros a los socios
-  const filteredSocios = sociosConDetalles.filter((socio) => {
-    // Primero aplicar el filtro de búsqueda global
-    const searchTerm = globalFilter.toLowerCase()
-    const matchesSearch =
-      !globalFilter ||
-      // socio.personal?.name?.toLowerCase().includes(searchTerm) ||
-      (socio.personal?.name?.toLowerCase() + " " + socio.personal?.lastName?.toLowerCase()).includes(searchTerm) ||
-      socio.personal?.lastName?.toLowerCase().includes(searchTerm) ||
-      socio.personal?.businessType?.toLowerCase().includes(searchTerm) ||
-      socio.personal?.phone?.toLowerCase().includes(searchTerm) ||
-      socio.personal?.email?.toLowerCase().includes(searchTerm)
+  // Contar socios pendientes para el badge
+  const pendientesCount = sociosConDetalles.filter((s) => !s.aprobado).length
 
-    // Luego aplicar el filtro de tipo
-    switch (filterType) {
-      case "completos":
-        return matchesSearch && isSocioCompleto(socio)
-      case "incompletos":
-        return matchesSearch && !isSocioCompleto(socio)
-      case "aprobados":
-        return matchesSearch && socio.aprobado === true
-      case "pendientes":
-        return matchesSearch && socio.aprobado !== true
-      case "todos":
-      default:
-        return matchesSearch
-    }
-  })
+  // Aplicar filtros de estado y búsqueda
+  const filteredSocios = sociosConDetalles
+    .filter((socio) => {
+      // Filtrar por tab activo
+      if (activeTab === "aprobados") return socio.aprobado === true
+      if (activeTab === "pendientes") return socio.aprobado !== true
+      return true
+    })
+    .filter((socio) => {
+      // Filtrar por término de búsqueda
+      if (!globalFilter) return true
+
+      const searchTerm = globalFilter.toLowerCase()
+      return (
+        (socio.personal?.name?.toLowerCase() + " " + socio.personal?.lastName?.toLowerCase()).includes(searchTerm) ||
+        socio.personal?.lastName?.toLowerCase().includes(searchTerm) ||
+        socio.personal?.businessType?.toLowerCase().includes(searchTerm) ||
+        socio.personal?.phone?.toLowerCase().includes(searchTerm) ||
+        socio.personal?.email?.toLowerCase().includes(searchTerm)
+      )
+    })
+    .filter((socio) => {
+      // Aplicar filtros adicionales (completos/incompletos)
+      switch (filterType) {
+        case "completos":
+          return isSocioCompleto(socio)
+        case "incompletos":
+          return !isSocioCompleto(socio)
+        case "todos":
+        default:
+          return true
+      }
+    })
 
   const paginatedSocios = filteredSocios.slice(
     pagination.pageIndex * pagination.pageSize,
@@ -258,7 +267,42 @@ const SocioList: React.FC = () => {
     <Section title="Listado de Socios">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto flex flex-wrap gap-2">
+            {/* Tabs de Aprobados/Pendientes */}
+            <button
+              onClick={() => {
+                setActiveTab("aprobados")
+                setPagination({ ...pagination, pageIndex: 0 })
+              }}
+              className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm ${
+                activeTab === "aprobados"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Check size={16} />
+              <span>Aprobados</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("pendientes")
+                setPagination({ ...pagination, pageIndex: 0 })
+              }}
+              className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm relative ${
+                activeTab === "pendientes"
+                  ? "bg-yellow-500 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Clock size={16} />
+              <span>Pendientes</span>
+              {pendientesCount > 0 && (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full ml-1">
+                  {pendientesCount}
+                </span>
+              )}
+            </button>
+
             {/* Filtro personalizado con mejor diseño */}
             <div className="relative inline-block">
               <Button
@@ -273,11 +317,9 @@ const SocioList: React.FC = () => {
               >
                 <Filter className="h-4 w-4" />
                 <span>
-                  {filterType === "todos" && "Todos los registros"}
-                  {filterType === "completos" && "Registros completos"}
-                  {filterType === "incompletos" && "Registros incompletos"}
-                  {filterType === "aprobados" && "Aprobados"}
-                  {filterType === "pendientes" && "Pendientes"}
+                  {filterType === "todos" && "Todos"}
+                  {filterType === "completos" && "Completos"}
+                  {filterType === "incompletos" && "Incompletos"}
                 </span>
               </Button>
               <div
@@ -286,11 +328,9 @@ const SocioList: React.FC = () => {
               >
                 <div className="py-1">
                   {[
-                    { value: "todos", label: "Todos los registros" },
+                    { value: "todos", label: "Todos" },
                     { value: "completos", label: "Registros completos" },
                     { value: "incompletos", label: "Registros incompletos" },
-                    { value: "aprobados", label: "Aprobados" },
-                    { value: "pendientes", label: "Pendientes" },
                   ].map((option) => (
                     <button
                       key={option.value}
@@ -394,9 +434,11 @@ const SocioList: React.FC = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-800">No se encontraron socios</h3>
                     <p className="text-gray-500 mt-2">
-                      {globalFilter || filterType !== "todos"
-                        ? "Intenta con otra búsqueda o elimina los filtros aplicados."
-                        : "No hay socios registrados en el sistema."}
+                      {globalFilter
+                        ? "Intenta con otra búsqueda."
+                        : activeTab === "aprobados"
+                        ? "No hay socios aprobados."
+                        : "No hay socios pendientes de aprobación."}
                     </p>
                     {(globalFilter || filterType !== "todos") && (
                       <Button
