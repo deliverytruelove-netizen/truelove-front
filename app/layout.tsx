@@ -4,8 +4,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
 
-
 import { Toaster } from "@/components/ui/toaster";
+import CookieBanner from "@/components/CookieBanner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,23 +24,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-
   return (
     <html lang="en">
       <head>
-   
         <meta name="description" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col`}
+      >
         {/* {pathname === "/admin" ? null : <Navbar />} */}
-        
+
         <main className="flex-grow">
           {children}
-          <Toaster/>
+          <Toaster />
         </main>
+
+        <CookieBanner />
       </body>
     </html>
   );
 }
-

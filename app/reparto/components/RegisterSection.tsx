@@ -1,17 +1,17 @@
 // appeparto\components\RegisterSection.tsx
-"use client"
-import { Suspense } from "react"
-import Image from "next/image"
-import { motion } from "framer-motion"
-import RegistrationForm from "./RegisterForm"
-import ImagenFondo from "@/public/motorizadotruelove.png"
+"use client";
+import { Suspense } from "react";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import RegistrationForm from "./RegisterForm";
+import ImagenFondo from "@/public/motorizadotruelove.png";
 
 function Loading() {
   return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
     </div>
-  )
+  );
 }
 
 export default function RegisterSection() {
@@ -38,7 +38,9 @@ export default function RegisterSection() {
         >
           ¡Regístrate Ya!
           <br />
-          <span className="text-gray-300 text-2xl mt-2 font-light block">Es rápido y sencillo.</span>
+          <span className="text-gray-300 text-2xl mt-2 font-light block">
+            Es rápido y sencillo.
+          </span>
         </motion.h1>
         <div className="w-full max-w-md">
           <Suspense fallback={<Loading />}>
@@ -59,21 +61,25 @@ export default function RegisterSection() {
           >
             ¡Regístrate Ya!
             <br />
-            <span className="text-gray-300 text-2xl mt-6 font-light block">Es rápido y sencillo.</span>
+            <span className="text-gray-300 text-2xl mt-6 font-light block">
+              Es rápido y sencillo.
+            </span>
           </motion.h1>
         </div>
 
         {/* Formulario - Centrado en móvil, a la derecha en desktop */}
-        <div className="absolute 
+        <div
+          className="absolute 
           left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2
           md:left-auto md:right-16 md:transform md:-translate-y-1/2 md:translate-x-0
           lg:right-24 
-          w-full max-w-md px-4 md:px-0">
+          w-full max-w-md px-4 md:px-0"
+        >
           <Suspense fallback={<Loading />}>
             <RegistrationForm />
           </Suspense>
         </div>
       </div>
     </div>
-  )
+  );
 }
