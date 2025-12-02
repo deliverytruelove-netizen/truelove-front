@@ -26,8 +26,6 @@ function FormularioDetallesNegocioContent() {
   useBodyScrollLock();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tiposNegocio, setTiposNegocio] = useState<TipoNegocio[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const currentStep = 1;
   const totalSteps = 8;
@@ -36,8 +34,6 @@ function FormularioDetallesNegocioContent() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       businessName: "",
-      businessType: "",
-      category: "",
       branches: 1,
       isStreetLocation: "Si",
       contactMethod: "WhatsApp",
@@ -98,8 +94,6 @@ function FormularioDetallesNegocioContent() {
       if (negocioData) {
         form.reset({
           businessName: negocioData.nombre,
-          businessType: negocioData.tipo_negocio_id.toString(),
-          category: negocioData.categoria_id.toString(),
           branches: negocioData.total_sucursales,
           isStreetLocation: negocioData.es_local_calle ? "Si" : "No",
           contactMethod: negocioData.metodo_contacto,
@@ -109,52 +103,15 @@ function FormularioDetallesNegocioContent() {
           walletOwnerName: negocioData.nombre_titular_pago_digital || "",
         });
 
-        // Cargar las categorías correspondientes
-        await fetchCategorias(negocioData.tipo_negocio_id.toString());
       }
 
       setIsLoading(false);
     };
 
     checkToken();
-    fetchTiposNegocio();
   }, [form, router]);
 
-  const fetchTiposNegocio = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/tipos-negocio`
-      );
-      if (!response.ok) throw new Error("Error al obtener tipos de negocio");
-      const data = await response.json();
-      setTiposNegocio(data);
-    } catch (error) {
-      console.error("Error fetching business types:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los tipos de negocio",
-        variant: "destructive",
-      });
-    }
-  };
 
-  const fetchCategorias = async (tipoNegocioId: string) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_WEB}/categorias/${tipoNegocioId}`
-      );
-      if (!response.ok) throw new Error("Error al obtener categorías");
-      const data = await response.json();
-      setCategorias(data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las categorías",
-        variant: "destructive",
-      });
-    }
-  };
 
   const onSubmit = useCallback(
     async (data: BusinessFormValues) => {
@@ -176,8 +133,6 @@ function FormularioDetallesNegocioContent() {
 
         const businessData = {
           nombre: data.businessName,
-          tipo_negocio_id: parseInt(data.businessType),
-          categoria_id: parseInt(data.category),
           total_sucursales: data.branches,
           es_local_calle: data.isStreetLocation === "Si",
           metodo_contacto: data.contactMethod,
@@ -277,9 +232,6 @@ function FormularioDetallesNegocioContent() {
 
               <BusinessForm
                 form={form}
-                tiposNegocio={tiposNegocio}
-                categorias={categorias}
-                fetchCategorias={fetchCategorias}
               />
             </div>
           </div>

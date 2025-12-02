@@ -21,22 +21,15 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type BusinessFormValues } from "../schemas/business-form";
-import type { TipoNegocio, Categoria } from "../types/business";
 import { UseFormReturn } from "react-hook-form";
 import { PhoneInput } from "./phone-input";
 
 interface BusinessFormProps {
   form: UseFormReturn<BusinessFormValues>;
-  tiposNegocio: TipoNegocio[];
-  categorias: Categoria[];
-  fetchCategorias: (tipoNegocioId: string) => void;
 }
 
 export function BusinessForm({
-  form,
-  tiposNegocio,
-  categorias,
-  fetchCategorias,
+  form
 }: BusinessFormProps) {
   const { watch, setValue } = form;
   const digitalWallet = watch("digitalWallet");
@@ -73,65 +66,6 @@ export function BusinessForm({
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="businessType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tipo de Negocio *</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  fetchCategorias(value);
-                }}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione tipo de negocio" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {tiposNegocio.map((tipo) => (
-                    <SelectItem key={tipo.id} value={tipo.id.toString()}>
-                      {tipo.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Categoría *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccione categoría" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {categorias.map((categoria) => (
-                    <SelectItem
-                      key={categoria.id}
-                      value={categoria.id.toString()}
-                    >
-                      {categoria.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <FormField
           control={form.control}
