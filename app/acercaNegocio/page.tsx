@@ -13,7 +13,6 @@ import StepNavigation from "@/components/ui/StepNavigation";
 import Loading from "./components/Loading";
 import { BusinessForm } from "./components/Fomurlulario";
 import { formSchema, type BusinessFormValues } from "./schemas/business-form";
-import type { TipoNegocio, Categoria } from "./types/business";
 import {
   getRegistrationToken,
   updateRegistrationStep,
