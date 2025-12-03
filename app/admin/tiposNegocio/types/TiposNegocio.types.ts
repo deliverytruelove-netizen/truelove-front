@@ -4,6 +4,7 @@ export interface TipoNegocio {
   id: number;
   nombre: string;
   slug: string;
+  orden: number;
   activo: boolean;
   categorias_count?: number;
   created_at: string;

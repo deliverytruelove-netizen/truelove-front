@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Search, RefreshCw, X, Trash2, Plus, Edit, Power, List } from "lucide-react"
+import { Search, RefreshCw, X, Trash2, Plus, Edit, Power } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
@@ -98,10 +98,10 @@ const TipoNegocioList: React.FC = () => {
     mutationToggleStatus.mutate(id)
   }
 
-  const handleViewCategorias = (tipo: TipoNegocio) => {
-    setSelectedTipo(tipo)
-    setIsCategoriasModalOpen(true)
-  }
+  // const handleViewCategorias = (tipo: TipoNegocio) => {
+  //   setSelectedTipo(tipo)
+  //   setIsCategoriasModalOpen(true)
+  // }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -178,8 +178,11 @@ const TipoNegocioList: React.FC = () => {
                   Slug
                 </th>
                 <th scope="col" className="px-4 py-3 text-center">
-                  Categorías
+                  Orden
                 </th>
+                {/* <th scope="col" className="px-4 py-3 text-center">
+                  Categorías
+                </th> */}
                 <th scope="col" className="px-4 py-3 text-center">
                   Estado
                 </th>
@@ -240,11 +243,12 @@ const TipoNegocioList: React.FC = () => {
                     <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
                     <td className="px-4 py-3 font-medium text-gray-800">{tipo.nombre}</td>
                     <td className="px-4 py-3 text-gray-600">{tipo.slug}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center text-gray-600">{tipo.orden}</td>
+                    {/* <td className="px-4 py-3 text-center">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {tipo.categorias_count || 0} categorías
                       </span>
-                    </td>
+                    </td> */}
                     <td className="px-4 py-3 text-center">
                       {tipo.activo ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -259,7 +263,7 @@ const TipoNegocioList: React.FC = () => {
                     <td className="px-4 py-3 text-center text-gray-600">{formatDate(tipo.created_at)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleViewCategorias(tipo)}
@@ -267,7 +271,7 @@ const TipoNegocioList: React.FC = () => {
                           title="Ver categorías"
                         >
                           <List className="w-5 h-5" />
-                        </Button>
+                        </Button> */}
 
                         <Button
                           variant="ghost"
