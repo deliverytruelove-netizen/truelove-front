@@ -277,6 +277,11 @@ export async function middleware(req: NextRequest) {
 
   // Lógica para las rutas protegidas del proceso de registro
   if (RUTAS_PROTEGIDAS.includes(path) && path !== "/socio-aprobado") {
+    // EXCEPCIÓN TEMPORAL PARA DESARROLLO DE DISEÑO
+    if (path === "/acercaNegocio") {
+      console.log("Bypass temporal para /acercaNegocio por desarrollo de diseño.");
+      return NextResponse.next();
+    }
     // Excepción especial para la página de email cuando viene de un reinicio de registro
     if (path === "/email" && req.nextUrl.searchParams.has("email")) {
       console.log("Permitiendo acceso directo a /email con email")
