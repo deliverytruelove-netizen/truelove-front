@@ -1,3 +1,4 @@
+// app\reparto\zonas\components\CapturarImagen.tsx
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
@@ -5,7 +6,6 @@ import Webcam from "react-webcam"
 import { Camera } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import type * as faceapi from '@vladmandic/face-api';
 
 interface CapturarImagenProps {
   onCapture: (imageSrc: string) => void;
@@ -17,103 +17,132 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isModelLoaded, setIsModelLoaded] = useState(false)
   const [faceDetected, setFaceDetected] = useState(false)
-  const [message, setMessage] = useState("Cargando modelos...")
+  const [message, setMessage] = useState("Cargando detector facial...")
   const [modelLoadError, setModelLoadError] = useState(false)
-  const [faceapi, setFaceapi] = useState<typeof import('@vladmandic/face-api') | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const faceDetectorRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [MediaPipe, setMediaPipe] = useState<any>(null)
 
+  // Cargar MediaPipe dinámicamente solo en el cliente
   useEffect(() => {
-    if (typeof window !== 'undefined' && isOpen && !faceapi) {
-      import('@vladmandic/face-api').then((api: typeof import('@vladmandic/face-api')) => {
-        setFaceapi(api)
+    if (typeof window !== 'undefined' && isOpen && !MediaPipe) {
+      import('@mediapipe/tasks-vision').then((module) => {
+        setMediaPipe(module)
       }).catch((error) => {
-        console.error("Error loading face-api:", error)
+        console.error("Error loading MediaPipe:", error)
         setModelLoadError(true)
         setMessage("Error al cargar la librería de detección facial")
       })
     }
-  }, [isOpen, faceapi])
+  }, [isOpen, MediaPipe])
 
+  // Inicializar el detector
   useEffect(() => {
     let isMounted = true
-    const loadModels = async () => {
-      if (!faceapi) return
+
+    const initializeDetector = async () => {
+      if (!MediaPipe) return
 
       try {
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models' // Loading models from GitHub
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ])
-        
+        const { FaceDetector, FilesetResolver } = MediaPipe
+
+        // Cargar el modelo de MediaPipe
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+        )
+
+        const detector = await FaceDetector.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          minDetectionConfidence: 0.5
+        })
+
         if (isMounted) {
+          faceDetectorRef.current = detector
           setIsModelLoaded(true)
           setModelLoadError(false)
           setMessage("Posiciona tu rostro en el centro")
         }
       } catch (error) {
-        console.error("Error al cargar los modelos:", error)
+        console.error("Error al inicializar el detector:", error)
         if (isMounted) {
           setModelLoadError(true)
-          setMessage("Error al cargar los modelos. Por favor, recarga la página.")
+          setMessage("Error al cargar el modelo. Por favor, recarga la página.")
         }
       }
     }
 
-    if (faceapi && isOpen) {
-      loadModels()
+    if (MediaPipe && isOpen && !faceDetectorRef.current) {
+      initializeDetector()
     }
 
     return () => {
       isMounted = false
     }
-  }, [isOpen, faceapi])
+  }, [MediaPipe, isOpen])
 
+  // Detectar rostros
   useEffect(() => {
     let intervalId: NodeJS.Timeout
+    let lastVideoTime = -1
 
-    const detectFace = async () => {
-      if (!faceapi || !webcamRef.current || !canvasRef.current || !isModelLoaded) return
+    const detectFace = () => {
+      if (!faceDetectorRef.current || !webcamRef.current || !canvasRef.current || !isModelLoaded) return
 
       const video = webcamRef.current.video
       const canvas = canvasRef.current
-      
-      if (faceapi && video && video.readyState === 4) {
-        // Set canvas dimensions to match video
-        const displaySize = { width: video.videoWidth, height: video.videoHeight }
-        faceapi.matchDimensions(canvas, displaySize)
+
+      if (video && video.readyState === 4 && video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime
 
         try {
-          const detections = await faceapi.detectAllFaces(
-            video,
-            new faceapi.TinyFaceDetectorOptions()
-          ).withFaceLandmarks() as faceapi.WithFaceLandmarks<{ detection: faceapi.FaceDetection }>[];
+          // Detectar rostros
+          const detections = faceDetectorRef.current.detectForVideo(video, performance.now())
 
-          // Clear previous drawings
+          // Configurar canvas
           const ctx = canvas.getContext('2d')
-          ctx?.clearRect(0, 0, canvas.width, canvas.height)
+          if (!ctx) return
 
-          if (detections && detections.length === 1) {
-            // Draw facial landmarks
-            const resizedDetections = faceapi.resizeResults(detections, displaySize)
-            
-            // Draw face detection box
-            faceapi.draw.drawDetections(canvas, resizedDetections)
-            
-            // Draw facial landmarks
-            faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
+          canvas.width = video.videoWidth
+          canvas.height = video.videoHeight
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-            // Add custom overlay elements
-            ctx!.strokeStyle = '#4ade80' // Green color for the frame
-            ctx!.lineWidth = 2
-            ctx!.strokeRect(50, 50, canvas.width - 100, canvas.height - 100)
+          if (detections.detections && detections.detections.length === 1) {
+            const detection = detections.detections[0]
+            const bbox = detection.boundingBox
+
+            // Dibujar rectángulo verde alrededor del rostro
+            ctx.strokeStyle = '#4ade80'
+            ctx.lineWidth = 3
+            ctx.strokeRect(bbox.originX, bbox.originY, bbox.width, bbox.height)
+
+            // Dibujar puntos clave (keypoints) si existen
+            if (detection.keypoints) {
+              ctx.fillStyle = '#4ade80'
+              detection.keypoints.forEach((keypoint: { x: number; y: number }) => {
+                ctx.beginPath()
+                ctx.arc(keypoint.x, keypoint.y, 3, 0, 2 * Math.PI)
+                ctx.fill()
+              })
+            }
+
+            // Marco de guía
+            ctx.strokeStyle = '#4ade80'
+            ctx.lineWidth = 2
+            ctx.setLineDash([10, 5])
+            ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100)
+            ctx.setLineDash([])
 
             setFaceDetected(true)
             setMessage("¡Rostro detectado correctamente!")
           } else {
             setFaceDetected(false)
-            setMessage(detections.length === 0 
-              ? "No se detectó ningún rostro" 
+            setMessage(detections.detections.length === 0
+              ? "No se detectó ningún rostro"
               : "Solo debe haber un rostro en la imagen")
           }
         } catch (error) {
@@ -130,14 +159,25 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
     return () => {
       if (intervalId) clearInterval(intervalId)
     }
-  }, [isOpen, isModelLoaded, modelLoadError, faceapi])
+  }, [isOpen, isModelLoaded, modelLoadError])
+
+  // Limpiar el detector al cerrar
+  useEffect(() => {
+    if (!isOpen && faceDetectorRef.current) {
+      faceDetectorRef.current.close()
+      faceDetectorRef.current = null
+      setIsModelLoaded(false)
+      setFaceDetected(false)
+      setMessage("Cargando detector facial...")
+    }
+  }, [isOpen])
 
   const captureImage = React.useCallback(() => {
     if (!faceDetected) {
       setMessage("Por favor, asegúrate que tu rostro esté correctamente detectado")
       return
     }
-    
+
     const imageSrc = webcamRef.current?.getScreenshot()
     if (imageSrc) {
       onCapture(imageSrc)
@@ -147,9 +187,9 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
 
   return (
     <>
-      <Button 
+      <Button
         type="button"
-        variant="outline" 
+        variant="outline"
         onClick={() => setIsOpen(true)}
         className="w-full py-8"
       >
@@ -185,15 +225,15 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
             {message}
           </p>
           <div className="flex justify-between gap-2">
-            <Button 
+            <Button
               type="button"
-              variant="outline" 
+              variant="outline"
               onClick={() => setIsOpen(false)}
             >
               Cancelar
             </Button>
-            <Button 
-              onClick={captureImage} 
+            <Button
+              onClick={captureImage}
               className="bg-red-600 hover:bg-red-500"
               disabled={!faceDetected || modelLoadError}
             >
@@ -205,4 +245,3 @@ export function CapturarImagen({ onCapture }: CapturarImagenProps) {
     </>
   )
 }
-
