@@ -9,6 +9,7 @@ import {
   RiAncientGateLine,
   RiBankCardFill,
   RiCalendar2Fill,
+  RiDeleteBin6Line,
 } from "react-icons/ri";
 
 export interface NavItem {
@@ -94,6 +95,11 @@ export const navigationItems: NavItem[] = [
     title: "Tipos de Negocio",
     path: "/admin/tiposNegocio",
     icon: RiShieldUserLine,
+  },
+  {
+    title: "Solicitudes Eliminación",
+    path: "/admin/solicitudes-eliminacion",
+    icon: RiDeleteBin6Line,
   },
 ];
 
