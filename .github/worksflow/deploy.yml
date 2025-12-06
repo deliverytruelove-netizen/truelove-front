@@ -1,0 +1,43 @@
+name: Deploy Next.js App
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+      uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/html/truelove-front
+
+            echo "➡️ Haciendo git pull..."
+            git pull origin main
+
+            echo "➡️ Instalando dependencias..."
+            npm install
+
+            echo "➡️ Generando build..."
+            npm run build
+
+            echo "➡️ Reiniciando PM2..."
+            pm2 delete true-love
+            pm2 start npm --name "true-love" -- start
+
+            echo "➡️ Guardando configuración PM2..."
+            pm2 save
+
+            echo "⬅️ Deploy completado."
