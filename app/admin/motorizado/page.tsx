@@ -4,7 +4,7 @@
 
 import React from 'react';
 import MainLayout from '../components/MainLayout';
-import MotorizadoList from '@/components/MotorizadoList'; 
+import MotorizadoList from '@/components/MotorizadoList';
 
 
 const Socios: React.FC = () => {

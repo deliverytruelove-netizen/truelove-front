@@ -2,14 +2,30 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
-import { Document, Page, pdfjs } from "react-pdf"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Download, Eye } from "lucide-react"
 import { PDFModal } from "./PDFModal"
+import dynamic from 'next/dynamic'
 
-// Cambia la ruta para usar el archivo local en la carpeta public
-pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`
+// Importar estilos CSS
+import 'react-pdf/dist/Page/AnnotationLayer.css'
+import 'react-pdf/dist/Page/TextLayer.css'
+
+// Cargar react-pdf dinámicamente solo en el cliente
+const Document = dynamic(
+  () => import('react-pdf').then(mod => {
+    // Configurar worker desde CDN
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`
+    return mod.Document
+  }),
+  { ssr: false }
+)
+
+const Page = dynamic(
+  () => import('react-pdf').then(mod => mod.Page),
+  { ssr: false }
+)
 
 interface PDFViewerProps {
   url: string | null
@@ -22,6 +38,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
   const [pageNumber, setPageNumber] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (!url) {
     return (
@@ -68,6 +89,19 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
 
   const closeModal = () => {
     setIsModalOpen(false)
+  }
+
+  if (!mounted) {
+    return (
+      <div className="border rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="text-lg font-semibold">{title}</h4>
+        </div>
+        <div className="flex items-center justify-center p-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    )
   }
 
   return (

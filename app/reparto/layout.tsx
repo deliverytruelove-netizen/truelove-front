@@ -6,6 +6,9 @@ import type React from "react"
 import { useEffect } from "react"
 import { initTokenSyncListener } from "@/services/repartoTokenService"
 
+// Deshabilitar SSG para evitar errores con librerías del navegador
+export const dynamic = 'force-dynamic'
+
 export default function RepartoLayout({
   children,
 }: {

@@ -33,7 +33,9 @@ const nextConfig = {
   // Configuración de webpack sin tipado explícito
   webpack: (
     // @ts-expect-error: Config parameter is not explicitly typed
-    config
+    config,
+    // @ts-expect-error: Context parameter is not explicitly typed
+    { isServer }
   ) => {
     // Este fallback permite que pdfjs-dist funcione sin el módulo canvas
     config.resolve = {
@@ -43,6 +45,19 @@ const nextConfig = {
         canvas: false,
       },
     };
+
+    // Excluir librerías del navegador del bundle del servidor
+    if (isServer) {
+      if (!config.externals) {
+        config.externals = [];
+      }
+      if (Array.isArray(config.externals)) {
+        config.externals.push('@mediapipe/tasks-vision');
+        config.externals.push('dynamsoft-document-normalizer');
+        config.externals.push('mapbox-gl');
+      }
+    }
+
     return config;
   },
   async rewrites() {

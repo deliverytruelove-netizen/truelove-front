@@ -1,4 +1,4 @@
-// app\reparto\zonas\components\FormularioDatos.tsx este es el segundo paso
+// app\reparto\zonas\components\FormularioDatos.tsx 
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
