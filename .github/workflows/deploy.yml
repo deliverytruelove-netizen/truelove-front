@@ -30,14 +30,13 @@ jobs:
             echo "➡️ Instalando dependencias..."
             npm install
 
+            echo "➡️ Reiniciando PM2..."
+            pm2 delete true-love 
+
             echo "➡️ Generando build..."
             npm run build
 
-            echo "➡️ Reiniciando PM2..."
-            pm2 delete true-love 
+            echo "➡️ Iniciando aplicación con PM2..."
             pm2 start npm --name "true-love" -- start
-
-            echo "➡️ Guardando configuración PM2..."
-            pm2 save
 
             echo "⬅️ Deploy completado."
