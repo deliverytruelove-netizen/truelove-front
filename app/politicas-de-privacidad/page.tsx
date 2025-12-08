@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Lock, Eye, FileText, Mail, UserCheck, X } from "lucide-react";
+import { Shield, Lock, Eye, FileText, Mail, UserCheck, X, CreditCard, MapPin, Smartphone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieSettings from "@/components/CookieSettings";
@@ -16,85 +16,86 @@ export default function PoliticasPrivacidad() {
     {
       icon: <FileText className="h-6 w-6" />,
       title: "1. Información que Recopilamos",
-      summary:
-        "Recopilamos información personal necesaria para registrar socios y motorizados en nuestra plataforma.",
-      socios: [
-        "Tipo y número de documento (DNI/RUC)",
-        "Nombre completo y apellidos",
-        "Tipo de negocio",
-        "Número de teléfono",
-        "Correo electrónico",
-      ],
-      motorizados: [
-        "Departamento de operación",
-        "Tipo de vehículo",
-        "Tipo y número de documento",
-        "Nombres y apellidos",
-        "Número de celular",
-        "Correo electrónico",
-        "Fotografías del documento de identidad (frente y reverso)",
-        "Documentos adicionales del vehículo",
-      ],
+      summary: "Recopilamos diversos tipos de información para ofrecer un servicio de delivery eficiente y personalizado.",
+      categories: {
+        "Datos de Identificación Personal": [
+          "Nombre completo: Para personalizar la experiencia y la comunicación",
+          "Número de teléfono: Para la confirmación de pedidos y comunicación en tiempo real",
+          "Correo electrónico: Para envío de confirmaciones, recibos y notificaciones",
+        ],
+        "Información de Pago": [
+          "Datos de tarjetas de crédito o débito en POS: Para procesar pagos de manera segura",
+          "Información de plataformas de pago digital: Para facilitar transacciones electrónicas",
+        ],
+        "Ubicación": [
+          "Ubicación en tiempo real: Para localizar al usuario y coordinar entregas rápidas y precisas",
+          "Dirección de entrega: Para asegurar que los pedidos lleguen al destino correcto",
+        ],
+        "Historial y Datos de Uso": [
+          "Detalles de pedidos anteriores: Productos solicitados, tiempos de entrega y preferencias",
+          "Valoraciones y comentarios: Retroalimentación sobre los servicios recibidos",
+          "Interacción con la app: Cómo navegan y sus preferencias personalizadas",
+        ],
+        "Datos de Dispositivo": [
+          "Modelo y sistema operativo: Para garantizar compatibilidad y optimización",
+          "Identificadores únicos del dispositivo: Para mejorar seguridad y personalización",
+        ],
+        "Acceso a Funciones": [
+          "Acceso a la Cámara: Para verificar identidad, pedidos y tomar fotos",
+        ],
+      },
     },
     {
       icon: <Lock className="h-6 w-6" />,
-      title: "2. Finalidad del Uso de los Datos",
-      summary:
-        "Utilizamos tu información para operar nuestros servicios de entrega y mejorar tu experiencia.",
+      title: "2. Uso de la Información",
+      summary: "Utilizamos tu información para ofrecer un servicio de entrega eficiente y de calidad.",
       items: [
-        "Registrar y autenticar usuarios",
-        "Procesar y coordinar entregas",
-        "Comunicarnos sobre el estado de pedidos",
-        "Verificar identidad y documentación",
-        "Mejorar nuestros servicios",
-        "Personalizar la experiencia del usuario",
+        "Procesar y entregar tus pedidos de manera eficiente",
+        "Mejorar la experiencia del usuario y la calidad del servicio",
+        "Cumplir con obligaciones legales",
       ],
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "3. Protección de Datos",
-      summary:
-        "Implementamos medidas de seguridad para proteger tu información personal.",
-      items: [
-        "Encriptación de datos sensibles",
-        "Almacenamiento seguro de documentos",
-        "Acceso restringido solo para personal autorizado",
-        "Protocolos de seguridad técnicos",
-        "Monitoreo continuo de seguridad",
-      ],
-    },
-    {
-      icon: <Eye className="h-6 w-6" />,
-      title: "4. Compartir Información con Terceros",
-      summary:
-        "Solo compartimos tu información cuando es necesario para operar el servicio.",
-      items: [
-        "Motorizados asignados a entregas",
-        "Servicios necesarios para operar la plataforma",
-        "Autoridades legales cuando sea requerido por ley",
-      ],
+      title: "3. Seguridad de la Información",
+      summary: "Implementamos medidas robustas para proteger tu información personal.",
+      subsections: {
+        "Control de Accesos": [
+          "Autenticación y Autorización: Mecanismos robustos para garantizar acceso solo a personas autorizadas",
+          "Gestión de Permisos: Los accesos se asignan según el principio de menor privilegio",
+        ],
+        "Protección de Datos": [
+          "Cifrado: Los datos sensibles se cifran en tránsito y en reposo",
+          "Respaldo de Información: Copias de seguridad periódicas para garantizar disponibilidad",
+        ],
+        "Gestión de Vulnerabilidades": [
+          "Monitoreo Continuo: Herramientas de monitoreo para detectar amenazas",
+          "Actualizaciones y Parcheo: Actualizaciones de seguridad oportunas",
+        ],
+        "Gestión de Incidentes": [
+          "Protocolo de respuesta para identificar, contener y resolver incidentes de seguridad",
+        ],
+      },
     },
     {
       icon: <UserCheck className="h-6 w-6" />,
-      title: "5. Derechos del Usuario",
+      title: "4. Derechos del Usuario",
       summary: "Tienes control total sobre tus datos personales.",
       items: [
-        "Acceder a tus datos personales",
-        "Corregir información incorrecta",
-        "Eliminar tu cuenta y datos asociados",
-        "Limitar el uso de tus datos",
-        "Retirar tu consentimiento",
+        "Acceder a tu información personal",
+        "Rectificar información incorrecta",
+        "Eliminar tu información personal",
+        "Gestionar tus preferencias a través de la configuración de la aplicación",
       ],
     },
     {
       icon: <Mail className="h-6 w-6" />,
-      title: "6. Cookies y Tecnologías",
-      summary: "Utilizamos cookies para mejorar tu experiencia de navegación.",
+      title: "5. Cumplimiento Legal y Contacto",
+      summary: "Delivery TrueLove cumple con las leyes y regulaciones aplicables en materia de protección de datos.",
       items: [
-        "Mejorar tu experiencia de navegación",
-        "Recordar tus preferencias",
-        "Analizar el uso de nuestra plataforma",
-        "Mostrar contenido personalizado",
+        "Normativas y Regulaciones: Cumplimiento con leyes de protección de datos",
+        "Capacitación Continua: Formación periódica al personal sobre prácticas de seguridad",
+        "Privacidad: Protección de la información de usuarios y de la empresa",
       ],
     },
   ];
@@ -112,7 +113,6 @@ export default function PoliticasPrivacidad() {
         <Navbar />
 
         <div className="container mx-auto px-4 py-16 md:py-20 max-w-6xl">
-          {/* Header */}
           <motion.div
             className="text-center mb-12"
             initial={{ opacity: 0, y: -20 }}
@@ -122,11 +122,10 @@ export default function PoliticasPrivacidad() {
               Política de <span className="text-[#D9043D]">Privacidad</span>
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              En TRUE LOVE, valoramos la privacidad de nuestros usuarios y nos
-              comprometemos a proteger la información personal que recolectamos.
+              En Delivery TrueLove, con sede en Huacho, Lima, Perú, valoramos la privacidad de nuestros usuarios y nos comprometemos a proteger su información personal.
             </p>
             <p className="text-sm text-gray-500 mt-3">
-              Última actualización: 29 de noviembre de 2025
+              Última actualización: Diciembre 2025
             </p>
           </motion.div>
 
@@ -140,10 +139,7 @@ export default function PoliticasPrivacidad() {
               Introducción
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              Bienvenido a TRUE LOVE. Esta Política de Privacidad describe qué
-              datos recopilamos, cómo los usamos y con quién los compartimos
-              cuando utilizas nuestros servicios de entrega. Al usar nuestra
-              plataforma, aceptas las prácticas descritas en esta política.
+              Bienvenido a Delivery TrueLove. Esta Política de Privacidad describe qué datos recopilamos, cómo los usamos y con quién los compartimos cuando utilizas nuestros servicios de delivery. Al usar nuestra plataforma, aceptas las prácticas descritas en esta política. Nos comprometemos a proteger la seguridad de la información de nuestros usuarios y de la empresa.
             </p>
           </motion.div>
 
@@ -210,45 +206,48 @@ export default function PoliticasPrivacidad() {
                   </div>
 
                   <div className="overflow-y-auto p-5 md:p-6">
-                    {sections[selectedSection].socios && (
-                      <>
-                        <div className="mb-6">
-                          <h4 className="font-bold text-[#D9043D] mb-3 flex items-center gap-2">
-                            <span>🏪</span> Para Socios/Negocios:
-                          </h4>
-                          <ul className="space-y-2">
-                            {sections[selectedSection].socios?.map(
-                              (item, i) => (
-                                <li
-                                  key={i}
-                                  className="flex gap-2 text-gray-700"
-                                >
-                                  <span className="text-[#D9043D]">•</span>
-                                  <span>{item}</span>
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </div>
-                        <div className="mb-6">
-                          <h4 className="font-bold text-[#D9043D] mb-3 flex items-center gap-2">
-                            <span>🏍️</span> Para Motorizados:
-                          </h4>
-                          <ul className="space-y-2">
-                            {sections[selectedSection].motorizados?.map(
-                              (item, i) => (
-                                <li
-                                  key={i}
-                                  className="flex gap-2 text-gray-700"
-                                >
-                                  <span className="text-[#D9043D]">•</span>
-                                  <span>{item}</span>
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </div>
-                      </>
+                    {sections[selectedSection].categories && (
+                      <div className="space-y-6">
+                        {Object.entries(sections[selectedSection].categories || {}).map(
+                          ([category, items], idx) => (
+                            <div key={idx}>
+                              <h4 className="font-bold text-[#D9043D] mb-3">
+                                {category}
+                              </h4>
+                              <ul className="space-y-2">
+                                {items.map((item, i) => (
+                                  <li key={i} className="flex gap-2 text-gray-700 text-sm">
+                                    <span className="text-[#D9043D]">•</span>
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {sections[selectedSection].subsections && (
+                      <div className="space-y-6">
+                        {Object.entries(sections[selectedSection].subsections || {}).map(
+                          ([subsection, items], idx) => (
+                            <div key={idx}>
+                              <h4 className="font-bold text-[#D9043D] mb-3">
+                                {subsection}
+                              </h4>
+                              <ul className="space-y-2">
+                                {items.map((item, i) => (
+                                  <li key={i} className="flex gap-2 text-gray-700 text-sm">
+                                    <span className="text-[#D9043D]">•</span>
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )
+                        )}
+                      </div>
                     )}
 
                     {sections[selectedSection].items && (
@@ -291,18 +290,23 @@ export default function PoliticasPrivacidad() {
                   Retención de Datos
                 </h3>
                 <p className="text-gray-700 text-sm">
-                  Conservamos tu información personal durante el tiempo
-                  necesario para cumplir con los propósitos descritos en esta
-                  política, o mientras mantengas una cuenta activa con nosotros.
+                  Conservamos tu información personal durante el tiempo necesario para cumplir con los propósitos descritos en esta política, o mientras mantengas una cuenta activa con nosotros.
                 </p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">
-                  Mayoría de Edad
+                  Capacitación y Concientización
                 </h3>
                 <p className="text-gray-700 text-sm">
-                  Nuestros servicios están destinados exclusivamente a personas
-                  mayores de 18 años.
+                  Se brinda capacitación periódica al personal sobre prácticas de seguridad de la información para garantizar la protección continua de tus datos.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Alcance de la Política
+                </h3>
+                <p className="text-gray-700 text-sm">
+                  Esta política aplica a todos los usuarios, empleados, colaboradores, contratistas y terceros que tengan acceso a la información de Delivery TrueLove.
                 </p>
               </div>
               <div>
@@ -310,20 +314,32 @@ export default function PoliticasPrivacidad() {
                   Cambios a esta Política
                 </h3>
                 <p className="text-gray-700 text-sm">
-                  Nos reservamos el derecho de actualizar esta Política de
-                  Privacidad en cualquier momento. Te notificaremos sobre
-                  cambios significativos.
+                  Nos reservamos el derecho de actualizar esta Política de Privacidad en cualquier momento. Te notificaremos sobre cambios significativos.
                 </p>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  Seguridad de Documentos
-                </h3>
-                <p className="text-gray-700 text-sm">
-                  Las fotografías de documentos de identidad y vehículos son
-                  almacenadas de forma segura y encriptada.
-                </p>
-              </div>
+            </div>
+          </motion.div>
+
+          {/* Contacto */}
+          <motion.div
+            className="mb-12 bg-[#D9043D] text-white rounded-xl p-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <h2 className="text-2xl font-bold mb-4">
+              ¿Preguntas sobre tu Privacidad?
+            </h2>
+            <p className="mb-4">
+              Si tienes preguntas o inquietudes sobre esta política de privacidad, o si deseas ejercer tus derechos de acceso, rectificación o eliminación de datos, contáctanos:
+            </p>
+            <div className="bg-white/20 rounded-lg p-4">
+              <p className="font-semibold mb-2">Email de Soporte:</p>
+              <a
+                href="mailto:Soporte@deliverytruelove.com"
+                className="text-white underline hover:text-gray-100 transition-colors break-all"
+              >
+                Soporte@deliverytruelove.com
+              </a>
             </div>
           </motion.div>
 
