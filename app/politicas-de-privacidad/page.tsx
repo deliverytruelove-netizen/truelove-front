@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Lock, Eye, FileText, Mail, UserCheck, X, CreditCard, MapPin, Smartphone } from "lucide-react";
+import { Shield, Lock, Eye, FileText, Mail, UserCheck, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieSettings from "@/components/CookieSettings";
