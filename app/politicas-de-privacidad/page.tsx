@@ -11,7 +11,7 @@ export default function PoliticasPrivacidad() {
   const [selectedSection, setSelectedSection] = React.useState<number | null>(
     null
   );
-
+// Definición de las secciones de la política de privacidad
   const sections = [
     {
       icon: <FileText className="h-6 w-6" />,
