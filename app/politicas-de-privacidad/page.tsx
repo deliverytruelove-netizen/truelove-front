@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Lock, Eye, FileText, Mail, UserCheck, X } from "lucide-react";
+import { Shield, Lock, Eye, FileText, Mail, UserCheck, X, Trash2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieSettings from "@/components/CookieSettings";
@@ -89,8 +89,19 @@ export default function PoliticasPrivacidad() {
       ],
     },
     {
+      icon: <Trash2 className="h-6 w-6" />,
+      title: "5. Eliminación de Datos",
+      summary: "Respetamos tu privacidad y te ofrecemos la posibilidad de solicitar la eliminación de tus datos personales.",
+      description: "En Delivery True Love, respetamos tu privacidad y te ofrecemos la posibilidad de solicitar la eliminación de tus datos personales en cualquier momento. Para hacerlo, puedes enviarnos una solicitud a nuestro correo electrónico soporte@deliverytruelove.com.",
+      items: [
+        "Proceso de Eliminación: Una vez recibida tu solicitud, procesaremos la eliminación de tus datos en un plazo máximo de 3 días hábiles",
+        "Seguridad y Confidencialidad: Durante este proceso, garantizamos la seguridad y confidencialidad de tu información, eliminando todos los datos que no sean necesarios para cumplir con obligaciones legales",
+        "Asistencia: Si tienes alguna duda o necesitas asistencia adicional, no dudes en contactarnos a soporte@deliverytruelove.com",
+      ],
+    },
+    {
       icon: <Mail className="h-6 w-6" />,
-      title: "5. Cumplimiento Legal y Contacto",
+      title: "6. Cumplimiento Legal y Contacto",
       summary: "Delivery TrueLove cumple con las leyes y regulaciones aplicables en materia de protección de datos.",
       items: [
         "Normativas y Regulaciones: Cumplimiento con leyes de protección de datos",
@@ -188,87 +199,97 @@ export default function PoliticasPrivacidad() {
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
                   transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                  className="fixed bottom-0 left-0 right-0 md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[90%] md:max-w-2xl md:bottom-auto md:right-auto max-h-[85vh] bg-white shadow-2xl z-50 flex flex-col rounded-t-3xl md:rounded-xl overflow-hidden"
+                  className="fixed bottom-0 left-0 right-0 md:inset-0 md:flex md:items-center md:justify-center md:p-4 z-50 pointer-events-none md:pointer-events-auto"
                 >
-                  <div className="bg-[#D9043D] p-4 md:p-5 flex items-center justify-between flex-shrink-0 rounded-t-3xl md:rounded-t-xl">
-                    <div className="flex items-center gap-3 text-white">
-                      {sections[selectedSection].icon}
-                      <h3 className="font-bold text-base md:text-lg">
-                        {sections[selectedSection].title}
-                      </h3>
+                  <div className="w-full md:w-auto md:max-w-2xl max-h-[85vh] md:max-h-[90vh] bg-white shadow-2xl rounded-t-3xl md:rounded-xl overflow-hidden flex flex-col pointer-events-auto">
+                    <div className="bg-[#D9043D] p-4 md:p-5 flex items-center justify-between flex-shrink-0 rounded-t-3xl md:rounded-t-xl">
+                      <div className="flex items-center gap-3 text-white">
+                        {sections[selectedSection].icon}
+                        <h3 className="font-bold text-base md:text-lg">
+                          {sections[selectedSection].title}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setSelectedSection(null)}
+                        className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setSelectedSection(null)}
-                      className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
 
-                  <div className="overflow-y-auto p-5 md:p-6">
-                    {sections[selectedSection].categories && (
-                      <div className="space-y-6">
-                        {Object.entries(sections[selectedSection].categories || {}).map(
-                          ([category, items], idx) => (
-                            <div key={idx}>
-                              <h4 className="font-bold text-[#D9043D] mb-3">
-                                {category}
-                              </h4>
-                              <ul className="space-y-2">
-                                {items.map((item, i) => (
-                                  <li key={i} className="flex gap-2 text-gray-700 text-sm">
-                                    <span className="text-[#D9043D]">•</span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
+                    <div className="overflow-y-auto p-5 md:p-8 flex-1">
+                      {sections[selectedSection].description && (
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                          <p className="text-gray-700 text-sm leading-relaxed">
+                            {sections[selectedSection].description}
+                          </p>
+                        </div>
+                      )}
 
-                    {sections[selectedSection].subsections && (
-                      <div className="space-y-6">
-                        {Object.entries(sections[selectedSection].subsections || {}).map(
-                          ([subsection, items], idx) => (
-                            <div key={idx}>
-                              <h4 className="font-bold text-[#D9043D] mb-3">
-                                {subsection}
-                              </h4>
-                              <ul className="space-y-2">
-                                {items.map((item, i) => (
-                                  <li key={i} className="flex gap-2 text-gray-700 text-sm">
-                                    <span className="text-[#D9043D]">•</span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
+                      {sections[selectedSection].categories && (
+                        <div className="space-y-6">
+                          {Object.entries(sections[selectedSection].categories || {}).map(
+                            ([category, items], idx) => (
+                              <div key={idx}>
+                                <h4 className="font-bold text-[#D9043D] mb-3 text-base">
+                                  {category}
+                                </h4>
+                                <ul className="space-y-2.5">
+                                  {items.map((item, i) => (
+                                    <li key={i} className="flex gap-3 text-gray-700 text-sm leading-relaxed">
+                                      <span className="text-[#D9043D] flex-shrink-0 mt-0.5">•</span>
+                                      <span>{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
 
-                    {sections[selectedSection].items && (
-                      <ul className="space-y-2">
-                        {sections[selectedSection].items?.map((item, i) => (
-                          <li key={i} className="flex gap-2 text-gray-700">
-                            <span className="text-[#D9043D]">•</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                      {sections[selectedSection].subsections && (
+                        <div className="space-y-6">
+                          {Object.entries(sections[selectedSection].subsections || {}).map(
+                            ([subsection, items], idx) => (
+                              <div key={idx}>
+                                <h4 className="font-bold text-[#D9043D] mb-3 text-base">
+                                  {subsection}
+                                </h4>
+                                <ul className="space-y-2.5">
+                                  {items.map((item, i) => (
+                                    <li key={i} className="flex gap-3 text-gray-700 text-sm leading-relaxed">
+                                      <span className="text-[#D9043D] flex-shrink-0 mt-0.5">•</span>
+                                      <span>{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
 
-                  <div className="flex-shrink-0 p-4 md:p-6">
-                    <button
-                      onClick={() => setSelectedSection(null)}
-                      className="w-full bg-[#D9043D] hover:bg-red-700 text-white font-medium py-3.5 rounded-lg transition-colors shadow-lg"
-                    >
-                      Cerrar
-                    </button>
+                      {sections[selectedSection].items && (
+                        <ul className="space-y-2.5">
+                          {sections[selectedSection].items?.map((item, i) => (
+                            <li key={i} className="flex gap-3 text-gray-700 text-sm leading-relaxed">
+                              <span className="text-[#D9043D] flex-shrink-0 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="flex-shrink-0 p-4 md:p-6">
+                      <button
+                        onClick={() => setSelectedSection(null)}
+                        className="w-full bg-[#D9043D] hover:bg-red-700 text-white font-medium py-3.5 rounded-lg transition-colors shadow-lg"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               </>
