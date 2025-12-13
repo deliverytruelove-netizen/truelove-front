@@ -164,10 +164,10 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors">
-      {/* Overlay para móvil */}
+      {/* Overlay para móvil y tablet */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-all duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-all duration-300"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -177,7 +177,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
         className={cn(
           "fixed top-0 left-0 z-50 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm transition-all duration-300 ease-in-out",
           isCollapsed ? "w-[72px]" : "w-[280px]",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Sidebar Header */}
@@ -349,7 +349,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "flex-1 transition-all duration-300 ease-in-out",
-          isCollapsed ? "md:ml-[72px]" : "md:ml-[280px]"
+          isCollapsed ? "lg:ml-[72px]" : "lg:ml-[280px]"
         )}
       >
         {/* Header */}
@@ -359,7 +359,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden rounded-full w-9 h-9 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="lg:hidden rounded-full w-9 h-9 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
               >
                 <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400" />

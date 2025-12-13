@@ -50,12 +50,17 @@ export function PerfilNegocio({
   // Estados de error separados para logo y banner
   const [errorLogo, setErrorLogo] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [errorCargaPerfil, setErrorCargaPerfil] = useState<string | null>(null);
+  const [cargandoPerfil, setCargandoPerfil] = useState(true);
   
   const [horarios, setHorarios] = useState<HorarioNegocio[]>(horariosIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [horarioAEditar, setHorarioAEditar] = useState<HorarioNegocio | undefined>(undefined);
 
   const obtenerPerfil = useCallback(async () => {
+    setCargandoPerfil(true);
+    setErrorCargaPerfil(null);
+    
     try {
       const token = document.cookie
         .split("; ")
@@ -63,8 +68,10 @@ export function PerfilNegocio({
         ?.split("=")[1];
 
       if (!token) {
+        console.warn("No se encontró token de autenticación");
         setLogoUrl(logo);
         setBannerUrl(banner);
+        setCargandoPerfil(false);
         return;
       }
 
@@ -77,19 +84,41 @@ export function PerfilNegocio({
 
       if (respuesta.ok) {
         const datos = await respuesta.json();
+        
+        // Validar que datos sea un objeto válido
+        if (!datos || typeof datos !== 'object') {
+          console.error("Respuesta del API inválida:", datos);
+          setErrorCargaPerfil("No se pudo obtener la información del socio");
+          setLogoUrl(logo);
+          setBannerUrl(banner);
+          setCargandoPerfil(false);
+          return;
+        }
+        
+        // Establecer URLs con validación
         setLogoUrl(datos.ruta_logo || logo);
         setBannerUrl(datos.banner || banner);
-        if (datos.horarios) {
+        
+        // Validar y establecer horarios
+        if (datos.horarios && Array.isArray(datos.horarios)) {
           setHorarios(datos.horarios);
         }
+        
+        setErrorCargaPerfil(null);
       } else {
+        const errorMsg = `Error ${respuesta.status}: No se pudo cargar el perfil`;
+        console.warn(errorMsg);
+        setErrorCargaPerfil(errorMsg);
         setLogoUrl(logo);
         setBannerUrl(banner);
       }
     } catch (error) {
       console.error("Error al obtener el perfil:", error);
+      setErrorCargaPerfil("Error al cargar Perfil - No se pudo obtener la información del socio");
       setLogoUrl(logo);
       setBannerUrl(banner);
+    } finally {
+      setCargandoPerfil(false);
     }
   }, [logo, banner]);
 
@@ -430,23 +459,60 @@ export function PerfilNegocio({
         </h1>
       </div>
 
+      {/* Mensaje de error de carga del perfil */}
+      {errorCargaPerfil && (
+        <Card className="overflow-hidden border-destructive/50 bg-destructive/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-destructive">Error al cargar Perfil</p>
+                  <p className="text-sm text-muted-foreground">{errorCargaPerfil}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={obtenerPerfil}
+                disabled={cargandoPerfil}
+              >
+                {cargandoPerfil ? "Cargando..." : "Reintentar"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 ">
         {/* Logo Section */}
         <Card className="overflow-hidden dark:bg-gray-800">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-center gap-6 ">
               <div className="relative w-40 h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-background to-muted/50 border-2 border-muted/20 shadow-sm group hover:border-primary/20 hover:shadow-md transition-all duration-300">
-                {logoUrl ? (
+                {cargandoPerfil ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : logoUrl && logoUrl !== "null" && logoUrl !== "undefined" ? (
                   <Image
-                    src={logoUrl || "/placeholder.svg"}
+                    src={logoUrl}
                     alt="Logo del negocio"
                     className="object-contain transition-transform duration-500 group-hover:scale-105"
                     fill
                     priority
+                    onError={(e) => {
+                      console.error("Error al cargar logo:", logoUrl);
+                      e.currentTarget.src = logoPerfil.src;
+                    }}
                   />
                 ) : (
                   <Image
-                    src={logoPerfil || "/placeholder.svg"}
+                    src={logoPerfil}
                     alt="Logo por defecto"
                     className="object-contain transition-transform duration-500 group-hover:scale-105"
                     fill
@@ -508,13 +574,21 @@ export function PerfilNegocio({
 
               {/* Banner más alto - cambié de h-48 a h-64 */}
               <div className="relative w-full h-64 rounded-xl overflow-hidden bg-gradient-to-br from-background to-muted/50 border-2 border-muted/20 shadow-sm group hover:border-primary/20 hover:shadow-md transition-all duration-300">
-                {bannerUrl ? (
+                {cargandoPerfil ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : bannerUrl && bannerUrl !== "null" && bannerUrl !== "undefined" ? (
                   <Image
-                    src={bannerUrl || "/placeholder.svg"}
+                    src={bannerUrl}
                     alt="Banner del negocio"
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                     fill
                     priority
+                    onError={(e) => {
+                      console.error("Error al cargar banner:", bannerUrl);
+                      setBannerUrl(undefined);
+                    }}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
