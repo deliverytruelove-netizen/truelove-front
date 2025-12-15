@@ -77,7 +77,7 @@ export default function CookieBanner() {
                       Al hacer clic en <span className="font-semibold">&quot;Aceptar todo&quot;</span> usted da su consentimiento a nuestro uso de las cookies.
                     </p>
                     <Link 
-                      href="/politicas-de-privacidad" 
+                      href="/politica-de-uso-de-cookies" 
                       className="inline-flex items-center text-sm text-[#D9043D] hover:text-red-700 font-medium transition-colors"
                     >
                       Política de cookies

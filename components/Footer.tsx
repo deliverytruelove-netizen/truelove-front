@@ -67,6 +67,12 @@ const Footer = () => {
               >
                 Política de Privacidad
               </Link>
+              <Link
+                href="/terminos-y-condiciones"
+                className="text-gray-600 hover:text-orange-500 transition-colors"
+              >
+                Terminos y Condiciones
+              </Link>
             </nav>
           </motion.div>
 
