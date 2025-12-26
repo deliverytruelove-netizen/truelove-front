@@ -239,26 +239,26 @@ const Locales: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">#</TableHead>
-                  <TableHead className="min-w-[200px]">
+                  <TableHead className="min-w-[120px] sm:min-w-[200px]">
                     <button className="flex items-center gap-1" onClick={() => toggleSortOrder("nombre")}>
                       Local
                       <ArrowUpDown className="h-4 w-4" />
                     </button>
                   </TableHead>
-                  <TableHead className="min-w-[200px]">
+                  <TableHead className="hidden md:table-cell min-w-[150px]">
                     <button className="flex items-center gap-1" onClick={() => toggleSortOrder("empresa")}>
                       Empresa/Socio
                       <ArrowUpDown className="h-4 w-4" />
                     </button>
                   </TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead className="min-w-[150px]">
+                  <TableHead className="hidden lg:table-cell">Dirección</TableHead>
+                  <TableHead className="min-w-[100px] sm:min-w-[150px]">
                     <button className="flex items-center gap-1" onClick={() => toggleSortOrder("prioridad")}>
                       Prioridad
                       <ArrowUpDown className="h-4 w-4" />
                     </button>
                   </TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="text-right min-w-[80px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -280,21 +280,24 @@ const Locales: React.FC = () => {
                               alt={local.nombre}
                               width={32}
                               height={32}
-                              className="rounded-full object-cover"
+                              className="rounded-full object-cover shrink-0"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center shrink-0">
                               <Building className="h-4 w-4 text-gray-500" />
                             </div>
                           )}
-                          <span className="font-medium">{local.nombre}</span>
+                          <div className="min-w-0">
+                            <span className="font-medium text-sm sm:text-base block truncate">{local.nombre}</span>
+                            <span className="text-xs text-gray-500 md:hidden block truncate">{local.empresa}</span>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>{local.empresa}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">{local.empresa}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <div className="flex items-start gap-1">
                           <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{local.direccion}</span>
+                          <span className="text-sm line-clamp-2">{local.direccion}</span>
                         </div>
                       </TableCell>
                       <TableCell>{renderPriorityBadge(local.prioridad)}</TableCell>
@@ -308,9 +311,10 @@ const Locales: React.FC = () => {
                                 setSelectedLocal(local)
                                 setNewPriority(ensureNumber(local.prioridad))
                               }}
-                              className="hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                              className="hover:bg-gray-100 hover:text-gray-900 transition-colors text-xs sm:text-sm px-2 sm:px-4"
                             >
-                              Establecer Prioridad
+                              <span className="hidden sm:inline">Establecer Prioridad</span>
+                              <span className="sm:hidden">Editar</span>
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-md">
@@ -433,9 +437,9 @@ const Locales: React.FC = () => {
             </Table>
 
             {/* Paginación */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Mostrar</span>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 p-3 sm:p-4 border-t">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <span className="text-gray-500 hidden sm:inline">Mostrar</span>
                 <Select
                   value={perPage.toString()}
                   onValueChange={(value) => {
@@ -443,7 +447,7 @@ const Locales: React.FC = () => {
                     setCurrentPage(1)
                   }}
                 >
-                  <SelectTrigger className="w-[70px]">
+                  <SelectTrigger className="w-[60px] sm:w-[70px] h-8 text-xs sm:text-sm">
                     <SelectValue placeholder={perPage.toString()} />
                   </SelectTrigger>
                   <SelectContent>
@@ -453,48 +457,54 @@ const Locales: React.FC = () => {
                     <SelectItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
-                <span className="text-sm text-gray-500">por página</span>
+                <span className="text-gray-500 hidden sm:inline">por página</span>
               </div>
 
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-gray-500">
-                  Mostrando {filteredLocales.length > 0 ? (currentPage - 1) * perPage + 1 : 0} a{" "}
-                  {Math.min(currentPage * perPage, totalItems)} de {totalItems} resultados
+              <div className="flex items-center gap-1 order-3 sm:order-2">
+                <span className="text-xs sm:text-sm text-gray-500">
+                  <span className="sm:hidden">
+                    {filteredLocales.length > 0 ? (currentPage - 1) * perPage + 1 : 0}-
+                    {Math.min(currentPage * perPage, totalItems)} de {totalItems}
+                  </span>
+                  <span className="hidden sm:inline">
+                    Mostrando {filteredLocales.length > 0 ? (currentPage - 1) * perPage + 1 : 0} a{" "}
+                    {Math.min(currentPage * perPage, totalItems)} de {totalItems} resultados
+                  </span>
                 </span>
               </div>
 
-              <div className="flex items-center">
+              <div className="flex items-center order-2 sm:order-3">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => handlePageChange(1)}
                   disabled={currentPage === 1}
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                 >
-                  <ChevronsLeft className="h-4 w-4" />
+                  <ChevronsLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="h-8 w-8 ml-1"
+                  className="h-7 w-7 sm:h-8 sm:w-8 ml-1"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
 
-                <div className="flex items-center mx-2">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // Mostrar páginas alrededor de la página actual
+                <div className="flex items-center mx-1 sm:mx-2">
+                  {Array.from({ length: Math.min(window.innerWidth < 640 ? 3 : 5, totalPages) }, (_, i) => {
                     let pageToShow: number
-                    if (totalPages <= 5) {
+                    const maxPages = window.innerWidth < 640 ? 3 : 5
+                    if (totalPages <= maxPages) {
                       pageToShow = i + 1
-                    } else if (currentPage <= 3) {
+                    } else if (currentPage <= Math.floor(maxPages / 2) + 1) {
                       pageToShow = i + 1
-                    } else if (currentPage >= totalPages - 2) {
-                      pageToShow = totalPages - 4 + i
+                    } else if (currentPage >= totalPages - Math.floor(maxPages / 2)) {
+                      pageToShow = totalPages - maxPages + 1 + i
                     } else {
-                      pageToShow = currentPage - 2 + i
+                      pageToShow = currentPage - Math.floor(maxPages / 2) + i
                     }
 
                     return (
@@ -503,7 +513,7 @@ const Locales: React.FC = () => {
                         variant={currentPage === pageToShow ? "default" : "outline"}
                         size="icon"
                         onClick={() => handlePageChange(pageToShow)}
-                        className={`h-8 w-8 mx-0.5 ${currentPage === pageToShow ? "bg-red-600 hover:bg-red-700" : ""}`}
+                        className={`h-7 w-7 sm:h-8 sm:w-8 mx-0.5 text-xs sm:text-sm ${currentPage === pageToShow ? "bg-red-600 hover:bg-red-700" : ""}`}
                       >
                         {pageToShow}
                       </Button>
@@ -516,18 +526,18 @@ const Locales: React.FC = () => {
                   size="icon"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="h-8 w-8 mr-1"
+                  className="h-7 w-7 sm:h-8 sm:w-8 mr-1"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => handlePageChange(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="h-8 w-8"
+                  className="h-7 w-7 sm:h-8 sm:w-8"
                 >
-                  <ChevronsRight className="h-4 w-4" />
+                  <ChevronsRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -588,33 +598,33 @@ const Locales: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto p-4">
-        <Card className="shadow-md">
-          <CardHeader className="bg-white border-b">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="w-full px-0 sm:container sm:mx-auto sm:px-4 py-3 sm:py-4">
+        <Card className="shadow-md rounded-none sm:rounded-lg">
+          <CardHeader className="bg-white border-b p-3 sm:p-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                  <Building className="h-6 w-6 text-red-600" />
+                <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                  <Building className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                   Prioridad de Locales
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm mt-1">
                   Administra la prioridad de visualización de los locales en la aplicación
                 </CardDescription>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto">
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Buscar local o empresa..."
-                    className="pl-8"
+                    placeholder="Buscar local..."
+                    className="pl-8 text-sm"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
 
                 <Select value={filterCity} onValueChange={setFilterCity}>
-                  <SelectTrigger className="w-full sm:w-40">
+                  <SelectTrigger className="w-full sm:w-40 text-sm">
                     <SelectValue placeholder="Ciudad" />
                   </SelectTrigger>
                   <SelectContent>
@@ -631,31 +641,34 @@ const Locales: React.FC = () => {
           </CardHeader>
 
           <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
-            <div className="px-4 pt-4">
-              <TabsList className="flex flex-wrap gap-2 w-full md:w-auto">
+            <div className="px-3 sm:px-4 pt-3 sm:pt-4">
+              <TabsList className="flex flex-wrap gap-1 sm:gap-2 w-full md:w-auto">
                 <TabsTrigger
                   value="todos"
-                  className="px-4 data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
+                  className="px-2 sm:px-4 text-xs sm:text-sm data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
                 >
                   Todos
                 </TabsTrigger>
                 <TabsTrigger
                   value="alta"
-                  className="px-4 data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
+                  className="px-2 sm:px-4 text-xs sm:text-sm data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
                 >
-                  Prioridad Alta
+                  <span className="hidden sm:inline">Prioridad Alta</span>
+                  <span className="sm:hidden">Alta</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="media"
-                  className="px-4 data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
+                  className="px-2 sm:px-4 text-xs sm:text-sm data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
                 >
-                  Prioridad Media
+                  <span className="hidden sm:inline">Prioridad Media</span>
+                  <span className="sm:hidden">Media</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="baja"
-                  className="px-4 data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
+                  className="px-2 sm:px-4 text-xs sm:text-sm data-[state=active]:bg-red-100 data-[state=active]:text-red-800 hover:bg-gray-100"
                 >
-                  Prioridad Baja
+                  <span className="hidden sm:inline">Prioridad Baja</span>
+                  <span className="sm:hidden">Baja</span>
                 </TabsTrigger>
               </TabsList>
             </div>

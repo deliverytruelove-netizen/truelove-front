@@ -24,7 +24,7 @@ export function StatCard({ title, value, icon, description, trend, className }: 
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{description}</p>}
+        {description && <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2">{description}</p>}
         {trend && (
           <div className="flex items-center text-xs mt-1">
             <span className={cn("mr-1", trend.isPositive ? "text-green-500" : "text-destructive")}>

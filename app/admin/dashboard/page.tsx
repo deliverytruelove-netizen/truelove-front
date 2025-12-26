@@ -63,7 +63,7 @@ const Dashboard = () => {
   }, []);
   return (
     <MainLayout>
-      <div className="grid gap-4 sm:gap-6">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
@@ -81,7 +81,7 @@ const Dashboard = () => {
         </div>
 
         {/* Estadísticas principales */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {isLoading ? (
             <>
               {[1, 2, 3, 4].map((i) => (

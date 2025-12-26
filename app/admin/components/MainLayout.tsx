@@ -55,7 +55,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <div className="min-h-screen w-full bg-gray-50">
         <SidebarWrap />
         <main className={`${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"} min-h-screen transition-all duration-300`}>
-          <div className="pt-24 px-4 sm:px-6 pb-6">
+          <div className="pt-16 sm:pt-20 lg:pt-24 px-4 sm:px-6 pb-6 max-w-[100vw] overflow-x-hidden">
             <Breadcrumbs />
             <div>{children}</div>
           </div>
