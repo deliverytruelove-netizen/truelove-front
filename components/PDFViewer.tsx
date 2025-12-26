@@ -2,30 +2,10 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Download, Eye } from "lucide-react"
+import { Download, Eye, ExternalLink } from "lucide-react"
 import { PDFModal } from "./PDFModal"
-import dynamic from 'next/dynamic'
-
-// Importar estilos CSS
-import 'react-pdf/dist/Page/AnnotationLayer.css'
-import 'react-pdf/dist/Page/TextLayer.css'
-
-// Cargar react-pdf dinámicamente solo en el cliente
-const Document = dynamic(
-  () => import('react-pdf').then(mod => {
-    // Configurar worker desde CDN
-    mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`
-    return mod.Document
-  }),
-  { ssr: false }
-)
-
-const Page = dynamic(
-  () => import('react-pdf').then(mod => mod.Page),
-  { ssr: false }
-)
 
 interface PDFViewerProps {
   url: string | null
@@ -34,15 +14,7 @@ interface PDFViewerProps {
 }
 
 export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }) => {
-  const [numPages, setNumPages] = useState<number | null>(null)
-  const [pageNumber, setPageNumber] = useState(1)
-  const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   if (!url) {
     return (
@@ -53,16 +25,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
     )
   }
 
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages)
-    setError(null)
-  }
-
-  function onDocumentLoadError(error: Error) {
-    console.error("Error loading PDF:", error)
-    setError("Error al cargar el PDF. Por favor, intente nuevamente.")
-  }
-
   const handleDownload = async () => {
     try {
       const response = await fetch(url)
@@ -70,8 +32,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
       const downloadUrl = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = downloadUrl
-
-      // usar el donwloadName si se proporciona, de lo contrario usar el título
       link.download = downloadName || `${title.toLowerCase().replace(/ /g, "_")}.pdf`
       document.body.appendChild(link)
       link.click()
@@ -79,8 +39,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
       window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error("Error al descargar el PDF:", error)
-      setError("Error al descargar el PDF. Por favor, intente nuevamente.")
     }
+  }
+
+  const openInNewTab = () => {
+    window.open(url, '_blank')
   }
 
   const openModal = () => {
@@ -89,19 +52,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
 
   const closeModal = () => {
     setIsModalOpen(false)
-  }
-
-  if (!mounted) {
-    return (
-      <div className="border rounded-lg p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h4 className="text-lg font-semibold">{title}</h4>
-        </div>
-        <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -113,61 +63,32 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, title, downloadName }
             <Eye className="w-4 h-4 mr-2" />
             Ver PDF
           </Button>
+          <Button onClick={openInNewTab} variant="outline" size="sm" className="text-green-600 hover:text-green-700">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Abrir
+          </Button>
           <Button onClick={handleDownload} variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
             <Download className="w-4 h-4 mr-2" />
-            Descargar PDF
+            Descargar
           </Button>
         </div>
       </div>
+      
+      {/* Vista previa simple con iframe */}
       <div className="flex flex-col items-center">
-        {error ? (
-          <div className="text-red-500 p-4">{error}</div>
-        ) : (
-          <Document
-            file={url}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex items-center justify-center p-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            }
-            className="max-w-full"
-            options={{
-              cMapUrl: "",
-              cMapPacked: true,
-            }}
-          >
-            <Page pageNumber={pageNumber} width={300} renderTextLayer={false} renderAnnotationLayer={false} />
-          </Document>
-        )}
-
-        {numPages && numPages > 0 && (
-          <div className="flex justify-between items-center w-full mt-4">
-            <Button
-              onClick={() => setPageNumber(pageNumber - 1)}
-              disabled={pageNumber <= 1}
-              variant="outline"
-              size="sm"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-            </Button>
-            <p className="text-sm">
-              Página {pageNumber} de {numPages}
-            </p>
-            <Button
-              onClick={() => setPageNumber(pageNumber + 1)}
-              disabled={pageNumber >= numPages}
-              variant="outline"
-              size="sm"
-            >
-              Siguiente <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        )}
+        <div className="w-full h-64 border rounded-lg overflow-hidden bg-gray-50">
+          <iframe
+            src={`${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+            className="w-full h-full"
+            title={title}
+          />
+        </div>
+        <p className="text-sm text-gray-500 mt-2">
+          Vista previa del documento
+        </p>
       </div>
 
-      {/* Modal para ver el PDF */}
+      {/* Modal para ver el PDF completo */}
       <PDFModal isOpen={isModalOpen} onClose={closeModal} url={url} title={title} />
     </div>
   )

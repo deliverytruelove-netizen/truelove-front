@@ -43,8 +43,20 @@ const nextConfig = {
       fallback: {
         ...(config.resolve?.fallback || {}),
         canvas: false,
+        fs: false,
+        path: false,
       },
     };
+
+    // Configuración adicional para react-pdf
+    config.module = config.module || {};
+    config.module.rules = config.module.rules || [];
+    
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /node_modules/,
+      type: 'javascript/auto',
+    });
 
     // Excluir librerías del navegador del bundle del servidor
     if (isServer) {
@@ -55,6 +67,7 @@ const nextConfig = {
         config.externals.push('@mediapipe/tasks-vision');
         config.externals.push('dynamsoft-document-normalizer');
         config.externals.push('mapbox-gl');
+        config.externals.push('canvas');
       }
     }
 

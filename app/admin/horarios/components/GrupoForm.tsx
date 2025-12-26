@@ -59,12 +59,17 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
     }
   }, [grupo?.id])
 
-  // Cargar todos los motorizados (para edición de horarios)
+  // Cargar todos los motorizados + disponibles (para edición de horarios)
   const loadTodosMotorizados = useCallback(async () => {
     try {
       setLoadingMotorizados(true)
-      const motorizados = await fetchTodosMotorizados()
-      setTodosMotorizados(motorizados)
+      // Cargar ambas listas en paralelo
+      const [todos, disponibles] = await Promise.all([
+        fetchTodosMotorizados(),
+        fetchMotorizadosDisponibles(grupo?.id)
+      ])
+      setTodosMotorizados(todos)
+      setMotorizadosDisponibles(disponibles)
     } catch (error) {
       console.error("Error al cargar todos los motorizados:", error)
       showAlert({
@@ -75,7 +80,7 @@ export function GrupoForm({ grupo, onCancel, onSave }: GrupoFormProps) {
     } finally {
       setLoadingMotorizados(false)
     }
-  }, [])
+  }, [grupo?.id])
 
   const diasSemana: { key: DiaSemana; label: string; short: string }[] = [
     { key: "lunes", label: "Lunes", short: "Lun" },
