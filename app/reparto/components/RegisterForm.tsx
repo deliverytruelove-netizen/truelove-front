@@ -12,6 +12,7 @@ import { WebcamModal } from "./WebcamModal";
 import { useMediaQuery } from "../hooks/use-media-query";
 import { VisualCaptcha } from "./VisualCapcha";
 import { ValidationAlert } from "@/components/ValidationAlert";
+import { StorageWarning } from "./StorageWarning";
 import type {
   FormData,
   DocumentInfo,
@@ -159,27 +160,28 @@ export default function RegisterForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Verificar tipo de archivo
+    // ✅ VALIDAR TIPO DE ARCHIVO
     if (file.type !== "application/pdf") {
       toast({
-        title: "Error",
+        title: "Formato no válido",
         description: "Solo se permiten archivos PDF",
         variant: "destructive",
       });
       return;
     }
 
-    // Verificar tamaño (2MB)
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    // ✅ VALIDAR TAMAÑO MÁXIMO (1MB para PDFs)
+    const maxSize = 1 * 1024 * 1024; // 1MB
     if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       toast({
-        title: "Error",
-        description: "El archivo excede el tamaño máximo de 2MB",
+        title: "Archivo muy pesado",
+        description: `El PDF pesa ${sizeMB}MB. El tamaño máximo es 1MB. Por favor, comprime el PDF o usa uno más liviano.`,
         variant: "destructive",
       });
       return;
     }
-    // obtener la categoria del artributo data
+
     const categoria =
       fileInputRefAdicional.current?.getAttribute("data-categoria") || "otros";
 
@@ -198,12 +200,17 @@ export default function RegisterForm() {
         reader.readAsDataURL(file);
       });
 
+      // ✅ VERIFICAR TAMAÑO FINAL EN BASE64
+      const finalSize = Math.round((base64.length * 3) / 4);
+      const finalSizeKB = (finalSize / 1024).toFixed(0);
+
       const nuevoDocumento: DocumentoAdicional = {
         nombre: file.name,
         archivo: base64,
         tipo: file.type,
         categoria: categoria,
       };
+      
       // Eliminar documento anterior de la misma categoría si existe
       const documentosActualizados = formData.documentosAdicionales.filter(
         (doc) => doc.categoria !== categoria
@@ -215,18 +222,17 @@ export default function RegisterForm() {
 
       toast({
         title: "Documento agregado",
-        description: "El documento se ha agregado correctamente",
+        description: `PDF cargado correctamente (${finalSizeKB}KB)`,
       });
     } catch (error) {
       console.error("Error al procesar documento adicional:", error);
       toast({
         title: "Error",
-        description: "No se pudo procesar el documento",
+        description: "No se pudo procesar el documento. Intenta con otro archivo.",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-      // Limpiar el input para permitir seleccionar el mismo archivo nuevamente
       if (fileInputRefAdicional.current) {
         fileInputRefAdicional.current.value = "";
       }
@@ -384,7 +390,7 @@ const validarFormulario = useCallback((formData: FormData) => {
 // Usar useCallback para handleSaveAndRedirect
 const handleSaveAndRedirect = useCallback((): void => {
   try {
-    // Guardamos los datos en el almacenamiento local
+    // ✅ PREPARAR DATOS BÁSICOS
     const datosBasicos = {
       departamento: formData.departamento,
       vehiculo: formData.vehiculo,
@@ -401,10 +407,49 @@ const handleSaveAndRedirect = useCallback((): void => {
       documentosAdicionales: formData.documentosAdicionales,
     };
 
-    // Guardamos en el servicio de almacenamiento
-    FormDataService.guardarDatosBasicos(datosBasicos);
+    // ✅ VERIFICAR TAMAÑO TOTAL ANTES DE GUARDAR
+    const datosString = JSON.stringify(datosBasicos);
+    const tamanoTotal = new Blob([datosString]).size;
+    const tamanoMB = (tamanoTotal / (1024 * 1024)).toFixed(2);
+    
+    console.log(`📦 Tamaño total de datos: ${tamanoMB}MB`);
 
-    // Generar un ID temporal para identificar el registro a lo largo del proceso
+    // ✅ LÍMITE DE SESSIONSTORAGE (~5MB, dejamos margen)
+    if (tamanoTotal > 4 * 1024 * 1024) {
+      toast({
+        title: "Datos muy pesados",
+        description: `Los archivos pesan ${tamanoMB}MB. Por favor, usa imágenes y PDFs más pequeños (máx. 4MB en total).`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ INTENTAR GUARDAR CON MANEJO DE ERRORES
+    try {
+      FormDataService.guardarDatosBasicos(datosBasicos);
+      
+      // ✅ VERIFICAR QUE SE GUARDÓ CORRECTAMENTE
+      const datosGuardados = FormDataService.obtenerDatosBasicos();
+      if (!datosGuardados) {
+        throw new Error("Los datos no se guardaron correctamente");
+      }
+      
+      console.log("✅ Datos guardados exitosamente");
+    } catch (storageError) {
+      if (storageError instanceof Error) {
+        if (storageError.name === "QuotaExceededError" || storageError.message.includes("quota")) {
+          toast({
+            title: "Almacenamiento lleno",
+            description: "No hay suficiente espacio. Por favor, usa imágenes más pequeñas o limpia el caché del navegador.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      throw storageError;
+    }
+
+    // Generar un ID temporal para identificar el registro
     const registroId = "temp_" + Date.now().toString();
     sessionStorage.setItem("repartoRegistroId", registroId);
     sessionStorage.setItem("repartoCurrentStep", "/reparto/zonas");
@@ -413,9 +458,19 @@ const handleSaveAndRedirect = useCallback((): void => {
     router.push("/reparto/zonas");
   } catch (error) {
     console.error("Error al guardar y redireccionar:", error);
+    
+    let errorMessage = "Hubo un problema al procesar el formulario.";
+    if (error instanceof Error) {
+      if (error.message.includes("quota") || error.name === "QuotaExceededError") {
+        errorMessage = "Los archivos son muy pesados. Por favor, usa imágenes más pequeñas.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     toast({
       title: "Error",
-      description: "Hubo un problema al procesar el formulario.",
+      description: errorMessage,
       variant: "destructive",
     });
   }
@@ -724,51 +779,162 @@ const handleCaptchaVerify = useCallback(
     side: "frente" | "reverso"
   ): Promise<void> => {
     const file = event.target.files?.[0];
-    if (file) {
-      try {
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === "string") {
-              resolve(reader.result);
-            } else {
-              reject(new Error("Failed to read file as base64"));
-            }
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+    if (!file) return;
 
-        if (side === "frente") {
-          setPreviewImageFrente(base64);
-          updateFormData("documentoImagenFrente", base64);
-        } else {
-          setPreviewImageReverso(base64);
-          updateFormData("documentoImagenReverso", base64);
-        }
-      } catch (error) {
-        console.error("Error al procesar la imagen:", error);
+    // ✅ VALIDAR TIPO DE ARCHIVO
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Formato no válido",
+        description: "Solo se permiten imágenes JPG, JPEG o PNG",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ VALIDAR TAMAÑO MÁXIMO (2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      toast({
+        title: "Archivo muy pesado",
+        description: `La imagen pesa ${sizeMB}MB. El tamaño máximo es 2MB. Por favor, usa una imagen más pequeña.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // ✅ COMPRIMIR IMAGEN ANTES DE GUARDAR
+      const compressedBase64 = await compressImage(file);
+      
+      // ✅ VERIFICAR TAMAÑO FINAL
+      const finalSize = Math.round((compressedBase64.length * 3) / 4);
+      if (finalSize > 500 * 1024) { // 500KB después de comprimir
         toast({
-          title: "Error",
-          description: "No se pudo procesar la imagen",
+          title: "Imagen aún muy pesada",
+          description: "Incluso después de comprimir, la imagen es muy grande. Intenta con una foto de menor resolución.",
           variant: "destructive",
         });
+        return;
       }
+
+      if (side === "frente") {
+        setPreviewImageFrente(compressedBase64);
+        updateFormData("documentoImagenFrente", compressedBase64);
+      } else {
+        setPreviewImageReverso(compressedBase64);
+        updateFormData("documentoImagenReverso", compressedBase64);
+      }
+
+      toast({
+        title: "Imagen cargada",
+        description: `Tamaño: ${(finalSize / 1024).toFixed(0)}KB`,
+      });
+    } catch (error) {
+      console.error("Error al procesar la imagen:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo procesar la imagen. Intenta con otra foto.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleCameraCapture = (
+  // ✅ FUNCIÓN DE COMPRESIÓN DE IMÁGENES
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          
+          // ✅ REDUCIR TAMAÑO MÁXIMO
+          const maxWidth = 800;
+          const maxHeight = 600;
+          let { width, height } = img;
+          
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width *= ratio;
+            height *= ratio;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // ✅ COMPRIMIR A 60% DE CALIDAD
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+          resolve(compressedBase64);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleCameraCapture = async (
     imageData: { imageSrc: string; text: string },
     side: "frente" | "reverso"
-  ): void => {
-    if (side === "frente") {
-      setPreviewImageFrente(imageData.imageSrc);
-      updateFormData("documentoImagenFrente", imageData.imageSrc);
-    } else {
-      setPreviewImageReverso(imageData.imageSrc);
-      updateFormData("documentoImagenReverso", imageData.imageSrc);
+  ): Promise<void> => {
+    try {
+      // ✅ COMPRIMIR IMAGEN CAPTURADA
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        
+        const maxWidth = 800;
+        const maxHeight = 600;
+        let { width, height } = img;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+        
+        // ✅ VERIFICAR TAMAÑO
+        const finalSize = Math.round((compressedBase64.length * 3) / 4);
+        if (finalSize > 500 * 1024) {
+          toast({
+            title: "Imagen muy pesada",
+            description: "La foto capturada es muy grande. Intenta desde más lejos o con menos luz.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (side === "frente") {
+          setPreviewImageFrente(compressedBase64);
+          updateFormData("documentoImagenFrente", compressedBase64);
+        } else {
+          setPreviewImageReverso(compressedBase64);
+          updateFormData("documentoImagenReverso", compressedBase64);
+        }
+        
+        console.log(`OCR Text (${side}):`, imageData.text);
+      };
+      img.src = imageData.imageSrc;
+    } catch (error) {
+      console.error("Error al comprimir imagen capturada:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo procesar la imagen capturada",
+        variant: "destructive",
+      });
     }
-    console.log(`OCR Text (${side}):`, imageData.text);
   };
 
   const isStepComplete = (): boolean => {
@@ -822,6 +988,9 @@ const handleCaptchaVerify = useCallback(
             Es rápido y sencillo. ¡Comencemos!
           </p>
         </div>
+
+        {/* ✅ ADVERTENCIA DE ALMACENAMIENTO */}
+        <StorageWarning />
 
         <IndicadorPasos pasoActual={step} />
 
