@@ -21,7 +21,7 @@ import { FileText, ImageIcon, Loader2, Info, CheckCircle2 } from "lucide-react";
 import { PdfPreview } from "./Pdf-preview";
 import { ImagePreview } from "./ImagePreview";
 // import { createRepartoToken } from "@/services/repartoTokenService"
-import { FormDataService } from "@/services/formDataService";
+import { FormDataServiceV2 } from "@/services/formDataServiceV2";
 
 
 interface Banco {
@@ -145,17 +145,21 @@ useEffect(() => {
     setRepartoRegistroId(id);
     
     // Verificar solo los datos básicos y personales (que son obligatorios)
-    const datosBasicos = FormDataService.obtenerDatosBasicos();
-    const datosPersonales = FormDataService.obtenerDatosPersonales();
+    const verificarDatos = async () => {
+      const datosBasicos = await FormDataServiceV2.obtenerDatosBasicos();
+      const datosPersonales = await FormDataServiceV2.obtenerDatosPersonales();
+      
+      // Solo validar que existan los datos básicos y personales
+      if (!datosBasicos || !datosPersonales) {
+        toast.error("Faltan datos del registro. Por favor, comience el proceso nuevamente.");
+        router.push("/reparto");
+      } else {
+        // Cargar datos existentes
+        cargarDatosExistentes(id);
+      }
+    };
     
-    // Solo validar que existan los datos básicos y personales
-    if (!datosBasicos || !datosPersonales) {
-      toast.error("Faltan datos del registro. Porr favor, comience el proceso nuevamente.");
-      router.push("/reparto");
-    } else {
-      // Cargar datos existentes
-      cargarDatosExistentes(id);
-    }
+    verificarDatos();
   }
 }, [router]);
 
@@ -164,7 +168,7 @@ useEffect(() => {
       setIsLoading(true);
 
       // ✅ OBTENER TIPO DE DOCUMENTO DE LOS DATOS BÁSICOS
-      const datosBasicos = FormDataService.obtenerDatosBasicos();
+      const datosBasicos = await FormDataServiceV2.obtenerDatosBasicos();
       if (datosBasicos && datosBasicos.tipo_documento) {
         setTipoDocumentoOriginal(datosBasicos.tipo_documento);
       }
@@ -262,8 +266,8 @@ useEffect(() => {
         });
         return;
       }
-      // Agregar validación de tamaño
-      const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB en bytes
+      // Agregar validación de tamaño (10MB con IndexedDB)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes
       const archivosGrandes = files.filter((file) => file.size > MAX_FILE_SIZE);
 
       if (archivosGrandes.length > 0) {
@@ -273,7 +277,7 @@ useEffect(() => {
 
         setErrors({
           ...errors,
-          imagen: `El archivo es demasiado grande: ${detallesArchivo}. Tamaño máximo permitido: 4MB.`,
+          imagen: `El archivo es demasiado grande: ${detallesArchivo}. Tamaño máximo permitido: 10MB.`,
         });
         return;
       }
@@ -306,14 +310,14 @@ useEffect(() => {
     try {
       // Calcular tamaño aproximado de la imagen base64
       const base64Size = Math.ceil((imageSrc.length * 3) / 4);
-      const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB en bytes
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes
 
       if (base64Size > MAX_FILE_SIZE) {
         setErrors({
           ...errors,
           imagen: `La imagen capturada es demasiado grande (${formatFileSize(
             base64Size
-          )}). Tamaño máximo: 4MB.`,
+          )}). Tamaño máximo: 10MB.`,
         });
         return;
       }
@@ -508,11 +512,11 @@ useEffect(() => {
           : capturedImage,
       };
 
-      // Guardar en el servicio
-      FormDataService.guardarCuentaBancaria(datosBancarios);
+      // ✅ GUARDAR CON INDEXEDDB (async)
+      await FormDataServiceV2.guardarCuentaBancaria(datosBancarios);
 
      // Obtener el tipo de vehículo de los datos básicos
-    const datosBasicos = FormDataService.obtenerDatosBasicos();
+    const datosBasicos = await FormDataServiceV2.obtenerDatosBasicos();
     const vehiculo = datosBasicos?.vehiculo;
 
     // Si es bicicleta o moto eléctrica, saltar documento-motorizado
@@ -523,14 +527,6 @@ useEffect(() => {
       sessionStorage.setItem("repartoCurrentStep", "/reparto/documento-motorizado");
       router.push("/reparto/documento-motorizado");
     }
-      // // Actualizar el paso actual
-      // sessionStorage.setItem(
-      //   "repartoCurrentStep",
-      //   "/reparto/documento-motorizado"
-      // );
-
-      // Redireccionar al siguiente paso
-      // router.push("/reparto/documento-motorizado");
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);

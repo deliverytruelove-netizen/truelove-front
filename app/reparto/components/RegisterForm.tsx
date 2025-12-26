@@ -27,7 +27,7 @@ import { EstadoVerificacion } from "./EstadoVerificacion";
 import { IndicadorPasos } from "./IndicadorPasos";
 import { EmailChangeDialog } from "./EmailChangeDialog";
 // import { createRepartoToken } from "@/services/repartoTokenService";
-import { FormDataService } from "@/services/formDataService";
+import { FormDataServiceV2 } from "@/services/formDataServiceV2";
 const formVariants = {
   hidden: { opacity: 0, x: 20 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
@@ -170,13 +170,13 @@ export default function RegisterForm() {
       return;
     }
 
-    // ✅ VALIDAR TAMAÑO MÁXIMO (1MB para PDFs)
-    const maxSize = 1 * 1024 * 1024; // 1MB
+    // ✅ VALIDAR TAMAÑO MÁXIMO (10MB para PDFs con IndexedDB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       toast({
         title: "Archivo muy pesado",
-        description: `El PDF pesa ${sizeMB}MB. El tamaño máximo es 1MB. Por favor, comprime el PDF o usa uno más liviano.`,
+        description: `El PDF pesa ${sizeMB}MB. El tamaño máximo es 10MB. Por favor, comprime el PDF o usa uno más liviano.`,
         variant: "destructive",
       });
       return;
@@ -388,7 +388,7 @@ const validarFormulario = useCallback((formData: FormData) => {
   return true
 }, [isMobile, setValidationError])
 // Usar useCallback para handleSaveAndRedirect
-const handleSaveAndRedirect = useCallback((): void => {
+const handleSaveAndRedirect = useCallback(async (): Promise<void> => {
   try {
     // ✅ PREPARAR DATOS BÁSICOS
     const datosBasicos = {
@@ -407,47 +407,10 @@ const handleSaveAndRedirect = useCallback((): void => {
       documentosAdicionales: formData.documentosAdicionales,
     };
 
-    // ✅ VERIFICAR TAMAÑO TOTAL ANTES DE GUARDAR
-    const datosString = JSON.stringify(datosBasicos);
-    const tamanoTotal = new Blob([datosString]).size;
-    const tamanoMB = (tamanoTotal / (1024 * 1024)).toFixed(2);
+    // ✅ GUARDAR CON INDEXEDDB (async)
+    await FormDataServiceV2.guardarDatosBasicos(datosBasicos);
     
-    console.log(`📦 Tamaño total de datos: ${tamanoMB}MB`);
-
-    // ✅ LÍMITE DE SESSIONSTORAGE (~5MB, dejamos margen)
-    if (tamanoTotal > 4 * 1024 * 1024) {
-      toast({
-        title: "Datos muy pesados",
-        description: `Los archivos pesan ${tamanoMB}MB. Por favor, usa imágenes y PDFs más pequeños (máx. 4MB en total).`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // ✅ INTENTAR GUARDAR CON MANEJO DE ERRORES
-    try {
-      FormDataService.guardarDatosBasicos(datosBasicos);
-      
-      // ✅ VERIFICAR QUE SE GUARDÓ CORRECTAMENTE
-      const datosGuardados = FormDataService.obtenerDatosBasicos();
-      if (!datosGuardados) {
-        throw new Error("Los datos no se guardaron correctamente");
-      }
-      
-      console.log("✅ Datos guardados exitosamente");
-    } catch (storageError) {
-      if (storageError instanceof Error) {
-        if (storageError.name === "QuotaExceededError" || storageError.message.includes("quota")) {
-          toast({
-            title: "Almacenamiento lleno",
-            description: "No hay suficiente espacio. Por favor, usa imágenes más pequeñas o limpia el caché del navegador.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-      throw storageError;
-    }
+    console.log("✅ Datos guardados exitosamente en IndexedDB");
 
     // Generar un ID temporal para identificar el registro
     const registroId = "temp_" + Date.now().toString();
@@ -461,11 +424,7 @@ const handleSaveAndRedirect = useCallback((): void => {
     
     let errorMessage = "Hubo un problema al procesar el formulario.";
     if (error instanceof Error) {
-      if (error.message.includes("quota") || error.name === "QuotaExceededError") {
-        errorMessage = "Los archivos son muy pesados. Por favor, usa imágenes más pequeñas.";
-      } else {
-        errorMessage = error.message;
-      }
+      errorMessage = error.message;
     }
     
     toast({
@@ -792,13 +751,13 @@ const handleCaptchaVerify = useCallback(
       return;
     }
 
-    // ✅ VALIDAR TAMAÑO MÁXIMO (2MB)
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    // ✅ VALIDAR TAMAÑO MÁXIMO (10MB con IndexedDB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       toast({
         title: "Archivo muy pesado",
-        description: `La imagen pesa ${sizeMB}MB. El tamaño máximo es 2MB. Por favor, usa una imagen más pequeña.`,
+        description: `La imagen pesa ${sizeMB}MB. El tamaño máximo es 10MB. Por favor, usa una imagen más pequeña.`,
         variant: "destructive",
       });
       return;
@@ -808,9 +767,9 @@ const handleCaptchaVerify = useCallback(
       // ✅ COMPRIMIR IMAGEN ANTES DE GUARDAR
       const compressedBase64 = await compressImage(file);
       
-      // ✅ VERIFICAR TAMAÑO FINAL
+      // ✅ VERIFICAR TAMAÑO FINAL (2MB después de comprimir con IndexedDB)
       const finalSize = Math.round((compressedBase64.length * 3) / 4);
-      if (finalSize > 500 * 1024) { // 500KB después de comprimir
+      if (finalSize > 2 * 1024 * 1024) { // 2MB después de comprimir
         toast({
           title: "Imagen aún muy pesada",
           description: "Incluso después de comprimir, la imagen es muy grande. Intenta con una foto de menor resolución.",
@@ -905,9 +864,9 @@ const handleCaptchaVerify = useCallback(
         
         const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
         
-        // ✅ VERIFICAR TAMAÑO
+        // ✅ VERIFICAR TAMAÑO (2MB después de comprimir con IndexedDB)
         const finalSize = Math.round((compressedBase64.length * 3) / 4);
-        if (finalSize > 500 * 1024) {
+        if (finalSize > 2 * 1024 * 1024) {
           toast({
             title: "Imagen muy pesada",
             description: "La foto capturada es muy grande. Intenta desde más lejos o con menos luz.",

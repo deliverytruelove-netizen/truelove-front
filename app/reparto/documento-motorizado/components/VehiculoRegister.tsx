@@ -13,7 +13,7 @@ import { CameraCapture } from "./CapturarCamara";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { createRepartoToken } from "@/services/repartoTokenService";
-import { FormDataService } from "@/services/formDataService";
+import { FormDataServiceV2 } from "@/services/formDataServiceV2";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -115,11 +115,11 @@ return imagenesRequeridas
       // Calidad más baja para reducir tamaño
       const compressedBase64 = canvas.toDataURL("image/jpeg", 0.5); // Reducido de 0.7 a 0.5
       
-      // Verificar tamaño final
+      // Verificar tamaño final (2MB con IndexedDB)
       const finalSize = Math.round((compressedBase64.length * 3) / 4); // Tamaño aproximado en bytes
       console.log(`Imagen ${field} comprimida: ${(finalSize / 1024).toFixed(2)}KB`);
       
-      if (finalSize > 500 * 1024) { // Si es mayor a 500KB
+      if (finalSize > 2 * 1024 * 1024) { // Si es mayor a 2MB
         toast({
           title: "Imagen aún muy grande",
           description: "La imagen sigue siendo muy pesada después de la compresión. Intente con una imagen más pequeña.",
@@ -362,43 +362,10 @@ return imagenesRequeridas
         tarjetaPropiedad_imagen: images.tarjetaPropiedad,
       };
 
-      // ✅ VERIFICAR TAMAÑO TOTAL ANTES DE GUARDAR
-      const datosString = JSON.stringify(datosVehiculo);
-      const tamanoTotal = new Blob([datosString]).size;
-      console.log(`Tamaño total de datos: ${(tamanoTotal / 1024).toFixed(2)}KB`);
-
-      if (tamanoTotal > 4 * 1024 * 1024) { // 4MB límite de sessionStorage
-        toast({
-          title: "Datos demasiado grandes",
-          description: "Las imágenes son muy pesadas para el almacenamiento. Por favor, use imágenes más pequeñas.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // ✅ MANEJAR ERROR DE CUOTA
-      try {
-        FormDataService.guardarVehiculo(datosVehiculo);
-        
-        // ✅ VERIFICAR QUE SE GUARDÓ CORRECTAMENTE
-        const datosGuardados = FormDataService.obtenerVehiculo();
-        if (!datosGuardados) {
-          throw new Error("Los datos no se guardaron correctamente");
-        }
-        
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.name === "QuotaExceededError" || error.message.includes("quota")) {
-            toast({
-              title: "Almacenamiento lleno",
-              description: "No hay suficiente espacio. Por favor, use imágenes más pequeñas o reinicie el navegador.",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-        throw error;
-      }
+      // ✅ GUARDAR CON INDEXEDDB (async)
+      await FormDataServiceV2.guardarVehiculo(datosVehiculo);
+      
+      console.log("✅ Datos de vehículo guardados exitosamente en IndexedDB");
 
       sessionStorage.setItem("repartoCurrentStep", "/reparto/registro-exitoso");
       router.push("/reparto/registro-exitoso");
@@ -439,12 +406,12 @@ return imagenesRequeridas
         return;
       }
 
-      // ✅ VALIDACIÓN DE TAMAÑO REDUCIDA (1MB en lugar de 2MB)
-      const maxSize = 2 * 1024 * 1024; // 1MB
+      // ✅ VALIDACIÓN DE TAMAÑO (10MB con IndexedDB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
         toast({
           title: "Archivo demasiado grande",
-          description: "El archivo debe ser menor a 2MB",
+          description: "El archivo debe ser menor a 10MB",
           variant: "destructive",
         });
         return;

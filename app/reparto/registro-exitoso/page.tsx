@@ -7,7 +7,7 @@ import { CheckCircle, Loader2 } from "lucide-react"
 import { createRepartoToken } from "@/services/repartoTokenService"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { FormDataService } from "@/services/formDataService"
+import { FormDataServiceV2 } from "@/services/formDataServiceV2"
 import { toast } from "@/hooks/use-toast"
 
 export default function RegistroExitoso() {
@@ -17,35 +17,39 @@ export default function RegistroExitoso() {
   const [currentRegistroId, setCurrentRegistroId] = useState<string | null>(null)
 
 useEffect(() => {
-  const id = sessionStorage.getItem("repartoRegistroId")
-  if (id) {
-    setCurrentRegistroId(id)
-    
-    const datosBasicos = FormDataService.obtenerDatosBasicos()
-    const datosPersonales = FormDataService.obtenerDatosPersonales()
-    const cuentaBancaria = FormDataService.obtenerCuentaBancaria()
-    const vehiculo = FormDataService.obtenerVehiculo()
-    
-    // Usar la función helper para verificar si es bicicleta o moto eléctrica
-    const esVehiculoSinDocumento = FormDataService.esVehiculoSinDocumentoMotorizado()
-    
-    // Modificar la validación para considerar vehículos sin documentos
-    if (!datosBasicos || !datosPersonales || !cuentaBancaria || (!vehiculo && !esVehiculoSinDocumento)) {
+  const verificarDatos = async () => {
+    const id = sessionStorage.getItem("repartoRegistroId")
+    if (id) {
+      setCurrentRegistroId(id)
+      
+      const datosBasicos = await FormDataServiceV2.obtenerDatosBasicos()
+      const datosPersonales = await FormDataServiceV2.obtenerDatosPersonales()
+      const cuentaBancaria = await FormDataServiceV2.obtenerCuentaBancaria()
+      const vehiculo = await FormDataServiceV2.obtenerVehiculo()
+      
+      // Usar la función helper para verificar si es bicicleta o moto eléctrica
+      const esVehiculoSinDocumento = FormDataServiceV2.esVehiculoSinDocumentoMotorizado()
+      
+      // Modificar la validación para considerar vehículos sin documentos
+      if (!datosBasicos || !datosPersonales || !cuentaBancaria || (!vehiculo && !esVehiculoSinDocumento)) {
+        toast({
+          title: "Error",
+          description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
+          variant: "destructive",
+        })
+        router.push("/reparto")
+      }
+    } else {
       toast({
         title: "Error",
-        description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
+        description: "No se encontró el ID del registro",
         variant: "destructive",
       })
       router.push("/reparto")
     }
-  } else {
-    toast({
-      title: "Error",
-      description: "No se encontró el ID del registro",
-      variant: "destructive",
-    })
-    router.push("/reparto")
   }
+  
+  verificarDatos()
 }, [router])
 
   const enviarRegistroCompleto = async () => {
@@ -62,30 +66,38 @@ useEffect(() => {
     setLoadingMessage("Enviando datos al servidor")
     
     try {
-      // const datosCompletos = FormDataService.obtenerTodosLosDatos()
-      const datosBasicos = FormDataService.obtenerDatosBasicos()
-const datosPersonales = FormDataService.obtenerDatosPersonales()
-const cuentaBancaria = FormDataService.obtenerCuentaBancaria()
-const vehiculo = FormDataService.obtenerVehiculo()
+      // ✅ OBTENER TODOS LOS DATOS DE INDEXEDDB
+      const datosBasicos = await FormDataServiceV2.obtenerDatosBasicos()
+      const datosPersonales = await FormDataServiceV2.obtenerDatosPersonales()
+      const cuentaBancaria = await FormDataServiceV2.obtenerCuentaBancaria()
+      const vehiculo = await FormDataServiceV2.obtenerVehiculo()
 
-// Para bicicletas y motos eléctricas, no se requieren datos de vehículo motorizado
-const esVehiculoSinDocumento = FormDataService.esVehiculoSinDocumentoMotorizado()
+      // Para bicicletas y motos eléctricas, no se requieren datos de vehículo motorizado
+      const esVehiculoSinDocumento = FormDataServiceV2.esVehiculoSinDocumentoMotorizado()
 
-if (!datosBasicos || !datosPersonales || !cuentaBancaria || (!vehiculo && !esVehiculoSinDocumento)) {
-  toast({
-    title: "Error",
-    description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
-    variant: "destructive",
-  })
-  router.push("/reparto")
-  return
-}
-const datosCompletos = {
-  datosBasicos,
-  datosPersonales, 
-  cuentaBancaria,
-  vehiculo: esVehiculoSinDocumento ? null : vehiculo
-}
+      if (!datosBasicos || !datosPersonales || !cuentaBancaria || (!vehiculo && !esVehiculoSinDocumento)) {
+        toast({
+          title: "Error",
+          description: "Faltan datos del registro. Por favor, comience el proceso nuevamente.",
+          variant: "destructive",
+        })
+        router.push("/reparto")
+        return
+      }
+      
+      const datosCompletos = {
+        datosBasicos,
+        datosPersonales, 
+        cuentaBancaria,
+        vehiculo: esVehiculoSinDocumento ? null : vehiculo
+      }
+      
+      console.log('📦 Enviando datos al backend:', {
+        datosBasicos: '✅',
+        datosPersonales: '✅',
+        cuentaBancaria: '✅',
+        vehiculo: vehiculo ? '✅' : '❌ (no requerido)'
+      })
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro-completo`, {
         method: "POST",
@@ -107,7 +119,10 @@ const datosCompletos = {
       
       if (data.data && data.data.id) {
         sessionStorage.setItem("repartoRegistroId", data.data.id)
-        FormDataService.limpiarTodosLosDatos()
+        
+        // ✅ LIMPIAR TODO (sessionStorage + IndexedDB)
+        await FormDataServiceV2.limpiarTodosLosDatos()
+        console.log('🧹 Datos limpiados exitosamente (sessionStorage + IndexedDB)')
         
         setLoadingMessage("Preparando siguiente paso")
         const newToken = await createRepartoToken(data.data.id, "/reparto/entrega-material")

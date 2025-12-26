@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast"
 import { compressImage } from "@/utils/comprimir-imagen"
 import React from "react"
 import { createRepartoToken } from "@/services/repartoTokenService"
-import { FormDataService } from "@/services/formDataService"
+import { FormDataServiceV2 } from "@/services/formDataServiceV2"
 interface Ubigeo {
   id_ubigeo: number
   departamento: string
@@ -560,7 +560,7 @@ const manejarEnvio = async (e: React.FormEvent) => {
       }
     }
 
-    // Guardar datos en el almacenamiento local
+    // Guardar datos en el almacenamiento local con IndexedDB
     const datosPersonales = {
       fecha_nacimiento: fechaNacimiento,
       genero: genero,
@@ -570,8 +570,8 @@ const manejarEnvio = async (e: React.FormEvent) => {
       provincia: provinciaSeleccionada,
     }
 
-    // Guardar en el servicio
-    FormDataService.guardarDatosPersonales(datosPersonales)
+    // ✅ GUARDAR CON INDEXEDDB (async)
+    await FormDataServiceV2.guardarDatosPersonales(datosPersonales)
 
     // Actualizar el paso actual
     sessionStorage.setItem("repartoCurrentStep", "/reparto/documentos")
