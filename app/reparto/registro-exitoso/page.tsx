@@ -87,7 +87,7 @@ useEffect(() => {
       
       // ✅ VALIDAR Y LIMPIAR DOCUMENTOS ADICIONALES
       if (datosBasicos.documentosAdicionales && Array.isArray(datosBasicos.documentosAdicionales)) {
-        const documentosValidos = datosBasicos.documentosAdicionales.filter(doc => {
+        const documentosValidos = datosBasicos.documentosAdicionales.filter((doc: { archivo: string | null; nombre: string; categoria: string }) => {
           if (!doc.archivo || doc.archivo === 'null' || doc.archivo === null) {
             console.warn('⚠️ Documento sin archivo válido, será omitido:', {
               nombre: doc.nombre,
