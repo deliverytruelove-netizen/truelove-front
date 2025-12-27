@@ -97,9 +97,10 @@ export const FormFields: React.FC<FormFieldsProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Campos de Nombre/Apellido o Razón Social según tipo de documento */}
+      {formData.documentType === "RUC" ? (
         <div className="space-y-1">
-          <Label htmlFor="name">Nombre *</Label>
+          <Label htmlFor="name">Razón Social *</Label>
           <Input
             id="name"
             type="text"
@@ -108,26 +109,43 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             onChange={handleInputChange}
             required
             disabled={isFieldsLocked}
-            placeholder="Ingrese su nombre"
+            placeholder="Ingrese la razón social"
             className="bg-white/50 backdrop-blur-sm"
           />
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="name">Nombre *</Label>
+            <Input
+              id="name"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              disabled={isFieldsLocked}
+              placeholder="Ingrese su nombre"
+              className="bg-white/50 backdrop-blur-sm"
+            />
+          </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="lastName">Apellido *</Label>
-          <Input
-            id="lastName"
-            type="text"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleInputChange}
-            required
-            disabled={isFieldsLocked}
-            placeholder="Ingrese su apellido"
-            className="bg-white/50 backdrop-blur-sm"
-          />
+          <div className="space-y-1">
+            <Label htmlFor="lastName">Apellido *</Label>
+            <Input
+              id="lastName"
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+              disabled={isFieldsLocked}
+              placeholder="Ingrese su apellido"
+              className="bg-white/50 backdrop-blur-sm"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-1">
         <Label htmlFor="businessType">Tipo de negocio *</Label>

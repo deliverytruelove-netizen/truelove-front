@@ -8,12 +8,10 @@ export interface FormData {
     phone: string
     email: string
     posToDriver: number
-    entrega_documento_venta: number;
+    entrega_documento_venta: number
   }
   
   export interface BusinessType {
     id: number
     nombre: string
   }
-  
-  

@@ -75,7 +75,8 @@ export default function RegistrationForm() {
       formDataToSend.append("documentType", formData.documentType)
       formDataToSend.append("documentNumber", formData.documentNumber)
       formDataToSend.append("name", formData.name)
-      formDataToSend.append("lastName", formData.lastName)
+      // Si es RUC, el apellido va vacío porque se usa razón social en el campo name
+      formDataToSend.append("lastName", formData.documentType === "RUC" ? "" : formData.lastName)
       formDataToSend.append("businessType", formData.businessType)
       formDataToSend.append("phone", formData.phone.replace(/\D/g, ""))
       formDataToSend.append("email", formData.email)
