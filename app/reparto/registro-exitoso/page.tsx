@@ -85,6 +85,29 @@ useEffect(() => {
         return
       }
       
+      // ✅ VALIDAR Y LIMPIAR DOCUMENTOS ADICIONALES
+      if (datosBasicos.documentosAdicionales && Array.isArray(datosBasicos.documentosAdicionales)) {
+        const documentosValidos = datosBasicos.documentosAdicionales.filter(doc => {
+          if (!doc.archivo || doc.archivo === 'null' || doc.archivo === null) {
+            console.warn('⚠️ Documento sin archivo válido, será omitido:', {
+              nombre: doc.nombre,
+              categoria: doc.categoria,
+              tieneArchivo: !!doc.archivo
+            })
+            return false
+          }
+          return true
+        })
+        
+        console.log('📄 Documentos adicionales validados:', {
+          total: datosBasicos.documentosAdicionales.length,
+          validos: documentosValidos.length,
+          rechazados: datosBasicos.documentosAdicionales.length - documentosValidos.length
+        })
+        
+        datosBasicos.documentosAdicionales = documentosValidos
+      }
+      
       const datosCompletos = {
         datosBasicos,
         datosPersonales, 
@@ -96,7 +119,8 @@ useEffect(() => {
         datosBasicos: '✅',
         datosPersonales: '✅',
         cuentaBancaria: '✅',
-        vehiculo: vehiculo ? '✅' : '❌ (no requerido)'
+        vehiculo: vehiculo ? '✅' : '❌ (no requerido)',
+        documentosAdicionales: datosBasicos.documentosAdicionales?.length || 0
       })
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/reparto/registro-completo`, {

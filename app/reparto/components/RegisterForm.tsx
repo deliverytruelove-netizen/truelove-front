@@ -930,7 +930,7 @@ const handleCaptchaVerify = useCallback(
 
   return (
     <div className="w-full">
-      <div className="w-full bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+      <div className="w-full bg-white rounded-2xl shadow-lg p-6 md:max-h-[80vh] md:overflow-y-auto">
         {step > 1 && (
           <button
             onClick={handleBack}
