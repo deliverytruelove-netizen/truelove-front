@@ -25,43 +25,42 @@ export const fetchPedidos = async (fecha: string = "hoy"): Promise<Pedido[]> => 
   try {
     const token = localStorage.getItem("authToken")
 
-    // Intentar obtener el ID del socio directamente
-    let socioId: string | null = localStorage.getItem("socioId")
-
-    // Si no existe socioId directo, intentar extraerlo del objeto user
-    if (!socioId) {
-      const userStr = localStorage.getItem("user")
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr)
-          // Primero intentar obtener el ID del businessRegistration
-          if (user && user.businessRegistration && user.businessRegistration.id) {
-            socioId = user.businessRegistration.id.toString()
-            // Guardar para futuros usos
-            if (socioId) {
-              localStorage.setItem("socioId", socioId)
-            }
-          }
-          // Si no hay businessRegistration, usar el ID del usuario
-          else if (user && user.id) {
-            socioId = user.id.toString()
-            // Guardar para futuros usos
-            if (socioId) {
-              localStorage.setItem("socioId", socioId)
-            }
-          }
-        } catch (e) {
-          console.error("Error al parsear datos de usuario:", e)
-        }
-      }
-    }
-
     if (!token) {
       throw new Error("No se encontró el token de autenticación")
     }
 
+    // SIEMPRE obtener el socioId del objeto user para evitar usar valores cacheados incorrectos
+    let socioId: string | null = null
+    const userStr = localStorage.getItem("user")
+
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        // Primero intentar obtener el ID del businessRegistration
+        if (user && user.businessRegistration && user.businessRegistration.id) {
+          socioId = user.businessRegistration.id.toString()
+        }
+        // Si no hay businessRegistration, usar el ID del usuario
+        else if (user && user.id) {
+          socioId = user.id.toString()
+        }
+
+        // Actualizar el socioId en localStorage si se obtuvo correctamente
+        if (socioId) {
+          const storedSocioId = localStorage.getItem("socioId")
+          // Solo actualizar si es diferente para evitar escrituras innecesarias
+          if (storedSocioId !== socioId) {
+            localStorage.setItem("socioId", socioId)
+            console.log(`SocioId actualizado de ${storedSocioId} a ${socioId}`)
+          }
+        }
+      } catch (e) {
+        console.error("Error al parsear datos de usuario:", e)
+      }
+    }
+
     if (!socioId) {
-      throw new Error("No se encontró el ID del socio")
+      throw new Error("No se encontró el ID del socio en los datos del usuario")
     }
 
     const response = await fetch(`${API_URL}/socio/pedidos/${socioId}?tipo=finalizados&fecha=${fecha}`, {

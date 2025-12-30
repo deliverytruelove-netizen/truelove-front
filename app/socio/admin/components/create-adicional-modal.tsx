@@ -28,7 +28,9 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [selectedCategoria, setSelectedCategoria] = useState<string>(defaultCategoriaId || "")
   const [status, setStatus] = useState<string>("active") // Valor predeterminado: active
+  const [imageError, setImageError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB en bytes
 
   useEffect(() => {
     if (defaultCategoriaId) {
@@ -65,7 +67,28 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    setImageError(null) // Limpiar error previo
+
     if (file) {
+      // Validar tamaño del archivo (5MB máximo)
+      if (file.size > MAX_FILE_SIZE) {
+        setImageError(`La imagen es demasiado grande. Tamaño máximo: 5MB. Tu archivo: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+        return
+      }
+
+      // Validar tipo de archivo
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
+      if (!validTypes.includes(file.type)) {
+        setImageError('Formato no válido. Solo se permiten imágenes JPG, PNG, GIF o WEBP')
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+        return
+      }
+
       const reader = new FileReader()
       reader.onload = () => {
         setPreviewImage(reader.result as string)
@@ -76,6 +99,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
 
   const clearImage = () => {
     setPreviewImage(null)
+    setImageError(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -88,6 +112,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
         setOpen(newOpen)
         if (!newOpen) {
           setPreviewImage(null)
+          setImageError(null)
           setStatus("active") // Resetear el estado al cerrar
         }
       }}
@@ -194,14 +219,21 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
                   id="foto"
                   name="foto"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className={cn(
                     "border-gray-300 focus:border-red-500 focus:ring-red-500",
                     previewImage ? "hidden" : "block",
+                    imageError ? "border-red-500" : ""
                   )}
                 />
+                {imageError && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <XCircle className="h-3 w-3" />
+                    {imageError}
+                  </p>
+                )}
                 {previewImage && (
                   <div className="relative h-[100px] rounded-md overflow-hidden">
                     <Image src={previewImage || "/placeholder.svg"} alt="Vista previa" fill className="object-cover" />
@@ -217,6 +249,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
                   </div>
                 )}
               </div>
+              <p className="text-xs text-gray-500">Tamaño máximo: 5MB. Formatos: JPG, PNG, GIF, WEBP</p>
             </div>
           </div>
 
@@ -256,7 +289,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
             <Button
               type="submit"
               className="bg-red-600 hover:bg-red-700 text-white transition-colors"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !!imageError}
             >
               {isSubmitting ? (
                 <span className="flex items-center">

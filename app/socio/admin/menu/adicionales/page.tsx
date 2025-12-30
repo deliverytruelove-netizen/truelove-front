@@ -52,7 +52,8 @@ function AdicionalesContent() {
         setCategorias(categoriasResponse.data || [])
         console.log("Categorías de adicionales cargadas:", categoriasResponse.data)
       } else {
-        throw new Error(categoriasResponse.message || "Error al cargar categorías de adicionales")
+        // Solo mostrar error si no es por falta de datos
+        console.warn(categoriasResponse.message || "No se pudieron cargar las categorías")
       }
 
       // Cargar adicionales
@@ -61,6 +62,7 @@ function AdicionalesContent() {
       setAdicionales(adicionalesResponse)
     } catch (error: unknown) {
       console.error("Error al cargar datos:", error)
+      // Solo mostrar toast de error si es un error real, no cuando simplemente no hay datos
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al cargar datos",

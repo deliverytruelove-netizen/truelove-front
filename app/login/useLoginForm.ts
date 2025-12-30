@@ -36,6 +36,10 @@ interface UserData {
   id: number;
   usuario: string;
   email: string;
+  businessRegistration?: {
+    id: number;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -66,9 +70,17 @@ export const useLoginForm = () => {
     user: UserData,
     role: string
   ): Promise<void> => {
+    // Limpiar cualquier socioId antiguo antes de guardar nuevos datos
+    localStorage.removeItem("socioId");
+
     localStorage.setItem("authToken", token);
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("userRole", role);
+
+    // Si el usuario es un socio (negocio), guardar su socioId
+    if (role === "negocio" && user.businessRegistration?.id) {
+      localStorage.setItem("socioId", user.businessRegistration.id.toString());
+    }
 
     const secure = window.location.protocol === "https:";
     const cookieOptions = `path=/; ${

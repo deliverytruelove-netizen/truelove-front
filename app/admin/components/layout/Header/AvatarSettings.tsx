@@ -73,6 +73,7 @@ const AvatarSettings: React.FC = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
     localStorage.removeItem("userRole");
+    localStorage.removeItem("socioId"); // Limpiar socioId por si acaso
     const secure = window.location.protocol === "https:";
    const cookieOptions = `path=/; ${secure ? "secure;" : ""} samesite=strict; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
    document.cookie = `authToken=; ${cookieOptions}`;

@@ -4,7 +4,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { User, Settings, LogOut } from "lucide-react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,7 +26,6 @@ const AvatarSettings = () => {
   const [email, setEmail] = useState<string>("")
   const [avatarUrl, setAvatarUrl] = useState<string>("")
   const [imageError, setImageError] = useState(false)
-  const router = useRouter()
 
   const getImageUrl = (path: string | null) => {
     if (!path) return null
@@ -100,14 +98,22 @@ const AvatarSettings = () => {
   }
 
   const handleLogout = () => {
+    // Limpiar localStorage
     localStorage.removeItem("authToken")
     localStorage.removeItem("user")
     localStorage.removeItem("userRole")
     localStorage.removeItem("userProfile")
     localStorage.removeItem("lastProfileUpdate")
-    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    router.push("/login")
+    localStorage.removeItem("socioId")
+
+    // Limpiar cookies (funciona tanto en http como https)
+    const cookieOptions = "path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
+    document.cookie = `authToken=; ${cookieOptions}`
+    document.cookie = `userRole=; ${cookieOptions}`
+
+    // Usar window.location.href para forzar una recarga completa de la página
+    // Esto asegura que todas las cachés se limpien correctamente
+    window.location.href = "/login"
   }
 
   return (
