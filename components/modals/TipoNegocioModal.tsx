@@ -26,9 +26,10 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
   tipoNegocio,
 }) => {
   const [nombre, setNombre] = useState("")
+  const [orden, setOrden] = useState("")
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [errors, setErrors] = useState<{ nombre?: string; image?: string }>({})
+  const [errors, setErrors] = useState<{ nombre?: string; orden?: string; image?: string }>({})
   const [isCompressing, setIsCompressing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -37,9 +38,11 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
   useEffect(() => {
     if (tipoNegocio) {
       setNombre(tipoNegocio.nombre)
+      setOrden(tipoNegocio.orden.toString())
       setImagePreview(getTipoNegocioImageUrl(tipoNegocio.image))
     } else {
       setNombre("")
+      setOrden("")
       setImagePreview(null)
     }
     setImageFile(null)
@@ -83,6 +86,7 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
 
   const resetForm = () => {
     setNombre("")
+    setOrden("")
     setImageFile(null)
     setImagePreview(null)
     setErrors({})
@@ -206,12 +210,18 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
   }
 
   const validate = () => {
-    const newErrors: { nombre?: string; image?: string } = {}
+    const newErrors: { nombre?: string; orden?: string; image?: string } = {}
 
     if (!nombre.trim()) {
       newErrors.nombre = "El nombre es requerido"
     } else if (nombre.trim().length < 2) {
       newErrors.nombre = "El nombre debe tener al menos 2 caracteres"
+    }
+
+    if (!orden.trim()) {
+      newErrors.orden = "El orden es requerido"
+    } else if (isNaN(Number(orden)) || Number(orden) < 0) {
+      newErrors.orden = "El orden debe ser un número válido mayor o igual a 0"
     }
 
     setErrors(newErrors)
@@ -225,6 +235,7 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
 
     const formData = new FormData()
     formData.append('nombre', nombre.trim())
+    formData.append('orden', orden.trim())
 
     if (imageFile) {
       formData.append('image', imageFile)
@@ -272,6 +283,23 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
               className={errors.nombre ? "border-red-500" : ""}
             />
             {errors.nombre && <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="orden" className="block text-sm font-medium text-gray-700 mb-1">
+              Orden <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="orden"
+              type="number"
+              value={orden}
+              onChange={(e) => setOrden(e.target.value)}
+              placeholder="Ej: 1, 2, 3..."
+              disabled={isLoading}
+              min="0"
+              className={errors.orden ? "border-red-500" : ""}
+            />
+            {errors.orden && <p className="text-red-500 text-xs mt-1">{errors.orden}</p>}
           </div>
 
           <div>
