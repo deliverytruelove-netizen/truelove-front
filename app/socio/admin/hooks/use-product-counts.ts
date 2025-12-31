@@ -6,8 +6,6 @@ import type { Category, MenuItem } from "../services/menu.service"
 export function useProductCounts(categories: Category[], menuItems: MenuItem[]) {
   return useMemo(() => {
     const productCounts: Record<number, number> = {}
-    
-    console.log("Calculando contadores con:", { categories, menuItems });
 
     // Inicializar todos los contadores a 0
     categories.forEach((category) => {
@@ -17,14 +15,16 @@ export function useProductCounts(categories: Category[], menuItems: MenuItem[]) 
     // Contar productos por categoría
     menuItems.forEach((menu) => {
       const categoryId = Number(menu.categoria_id)
-      console.log(`Producto ${menu.id} (${menu.titulo}) - Categoría: ${categoryId}`);
       
       if (productCounts.hasOwnProperty(categoryId)) {
         productCounts[categoryId]++
+      } else if (menu.categoria_id) {
+        // Solo mostrar advertencia si el producto tiene una categoría que no existe
+        console.warn(`⚠️ Producto "${menu.titulo}" (ID: ${menu.id}) tiene categoria_id: ${categoryId} que no existe`);
       }
     })
 
-    console.log("Contadores calculados:", productCounts);
+    console.log("📊 Contadores de productos por categoría:", productCounts);
     return productCounts
   }, [categories, menuItems])
 }

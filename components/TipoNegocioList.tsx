@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
+import NextImage from "next/image"
 import { Search, RefreshCw, X, Trash2, Plus, Edit, Power } from "lucide-react"
 import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -11,6 +12,7 @@ import {
   toggleTipoNegocioStatus,
 } from "@/app/admin/tiposNegocio/services/TiposNegocio.service"
 import type { TipoNegocio } from "@/app/admin/tiposNegocio/types/TiposNegocio.types"
+import { getTipoNegocioImageUrl } from "@/app/admin/tiposNegocio/utils/imageHelper"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { showAlert } from "@/components/ui/DataTable/Alert"
 import { Input } from "@/components/ui/input"
@@ -171,6 +173,9 @@ const TipoNegocioList: React.FC = () => {
                 <th scope="col" className="px-4 py-3 text-center w-12">
                   #
                 </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Imagen
+                </th>
                 <th scope="col" className="px-4 py-3">
                   Nombre
                 </th>
@@ -200,7 +205,7 @@ const TipoNegocioList: React.FC = () => {
                   .fill(0)
                   .map((_, index) => (
                     <tr key={index} className="bg-white border-b hover:bg-gray-50">
-                      <td colSpan={7} className="px-4 py-3">
+                      <td colSpan={8} className="px-4 py-3">
                         <div className="animate-pulse flex items-center space-x-4">
                           <div className="flex-1 space-y-2">
                             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -211,7 +216,7 @@ const TipoNegocioList: React.FC = () => {
                   ))
               ) : filteredTipos.length === 0 ? (
                 <tr className="bg-white">
-                  <td colSpan={7} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                     </div>
@@ -238,9 +243,27 @@ const TipoNegocioList: React.FC = () => {
                   const pageIndex = pagination.pageIndex
                   const rowNumber = pageSize * pageIndex + index + 1
 
+                  const imageUrl = getTipoNegocioImageUrl(tipo.image)
+
                   return (
                   <tr key={tipo.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
+                    <td className="px-4 py-3 text-center">
+                      {imageUrl ? (
+                        <div className="relative h-12 w-12 mx-auto rounded-lg border border-gray-200 overflow-hidden">
+                          <NextImage
+                            src={imageUrl}
+                            alt={tipo.nombre}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-12 w-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center mx-auto">
+                          <span className="text-gray-400 text-xs">Sin imagen</span>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-800">{tipo.nombre}</td>
                     <td className="px-4 py-3 text-gray-600">{tipo.slug}</td>
                     <td className="px-4 py-3 text-center text-gray-600">{tipo.orden}</td>

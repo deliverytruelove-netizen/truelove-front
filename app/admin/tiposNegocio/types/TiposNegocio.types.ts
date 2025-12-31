@@ -6,6 +6,7 @@ export interface TipoNegocio {
   slug: string;
   orden: number;
   activo: boolean;
+  image: string | null;
   categorias_count?: number;
   created_at: string;
   updated_at: string;
@@ -24,6 +25,8 @@ export interface Categoria {
 export interface TipoNegocioFormData {
   nombre: string;
 }
+
+export type TipoNegocioFormDataWithImage = FormData;
 
 export interface CategoriaFormData {
   nombre: string;

@@ -585,7 +585,7 @@ export function PerfilNegocio({
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                     fill
                     priority
-                    onError={(e) => {
+                    onError={() => {
                       console.error("Error al cargar banner:", bannerUrl);
                       setBannerUrl(undefined);
                     }}

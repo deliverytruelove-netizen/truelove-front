@@ -4,15 +4,21 @@ import { TipoNegocio, Categoria, TipoNegocioFormData, CategoriaFormData, ApiResp
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (isFormData: boolean = false) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('No se encontró el token');
   }
-  return {
+
+  const headers: HeadersInit = {
     'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
   };
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  return headers;
 };
 
 // ========== TIPOS DE NEGOCIO ==========
@@ -36,11 +42,13 @@ export const fetchTiposNegocio = async (): Promise<TipoNegocio[]> => {
 /**
  * Crear un nuevo tipo de negocio
  */
-export const createTipoNegocio = async (formData: TipoNegocioFormData): Promise<TipoNegocio> => {
+export const createTipoNegocio = async (formData: TipoNegocioFormData | FormData): Promise<TipoNegocio> => {
+  const isFormDataInstance = formData instanceof FormData;
+
   const response = await fetch(`${API_URL}/admin/tipos-negocio/admin`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(formData),
+    headers: getAuthHeaders(isFormDataInstance),
+    body: isFormDataInstance ? formData : JSON.stringify(formData),
   });
 
   const data: ApiResponse<TipoNegocio> = await response.json();
@@ -55,11 +63,18 @@ export const createTipoNegocio = async (formData: TipoNegocioFormData): Promise<
 /**
  * Actualizar un tipo de negocio
  */
-export const updateTipoNegocio = async (id: number, formData: TipoNegocioFormData): Promise<TipoNegocio> => {
+export const updateTipoNegocio = async (id: number, formData: TipoNegocioFormData | FormData): Promise<TipoNegocio> => {
+  const isFormDataInstance = formData instanceof FormData;
+
+  // Si es FormData, necesitamos usar POST con _method para simular PUT
+  if (isFormDataInstance) {
+    formData.append('_method', 'PUT');
+  }
+
   const response = await fetch(`${API_URL}/admin/tipos-negocio/admin/${id}`, {
-    method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(formData),
+    method: isFormDataInstance ? 'POST' : 'PUT',
+    headers: getAuthHeaders(isFormDataInstance),
+    body: isFormDataInstance ? formData : JSON.stringify(formData),
   });
 
   const data: ApiResponse<TipoNegocio> = await response.json();

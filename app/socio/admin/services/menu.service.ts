@@ -261,39 +261,20 @@ export const menuService = {
       const responseData = (await response.json()) as MenuResponseData
       console.log("Respuesta de getMenus:", responseData)
 
-      // Si la respuesta es un array directamente, asumimos que son los productos
+      // Si la respuesta es un array directamente, retornarlo
       if (Array.isArray(responseData)) {
-        // Asignar una categoría por defecto si no tiene categoria_id
-        return responseData.map((item: Partial<MenuItem>) => {
-          if (!item.categoria_id) {
-            console.log(`Producto ${item.id} sin categoria_id, asignando categoría por defecto`)
-            // Asignar a la primera categoría disponible o a la categoría 1
-            item.categoria_id = 1
-          }
-          return item as MenuItem
-        })
+        return responseData as MenuItem[]
       }
       // Si la respuesta es un objeto con una propiedad data que es un array
       else if (responseData && typeof responseData === "object" && "data" in responseData) {
         const dataContent = responseData.data
 
         if (Array.isArray(dataContent)) {
-          return dataContent.map((item: Partial<MenuItem>) => {
-            if (!item.categoria_id) {
-              console.log(`Producto ${item.id} sin categoria_id, asignando categoría por defecto`)
-              item.categoria_id = 1
-            }
-            return item as MenuItem
-          })
+          return dataContent as MenuItem[]
         }
         // Si data es un objeto único (no un array)
         else if (dataContent && typeof dataContent === "object" && !Array.isArray(dataContent)) {
-          const menuItem = dataContent as Partial<MenuItem>
-          if (!menuItem.categoria_id) {
-            console.log(`Producto ${menuItem.id} sin categoria_id, asignando categoría por defecto`)
-            menuItem.categoria_id = 1
-          }
-          return [menuItem as MenuItem]
+          return [dataContent as MenuItem]
         }
       }
 
