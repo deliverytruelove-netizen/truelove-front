@@ -250,12 +250,13 @@ const TipoNegocioList: React.FC = () => {
                     <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
                     <td className="px-4 py-3 text-center">
                       {imageUrl ? (
-                        <div className="relative h-12 w-12 mx-auto rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="relative h-12 w-12 mx-auto rounded-lg border border-gray-200 overflow-hidden bg-white">
                           <NextImage
                             src={imageUrl}
                             alt={tipo.nombre}
                             fill
-                            className="object-cover"
+                            className="object-contain p-1"
+                            unoptimized={imageUrl.endsWith('.png') || imageUrl.endsWith('.svg')}
                           />
                         </div>
                       ) : (

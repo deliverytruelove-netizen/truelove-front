@@ -38,7 +38,7 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
   useEffect(() => {
     if (tipoNegocio) {
       setNombre(tipoNegocio.nombre)
-      setOrden(tipoNegocio.orden.toString())
+      setOrden(tipoNegocio.orden != null ? tipoNegocio.orden.toString() : "0")
       setImagePreview(getTipoNegocioImageUrl(tipoNegocio.image))
     } else {
       setNombre("")
@@ -171,27 +171,46 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
           canvas.width = width
           canvas.height = height
 
-          ctx?.drawImage(img, 0, 0, width, height)
-
-          // Determinar calidad basada en el tamaño original
-          // Si la imagen es muy pesada, comprimir más
-          let quality = 0.85 // Calidad por defecto
-          const fileSizeKB = file.size / 1024
-
-          if (fileSizeKB > 1500) {
-            quality = 0.6 // 60% para imágenes > 1.5MB
-          } else if (fileSizeKB > 1000) {
-            quality = 0.7 // 70% para imágenes > 1MB
-          } else if (fileSizeKB > 500) {
-            quality = 0.8 // 80% para imágenes > 500KB
+          // Detectar si es PNG para preservar transparencia
+          const isPNG = file.type === 'image/png'
+          
+          if (isPNG && ctx) {
+            // Para PNG con transparencia, limpiar el canvas con transparencia
+            ctx.clearRect(0, 0, width, height)
           }
 
-          // Convertir a blob con compresión adaptativa
+          ctx?.drawImage(img, 0, 0, width, height)
+
+          // Determinar formato y calidad
+          let outputFormat = 'image/jpeg'
+          let quality = 0.85
+          let fileExtension = '.jpg'
+
+          if (isPNG) {
+            // Para PNG, mantener el formato PNG para preservar transparencia
+            outputFormat = 'image/png'
+            quality = 0.92 // PNG usa compresión sin pérdida, pero podemos ajustar
+            fileExtension = '.png'
+          } else {
+            // Para JPG/WEBP, determinar calidad basada en el tamaño original
+            const fileSizeKB = file.size / 1024
+
+            if (fileSizeKB > 1500) {
+              quality = 0.6 // 60% para imágenes > 1.5MB
+            } else if (fileSizeKB > 1000) {
+              quality = 0.7 // 70% para imágenes > 1MB
+            } else if (fileSizeKB > 500) {
+              quality = 0.8 // 80% para imágenes > 500KB
+            }
+          }
+
+          // Convertir a blob con el formato correcto
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                const compressedFile = new File([blob], file.name.replace(/\.\w+$/, '.jpg'), {
-                  type: 'image/jpeg',
+                const originalName = file.name.replace(/\.\w+$/, '')
+                const compressedFile = new File([blob], originalName + fileExtension, {
+                  type: outputFormat,
                   lastModified: Date.now(),
                 })
                 resolve(compressedFile)
@@ -199,7 +218,7 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
                 reject(new Error('Error al comprimir la imagen'))
               }
             },
-            'image/jpeg',
+            outputFormat,
             quality
           )
         }
@@ -317,12 +336,12 @@ const TipoNegocioModal: React.FC<TipoNegocioModalProps> = ({
                 </div>
               ) : imagePreview ? (
                 <div className="relative inline-block">
-                  <div className="relative h-32 w-32 rounded-lg border-2 border-gray-200 overflow-hidden">
+                  <div className="relative h-32 w-32 rounded-lg border-2 border-gray-200 overflow-hidden bg-white">
                     <NextImage
                       src={imagePreview}
                       alt="Preview"
                       fill
-                      className="object-cover"
+                      className="object-contain p-2"
                     />
                   </div>
                   <button
