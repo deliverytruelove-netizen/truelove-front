@@ -134,8 +134,10 @@ export const socioService = {
 
   // Actualizar información personal
   updatePersonalInfo: async (data: {
+    documentNumber: string;
     name: string;
     lastName: string;
+    email: string;
     phone: string;
     posToDriver: number;
     entrega_documento_venta: number;

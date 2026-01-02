@@ -56,6 +56,7 @@ export interface BusinessInfo {
 export interface DetallesSocio {
   id: number
   personal: {
+    documentNumber: string
     name: string
     lastName: string
     email: string

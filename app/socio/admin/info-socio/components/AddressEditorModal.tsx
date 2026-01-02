@@ -190,10 +190,10 @@ const AddressEditorModal: React.FC<AddressEditorModalProps> = ({
 
 
   return (
- <div className="bg-white p-6">
+ <div className="bg-white p-4 md:p-6">
       {/* Toast Notification */}
       {toast && (
-  <div className="absolute top-4 right-4 z-50 max-w-sm">
+  <div className="fixed top-4 right-4 z-50 max-w-sm">
           <div className={`rounded-lg p-4 shadow-lg ${
             toast.variant === 'destructive' 
               ? 'bg-red-50 border border-red-200 text-red-800' 
@@ -207,37 +207,40 @@ const AddressEditorModal: React.FC<AddressEditorModalProps> = ({
 
 
     
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
           {/* Left Column - Search and Map */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-red-600">Buscar Ubicación</CardTitle>
-                <p className="text-sm text-gray-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base md:text-lg text-red-600">Buscar Ubicación</CardTitle>
+                <p className="text-xs md:text-sm text-gray-500">
                   Haz clic en el mapa para ajustar la ubicación exacta
                 </p>
                 <SearchComponent onLocationSelect={handleLocationSelect} />
               </CardHeader>
-              <CardContent>
-                <MapComponent 
-                  selectedLocation={selectedLocation}
-                  onLocationUpdate={handleLocationSelect}
-                />
+              <CardContent className="p-3 md:p-6">
+                {/* Contenedor del mapa con altura fija y touch-action para permitir scroll */}
+                <div className="h-[300px] md:h-[400px] w-full rounded-lg overflow-hidden touch-pan-y">
+                  <MapComponent 
+                    selectedLocation={selectedLocation}
+                    onLocationUpdate={handleLocationSelect}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Right Column - Form */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {showForm && selectedLocation && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg text-red-600">Detalles de la Dirección</CardTitle>
-                  <p className="text-sm text-gray-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base md:text-lg text-red-600">Detalles de la Dirección</CardTitle>
+                  <p className="text-xs md:text-sm text-gray-500">
                     Completa y verifica los datos de tu establecimiento
                   </p>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-3 md:p-6">
                   <BusinessForm
                     selectedLocation={selectedLocation}
                     onSubmit={handleFormSubmit}
@@ -250,7 +253,7 @@ const AddressEditorModal: React.FC<AddressEditorModalProps> = ({
             {/* Action Buttons */}
             {showForm && selectedLocation && (
               <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-4 md:pt-6 p-3 md:p-6">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       variant="outline"

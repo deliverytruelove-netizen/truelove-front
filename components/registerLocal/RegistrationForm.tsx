@@ -78,7 +78,14 @@ export default function RegistrationForm() {
       // Si es RUC, el apellido va vacío porque se usa razón social en el campo name
       formDataToSend.append("lastName", formData.documentType === "RUC" ? "" : formData.lastName)
       formDataToSend.append("businessType", formData.businessType)
-      formDataToSend.append("phone", formData.phone.replace(/\D/g, ""))
+      
+      // Limpiar el teléfono: eliminar caracteres no numéricos y el prefijo 51 si existe
+      let cleanPhone = formData.phone.replace(/\D/g, "")
+      if (cleanPhone.startsWith("51") && cleanPhone.length === 11) {
+        cleanPhone = cleanPhone.substring(2) // Eliminar el prefijo "51"
+      }
+      formDataToSend.append("phone", cleanPhone)
+      
       formDataToSend.append("email", formData.email)
       formDataToSend.append("posToDriver", formData.posToDriver.toString())
       formDataToSend.append("entrega_documento_venta", formData.entrega_documento_venta.toString())

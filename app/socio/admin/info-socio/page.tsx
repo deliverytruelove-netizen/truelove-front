@@ -2,28 +2,40 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import BusinessInfoModal from "./components/BusinessInfoModal"
-import BusinessDataModal from "./components/BusinessDataModal"
-import BankDataModal from "./components/BankDataModal"
-import BankAccountModal from "./components/BankAccountModal"
+import BusinessInfoModal from "./components/BusinessInfoModal";
+import BusinessDataModal from "./components/BusinessDataModal";
+import BankDataModal from "./components/BankDataModal";
+import BankAccountModal from "./components/BankAccountModal";
+import PersonalInfoModal from "./components/PersonalInfoModal";
 
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { User, Building, MapPin, CreditCard, Banknote, FileText, Eye, Download, Edit } from 'lucide-react'
-import { Dialog, DialogContent  } from "@/components/ui/dialog"
-import AddressEditorModal from "./components/AddressEditorModal"
+import {
+  User,
+  Building,
+  MapPin,
+  CreditCard,
+  Banknote,
+  FileText,
+  Eye,
+  Download,
+  Edit,
+} from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import AddressEditorModal from "./components/AddressEditorModal";
 import { Button } from "@/components/ui/button";
 import NextImage from "next/image";
-import type { DetallesSocio, BankAccountFormData, BusinessInfo, DatosNegocioFormData, DatosBancariosFormData, ApiResponse} from "@/app/admin/socios/types/Socios.types";
+import type {
+  DetallesSocio,
+  BankAccountFormData,
+  BusinessInfo,
+  DatosNegocioFormData,
+  DatosBancariosFormData,
+  ApiResponse,
+} from "@/app/admin/socios/types/Socios.types";
 
 import { socioService } from "@/app/socio/admin/services/socio.service";
 import { PDFModal } from "@/components/PDFModal";
@@ -80,22 +92,22 @@ const SeccionDatos = ({
               <CardTitle className="text-sm font-medium">{title}</CardTitle>
             </div>
           </div>
-         {showEditButton && (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="h-8 w-8 p-0 hover:bg-gray-100"
-    onClick={() => {
-      if (onEditClick) {
-        onEditClick();
-      } else {
-        console.log(`Editar ${title}`);
-      }
-    }}
-  >
-    <Edit className="w-4 h-4" />
-  </Button>
-)}
+          {showEditButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-gray-100"
+              onClick={() => {
+                if (onEditClick) {
+                  onEditClick();
+                } else {
+                  console.log(`Editar ${title}`);
+                }
+              }}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
         </CardHeader>
       </Card>
     );
@@ -133,30 +145,30 @@ const SeccionDatos = ({
   return (
     <>
       <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-  <div className="flex items-center">
-    {icon && <div className="mr-2">{icon}</div>}
-    <div>
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-    </div>
-  </div>
-{showEditButton && (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="h-8 w-8 p-0 hover:bg-gray-100"
-    onClick={() => {
-      if (onEditClick) {
-        onEditClick();
-      } else {
-        console.log(`Editar ${title}`);
-      }
-    }}
-  >
-    <Edit className="w-4 h-4" />
-  </Button>
-)}
-</CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center">
+            {icon && <div className="mr-2">{icon}</div>}
+            <div>
+              <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            </div>
+          </div>
+          {showEditButton && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-gray-100"
+              onClick={() => {
+                if (onEditClick) {
+                  onEditClick();
+                } else {
+                  console.log(`Editar ${title}`);
+                }
+              }}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+        </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {Object.entries(data as Record<string, unknown>).map(
@@ -387,11 +399,12 @@ export default function InfoSocioPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
-  const [isBusinessInfoModalOpen, setIsBusinessInfoModalOpen] = useState(false)
-  const [isBusinessDataModalOpen, setIsBusinessDataModalOpen] = useState(false)
-  const [isBankDataModalOpen, setIsBankDataModalOpen] = useState(false)
-  const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false)
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isPersonalInfoModalOpen, setIsPersonalInfoModalOpen] = useState(false);
+  const [isBusinessInfoModalOpen, setIsBusinessInfoModalOpen] = useState(false);
+  const [isBusinessDataModalOpen, setIsBusinessDataModalOpen] = useState(false);
+  const [isBankDataModalOpen, setIsBankDataModalOpen] = useState(false);
+  const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -428,88 +441,119 @@ export default function InfoSocioPage() {
     fetchPerfil();
   }, [fetchPerfil]);
   const handleAddressUpdate = (newAddress: string) => {
-  // Aquí puedes actualizar los datos del socio si es necesario
-  console.log("Dirección actualizada:", newAddress)
-  setIsAddressModalOpen(false)
-  // Opcional: recargar datos del socio
-}
-const handleBusinessInfoUpdate = async (data: BusinessInfo): Promise<ApiResponse<unknown>> => {
-  try {
-    const response = await socioService.updateBusinessInfo(data);
-    toast({
-      title: "Éxito",
-      description: "Datos del negocio actualizados correctamente",
-    });
-    setIsBusinessInfoModalOpen(false);
-    fetchPerfil(); // Recargar datos
-    return response; // Return the API response
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Error al actualizar",
-      variant: "destructive",
-    });
-    throw error; 
-  }
-}
+    // Aquí puedes actualizar los datos del socio si es necesario
+    console.log("Dirección actualizada:", newAddress);
+    setIsAddressModalOpen(false);
+    // Opcional: recargar datos del socio
+  };
+  const handlePersonalInfoUpdate = async (data: {
+    documentNumber: string;
+    name: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    posToDriver: number;
+    entrega_documento_venta: number;
+  }): Promise<ApiResponse<unknown>> => {
+    try {
+      const response = await socioService.updatePersonalInfo(data);
+      toast({
+        title: "Éxito",
+        description: "Información personal actualizada correctamente",
+      });
+      setIsPersonalInfoModalOpen(false);
+      fetchPerfil(); // Recargar datos
+      return response;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al actualizar",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
 
-const handleBusinessDataUpdate = async (data: DatosNegocioFormData) => {
-  try {
-    await socioService.updateBusinessData(data)
-    toast({
-      title: "Éxito",
-      description: "Datos legales actualizados correctamente",
-    })
-    setIsBusinessDataModalOpen(false)
-    fetchPerfil()
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Error al actualizar",
-      variant: "destructive",
-    })
-  }
-}
+  const handleBusinessInfoUpdate = async (
+    data: BusinessInfo
+  ): Promise<ApiResponse<unknown>> => {
+    try {
+      const response = await socioService.updateBusinessInfo(data);
+      toast({
+        title: "Éxito",
+        description: "Datos del negocio actualizados correctamente",
+      });
+      setIsBusinessInfoModalOpen(false);
+      fetchPerfil(); // Recargar datos
+      return response; // Return the API response
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al actualizar",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
 
-const handleBankDataUpdate = async (data: DatosBancariosFormData) => {
+  const handleBusinessDataUpdate = async (data: DatosNegocioFormData) => {
+    try {
+      await socioService.updateBusinessData(data);
+      toast({
+        title: "Éxito",
+        description: "Datos legales actualizados correctamente",
+      });
+      setIsBusinessDataModalOpen(false);
+      fetchPerfil();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al actualizar",
+        variant: "destructive",
+      });
+    }
+  };
 
+  const handleBankDataUpdate = async (data: DatosBancariosFormData) => {
+    try {
+      await socioService.updateBankData(data);
+      toast({
+        title: "Éxito",
+        description: "Datos bancarios actualizados correctamente",
+      });
+      setIsBankDataModalOpen(false);
+      fetchPerfil();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al actualizar",
+        variant: "destructive",
+      });
+    }
+  };
 
-  try {
-    await socioService.updateBankData(data)
-    toast({
-      title: "Éxito",
-      description: "Datos bancarios actualizados correctamente",
-    })
-    setIsBankDataModalOpen(false)
-    fetchPerfil()
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Error al actualizar",
-      variant: "destructive",
-    })
-  }
-}
-
-const handleBankAccountUpdate = async (data: BankAccountFormData) => {
-  try {
-    await socioService.updateBankAccount(data)
-    toast({
-      title: "Éxito",
-      description: "Cuenta bancaria actualizada correctamente",
-    })
-    setIsBankAccountModalOpen(false)
-    fetchPerfil()
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Error al actualizar",
-      variant: "destructive",
-    })
-  }
-}
-
-
+  const handleBankAccountUpdate = async (data: BankAccountFormData) => {
+    try {
+      await socioService.updateBankAccount(data);
+      toast({
+        title: "Éxito",
+        description: "Cuenta bancaria actualizada correctamente",
+      });
+      setIsBankAccountModalOpen(false);
+      fetchPerfil();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al actualizar",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -554,7 +598,7 @@ const handleBankAccountUpdate = async (data: BankAccountFormData) => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -575,110 +619,144 @@ const handleBankAccountUpdate = async (data: BankAccountFormData) => {
           data={socio.personal}
           icon={<User className="w-4 h-4" />}
           isClient={isClient}
+          showEditButton={true}
+          onEditClick={() => setIsPersonalInfoModalOpen(true)}
         />
-      <SeccionDatos 
-  title="Datos del Negocio" 
-  data={socio.business} 
-  icon={<Building className="w-4 h-4" />}
-  isClient={isClient}
-  showEditButton={true}
-  onEditClick={() => setIsBusinessInfoModalOpen(true)}
-/>
-
-
-       <SeccionDatos
-  title="Dirección del Establecimiento"
-  data={socio.establishment}
-  icon={<MapPin className="w-4 h-4" />}
-  isClient={isClient}
-  showEditButton={true}
-  onEditClick={() => setIsAddressModalOpen(true)}
-/>
         <SeccionDatos
-  title="Datos Legales (RUC)"
-  data={socio.businessData}
-  icon={<FileText className="w-4 h-4" />}
-  isClient={isClient}
-  showEditButton={true}
-  onEditClick={() => setIsBusinessDataModalOpen(true)}
-/>
-       <SeccionDatos
-  title="Datos Bancarios (Declarados)"
-  data={socio.bankData}
-  icon={<CreditCard className="w-4 h-4" />}
-  isClient={isClient}
-  showEditButton={true}
-  onEditClick={() => setIsBankDataModalOpen(true)}
-/>
+          title="Datos del Negocio"
+          data={socio.business}
+          icon={<Building className="w-4 h-4" />}
+          isClient={isClient}
+          showEditButton={true}
+          onEditClick={() => setIsBusinessInfoModalOpen(true)}
+        />
+
         <SeccionDatos
-  title="Cuenta Bancaria (Verificación)"
-  data={socio.cuentaBancaria}
-  icon={<Banknote className="w-4 h-4" />}
-  isClient={isClient}
-  showEditButton={true}
-  onEditClick={() => setIsBankAccountModalOpen(true)}
-/>
+          title="Dirección del Establecimiento"
+          data={socio.establishment}
+          icon={<MapPin className="w-4 h-4" />}
+          isClient={isClient}
+          showEditButton={true}
+          onEditClick={() => setIsAddressModalOpen(true)}
+        />
+        <SeccionDatos
+          title="Datos Legales (RUC)"
+          data={socio.businessData}
+          icon={<FileText className="w-4 h-4" />}
+          isClient={isClient}
+          showEditButton={true}
+          onEditClick={() => setIsBusinessDataModalOpen(true)}
+        />
+        <SeccionDatos
+          title="Datos Bancarios (Declarados)"
+          data={socio.bankData}
+          icon={<CreditCard className="w-4 h-4" />}
+          isClient={isClient}
+          showEditButton={true}
+          onEditClick={() => setIsBankDataModalOpen(true)}
+        />
+        <SeccionDatos
+          title="Cuenta Bancaria (Verificación)"
+          data={socio.cuentaBancaria}
+          icon={<Banknote className="w-4 h-4" />}
+          isClient={isClient}
+          showEditButton={true}
+          onEditClick={() => setIsBankAccountModalOpen(true)}
+        />
       </div>
 
       {/* Modal de editar dirección */}
-<Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
-  <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden p-0">
-    <AddressEditorModal
-      currentAddress={socio.establishment?.direccion_completa || ""}
-      onAddressUpdate={handleAddressUpdate}
-      onClose={() => setIsAddressModalOpen(false)}
-    />
-  </DialogContent>
-</Dialog>
+      <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-0">
+          <AddressEditorModal
+            currentAddress={socio.establishment?.direccion_completa || ""}
+            onAddressUpdate={handleAddressUpdate}
+            onClose={() => setIsAddressModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-{/* Modales de edición */}
-<Dialog open={isBusinessInfoModalOpen} onOpenChange={setIsBusinessInfoModalOpen}>
-  <DialogContent className="max-w-2xl">
-    <BusinessInfoModal
-      currentData={socio.business}
-      onUpdate={handleBusinessInfoUpdate}
-      onClose={() => setIsBusinessInfoModalOpen(false)}
-    />
-  </DialogContent>
-</Dialog>
+      {/* Modales de edición */}
+      <Dialog
+        open={isPersonalInfoModalOpen}
+        onOpenChange={setIsPersonalInfoModalOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <PersonalInfoModal
+            currentData={socio.personal ? {
+              documentNumber: socio.personal.documentNumber || "",
+              name: socio.personal.name || "",
+              lastName: socio.personal.lastName || "",
+              email: socio.personal.email || "",
+              phone: socio.personal.phone || "",
+              posToDriver: socio.personal.posToDriver || 0,
+              entrega_documento_venta: socio.personal.entrega_documento_venta || 0,
+            } : null}
+            onUpdate={handlePersonalInfoUpdate}
+            onClose={() => setIsPersonalInfoModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-<Dialog open={isBusinessDataModalOpen} onOpenChange={setIsBusinessDataModalOpen}>
-  <DialogContent className="max-w-2xl">
-    <BusinessDataModal
-      currentData={socio.businessData}
-      onUpdate={handleBusinessDataUpdate}
-      onClose={() => setIsBusinessDataModalOpen(false)}
-    />
-  </DialogContent>
-</Dialog>
+      <Dialog
+        open={isBusinessInfoModalOpen}
+        onOpenChange={setIsBusinessInfoModalOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <BusinessInfoModal
+            currentData={socio.business}
+            onUpdate={handleBusinessInfoUpdate}
+            onClose={() => setIsBusinessInfoModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-<Dialog open={isBankDataModalOpen} onOpenChange={setIsBankDataModalOpen}>
-  <DialogContent className="max-w-2xl">
-    <BankDataModal
-      currentData={socio.bankData ? {
-        titular_cuenta: socio.bankData.titular_cuenta,
-        numero_cuenta: socio.bankData.numero_cuenta,
-        nombre_banco: socio.bankData.nombre_banco,
-        tipo_cuenta: socio.bankData.tipo_cuenta,
-        documento_titular: "",
-        codigo_cci: "",
-      } : null}
-      onUpdate={handleBankDataUpdate}
-      onClose={() => setIsBankDataModalOpen(false)}
-    />
-  </DialogContent>
-</Dialog>
+      <Dialog
+        open={isBusinessDataModalOpen}
+        onOpenChange={setIsBusinessDataModalOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <BusinessDataModal
+            currentData={socio.businessData}
+            onUpdate={handleBusinessDataUpdate}
+            onClose={() => setIsBusinessDataModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-<Dialog open={isBankAccountModalOpen} onOpenChange={setIsBankAccountModalOpen}>
-  <DialogContent className="max-w-2xl">
-    <BankAccountModal
-      currentData={socio.cuentaBancaria}
-      onUpdate={handleBankAccountUpdate}
-      onClose={() => setIsBankAccountModalOpen(false)}
-    />
-  </DialogContent>
-</Dialog>
+      <Dialog open={isBankDataModalOpen} onOpenChange={setIsBankDataModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <BankDataModal
+            currentData={
+              socio.bankData
+                ? {
+                    titular_cuenta: socio.bankData.titular_cuenta,
+                    numero_cuenta: socio.bankData.numero_cuenta,
+                    nombre_banco: socio.bankData.nombre_banco,
+                    tipo_cuenta: socio.bankData.tipo_cuenta,
+                    documento_titular: "",
+                    codigo_cci: "",
+                  }
+                : null
+            }
+            onUpdate={handleBankDataUpdate}
+            onClose={() => setIsBankDataModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
+      <Dialog
+        open={isBankAccountModalOpen}
+        onOpenChange={setIsBankAccountModalOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <BankAccountModal
+            currentData={socio.cuentaBancaria}
+            onUpdate={handleBankAccountUpdate}
+            onClose={() => setIsBankAccountModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
