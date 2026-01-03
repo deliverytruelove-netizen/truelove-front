@@ -145,7 +145,7 @@ function FormularioDetallesNegocioContent() {
                 : data.walletNumber
               : null,
           nombre_titular_pago_digital:
-            data.digitalWallet !== "0" && !data.useSamePhone
+            data.digitalWallet !== "0"
               ? data.walletOwnerName
               : null,
         };

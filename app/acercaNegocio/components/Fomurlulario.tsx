@@ -219,17 +219,30 @@ export function BusinessForm({
   <FormField
     control={form.control}
     name="walletNumber"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>
-          Número de {digitalWallet === "1" ? "Yape" : "Plin"}
-        </FormLabel>
-        <FormControl>
-          <Input {...field} placeholder="999999999" />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
+    render={({ field }) => {
+      const hasError = field.value && !/^\d{9}$/.test(field.value);
+      return (
+        <FormItem>
+          <FormLabel>
+            Número de {digitalWallet === "1" ? "Yape" : "Plin"} *
+          </FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              placeholder="999999999"
+              maxLength={9}
+              className={hasError ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+          </FormControl>
+          {hasError && (
+            <p className="text-sm text-red-500 mt-1">
+              El número debe tener exactamente 9 dígitos
+            </p>
+          )}
+          <FormMessage />
+        </FormItem>
+      );
+    }}
   />
 )}
 

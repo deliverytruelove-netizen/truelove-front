@@ -8,12 +8,14 @@ import { Input } from '@/components/ui/input';
 interface PagoDigitalSettings {
   tipo_pago_digital: number;
   numero_pago_digital: string;
+  nombre_titular_pago_digital: string;
 }
 
 const NumeroDigitalPage: React.FC = () => {
   const [settings, setSettings] = useState<PagoDigitalSettings>({
     tipo_pago_digital: 0,
     numero_pago_digital: '',
+    nombre_titular_pago_digital: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,6 +61,7 @@ const NumeroDigitalPage: React.FC = () => {
       setSettings({
         tipo_pago_digital: data.tipo_pago_digital,
         numero_pago_digital: data.numero_pago_digital || '',
+        nombre_titular_pago_digital: data.nombre_titular_pago_digital || '',
       });
     } catch (error) {
       console.error('Error loading payment settings:', error);
@@ -141,8 +144,9 @@ const NumeroDigitalPage: React.FC = () => {
     setSettings(prev => ({
       ...prev,
       tipo_pago_digital: newTipo,
-      // Limpiar el número si se selecciona "No usar pago digital"
-      numero_pago_digital: newTipo === 0 ? '' : prev.numero_pago_digital
+      // Limpiar el número y nombre si se selecciona "No usar pago digital"
+      numero_pago_digital: newTipo === 0 ? '' : prev.numero_pago_digital,
+      nombre_titular_pago_digital: newTipo === 0 ? '' : prev.nombre_titular_pago_digital
     }));
   };
 
@@ -154,6 +158,13 @@ const NumeroDigitalPage: React.FC = () => {
         numero_pago_digital: value
       }));
     }
+  };
+
+  const handleNombreTitularChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSettings(prev => ({
+      ...prev,
+      nombre_titular_pago_digital: e.target.value
+    }));
   };
 
   if (loading) {
@@ -261,34 +272,58 @@ const NumeroDigitalPage: React.FC = () => {
 
               {/* Campo de número de teléfono (solo si no es "No usar") */}
               {settings.tipo_pago_digital !== 0 && (
-                <div className="space-y-2">
-                  <label htmlFor="numero_pago_digital" className="text-sm font-medium block">
-                    Número de teléfono para {getTipoPagoLabel(settings.tipo_pago_digital)}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Phone className="h-4 w-4 text-gray-400" />
+                <>
+                  <div className="space-y-2">
+                    <label htmlFor="numero_pago_digital" className="text-sm font-medium block">
+                      Número de teléfono para {getTipoPagoLabel(settings.tipo_pago_digital)} *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <Input
+                        type="text"
+                        id="numero_pago_digital"
+                        value={settings.numero_pago_digital}
+                        onChange={handleNumeroChange}
+                        placeholder="987654321"
+                        className="w-full pl-10 pr-3 py-2 "
+                        maxLength={9}
+                      />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ingresa el número de teléfono asociado a tu cuenta de {getTipoPagoLabel(settings.tipo_pago_digital)} (9 dígitos).
+                      Este puede ser diferente al teléfono principal de tu negocio.
+                    </p>
+                    {settings.numero_pago_digital && settings.numero_pago_digital.length !== 9 && (
+                      <p className="text-xs text-red-500 mt-1">
+                        El número debe tener exactamente 9 dígitos.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="nombre_titular_pago_digital" className="text-sm font-medium block">
+                      Nombre del titular de {getTipoPagoLabel(settings.tipo_pago_digital)} *
+                    </label>
                     <Input
                       type="text"
-                      id="numero_pago_digital"
-                      value={settings.numero_pago_digital}
-                      onChange={handleNumeroChange}
-                      placeholder="987654321"
-                      className="w-full pl-10 pr-3 py-2 "
-                      maxLength={9}
+                      id="nombre_titular_pago_digital"
+                      value={settings.nombre_titular_pago_digital}
+                      onChange={handleNombreTitularChange}
+                      placeholder="Ingrese el nombre completo del titular"
+                      className="w-full px-3 py-2"
                     />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Ingresa el número de teléfono asociado a tu cuenta de {getTipoPagoLabel(settings.tipo_pago_digital)} (9 dígitos).
-                    Este puede ser diferente al teléfono principal de tu negocio.
-                  </p>
-                  {settings.numero_pago_digital && settings.numero_pago_digital.length !== 9 && (
-                    <p className="text-xs text-red-500 mt-1">
-                      El número debe tener exactamente 9 dígitos.
+                    <p className="text-xs text-gray-500 mt-1">
+                      Nombre completo del titular de la cuenta de {getTipoPagoLabel(settings.tipo_pago_digital)}.
                     </p>
-                  )}
-                </div>
+                    {settings.nombre_titular_pago_digital && settings.nombre_titular_pago_digital.trim().length < 2 && (
+                      <p className="text-xs text-red-500 mt-1">
+                        El nombre debe tener al menos 2 caracteres.
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -298,7 +333,12 @@ const NumeroDigitalPage: React.FC = () => {
         <div className="mt-8 flex justify-center">
           <button
             onClick={handleSave}
-            disabled={saving || (settings.tipo_pago_digital !== 0 && settings.numero_pago_digital.length !== 9)}
+            disabled={
+              saving ||
+              (settings.tipo_pago_digital !== 0 &&
+                (settings.numero_pago_digital.length !== 9 ||
+                 settings.nombre_titular_pago_digital.trim().length < 2))
+            }
             className="px-8 py-3 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
           >
             <Save className="h-5 w-5" />

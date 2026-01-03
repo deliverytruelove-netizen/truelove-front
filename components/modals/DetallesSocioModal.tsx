@@ -390,6 +390,14 @@ export function DetallesSocioModal({
                   value={data.business.numero_pago_digital}
                 />
               )}
+            {data.business.tipo_pago_digital !== 0 &&
+              data.business.nombre_titular_pago_digital && (
+                <InfoItem
+                  icon={<User className="w-5 h-5" />}
+                  label="Nombre del Titular (yape/plin)"
+                  value={data.business.nombre_titular_pago_digital}
+                />
+              )}
             {data.businessData && (
               <>
                 <InfoItem
