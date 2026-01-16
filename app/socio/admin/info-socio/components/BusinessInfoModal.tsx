@@ -235,8 +235,11 @@ export default function BusinessInfoModal({
                 name="nombre_titular_pago_digital"
                 value={formData.nombre_titular_pago_digital || ""}
                 onChange={handleChange}
-                placeholder="Nombre completo del titular"
+                placeholder="Dejar vacío para usar tu nombre"
               />
+              <p className="text-xs text-muted-foreground">
+                Si no registro un nombre, se usará tu nombre completo automáticamente
+              </p>
             </div>
           </div>
         )}

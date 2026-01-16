@@ -305,7 +305,9 @@ export default function PersonalInfoModal({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="0">No emite documentos de venta</SelectItem>
-              <SelectItem value="1">Sí emite documentos de venta</SelectItem>
+              <SelectItem value="1">Sí emite boleta de venta</SelectItem>
+              <SelectItem value="2">Sí emite factura venta</SelectItem>
+              <SelectItem value="3">Sí emite ambos documentos</SelectItem>
             </SelectContent>
           </Select>
         </div>
