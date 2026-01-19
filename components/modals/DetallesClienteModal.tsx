@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { User, Mail, Phone, Calendar, MapPin, FileText, Image as ImageIcon } from "lucide-react";
 import type { DetallesCliente } from "@/app/admin/clientes/types/cliente.types";
 import { ImageThumbnail } from "@/components/ui/image-thumbnail";
+import Image from "next/image";
 
 interface DetallesClienteModalProps {
   isOpen: boolean;
@@ -103,16 +104,19 @@ export const DetallesClienteModal: React.FC<DetallesClienteModalProps> = ({
                 Información Personal
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex items-center gap-2 sm:gap-3 col-span-full">
+                <div className="flex items-center gap-3 col-span-full">
                   {data.personal.foto_perfil ? (
-                    <ImageThumbnail
-                      src={normalizeFilePath(data.personal.foto_perfil)}
-                      alt={data.personal.nombre_completo}
-                      title="Foto de Perfil"
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover"
-                    />
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                      <Image
+                        src={normalizeFilePath(data.personal.foto_perfil)}
+                        alt={data.personal.nombre_completo}
+                        fill
+                        className="rounded-full object-cover"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                       <User className="w-8 h-8 sm:w-10 sm:h-10 text-gray-500" />
                     </div>
                   )}

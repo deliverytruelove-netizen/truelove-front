@@ -38,6 +38,9 @@ export function ImageThumbnail({ src, alt, title, className = "" }: ImageThumbna
       fullUrl = `/storage/${src.replace(/^\//, "")}`;
     }
 
+    console.log("ImageThumbnail - src original:", src);
+    console.log("ImageThumbnail - fullUrl normalizada:", fullUrl);
+
     return (
       <>
         <div className="flex flex-col items-center w-full">

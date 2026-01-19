@@ -37,7 +37,13 @@ export function ImageViewer({ src, alt, title, isOpen, onClose }: ImageViewerPro
   // Procesar la URL de la imagen
   useEffect(() => {
     if (src) {
-      setFullUrl(src.startsWith("http") ? src : `/storage/${src.replace(/^\/?(storage\/)?/, "")}`)
+      // Si ya es una URL completa o ya comienza con /storage/, la dejamos como está
+      if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/storage/")) {
+        setFullUrl(src);
+      } else {
+        // Si no, agregamos /storage/
+        setFullUrl(`/storage/${src.replace(/^\//, "")}`);
+      }
     } else {
       setFullUrl(null)
     }

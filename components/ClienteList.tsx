@@ -239,11 +239,12 @@ const ClienteList: React.FC = () => {
                         <div className="flex items-center gap-2">
                           {cliente.foto_perfil ? (
                             <Image
-                              src={cliente.foto_perfil}
+                              src={`/storage/${cliente.foto_perfil}`}
                               alt={`${cliente.nombre} ${cliente.apellido}`}
                               width={40}
                               height={40}
                               className="rounded-full object-cover"
+                              unoptimized
                             />
                           ) : (
                             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
