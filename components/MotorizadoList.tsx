@@ -137,16 +137,16 @@ const MotorizadoList: React.FC = () => {
   });
 
   // Mutación para actualizar un motorizado
+  interface UpdateMotorizadoData {
+    placa: string;
+    licencia_conducir: string;
+    seguro: string;
+    tarjeta_propiedad: string;
+  }
+
   const mutationUpdate = useMutation({
-    mutationFn: ({ id, data }: { 
-      id: number; 
-      data: {
-        placa: string;
-        licencia_conducir: string;
-        seguro: string;
-        tarjeta_propiedad: string;
-      }
-    }) => updateMotorizado(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdateMotorizadoData }) => 
+      updateMotorizado(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motorizados"] });
       showAlert({
@@ -168,7 +168,8 @@ const MotorizadoList: React.FC = () => {
 
   // Mutación para actualizar documentos del motorizado
   const mutationUpdateDocumentos = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Record<string, string> }) => updateDocumentosMotorizado(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, string> }) => 
+      updateDocumentosMotorizado(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motorizados"] });
       showAlert({
@@ -218,8 +219,8 @@ const MotorizadoList: React.FC = () => {
       const detalles = await fetchMotorizadoDetails(motorizado.id);
       setMotorizadoToEdit(detalles);
       setIsEditModalOpen(true);
-    } catch (err) {
-      console.error("Error al cargar detalles:", err);
+    } catch (error) {
+      console.error("Error al cargar detalles:", error);
       showAlert({
         title: "Error",
         text: "No se pudieron cargar los detalles del motorizado",
@@ -228,12 +229,7 @@ const MotorizadoList: React.FC = () => {
     }
   };
 
-  const handleSaveEdit = async (data: {
-    placa: string;
-    licencia_conducir: string;
-    seguro: string;
-    tarjeta_propiedad: string;
-  }) => {
+  const handleSaveEdit = async (data: UpdateMotorizadoData) => {
     if (motorizadoToEdit) {
       await mutationUpdate.mutateAsync({ id: motorizadoToEdit.id, data });
     }

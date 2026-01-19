@@ -17,7 +17,26 @@ export function ImageThumbnail({ src, alt, title, className = "" }: ImageThumbna
   if (!src) return <p className="text-gray-500">Imagen no disponible</p>
 
   try {
-    const fullUrl = src.startsWith("http") ? src : `/storage/${src.replace(/^\/?(storage\/)?/, "")}`
+    // Normalizar la ruta
+    let fullUrl = src;
+    
+    // Si ya es una URL completa, la dejamos como está
+    if (src.startsWith("http://") || src.startsWith("https://")) {
+      fullUrl = src;
+    }
+    // Si ya comienza con /storage/, la dejamos como está
+    else if (src.startsWith("/storage/")) {
+      fullUrl = src;
+    }
+    // Si contiene /storage/ en alguna parte, extraemos desde ahí
+    else if (src.includes("/storage/")) {
+      const storageIndex = src.indexOf("/storage/");
+      fullUrl = src.substring(storageIndex);
+    }
+    // Si no tiene /storage/, lo agregamos
+    else {
+      fullUrl = `/storage/${src.replace(/^\//, "")}`;
+    }
 
     return (
       <>
@@ -31,7 +50,7 @@ export function ImageThumbnail({ src, alt, title, className = "" }: ImageThumbna
         </div>
 
         <ImageViewer
-          src={src || "/placeholder.svg"}
+          src={fullUrl || "/placeholder.svg"}
           alt={alt}
           title={title}
           isOpen={showViewer}

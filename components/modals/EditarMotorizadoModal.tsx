@@ -44,7 +44,13 @@ const isPdfFile = (url: string): boolean => {
 };
 
 // Componente para mostrar preview de documento
-const DocumentPreview = ({ src, alt, onReplace }: { src?: string; alt: string; onReplace: () => void }) => {
+interface DocumentPreviewProps {
+  src?: string;
+  alt: string;
+  onReplace: () => void;
+}
+
+const DocumentPreview: React.FC<DocumentPreviewProps> = ({ src, alt, onReplace }) => {
   if (!src) {
     return (
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -178,8 +184,8 @@ export const EditarMotorizadoModal: React.FC<EditarMotorizadoModalProps> = ({
         title: "Archivo cargado",
         description: `${file.name} listo para guardar`,
       });
-    } catch (err) {
-      console.error("Error al cargar archivo:", err);
+    } catch (error) {
+      console.error("Error al cargar archivo:", error);
       toast({
         title: "Error",
         description: "No se pudo cargar el archivo",
