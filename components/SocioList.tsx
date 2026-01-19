@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { DeleteSocioDialog } from "@/components/DeleteSocioDialog"
 import AsignarCuotaModal from "./modals/AsignarCuotaModal"
 import EditarDiaPagoModal from "./modals/EditarDiaPagoModal"
+import { Pagination } from "@/components/ui/pagination"
 
 // Definir los tipos de filtro
 type FilterType = "todos" | "completos" | "incompletos"
@@ -581,39 +582,15 @@ const SocioList: React.FC = () => {
         </div>
 
         {filteredSocios.length > 0 && (
-          <div className="flex items-center justify-between p-4 border-t border-gray-200">
-            <div className="text-sm text-gray-600">
-              Página {pagination.pageIndex + 1} de {Math.ceil(filteredSocios.length / pagination.pageSize)}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setPagination({
-                    ...pagination,
-                    pageIndex: Math.max(0, pagination.pageIndex - 1),
-                  })
-                }
-                disabled={pagination.pageIndex === 0}
-              >
-                Anterior
-              </Button>
-              <Button
-                onClick={() =>
-                  setPagination({
-                    ...pagination,
-                    pageIndex: Math.min(
-                      Math.ceil(filteredSocios.length / pagination.pageSize) - 1,
-                      pagination.pageIndex + 1,
-                    ),
-                  })
-                }
-                disabled={pagination.pageIndex >= Math.ceil(filteredSocios.length / pagination.pageSize) - 1}
-              >
-                Siguiente
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={pagination.pageIndex + 1}
+            totalPages={Math.ceil(filteredSocios.length / pagination.pageSize)}
+            totalItems={filteredSocios.length}
+            perPage={pagination.pageSize}
+            onPageChange={(page) => setPagination({ ...pagination, pageIndex: page - 1 })}
+            onPerPageChange={(perPage) => setPagination({ pageSize: perPage, pageIndex: 0 })}
+            itemsInCurrentPage={paginatedSocios.length}
+          />
         )}
       </div>
 

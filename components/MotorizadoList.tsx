@@ -5,7 +5,7 @@ import type React from "react";
 import { AsignarPedidosModal } from "./modals/AsignarPedidosModal";
 import { EntregaCalendarioModal } from "./EntregaCalendarioModal";
 import { useState } from "react";
-import { Eye, Check, Search, RefreshCw, X, Trash2, Calendar, Clock } from "lucide-react";
+import { Eye, Check, Search, RefreshCw, X, Trash2, Calendar, Clock, Edit } from "lucide-react";
 import Section from "@/components/layout/Section";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,6 +13,8 @@ import {
   fetchMotorizadoDetails,
   aprobarMotorizado,
   deleteMotorizado,
+  updateMotorizado,
+  updateDocumentosMotorizado,
 } from "@/app/admin/motorizado/services/motorizado.service";
 import type {
   Motorizado,
@@ -21,9 +23,11 @@ import type {
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst";
 import { showAlert } from "@/components/ui/DataTable/Alert";
 import { DetallesMotorizadoModal } from "./modals/DetallesMotorizadoModal";
+import { EditarMotorizadoModal } from "./modals/EditarMotorizadoModal";
 import { Input } from "./ui/input";
 import { Button } from "@/components/ui/button";
 import { DeleteMotorizadoDialog } from "./DeleteMotorizadoDialog";
+import { Pagination } from "@/components/ui/pagination";
 
 const MotorizadoList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -53,6 +57,8 @@ const MotorizadoList: React.FC = () => {
     nombre: string;
   } | null>(null);
   const [showAsignarPedidosModal, setShowAsignarPedidosModal] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [motorizadoToEdit, setMotorizadoToEdit] = useState<DetallesMotorizado | null>(null);
   const {
     data: motorizados = [],
     isLoading,
@@ -130,6 +136,56 @@ const MotorizadoList: React.FC = () => {
     },
   });
 
+  // Mutación para actualizar un motorizado
+  const mutationUpdate = useMutation({
+    mutationFn: ({ id, data }: { 
+      id: number; 
+      data: {
+        placa: string;
+        licencia_conducir: string;
+        seguro: string;
+        tarjeta_propiedad: string;
+      }
+    }) => updateMotorizado(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["motorizados"] });
+      showAlert({
+        title: "Éxito",
+        text: "Motorizado actualizado correctamente.",
+        icon: "success",
+      });
+      setIsEditModalOpen(false);
+      setMotorizadoToEdit(null);
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "No se pudo actualizar el motorizado.",
+        icon: "error",
+      });
+    },
+  });
+
+  // Mutación para actualizar documentos del motorizado
+  const mutationUpdateDocumentos = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, string> }) => updateDocumentosMotorizado(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["motorizados"] });
+      showAlert({
+        title: "Éxito",
+        text: "Documentos actualizados correctamente.",
+        icon: "success",
+      });
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "No se pudieron actualizar los documentos.",
+        icon: "error",
+      });
+    },
+  });
+
   const handleAprobar = (id: number) => {
     const motorizado = motorizados.find((m) => m.id === id);
     if (motorizado) {
@@ -154,6 +210,39 @@ const MotorizadoList: React.FC = () => {
   const handleDelete = (id: number, name: string) => {
     setMotorizadoToDelete({ id, name });
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleEdit = async (motorizado: Motorizado) => {
+    try {
+      // Cargar los detalles completos del motorizado
+      const detalles = await fetchMotorizadoDetails(motorizado.id);
+      setMotorizadoToEdit(detalles);
+      setIsEditModalOpen(true);
+    } catch (err) {
+      console.error("Error al cargar detalles:", err);
+      showAlert({
+        title: "Error",
+        text: "No se pudieron cargar los detalles del motorizado",
+        icon: "error",
+      });
+    }
+  };
+
+  const handleSaveEdit = async (data: {
+    placa: string;
+    licencia_conducir: string;
+    seguro: string;
+    tarjeta_propiedad: string;
+  }) => {
+    if (motorizadoToEdit) {
+      await mutationUpdate.mutateAsync({ id: motorizadoToEdit.id, data });
+    }
+  };
+
+  const handleSaveDocumentos = async (data: Record<string, string>) => {
+    if (motorizadoToEdit) {
+      await mutationUpdateDocumentos.mutateAsync({ id: motorizadoToEdit.id, data });
+    }
   };
 
   const handleVerCalendario = (id: number, nombre: string) => {
@@ -439,6 +528,16 @@ const handleAprobarMotorizado = (id: number) => {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleEdit(motorizado)}
+                            className="text-green-600 hover:text-green-800 hover:bg-green-50"
+                            title="Editar motorizado"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() =>
                               handleVerCalendario(
                                 motorizado.id,
@@ -476,46 +575,15 @@ const handleAprobarMotorizado = (id: number) => {
         </div>
 
         {filteredMotorizados.length > 0 && (
-          <div className="flex items-center justify-between p-4 border-t border-gray-200">
-            <div className="text-sm text-gray-600">
-              Página {pagination.pageIndex + 1} de{" "}
-              {Math.ceil(filteredMotorizados.length / pagination.pageSize)}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setPagination({
-                    ...pagination,
-                    pageIndex: Math.max(0, pagination.pageIndex - 1),
-                  })
-                }
-                disabled={pagination.pageIndex === 0}
-              >
-                Anterior
-              </Button>
-              <Button
-                onClick={() =>
-                  setPagination({
-                    ...pagination,
-                    pageIndex: Math.min(
-                      Math.ceil(
-                        filteredMotorizados.length / pagination.pageSize
-                      ) - 1,
-                      pagination.pageIndex + 1
-                    ),
-                  })
-                }
-                disabled={
-                  pagination.pageIndex >=
-                  Math.ceil(filteredMotorizados.length / pagination.pageSize) -
-                    1
-                }
-              >
-                Siguiente
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={pagination.pageIndex + 1}
+            totalPages={Math.ceil(filteredMotorizados.length / pagination.pageSize)}
+            totalItems={filteredMotorizados.length}
+            perPage={pagination.pageSize}
+            onPageChange={(page) => setPagination({ ...pagination, pageIndex: page - 1 })}
+            onPerPageChange={(perPage) => setPagination({ pageSize: perPage, pageIndex: 0 })}
+            itemsInCurrentPage={paginatedMotorizados.length}
+          />
         )}
       </div>
 
@@ -571,6 +639,20 @@ const handleAprobarMotorizado = (id: number) => {
             handleAprobarMotorizado(motorizadoToApprove.id);
             setMotorizadoToApprove(null);
           }}
+        />
+      )}
+
+      {/* Modal de edición */}
+      {motorizadoToEdit && (
+        <EditarMotorizadoModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setMotorizadoToEdit(null);
+          }}
+          motorizado={motorizadoToEdit}
+          onSaveVehiculo={handleSaveEdit}
+          onSaveDocumentos={handleSaveDocumentos}
         />
       )}
     </Section>

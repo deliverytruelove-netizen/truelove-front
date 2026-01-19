@@ -229,3 +229,80 @@ export const actualizarNivelYPedidos = async (
 
   return response.json();
 };
+
+export const updateMotorizado = async (
+  id: number,
+  data: {
+    placa: string;
+    licencia_conducir: string;
+    seguro: string;
+    tarjeta_propiedad: string;
+  }
+): Promise<void> => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("No se encontró el token");
+  }
+
+  const response = await fetch(`${API_URL}/admin/motorizado/${id}/update`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: "Error desconocido" }));
+    throw new Error(errorData.message || "Error al actualizar el motorizado");
+  }
+
+  const result = await response.json();
+  if (result.status !== "success") {
+    throw new Error(result.message || "Error al actualizar el motorizado");
+  }
+};
+
+export const updateDocumentosMotorizado = async (
+  id: number,
+  data: {
+    documento_imagen_frente?: string;
+    documento_imagen_reverso?: string;
+    imagen_placa?: string;
+    imagen_licencia?: string;
+    imagen_seguro?: string;
+    imagen_tarjeta_propiedad?: string;
+    imagen_cuenta_bancaria?: string;
+    documentos_adicionales?: Array<{
+      archivo: string;
+      categoria: string;
+    }>;
+  }
+): Promise<void> => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    throw new Error("No se encontró el token");
+  }
+
+  const response = await fetch(`${API_URL}/admin/motorizado/${id}/update-documentos`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: "Error desconocido" }));
+    throw new Error(errorData.message || "Error al actualizar los documentos");
+  }
+
+  const result = await response.json();
+  if (result.status !== "success") {
+    throw new Error(result.message || "Error al actualizar los documentos");
+  }
+};

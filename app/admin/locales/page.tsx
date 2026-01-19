@@ -51,7 +51,6 @@ const Locales: React.FC = () => {
   const [cities, setCities] = useState<string[]>([])
   const [updatingPriority, setUpdatingPriority] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<string>("todos")
-  const [filteredLocales, setFilteredLocales] = useState<Local[]>([])
 
   // Paginación
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -262,14 +261,14 @@ const Locales: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLocales.length === 0 ? (
+                {locales.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                       No se encontraron locales con los filtros aplicados
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLocales.map((local, index) => (
+                  locales.map((local, index) => (
                     <TableRow key={local.id}>
                       <TableCell className="font-medium">{(currentPage - 1) * perPage + index + 1}</TableCell>
                       <TableCell>
@@ -463,11 +462,11 @@ const Locales: React.FC = () => {
               <div className="flex items-center gap-1 order-3 sm:order-2">
                 <span className="text-xs sm:text-sm text-gray-500">
                   <span className="sm:hidden">
-                    {filteredLocales.length > 0 ? (currentPage - 1) * perPage + 1 : 0}-
+                    {locales.length > 0 ? (currentPage - 1) * perPage + 1 : 0}-
                     {Math.min(currentPage * perPage, totalItems)} de {totalItems}
                   </span>
                   <span className="hidden sm:inline">
-                    Mostrando {filteredLocales.length > 0 ? (currentPage - 1) * perPage + 1 : 0} a{" "}
+                    Mostrando {locales.length > 0 ? (currentPage - 1) * perPage + 1 : 0} a{" "}
                     {Math.min(currentPage * perPage, totalItems)} de {totalItems} resultados
                   </span>
                 </span>
@@ -546,55 +545,6 @@ const Locales: React.FC = () => {
       </>
     )
   }
-
-  useEffect(() => {
-    let result = [...locales]
-
-    // Aplicar filtro de búsqueda
-    if (searchTerm) {
-      result = result.filter(
-        (local) =>
-          local.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          local.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          local.direccion.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    }
-
-    // Aplicar filtro de ciudad
-    if (filterCity !== "all") {
-      result = result.filter((local) => local.ciudad === filterCity)
-    }
-
-    // Calcular los umbrales para las categorías basados en el total de locales
-    const lowThreshold = Math.ceil(totalLocales * 0.33) // Primer tercio
-    const mediumThreshold = Math.ceil(totalLocales * 0.67) // Segundo tercio
-
-    // Aplicar filtro por tab
-    if (activeTab === "baja") {
-      result = result.filter((local) => local.prioridad <= lowThreshold)
-    } else if (activeTab === "media") {
-      result = result.filter((local) => local.prioridad > lowThreshold && local.prioridad <= mediumThreshold)
-    } else if (activeTab === "alta") {
-      result = result.filter((local) => local.prioridad > mediumThreshold)
-    }
-
-    // Aplicar ordenamiento
-    result.sort((a, b) => {
-      if (sortBy === "prioridad") {
-        // Para prioridad, ordenar numéricamente
-        return sortOrder === "asc" ? a.prioridad - b.prioridad : b.prioridad - a.prioridad
-      } else {
-        // Para otros campos, ordenar alfabéticamente
-        if (sortOrder === "asc") {
-          return a[sortBy] > b[sortBy] ? 1 : -1
-        } else {
-          return a[sortBy] < b[sortBy] ? 1 : -1
-        }
-      }
-    })
-
-    setFilteredLocales(result)
-  }, [locales, searchTerm, filterCity, sortBy, sortOrder, activeTab, totalLocales])
 
   return (
     <MainLayout>

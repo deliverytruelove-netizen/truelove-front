@@ -10,6 +10,7 @@ import {
   RiBankCardFill,
   RiCalendar2Fill,
   RiDeleteBin6Line,
+  RiUser2Line
 } from "react-icons/ri";
 
 export interface NavItem {
@@ -47,7 +48,12 @@ export const navigationItems: NavItem[] = [
     icon: RiRidingFill,
   },
   {
-    title: "Locales",
+    title: "Mis Clientes",
+    path: "/admin/clientes",
+    icon: RiUser2Line,
+  },
+  {
+    title: "Prioridad Locales",
     path: "/admin/locales",
     icon: RiAncientGateLine,
   },
