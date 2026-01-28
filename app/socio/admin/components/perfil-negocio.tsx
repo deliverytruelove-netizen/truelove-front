@@ -631,7 +631,8 @@ export function PerfilNegocio({
         <Card className="overflow-hidden dark:bg-gray-800">
           <CardContent className="p-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              {/* ✅ HEADER RESPONSIVO */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <h2 className="text-xl font-semibold tracking-tight">
                     Horarios de Atención
@@ -642,10 +643,10 @@ export function PerfilNegocio({
                 </div>
                 <Button
                   onClick={() => setModalAbierto(true)}
-                  className="relative overflow-hidden  text-primary-foreground shadow-lg transition-all hover:shadow-xl bg-red-600 hover:bg-red-700 dark:text-gray-200"
+                  className="relative overflow-hidden text-primary-foreground shadow-lg transition-all hover:shadow-xl bg-red-600 hover:bg-red-700 dark:text-gray-200 w-full sm:w-auto flex-shrink-0"
                 >
-                  <div className="absolute inset-0 opacity-0  hover:opacity-100 " />
-                  <Plus className="mr-2 h-5 w-5 " />
+                  <div className="absolute inset-0 opacity-0 hover:opacity-100" />
+                  <Plus className="mr-2 h-5 w-5" />
                   Agregar Horario
                 </Button>
               </div>
