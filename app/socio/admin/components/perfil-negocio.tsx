@@ -299,6 +299,14 @@ export function PerfilNegocio({
         throw new Error("No se encontró el token de autenticación");
       }
 
+      // Preparar datos sin el ID (el ID va en la URL, no en el body)
+      const { id, ...datosParaEnviar } = horarioData;
+
+      // Log para debug
+      console.log("Datos a enviar:", datosParaEnviar);
+      console.log("Hora apertura:", datosParaEnviar.hora_apertura);
+      console.log("Hora cierre:", datosParaEnviar.hora_cierre);
+
       let respuesta;
       if (horarioAEditar) {
         // Actualizar horario existente
@@ -309,7 +317,7 @@ export function PerfilNegocio({
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-          body: JSON.stringify(horarioData),
+          body: JSON.stringify(datosParaEnviar),
         });
       } else {
         // Crear nuevo horario
@@ -320,7 +328,7 @@ export function PerfilNegocio({
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-          body: JSON.stringify(horarioData),
+          body: JSON.stringify(datosParaEnviar),
         });
       }
 

@@ -38,8 +38,51 @@ export function HorarioModal({ open, onOpenChange, onGuardar, initialData }: Hor
   const [loading, setLoading] = useState(false);
   const [nombreError, setNombreError] = useState("");
   const nombreInputRef = useRef<HTMLInputElement>(null);
+  
+  // Función para convertir hora al formato HH:mm
+  const convertirHoraAFormato24 = (hora: string): string => {
+    if (!hora) return "";
+    
+    // Si ya está en formato HH:mm, devolverla tal cual
+    if (/^\d{2}:\d{2}$/.test(hora)) {
+      return hora;
+    }
+    
+    // Si viene en formato de 12 horas con AM/PM (ej: "02:04 p. m.")
+    try {
+      // Limpiar la hora
+      const horaLimpia = hora.trim().toLowerCase();
+      
+      // Extraer horas, minutos y período (am/pm)
+      const match = horaLimpia.match(/(\d{1,2}):(\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)/i);
+      
+      if (match) {
+        let horas = parseInt(match[1]);
+        const minutos = match[2];
+        const periodo = match[3].replace(/\s|\./g, '').toLowerCase();
+        
+        // Convertir a formato 24 horas
+        if (periodo.includes('p') && horas !== 12) {
+          horas += 12;
+        } else if (periodo.includes('a') && horas === 12) {
+          horas = 0;
+        }
+        
+        return `${horas.toString().padStart(2, '0')}:${minutos}`;
+      }
+    } catch (error) {
+      console.error("Error al convertir hora:", error);
+    }
+    
+    return hora;
+  };
+  
   const [formData, setFormData] = useState<HorarioNegocio>(
-    initialData || {
+    initialData ? {
+      ...initialData,
+      hora_apertura: convertirHoraAFormato24(initialData.hora_apertura),
+      hora_cierre: convertirHoraAFormato24(initialData.hora_cierre),
+    } : {
       nombre: "",
       lunes: false,
       martes: false,
@@ -56,7 +99,11 @@ export function HorarioModal({ open, onOpenChange, onGuardar, initialData }: Hor
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        hora_apertura: convertirHoraAFormato24(initialData.hora_apertura),
+        hora_cierre: convertirHoraAFormato24(initialData.hora_cierre),
+      });
     } else {
       // Reset form when modal is opened for new creation
       setFormData({
@@ -176,10 +223,13 @@ export function HorarioModal({ open, onOpenChange, onGuardar, initialData }: Hor
               <div className="h-8 w-8 rounded-md bg-brand-600 flex items-center justify-center">
                 <Calendar className="h-5 w-5 text-white" />
               </div>
-              Agregar Nuevo Horario
+              {initialData ? 'Editar Horario' : 'Agregar Nuevo Horario'}
             </DialogTitle>
             <DialogDescription className="text-gray-600 mt-2">
-              Define los días y horas en que tu negocio estará disponible para recibir pedidos.
+              {initialData 
+                ? 'Modifica los días y horas de este horario.'
+                : 'Define los días y horas en que tu negocio estará disponible para recibir pedidos.'
+              }
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -362,10 +412,10 @@ export function HorarioModal({ open, onOpenChange, onGuardar, initialData }: Hor
             {loading ? (
               <div className="flex items-center">
                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                <span className="font-medium">Guardando...</span>
+                <span className="font-medium">{initialData ? 'Actualizando...' : 'Guardando...'}</span>
               </div>
             ) : (
-              <span className="font-medium">Guardar Horario</span>
+              <span className="font-medium">{initialData ? 'Actualizar Horario' : 'Guardar Horario'}</span>
             )}
           </Button>
         </DialogFooter>
