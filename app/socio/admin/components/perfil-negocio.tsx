@@ -300,12 +300,25 @@ export function PerfilNegocio({
       }
 
       // Preparar datos sin el ID (el ID va en la URL, no en el body)
-      const { id, ...datosParaEnviar } = horarioData;
+      const { id, perfil_negocio_id, created_at, updated_at, ...datosParaEnviar } = horarioData;
+
+      // Asegurar que las horas estén en formato HH:mm (sin segundos)
+      const formatearHora = (hora: string): string => {
+        if (!hora) return "";
+        // Si tiene segundos (HH:mm:ss), quitarlos
+        return hora.substring(0, 5);
+      };
+
+      const datosFormateados = {
+        ...datosParaEnviar,
+        hora_apertura: formatearHora(datosParaEnviar.hora_apertura),
+        hora_cierre: formatearHora(datosParaEnviar.hora_cierre),
+      };
 
       // Log para debug
-      console.log("Datos a enviar:", datosParaEnviar);
-      console.log("Hora apertura:", datosParaEnviar.hora_apertura);
-      console.log("Hora cierre:", datosParaEnviar.hora_cierre);
+      console.log("Datos a enviar:", datosFormateados);
+      console.log("Hora apertura:", datosFormateados.hora_apertura);
+      console.log("Hora cierre:", datosFormateados.hora_cierre);
 
       let respuesta;
       if (horarioAEditar) {
@@ -317,7 +330,7 @@ export function PerfilNegocio({
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-          body: JSON.stringify(datosParaEnviar),
+          body: JSON.stringify(datosFormateados),
         });
       } else {
         // Crear nuevo horario
@@ -328,7 +341,7 @@ export function PerfilNegocio({
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
           },
-          body: JSON.stringify(datosParaEnviar),
+          body: JSON.stringify(datosFormateados),
         });
       }
 
