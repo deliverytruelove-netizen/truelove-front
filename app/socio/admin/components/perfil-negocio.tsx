@@ -299,9 +299,6 @@ export function PerfilNegocio({
         throw new Error("No se encontró el token de autenticación");
       }
 
-      // Preparar datos sin el ID (el ID va en la URL, no en el body)
-      const { id, perfil_negocio_id, created_at, updated_at, ...datosParaEnviar } = horarioData;
-
       // Asegurar que las horas estén en formato HH:mm (sin segundos)
       const formatearHora = (hora: string): string => {
         if (!hora) return "";
@@ -309,10 +306,19 @@ export function PerfilNegocio({
         return hora.substring(0, 5);
       };
 
-      const datosFormateados = {
-        ...datosParaEnviar,
-        hora_apertura: formatearHora(datosParaEnviar.hora_apertura),
-        hora_cierre: formatearHora(datosParaEnviar.hora_cierre),
+      // Preparar datos para enviar (sin campos innecesarios)
+      const datosFormateados: Record<string, unknown> = {
+        nombre: horarioData.nombre,
+        lunes: horarioData.lunes,
+        martes: horarioData.martes,
+        miercoles: horarioData.miercoles,
+        jueves: horarioData.jueves,
+        viernes: horarioData.viernes,
+        sabado: horarioData.sabado,
+        domingo: horarioData.domingo,
+        hora_apertura: formatearHora(horarioData.hora_apertura),
+        hora_cierre: formatearHora(horarioData.hora_cierre),
+        activo: horarioData.activo,
       };
 
       // Log para debug
