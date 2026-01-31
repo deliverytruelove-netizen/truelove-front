@@ -1,11 +1,11 @@
 // app\socio\admin\page.tsx
-"use client"
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { PerfilNegocio } from "./components/perfil-negocio"
-import Link from "next/link"
-import { Store, FileText, HeadphonesIcon } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PerfilNegocio } from "./components/perfil-negocio";
+import Link from "next/link";
+import { Store, FileText, HeadphonesIcon } from "lucide-react";
 
 const horariosEjemplo = [
   {
@@ -22,7 +22,7 @@ const horariosEjemplo = [
     hora_cierre: "18:00:00",
     activo: true,
   },
-]
+];
 
 export default function SocioDashboard() {
   return (
@@ -52,13 +52,15 @@ export default function SocioDashboard() {
                       </div>
                       <div className="flex flex-col items-start">
                         <span className="font-medium">Gestionar Menú</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-200">Administra tus productos</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-200">
+                          Administra tus productos
+                        </span>
                       </div>
                     </div>
                   </Button>
                 </Link>
 
-                <Link href="/socio/admin/pedidos" className="block">
+                <Link href="/socio/admin/pedidos-activos" className="block">
                   <Button
                     variant="outline"
                     className="w-full h-auto p-4 bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-300 text-gray-700 hover:text-brand-700 shadow-sm group relative overflow-hidden transition-all duration-200 dark:bg-gray-800 dark:text-white"
@@ -69,8 +71,10 @@ export default function SocioDashboard() {
                         <FileText className="h-5 w-5 text-brand-600" />
                       </div>
                       <div className="flex flex-col items-start">
-                        <span className="font-medium">Pedidos Pendientes</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-200">Revisa tus pedidos activos</span>
+                        <span className="font-medium">Pedidos Activos</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-200">
+                          Revisa y acepta pedidos en tiempo real
+                        </span>
                       </div>
                     </div>
                   </Button>
@@ -106,17 +110,17 @@ export default function SocioDashboard() {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="font-medium">Soporte</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-200">¿Necesitas ayuda?</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-200">
+                        ¿Necesitas ayuda?
+                      </span>
                     </div>
                   </div>
                 </Button>
               </div>
             </CardContent>
           </Card>
-
-        
         </div>
       </div>
     </div>
-  )
+  );
 }

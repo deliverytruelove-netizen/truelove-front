@@ -18,6 +18,8 @@ import {
   AlertCircle,
   Clock,
   X,
+  Bell,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarSettings from "./components/AvatarSettings";
@@ -29,21 +31,32 @@ import { AdminThemeProvider } from "./components/theme-provider";
 import { ThemeToggle } from "./components/theme-toggle";
 // Importamos el CSS para el modo oscuro
 import "./admin-dark-mode.css";
-import { verificarAcceso, fetchMisPeriodos } from "./cuotas/services/pago-cuota.service";
-import type { VerificarAccesoResponse, Periodo } from "./cuotas/types/pago-cuota.types";
+import {
+  verificarAcceso,
+  fetchMisPeriodos,
+} from "./cuotas/services/pago-cuota.service";
+import type {
+  VerificarAccesoResponse,
+  Periodo,
+} from "./cuotas/types/pago-cuota.types";
 import PantallaBloqueoCuota from "./cuotas/components/PantallaBloqueoCuota";
 
 const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
   { name: "Menú", href: "/socio/admin/menu", icon: Utensils },
-  { name: "Pedidos", href: "/socio/admin/pedidos", icon: ShoppingBag },
-  { 
-    name: "Acerca negocio", 
+  { name: "Pedidos Activos", href: "/socio/admin/pedidos-activos", icon: Bell },
+  { name: "Historial", href: "/socio/admin/pedidos", icon: History },
+  {
+    name: "Acerca negocio",
     icon: ShoppingBag,
     submenu: [
       { name: "POS", href: "/socio/admin/pos", icon: CreditCard },
-      { name: "Número Digital", href: "/socio/admin/num-negocio", icon: Smartphone },
-    ]
+      {
+        name: "Número Digital",
+        href: "/socio/admin/num-negocio",
+        icon: Smartphone,
+      },
+    ],
   },
   { name: "Información", href: "/socio/admin/info-socio", icon: ShoppingBag },
 
@@ -55,7 +68,9 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-  const [accesoInfo, setAccesoInfo] = useState<VerificarAccesoResponse | null>(null);
+  const [accesoInfo, setAccesoInfo] = useState<VerificarAccesoResponse | null>(
+    null,
+  );
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [loadingAcceso, setLoadingAcceso] = useState(true);
   const [showBannerVencimiento, setShowBannerVencimiento] = useState(true);
@@ -73,7 +88,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
       try {
         const [accesoData, periodosData] = await Promise.all([
           verificarAcceso(),
-          fetchMisPeriodos()
+          fetchMisPeriodos(),
         ]);
         setAccesoInfo(accesoData);
         setPeriodos(periodosData);
@@ -88,10 +103,10 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleSubmenu = (menuName: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(menuName) 
-        ? prev.filter(name => name !== menuName)
-        : [...prev, menuName]
+    setExpandedMenus((prev) =>
+      prev.includes(menuName)
+        ? prev.filter((name) => name !== menuName)
+        : [...prev, menuName],
     );
   };
 
@@ -130,9 +145,12 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="flex items-start gap-4">
                   <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
                   <div className="flex-1">
-                    <h2 className="text-lg sm:text-xl font-bold mb-1">⚠️ Acceso Temporal para Pagos</h2>
+                    <h2 className="text-lg sm:text-xl font-bold mb-1">
+                      ⚠️ Acceso Temporal para Pagos
+                    </h2>
                     <p className="text-sm sm:text-base text-red-50">
-                      Tu acceso está suspendido. Sube tu comprobante de pago aquí. Una vez aprobado, tu acceso será restaurado.
+                      Tu acceso está suspendido. Sube tu comprobante de pago
+                      aquí. Una vez aprobado, tu acceso será restaurado.
                     </p>
                   </div>
                 </div>
@@ -153,7 +171,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
     return (
       <PantallaBloqueoCuota
         periodosVencidos={periodosVencidos}
-        mensaje={accesoInfo.message ?? ''}
+        mensaje={accesoInfo.message ?? ""}
         diasVencimiento={accesoInfo.dias_vencimiento ?? 0}
         onIrAPagar={() => {
           router.push("/socio/admin/cuotas?acceso_temporal=true");
@@ -177,7 +195,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
         className={cn(
           "fixed top-0 left-0 z-50 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm transition-all duration-300 ease-in-out",
           isCollapsed ? "w-[72px]" : "w-[280px]",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Sidebar Header */}
@@ -197,7 +215,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
             size="sm"
             className={cn(
               "p-0 h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800",
-              isCollapsed && "mx-auto"
+              isCollapsed && "mx-auto",
             )}
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
@@ -214,17 +232,20 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
           <ul className="space-y-1.5">
             {menuItems.map((item) => {
               // Si el item tiene submenu, verificamos si algún subitem está activo
-              const isActive = item.submenu 
-                ? item.submenu.some(subitem => 
-                    pathname === subitem.href || 
-                    (pathname.startsWith(`${subitem.href}/`) && subitem.href !== "/socio/admin")
+              const isActive = item.submenu
+                ? item.submenu.some(
+                    (subitem) =>
+                      pathname === subitem.href ||
+                      (pathname.startsWith(`${subitem.href}/`) &&
+                        subitem.href !== "/socio/admin"),
                   )
                 : pathname === item.href ||
-                  (pathname.startsWith(`${item.href}/`) && item.href !== "/socio/admin");
-              
+                  (pathname.startsWith(`${item.href}/`) &&
+                    item.href !== "/socio/admin");
+
               const hasSubmenu = !!item.submenu;
               const isExpanded = isSubmenuExpanded(item.name);
-              
+
               return (
                 <li key={item.name}>
                   {hasSubmenu ? (
@@ -238,18 +259,20 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                             ? "px-0 justify-center h-10 w-10 mx-auto"
                             : "px-3",
                           isActive &&
-                            "bg-brand-50 dark:bg-brand-950 text-brand-700 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200"
+                            "bg-brand-50 dark:bg-brand-950 text-brand-700 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200",
                         )}
                       >
                         <item.icon
                           className={cn(
                             "h-5 w-5 shrink-0",
-                            isActive && "text-brand-600 dark:text-brand-400"
+                            isActive && "text-brand-600 dark:text-brand-400",
                           )}
                         />
                         {!isCollapsed && (
                           <>
-                            <span className="ml-3 truncate flex-1 text-left">{item.name}</span>
+                            <span className="ml-3 truncate flex-1 text-left">
+                              {item.name}
+                            </span>
                             {isExpanded ? (
                               <ChevronUp className="h-4 w-4 ml-2" />
                             ) : (
@@ -258,14 +281,16 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                           </>
                         )}
                       </Button>
-                      
+
                       {/* Submenu */}
                       {!isCollapsed && hasSubmenu && isExpanded && (
                         <ul className="mt-1 ml-4 space-y-1">
                           {item.submenu.map((subitem) => {
-                            const isSubActive = pathname === subitem.href ||
-                              (pathname.startsWith(`${subitem.href}/`) && subitem.href !== "/socio/admin");
-                            
+                            const isSubActive =
+                              pathname === subitem.href ||
+                              (pathname.startsWith(`${subitem.href}/`) &&
+                                subitem.href !== "/socio/admin");
+
                             return (
                               <li key={subitem.name}>
                                 <Link href={subitem.href}>
@@ -274,16 +299,19 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                                     className={cn(
                                       "w-full justify-start text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200 px-3 py-2 h-9",
                                       isSubActive &&
-                                        "bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-700 dark:hover:text-brand-300 font-medium"
+                                        "bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-700 dark:hover:text-brand-300 font-medium",
                                     )}
                                   >
                                     <subitem.icon
                                       className={cn(
                                         "h-4 w-4 shrink-0",
-                                        isSubActive && "text-brand-600 dark:text-brand-400"
+                                        isSubActive &&
+                                          "text-brand-600 dark:text-brand-400",
                                       )}
                                     />
-                                    <span className="ml-3 truncate text-sm">{subitem.name}</span>
+                                    <span className="ml-3 truncate text-sm">
+                                      {subitem.name}
+                                    </span>
                                   </Button>
                                 </Link>
                               </li>
@@ -302,13 +330,13 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                             ? "px-0 justify-center h-10 w-10 mx-auto"
                             : "px-3",
                           isActive &&
-                            "bg-brand-50 dark:bg-brand-950 text-brand-700 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200"
+                            "bg-brand-50 dark:bg-brand-950 text-brand-700 hover:bg-brand-100 dark:hover:bg-gray-900 hover:text-brand-800 dark:hover:text-brand-200 font-medium dark:bg-gray-800 dark:text-gray-200",
                         )}
                       >
                         <item.icon
                           className={cn(
                             "h-5 w-5 shrink-0",
-                            isActive && "text-brand-600 dark:text-brand-400"
+                            isActive && "text-brand-600 dark:text-brand-400",
                           )}
                         />
                         {!isCollapsed && (
@@ -349,7 +377,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "flex-1 transition-all duration-300 ease-in-out",
-          isCollapsed ? "lg:ml-[72px]" : "lg:ml-[280px]"
+          isCollapsed ? "lg:ml-[72px]" : "lg:ml-[280px]",
         )}
       >
         {/* Header */}
@@ -376,43 +404,46 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Banner de Vencimiento Próximo */}
-        {accesoInfo?.motivo === 'proximo_vencimiento' && showBannerVencimiento && (
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-b border-yellow-200 dark:border-yellow-800 sticky top-16 z-20">
-            <div className="px-4 py-3">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/40 rounded-full flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+        {accesoInfo?.motivo === "proximo_vencimiento" &&
+          showBannerVencimiento && (
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-b border-yellow-200 dark:border-yellow-800 sticky top-16 z-20">
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 dark:bg-yellow-900/40 rounded-full flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
+                        ⏰ Tu cuota vence en {accesoInfo.dias_vencimiento}{" "}
+                        {accesoInfo.dias_vencimiento === 1 ? "día" : "días"}
+                      </p>
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-0.5">
+                        Recuerda realizar tu pago antes del vencimiento para
+                        evitar suspensión de acceso.
+                      </p>
+                    </div>
+                    <Link href="/socio/admin/cuotas">
+                      <Button
+                        size="sm"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-600"
+                      >
+                        Pagar Ahora
+                      </Button>
+                    </Link>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
-                      ⏰ Tu cuota vence en {accesoInfo.dias_vencimiento} {accesoInfo.dias_vencimiento === 1 ? 'día' : 'días'}
-                    </p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-0.5">
-                      Recuerda realizar tu pago antes del vencimiento para evitar suspensión de acceso.
-                    </p>
-                  </div>
-                  <Link href="/socio/admin/cuotas">
-                    <Button
-                      size="sm"
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-600"
-                    >
-                      Pagar Ahora
-                    </Button>
-                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-shrink-0 h-8 w-8 p-0 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 rounded-full"
+                    onClick={() => setShowBannerVencimiento(false)}
+                  >
+                    <X className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-shrink-0 h-8 w-8 p-0 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 rounded-full"
-                  onClick={() => setShowBannerVencimiento(false)}
-                >
-                  <X className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                </Button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Page Content */}
         <main className="p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)]">
@@ -430,14 +461,16 @@ export default function SocioAdminLayout({
 }) {
   return (
     <AdminThemeProvider defaultTheme="light">
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando...</p>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Cargando...</p>
+            </div>
           </div>
-        </div>
-      }>
+        }
+      >
         <SocioAdminLayoutContent>{children}</SocioAdminLayoutContent>
       </Suspense>
     </AdminThemeProvider>
