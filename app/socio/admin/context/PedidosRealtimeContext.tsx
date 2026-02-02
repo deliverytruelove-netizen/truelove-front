@@ -99,22 +99,42 @@ export function PedidosRealtimeProvider({
 
   const playSound = useCallback(() => {
     if (!soundEnabled || !audioRef.current) return;
-    audioRef.current.currentTime = 0;
-    audioRef.current.play().catch((err) => {
-      console.warn("No se pudo reproducir el sonido:", err);
-    });
+    try {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    } catch {
+      // Ignorar errores de autoplay en móvil
+    }
   }, [soundEnabled]);
 
   const showBrowserNotification = useCallback((title: string, body: string) => {
     if (!("Notification" in window)) return;
-    if (Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/favicon.ico",
-        tag: `pedido-${Date.now()}`,
+    if (Notification.permission !== "granted") {
+      if (Notification.permission !== "denied")
+        Notification.requestPermission();
+      return;
+    }
+
+    // En móvil, new Notification() no funciona - usar Service Worker
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.showNotification(title, {
+          body,
+          icon: "/favicon.ico",
+          tag: `pedido-${Date.now()}`,
+        });
       });
-    } else if (Notification.permission !== "denied") {
-      Notification.requestPermission();
+    } else {
+      // Desktop: usar new Notification() directamente
+      try {
+        new Notification(title, {
+          body,
+          icon: "/favicon.ico",
+          tag: `pedido-${Date.now()}`,
+        });
+      } catch {
+        // Fallback silencioso si falla
+      }
     }
   }, []);
 

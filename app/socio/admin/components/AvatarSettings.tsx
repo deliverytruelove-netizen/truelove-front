@@ -1,11 +1,10 @@
-
 // este si funciona no lo modifiques app\socio\admin\components\AvatarSettings.tsx
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { User, Settings, LogOut } from "lucide-react"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect, useCallback } from "react";
+import { User, Settings, LogOut } from "lucide-react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,38 +12,38 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import Link from "next/link"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_WEB
-const BASE_URL = API_URL?.replace("/api", "") // Remover /api para rutas de archivos
+const API_URL = process.env.NEXT_PUBLIC_API_WEB;
+const BASE_URL = API_URL?.replace("/api", ""); // Remover /api para rutas de archivos
 
 const AvatarSettings = () => {
-  const [userInitials, setUserInitials] = useState<string>("")
-  const [fullName, setFullName] = useState<string>("")
-  const [email, setEmail] = useState<string>("")
-  const [avatarUrl, setAvatarUrl] = useState<string>("")
-  const [imageError, setImageError] = useState(false)
+  const [userInitials, setUserInitials] = useState<string>("");
+  const [fullName, setFullName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [imageError, setImageError] = useState(false);
 
   const getImageUrl = (path: string | null) => {
-    if (!path) return null
-    if (path.startsWith("http")) return path
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
 
     // Remover /api/ si existe en la ruta
-    const cleanPath = path.replace("/api/", "")
-    return `${BASE_URL}/${cleanPath}`
-  }
+    const cleanPath = path.replace("/api/", "");
+    return `${BASE_URL}/${cleanPath}`;
+  };
 
   const obtenerDatosUsuario = useCallback(async () => {
     try {
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("authToken="))
-        ?.split("=")[1]
+        ?.split("=")[1];
 
       if (!token) {
-        throw new Error("No se encontró el token de autenticación")
+        throw new Error("No se encontró el token de autenticación");
       }
 
       const [datosResponse, logoResponse] = await Promise.all([
@@ -60,61 +59,82 @@ const AvatarSettings = () => {
             Accept: "application/json",
           },
         }),
-      ])
+      ]);
 
       if (!datosResponse.ok || !logoResponse.ok) {
-        throw new Error("Error al obtener datos del usuario")
+        throw new Error("Error al obtener datos del usuario");
       }
 
-      const datos = await datosResponse.json()
-      const logoData = await logoResponse.json()
+      const datos = await datosResponse.json();
+      const logoData = await logoResponse.json();
 
-      const firstName = datos.nombre?.split(" ")[0] || ""
-      const lastName = datos.nombre?.split(" ")[1] || ""
-      const fullName = `${firstName} ${lastName}`.trim()
+      const firstName = datos.nombre?.split(" ")[0] || "";
+      const lastName = datos.nombre?.split(" ")[1] || "";
+      const fullName = `${firstName} ${lastName}`.trim();
 
-      setFullName(fullName || datos.email)
-      setEmail(datos.email)
+      setFullName(fullName || datos.email);
+      setEmail(datos.email);
       setUserInitials(
-        `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || datos.email.charAt(0).toUpperCase(),
-      )
+        `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() ||
+          datos.email.charAt(0).toUpperCase(),
+      );
 
       if (logoData.foto_perfil) {
-        setAvatarUrl(logoData.foto_perfil)
-        setImageError(false)
+        setAvatarUrl(logoData.foto_perfil);
+        setImageError(false);
       }
     } catch (error) {
-      console.error("Error al obtener datos del usuario:", error)
-      setImageError(true)
+      console.error("Error al obtener datos del usuario:", error);
+      setImageError(true);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    obtenerDatosUsuario()
-  }, [obtenerDatosUsuario])
+    obtenerDatosUsuario();
+  }, [obtenerDatosUsuario]);
 
   const handleImageError = () => {
-    setImageError(true)
-  }
+    setImageError(true);
+  };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Limpiar token FCM web en el backend
+    try {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_API_WEB}/socio/update-token-web`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token_fcm: "" }),
+          },
+        );
+      }
+    } catch (e) {
+      // No bloquear el logout si falla
+    }
+
     // Limpiar localStorage
-    localStorage.removeItem("authToken")
-    localStorage.removeItem("user")
-    localStorage.removeItem("userRole")
-    localStorage.removeItem("userProfile")
-    localStorage.removeItem("lastProfileUpdate")
-    localStorage.removeItem("socioId")
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userProfile");
+    localStorage.removeItem("lastProfileUpdate");
+    localStorage.removeItem("socioId");
 
     // Limpiar cookies (funciona tanto en http como https)
-    const cookieOptions = "path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    document.cookie = `authToken=; ${cookieOptions}`
-    document.cookie = `userRole=; ${cookieOptions}`
+    const cookieOptions = "path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = `authToken=; ${cookieOptions}`;
+    document.cookie = `userRole=; ${cookieOptions}`;
 
     // Usar window.location.href para forzar una recarga completa de la página
     // Esto asegura que todas las cachés se limpien correctamente
-    window.location.href = "/login"
-  }
+    window.location.href = "/login";
+  };
 
   return (
     <DropdownMenu>
@@ -141,7 +161,9 @@ const AvatarSettings = () => {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{fullName}</p>
-            <p className="text-xs leading-none text-muted-foreground">{email}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {email}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -164,8 +186,7 @@ const AvatarSettings = () => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
+  );
+};
 
-export default AvatarSettings
-
+export default AvatarSettings;
