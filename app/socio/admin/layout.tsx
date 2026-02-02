@@ -40,6 +40,10 @@ import type {
   Periodo,
 } from "./cuotas/types/pago-cuota.types";
 import PantallaBloqueoCuota from "./cuotas/components/PantallaBloqueoCuota";
+import {
+  PedidosRealtimeProvider,
+  usePedidosRealtimeContext,
+} from "./context/PedidosRealtimeContext";
 
 const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
@@ -75,6 +79,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [loadingAcceso, setLoadingAcceso] = useState(true);
   const [showBannerVencimiento, setShowBannerVencimiento] = useState(true);
   const pathname = usePathname();
+  const { pedidosPendientes } = usePedidosRealtimeContext();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -159,7 +164,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
 
             {/* Page Content */}
             <main className="p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)]">
-              <Providers>{children}</Providers>
+              {children}
             </main>
           </div>
         </div>
@@ -325,7 +330,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200",
+                          "relative w-full justify-start text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200",
                           isCollapsed
                             ? "px-0 justify-center h-10 w-10 mx-auto"
                             : "px-3",
@@ -340,8 +345,25 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                           )}
                         />
                         {!isCollapsed && (
-                          <span className="ml-3 truncate">{item.name}</span>
+                          <>
+                            <span className="ml-3 truncate flex-1 text-left">
+                              {item.name}
+                            </span>
+                            {item.name === "Pedidos Activos" &&
+                              pedidosPendientes.length > 0 && (
+                                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                                  {pedidosPendientes.length}
+                                </span>
+                              )}
+                          </>
                         )}
+                        {isCollapsed &&
+                          item.name === "Pedidos Activos" &&
+                          pedidosPendientes.length > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                              {pedidosPendientes.length}
+                            </span>
+                          )}
                       </Button>
                     </Link>
                   )}
@@ -447,7 +469,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
 
         {/* Page Content */}
         <main className="p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)]">
-          <Providers>{children}</Providers>
+          {children}
         </main>
       </div>
     </div>
@@ -471,7 +493,11 @@ export default function SocioAdminLayout({
           </div>
         }
       >
-        <SocioAdminLayoutContent>{children}</SocioAdminLayoutContent>
+        <Providers>
+          <PedidosRealtimeProvider>
+            <SocioAdminLayoutContent>{children}</SocioAdminLayoutContent>
+          </PedidosRealtimeProvider>
+        </Providers>
       </Suspense>
     </AdminThemeProvider>
   );

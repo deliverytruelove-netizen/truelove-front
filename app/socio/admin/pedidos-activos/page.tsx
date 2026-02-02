@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePedidosRealtime } from "./hooks/usePedidosRealtime";
+import { usePedidosRealtimeContext } from "../context/PedidosRealtimeContext";
 import PedidoActivoCard from "./components/PedidoActivoCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ export default function PedidosActivosPage() {
     soundEnabled,
     toggleSound,
     hasInteracted,
-  } = usePedidosRealtime();
+  } = usePedidosRealtimeContext();
 
   const [filtro, setFiltro] = useState<"todos" | "pendientes" | "en_proceso">(
     "todos",

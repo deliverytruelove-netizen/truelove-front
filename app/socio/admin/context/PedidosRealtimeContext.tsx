@@ -1,0 +1,238 @@
+"use client";
+
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+} from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  fetchPedidosActivos,
+  guardarTokenFcmWeb,
+  type PedidoActivo,
+} from "../services/pedido.service";
+import { requestFCMToken, onForegroundMessage } from "@/lib/firebase";
+
+const POLLING_INTERVAL = 5000;
+
+interface PedidosRealtimeContextType {
+  pedidos: PedidoActivo[];
+  pedidosPendientes: PedidoActivo[];
+  pedidosEnProceso: PedidoActivo[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  refetch: () => void;
+  soundEnabled: boolean;
+  toggleSound: () => void;
+  hasInteracted: boolean;
+  invalidate: () => void;
+}
+
+const PedidosRealtimeContext = createContext<PedidosRealtimeContextType | null>(
+  null,
+);
+
+export function usePedidosRealtimeContext() {
+  const context = useContext(PedidosRealtimeContext);
+  if (!context) {
+    throw new Error(
+      "usePedidosRealtimeContext must be used within PedidosRealtimeProvider",
+    );
+  }
+  return context;
+}
+
+export function PedidosRealtimeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const queryClient = useQueryClient();
+  const prevIdsRef = useRef<Set<number>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isFirstLoad = useRef(true);
+  const fcmInitialized = useRef(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Pre-cargar el audio
+  useEffect(() => {
+    audioRef.current = new Audio("/sounds/nuevo_pedido.wav");
+    audioRef.current.volume = 1.0;
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Detectar interacción del usuario (necesaria para autoplay en navegadores)
+  useEffect(() => {
+    const handleInteraction = () => {
+      setHasInteracted(true);
+      if (audioRef.current) {
+        audioRef.current.volume = 0;
+        audioRef.current
+          .play()
+          .then(() => {
+            audioRef.current!.pause();
+            audioRef.current!.currentTime = 0;
+            audioRef.current!.volume = 1.0;
+          })
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener("click", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("click", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+    };
+  }, []);
+
+  const playSound = useCallback(() => {
+    if (!soundEnabled || !audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch((err) => {
+      console.warn("No se pudo reproducir el sonido:", err);
+    });
+  }, [soundEnabled]);
+
+  const showBrowserNotification = useCallback((title: string, body: string) => {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      new Notification(title, {
+        body,
+        icon: "/favicon.ico",
+        tag: `pedido-${Date.now()}`,
+      });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Inicializar FCM Web - obtener token y escuchar mensajes foreground
+  useEffect(() => {
+    if (fcmInitialized.current) return;
+    fcmInitialized.current = true;
+
+    const initFCM = async () => {
+      try {
+        // Registrar Service Worker manualmente
+        if ("serviceWorker" in navigator) {
+          await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        }
+
+        // Obtener token FCM web
+        const fcmToken = await requestFCMToken();
+        if (fcmToken) {
+          console.log("Token FCM web obtenido");
+          // Guardar en el backend
+          await guardarTokenFcmWeb(fcmToken);
+          console.log("Token FCM web guardado en backend");
+        }
+
+        // Escuchar mensajes en primer plano (cuando la pestaña está activa)
+        onForegroundMessage((payload) => {
+          console.log("FCM foreground:", payload.title);
+          // Reproducir sonido
+          playSound();
+          // Refrescar lista de pedidos inmediatamente
+          queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] });
+        });
+      } catch (error) {
+        // FCM no es crítico - el polling sigue funcionando
+        console.warn("FCM web no disponible, usando solo polling:", error);
+      }
+    };
+
+    initFCM();
+  }, [playSound, queryClient]);
+
+  const {
+    data: pedidos = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<PedidoActivo[]>({
+    queryKey: ["pedidos-activos"],
+    queryFn: fetchPedidosActivos,
+    refetchInterval: POLLING_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+  });
+
+  // Detectar pedidos nuevos via polling y reproducir sonido
+  useEffect(() => {
+    if (isLoading) return;
+
+    const currentIds = new Set(pedidos.map((p) => p.id));
+
+    if (isFirstLoad.current) {
+      prevIdsRef.current = currentIds;
+      isFirstLoad.current = false;
+      return;
+    }
+
+    const newPedidos = pedidos.filter((p) => !prevIdsRef.current.has(p.id));
+
+    if (newPedidos.length > 0) {
+      playSound();
+      newPedidos.forEach((p) =>
+        showBrowserNotification(
+          "Nuevo Pedido #" + p.id,
+          `${p.cliente} - ${p.detalle}`,
+        ),
+      );
+    }
+
+    prevIdsRef.current = currentIds;
+  }, [pedidos, isLoading, playSound, showBrowserNotification]);
+
+  // Solicitar permiso de notificación al montar
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => !prev);
+  }, []);
+
+  const pedidosPendientes = pedidos.filter(
+    (p) => Number(p.ultimo_estado_tracking) === 1,
+  );
+  const pedidosEnProceso = pedidos.filter((p) =>
+    [2, 3, 9].includes(Number(p.ultimo_estado_tracking)),
+  );
+
+  return (
+    <PedidosRealtimeContext.Provider
+      value={{
+        pedidos,
+        pedidosPendientes,
+        pedidosEnProceso,
+        isLoading,
+        isError,
+        error: error as Error | null,
+        refetch,
+        soundEnabled,
+        toggleSound,
+        hasInteracted,
+        invalidate: () =>
+          queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] }),
+      }}
+    >
+      {children}
+    </PedidosRealtimeContext.Provider>
+  );
+}

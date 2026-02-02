@@ -287,6 +287,24 @@ export const getEstadoNumerico = (estado: string | number): number => {
   return typeof estado === "string" ? parseInt(estado, 10) : estado;
 };
 
+export const guardarTokenFcmWeb = async (tokenFcm: string): Promise<void> => {
+  const token = getAuthToken();
+
+  const response = await fetch(`${API_URL}/socio/update-token-web`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token_fcm: tokenFcm }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Error al guardar token FCM web");
+  }
+};
+
 export const getEstadoActivoLabel = (
   estado: number,
 ): { label: string; color: string; bgColor: string } => {
