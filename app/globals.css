@@ -132,3 +132,7 @@ body {
 .scrollbar-custom::-webkit-scrollbar-thumb:hover {
   background: #b91c1c;
 }
+/* SweetAlert encima de modales/drawers */
+.swal-on-top {
+  z-index: 9999 !important;
+}

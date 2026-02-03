@@ -58,6 +58,7 @@ export function PedidosRealtimeProvider({
   const fcmInitialized = useRef(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const fcmJustNotified = useRef(false);
 
   // Pre-cargar el audio
   useEffect(() => {
@@ -162,8 +163,18 @@ export function PedidosRealtimeProvider({
         // Escuchar mensajes en primer plano (cuando la pestaña está activa)
         onForegroundMessage((payload) => {
           console.log("FCM foreground:", payload.title);
+          // Marcar que FCM ya notificó para evitar duplicado con polling
+          fcmJustNotified.current = true;
+          setTimeout(() => {
+            fcmJustNotified.current = false;
+          }, 3000);
           // Reproducir sonido
           playSound();
+          // Mostrar notificación del sistema (en foreground FCM no la muestra automáticamente)
+          showBrowserNotification(
+            payload.title || "Nuevo Pedido",
+            payload.body || "Tienes un nuevo pedido",
+          );
           // Refrescar lista de pedidos inmediatamente
           queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] });
         });
@@ -174,7 +185,7 @@ export function PedidosRealtimeProvider({
     };
 
     initFCM();
-  }, [playSound, queryClient]);
+  }, [playSound, queryClient, showBrowserNotification]);
 
   const {
     data: pedidos = [],
@@ -204,7 +215,8 @@ export function PedidosRealtimeProvider({
 
     const newPedidos = pedidos.filter((p) => !prevIdsRef.current.has(p.id));
 
-    if (newPedidos.length > 0) {
+    if (newPedidos.length > 0 && !fcmJustNotified.current) {
+      // Solo notificar si FCM no lo hizo ya (evitar duplicados)
       playSound();
       newPedidos.forEach((p) =>
         showBrowserNotification(

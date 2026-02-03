@@ -201,6 +201,8 @@ export interface PedidoActivo extends Pedido {
   precio_delivery: string;
   subtotal: string;
   descuento: string;
+  tipo_comprobante: string;
+  documento: string;
 }
 
 function getSocioId(): string {
@@ -333,6 +335,36 @@ export const getEstadoActivoLabel = (
         color: "text-purple-700",
         bgColor: "bg-purple-100",
       };
+    case 4:
+      return {
+        label: "Motorizado aceptó",
+        color: "text-blue-700",
+        bgColor: "bg-blue-100",
+      };
+    case 5:
+      return {
+        label: "En restaurante",
+        color: "text-cyan-700",
+        bgColor: "bg-cyan-100",
+      };
+    case 6:
+      return {
+        label: "En camino",
+        color: "text-orange-700",
+        bgColor: "bg-orange-100",
+      };
+    case 7:
+      return {
+        label: "Llegó al destino",
+        color: "text-teal-700",
+        bgColor: "bg-teal-100",
+      };
+    case 8:
+      return {
+        label: "Entregado",
+        color: "text-green-700",
+        bgColor: "bg-green-100",
+      };
     case 9:
       return {
         label: "Listo para recoger",
@@ -346,4 +378,47 @@ export const getEstadoActivoLabel = (
         bgColor: "bg-gray-100",
       };
   }
+};
+
+export const verificarConfirmacionPago = async (
+  pedidoId: number,
+): Promise<void> => {
+  const token = getAuthToken();
+
+  const response = await fetch(
+    `${API_URL}/socio/update/verificar/confirmacion/${pedidoId}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Error al verificar el pago");
+  }
+};
+
+export const fetchPedidoDetalle = async (
+  pedidoId: number,
+): Promise<PedidoActivo[]> => {
+  const token = getAuthToken();
+
+  const response = await fetch(`${API_URL}/socio/get/pedido/${pedidoId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Error al obtener el detalle");
+  }
+
+  return response.json();
 };

@@ -7,12 +7,20 @@ interface AlertOptions {
   icon: "success" | "error" | "warning" | "info" | "question"
 }
 
+// Configuración común para que el alert aparezca sobre modales/drawers
+const baseConfig = {
+  confirmButtonColor: "#e74c3c",
+  customClass: {
+    container: 'swal-on-top',
+  },
+}
+
 export const showAlert = ({ title, text, icon }: AlertOptions) => {
   return Swal.fire({
     title,
     text,
     icon,
-    confirmButtonColor: "#e74c3c",
+    ...baseConfig,
   })
 }
 
@@ -33,10 +41,10 @@ export const confirmAlert = ({
     text,
     icon,
     showCancelButton,
-    confirmButtonColor: "#e74c3c",
     cancelButtonColor: "#6c757d",
     confirmButtonText,
     cancelButtonText,
+    ...baseConfig,
   })
 }
 

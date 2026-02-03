@@ -26,8 +26,10 @@ import {
   Loader2,
   ImageIcon,
   ShoppingBag,
+  Eye,
 } from "lucide-react";
 import { showAlert, confirmAlert } from "@/components/ui/DataTable/Alert";
+import PedidoDetalleModal from "./PedidoDetalleModal";
 
 interface Props {
   pedido: PedidoActivo;
@@ -40,6 +42,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
   const [showTiempoInput, setShowTiempoInput] = useState(false);
   const [tiempo, setTiempo] = useState("");
   const [showFotoPago, setShowFotoPago] = useState(false);
+  const [showDetalle, setShowDetalle] = useState(false);
 
   const mutation = useMutation({
     mutationFn: ({ estado, tiempo }: { estado: number; tiempo?: number }) =>
@@ -310,63 +313,84 @@ export default function PedidoActivoCard({ pedido }: Props) {
 
         {/* Botones de acción */}
         {!showTiempoInput && (
-          <div className="flex gap-2">
-            {estadoNum === 1 && (
-              <>
+          <div className="space-y-2">
+            {/* Fila principal de acciones */}
+            <div className="flex gap-2">
+              {estadoNum === 1 && (
+                <>
+                  <Button
+                    onClick={handleAceptar}
+                    disabled={mutation.isPending}
+                    size="sm"
+                    className="flex-1 bg-green-600 hover:bg-green-700 h-10"
+                  >
+                    {mutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-1" />
+                    )}
+                    Aceptar
+                  </Button>
+                  <Button
+                    onClick={handleRechazar}
+                    disabled={mutation.isPending}
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1 h-10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Rechazar
+                  </Button>
+                </>
+              )}
+
+              {estadoNum === 2 && (
                 <Button
-                  onClick={handleAceptar}
+                  onClick={handleMarcarListo}
                   disabled={mutation.isPending}
                   size="sm"
-                  className="flex-1 bg-green-600 hover:bg-green-700 h-9"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 h-10"
                 >
                   {mutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-1" />
                   ) : (
                     <Check className="h-4 w-4 mr-1" />
                   )}
-                  Aceptar
+                  Marcar como Listo
                 </Button>
-                <Button
-                  onClick={handleRechazar}
-                  disabled={mutation.isPending}
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1 h-9"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Rechazar
-                </Button>
-              </>
-            )}
+              )}
 
-            {estadoNum === 2 && (
-              <Button
-                onClick={handleMarcarListo}
-                disabled={mutation.isPending}
-                size="sm"
-                className="flex-1 bg-purple-600 hover:bg-purple-700 h-9"
-              >
-                {mutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                ) : (
-                  <Check className="h-4 w-4 mr-1" />
-                )}
-                Marcar como Listo
-              </Button>
-            )}
+              {(estadoNum === 3 || estadoNum === 9) && (
+                <div className="flex-1 text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  <p className="text-xs text-muted-foreground">
+                    {estadoNum === 3
+                      ? "Esperando motorizado..."
+                      : "Esperando que el cliente recoja..."}
+                  </p>
+                </div>
+              )}
+            </div>
 
-            {(estadoNum === 3 || estadoNum === 9) && (
-              <div className="flex-1 text-center py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md">
-                <p className="text-xs text-muted-foreground">
-                  {estadoNum === 3
-                    ? "Esperando motorizado..."
-                    : "Esperando que el cliente recoja..."}
-                </p>
-              </div>
-            )}
+            {/* Botón Ver Detalle en su propia fila */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-9"
+              onClick={() => setShowDetalle(true)}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Ver Detalle Completo
+            </Button>
           </div>
         )}
       </CardContent>
+
+      {/* Modal de detalle */}
+      <PedidoDetalleModal
+        pedido={pedido}
+        open={showDetalle}
+        onOpenChange={setShowDetalle}
+      />
     </Card>
   );
 }
