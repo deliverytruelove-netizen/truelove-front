@@ -1,20 +1,19 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
-import { Search, Loader2, Plus, ArrowLeft } from "lucide-react"
+import { Search, Loader2, ArrowLeft, Package } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
-import { adicionalService, type CategoriaAdicional, type Adicional } from "../../services/adicional.service"
-import { CategoriaAdicionalDialog } from "../../components/categoria-adicional-dialog"
-import { CategoriasAdicionalesList } from "../../components/categorias-adicionales-list"
+import { adicionalService, type Adicional, type Menu } from "../../services/adicional.service"
+import { AdicionalesList } from "../../components/adicionales-list"
 import { CreateAdicionalModal } from "../../components/create-adicional-modal"
 import { useRouter } from "next/navigation"
 
 // Componente de carga para Suspense
-function LoadingCategories() {
+function LoadingAdicionales() {
   return (
     <div className="text-center py-12">
       <div className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4">
@@ -27,7 +26,7 @@ function LoadingCategories() {
           />
         </svg>
       </div>
-      <p className="text-gray-600">Cargando categorías de adicionales...</p>
+      <p className="text-gray-600">Cargando adicionales...</p>
     </div>
   )
 }
@@ -35,8 +34,8 @@ function LoadingCategories() {
 // Componente principal que maneja la lógica de datos
 function AdicionalesContent() {
   const router = useRouter()
-  const [categorias, setCategorias] = useState<CategoriaAdicional[]>([])
   const [adicionales, setAdicionales] = useState<Adicional[]>([])
+  const [menus, setMenus] = useState<Menu[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
@@ -45,24 +44,17 @@ function AdicionalesContent() {
     try {
       setLoading(true)
 
-      // Cargar categorías de adicionales
-      const categoriasResponse = await adicionalService.getCategoriasAdicionales()
-
-      if (categoriasResponse.success) {
-        setCategorias(categoriasResponse.data || [])
-        console.log("Categorías de adicionales cargadas:", categoriasResponse.data)
-      } else {
-        // Solo mostrar error si no es por falta de datos
-        console.warn(categoriasResponse.message || "No se pudieron cargar las categorías")
-      }
-
-      // Cargar adicionales
+      // Cargar adicionales (ahora incluyen info del menú)
       const adicionalesResponse = await adicionalService.getAdicionales()
-      console.log("Respuesta completa de adicionales:", adicionalesResponse)
+      console.log("Adicionales cargados:", adicionalesResponse)
       setAdicionales(adicionalesResponse)
+
+      // Cargar menús para el selector de crear/editar
+      const menusResponse = await adicionalService.getMenus()
+      console.log("Menús cargados:", menusResponse)
+      setMenus(menusResponse)
     } catch (error: unknown) {
       console.error("Error al cargar datos:", error)
-      // Solo mostrar toast de error si es un error real, no cuando simplemente no hay datos
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al cargar datos",
@@ -96,87 +88,89 @@ function AdicionalesContent() {
     }
   }
 
-  const handleCreateCategoria = async (nombre: string) => {
+  const handleEditAdicional = async (id: number, formData: FormData) => {
     try {
-      await adicionalService.createCategoriaAdicional({ nombre })
+      await adicionalService.updateAdicional(id.toString(), formData)
       await loadData()
       toast({
         title: "Éxito",
-        description: "Categoría de adicional creada correctamente",
+        description: "Adicional actualizado correctamente",
         variant: "default",
       })
     } catch (error: unknown) {
+      console.error("Error al actualizar adicional:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear la categoría",
+        description: error instanceof Error ? error.message : "No se pudo actualizar el adicional",
         variant: "destructive",
       })
     }
   }
 
-  const handleEditCategoria = async (id: number, nombre: string) => {
+  const handleDeleteAdicional = async (id: number) => {
     try {
-      await adicionalService.updateCategoriaAdicional(id.toString(), { nombre })
+      await adicionalService.deleteAdicional(id.toString())
       await loadData()
       toast({
         title: "Éxito",
-        description: "Categoría de adicional actualizada correctamente",
+        description: "Adicional eliminado correctamente",
         variant: "default",
       })
     } catch (error: unknown) {
+      console.error("Error al eliminar adicional:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo actualizar la categoría",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el adicional",
         variant: "destructive",
       })
     }
   }
 
-  const handleDeleteCategoria = async (id: number) => {
+  const handleStatusChange = async (id: number, newStatus: string) => {
     try {
-      await adicionalService.deleteCategoriaAdicional(id.toString())
+      const adicional = adicionales.find(a => a.id === id)
+      if (!adicional) return
+
+      const formData = new FormData()
+      formData.append("titulo", adicional.titulo)
+      formData.append("descripcion", adicional.descripcion || "")
+      formData.append("precio", adicional.precio.toString())
+      formData.append("menu_id", adicional.menu_id.toString())
+      formData.append("status", newStatus)
+
+      await adicionalService.updateAdicional(id.toString(), formData)
       await loadData()
       toast({
         title: "Éxito",
-        description: "Categoría de adicional eliminada correctamente",
+        description: `Adicional ${newStatus === 'active' ? 'activado' : 'desactivado'} correctamente`,
         variant: "default",
       })
     } catch (error: unknown) {
+      console.error("Error al cambiar estado:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo eliminar la categoría",
+        description: error instanceof Error ? error.message : "No se pudo cambiar el estado",
         variant: "destructive",
       })
     }
   }
 
-  // Calcular el número de adicionales por categoría
-  const adicionalesCounts: Record<number, number> = {}
-  categorias.forEach((categoria) => {
-    adicionalesCounts[categoria.id] = adicionales.filter(
-      (item) => Number(item.categoria_adicional_id) === Number(categoria.id),
-    ).length
-  })
-
-  // Filtrar categorías según el término de búsqueda
-  const filteredCategorias = categorias.filter((categoria) => {
-    // Si no hay término de búsqueda, mostrar todas las categorías
+  // Filtrar adicionales según el término de búsqueda
+  const filteredAdicionales = adicionales.filter((adicional) => {
     if (!searchTerm.trim()) return true
 
-    // Buscar en el nombre de la categoría
-    if (categoria.nombre.toLowerCase().includes(searchTerm.toLowerCase())) return true
+    const searchLower = searchTerm.toLowerCase()
+    
+    // Buscar en título del adicional
+    if (adicional.titulo.toLowerCase().includes(searchLower)) return true
+    
+    // Buscar en descripción
+    if (adicional.descripcion && adicional.descripcion.toLowerCase().includes(searchLower)) return true
+    
+    // Buscar en nombre del producto/menú
+    if (adicional.menu?.titulo && adicional.menu.titulo.toLowerCase().includes(searchLower)) return true
 
-    // Buscar en los adicionales de la categoría
-    const categoriaAdicionales = adicionales.filter((item) => {
-      // Convertir ambos a número para comparación segura
-      return Number(item.categoria_adicional_id) === Number(categoria.id)
-    })
-
-    return categoriaAdicionales.some(
-      (item) =>
-        item.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm.toLowerCase())),
-    )
+    return false
   })
 
   return (
@@ -193,7 +187,7 @@ function AdicionalesContent() {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Volver al menú
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Opciones y Adicionales</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Todos los Adicionales</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -201,31 +195,28 @@ function AdicionalesContent() {
               size="sm"
               onClick={() => {
                 console.log("Datos actuales:")
-                console.log("Categorías:", categorias)
                 console.log("Adicionales:", adicionales)
+                console.log("Menús:", menus)
                 loadData()
               }}
             >
               <Loader2 className="mr-2 h-4 w-4" />
-              Recargar datos
+              Recargar
             </Button>
           </div>
         </div>
 
         <Card className="border border-gray-200 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100">
-            <CardTitle className="text-xl font-semibold text-gray-800">Categorías de Adicionales</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+              <Package className="h-5 w-5 text-red-600" />
+              Adicionales por Producto
+              <span className="text-sm font-normal text-gray-500">
+                ({filteredAdicionales.length} {filteredAdicionales.length === 1 ? 'adicional' : 'adicionales'})
+              </span>
+            </CardTitle>
             <div className="flex gap-2">
-              <CategoriaAdicionalDialog
-                onSubmit={handleCreateCategoria}
-                trigger={
-                  <Button variant="outline" className="gap-2 border-gray-300">
-                    <Plus className="h-4 w-4" />
-                    Nueva categoría
-                  </Button>
-                }
-              />
-              <CreateAdicionalModal categorias={categorias} onSubmit={handleCreateAdicional} />
+              <CreateAdicionalModal menus={menus} onSubmit={handleCreateAdicional} />
             </div>
           </CardHeader>
           <CardContent className="p-5">
@@ -234,7 +225,7 @@ function AdicionalesContent() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 <Input
                   className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
-                  placeholder="Buscar por nombre de categoría o adicional..."
+                  placeholder="Buscar por nombre de adicional o producto..."
                   type="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -243,13 +234,13 @@ function AdicionalesContent() {
 
               <Separator className="my-6" />
 
-              <CategoriasAdicionalesList
-                categorias={filteredCategorias}
-                adicionalesCounts={adicionalesCounts}
-                onEditCategoria={handleEditCategoria}
-                onDeleteCategoria={handleDeleteCategoria}
-                onCreateCategoria={handleCreateCategoria}
-                isLoading={loading}
+              <AdicionalesList
+                adicionales={filteredAdicionales}
+                menus={menus}
+                onStatusChange={handleStatusChange}
+                onEditAdicional={handleEditAdicional}
+                onDeleteAdicional={handleDeleteAdicional}
+                loading={loading}
               />
             </div>
           </CardContent>
@@ -262,9 +253,8 @@ function AdicionalesContent() {
 // Página principal que usa Suspense
 export default function Page() {
   return (
-    <Suspense fallback={<LoadingCategories />}>
+    <Suspense fallback={<LoadingAdicionales />}>
       <AdicionalesContent />
     </Suspense>
   )
 }
-

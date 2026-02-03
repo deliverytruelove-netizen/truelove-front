@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, MoreVertical, DollarSign, ShoppingBag, Trash2 } from "lucide-react"
+import { Edit, MoreVertical, DollarSign, ShoppingBag, Trash2, Package } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
-import type { Adicional, CategoriaAdicional } from "../services/adicional.service"
+import type { Adicional, Menu } from "../services/adicional.service"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,7 @@ import { EditAdicionalModal } from "./edit-adicional-modal"
 
 interface AdicionalesListProps {
   adicionales: Adicional[]
-  categorias: CategoriaAdicional[]
+  menus: Menu[]
   onStatusChange: (id: number, newStatus: string) => Promise<void>
   onEditAdicional: (id: number, formData: FormData) => Promise<void>
   onDeleteAdicional: (id: number) => Promise<void>
@@ -38,7 +38,7 @@ interface AdicionalesListProps {
 
 export function AdicionalesList({
   adicionales,
-  categorias,
+  menus,
   onStatusChange,
   onEditAdicional,
   onDeleteAdicional,
@@ -59,16 +59,25 @@ export function AdicionalesList({
 
   // Función para formatear el precio correctamente
   const formatPrice = (price: number | string): string => {
-    // Si es un string, intentar convertirlo a número
     if (typeof price === "string") {
       const numPrice = Number.parseFloat(price)
       if (!isNaN(numPrice)) {
         return numPrice.toFixed(2)
       }
-      return price // Si no se puede convertir, devolver el string original
+      return price
     }
-    // Si ya es un número
     return price.toFixed(2)
+  }
+
+  // Obtener nombre del producto/menú
+  const getMenuName = (adicional: Adicional): string => {
+    // Primero intentar obtener del objeto menu incluido
+    if (adicional.menu?.titulo) {
+      return adicional.menu.titulo
+    }
+    // Si no, buscar en la lista de menús
+    const menu = menus.find(m => m.id === adicional.menu_id)
+    return menu?.titulo || "Sin producto"
   }
 
   const handleDelete = async (id: number) => {
@@ -102,8 +111,8 @@ export function AdicionalesList({
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
         <ShoppingBag className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium">No hay adicionales en esta categoría</p>
-        <p className="text-sm text-gray-500 mt-1">Agrega adicionales usando el botón Nuevo adicional</p>
+        <p className="text-gray-600 font-medium">No hay adicionales creados</p>
+        <p className="text-sm text-gray-500 mt-1">Crea adicionales usando el botón &quot;Nuevo adicional&quot;</p>
       </div>
     )
   }
@@ -123,9 +132,16 @@ export function AdicionalesList({
           </div>
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-medium text-gray-800">{item.titulo}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-gray-800 truncate">{item.titulo}</h3>
                 <p className="text-sm text-gray-500 line-clamp-2 h-10">{item.descripcion}</p>
+                
+                {/* Mostrar el producto asociado */}
+                <div className="mt-2 flex items-center text-xs text-gray-500">
+                  <Package className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">Producto: {getMenuName(item)}</span>
+                </div>
+                
                 <div className="mt-2 flex items-center">
                   <DollarSign className="h-4 w-4 text-green-600 mr-1" />
                   <p className="font-semibold text-gray-900">S/ {formatPrice(item.precio)}</p>
@@ -133,7 +149,7 @@ export function AdicionalesList({
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 flex-shrink-0">
                     <MoreVertical className="h-4 w-4" />
                     <span className="sr-only">Opciones</span>
                   </Button>
@@ -156,7 +172,7 @@ export function AdicionalesList({
                   <DropdownMenuSeparator />
                   <EditAdicionalModal
                     adicional={item}
-                    categorias={categorias}
+                    menus={menus}
                     onSubmit={onEditAdicional}
                     trigger={
                       <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="focus:bg-gray-50">
@@ -206,4 +222,3 @@ export function AdicionalesList({
     </div>
   )
 }
-

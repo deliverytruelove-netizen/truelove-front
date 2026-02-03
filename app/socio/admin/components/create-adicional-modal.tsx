@@ -10,33 +10,33 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Plus, Upload, DollarSign, Tag, FileText, X, CheckCircle2, XCircle } from "lucide-react"
+import { Plus, Upload, DollarSign, Package, FileText, X, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { CategoriaAdicional } from "../services/adicional.service"
+import type { Menu } from "../services/adicional.service"
 import Image from "next/image"
 
 interface CreateAdicionalModalProps {
-  categorias: CategoriaAdicional[]
+  menus: Menu[]
   onSubmit: (formData: FormData) => Promise<void>
   trigger?: React.ReactNode
-  defaultCategoriaId?: string
+  defaultMenuId?: string
 }
 
-export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCategoriaId }: CreateAdicionalModalProps) {
+export function CreateAdicionalModal({ menus, onSubmit, trigger, defaultMenuId }: CreateAdicionalModalProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [selectedCategoria, setSelectedCategoria] = useState<string>(defaultCategoriaId || "")
+  const [selectedMenu, setSelectedMenu] = useState<string>(defaultMenuId || "")
   const [status, setStatus] = useState<string>("active")
   const [imageError, setImageError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const MAX_FILE_SIZE = 5 * 1024 * 1024
 
   useEffect(() => {
-    if (defaultCategoriaId) {
-      setSelectedCategoria(defaultCategoriaId)
+    if (defaultMenuId) {
+      setSelectedMenu(defaultMenuId)
     }
-  }, [defaultCategoriaId])
+  }, [defaultMenuId])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -46,8 +46,8 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
       const formData = new FormData(e.currentTarget)
       formData.append("status", status)
 
-      if (selectedCategoria) {
-        formData.set("categoria_adicional_id", selectedCategoria)
+      if (selectedMenu) {
+        formData.set("menu_id", selectedMenu)
       }
 
       await onSubmit(formData)
@@ -55,6 +55,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
       setPreviewImage(null)
       e.currentTarget.reset()
       setStatus("active")
+      setSelectedMenu(defaultMenuId || "")
     } catch (error) {
       console.error("Error al crear adicional:", error)
     } finally {
@@ -109,6 +110,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
           setPreviewImage(null)
           setImageError(null)
           setStatus("active")
+          setSelectedMenu(defaultMenuId || "")
         }
       }}
     >
@@ -126,7 +128,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
           <DialogHeader className="space-y-0">
             <DialogTitle className="text-base sm:text-xl font-semibold text-gray-800 flex items-center gap-2 pr-8">
               <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-              Crear nuevo producto
+              Crear nuevo adicional
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -134,48 +136,51 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
         {/* Contenido scrolleable */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
-            {/* Nombre del producto */}
+            {/* Nombre del adicional */}
             <div className="space-y-2">
               <Label htmlFor="titulo" className="text-sm font-medium flex items-center gap-1">
                 <FileText className="h-4 w-4 text-gray-500" />
-                Nombre del producto <span className="text-red-500">*</span>
+                Nombre del adicional <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="titulo"
                 name="titulo"
-                placeholder="Ej: Hamburguesa clásica"
+                placeholder="Ej: Extra queso, Salsa especial"
                 className="border-gray-300 focus:border-red-500 focus:ring-red-500"
                 required
               />
             </div>
 
-            {/* Categoría */}
+            {/* Producto asociado */}
             <div className="space-y-2">
-              <Label htmlFor="categoria_adicional_id" className="text-sm font-medium flex items-center gap-1">
-                <Tag className="h-4 w-4 text-gray-500" />
-                Categoría <span className="text-red-500">*</span>
+              <Label htmlFor="menu_id" className="text-sm font-medium flex items-center gap-1">
+                <Package className="h-4 w-4 text-gray-500" />
+                Producto asociado <span className="text-red-500">*</span>
               </Label>
               <Select
-                name="categoria_adicional_id"
+                name="menu_id"
                 required
-                value={selectedCategoria}
-                onValueChange={setSelectedCategoria}
+                value={selectedMenu}
+                onValueChange={setSelectedMenu}
               >
                 <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
-                  <SelectValue placeholder="Selecciona una categoría" />
+                  <SelectValue placeholder="Selecciona un producto" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categorias.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">No hay categorías disponibles</div>
+                  {menus.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">No hay productos disponibles</div>
                   ) : (
-                    categorias.map((categoria) => (
-                      <SelectItem key={categoria.id} value={categoria.id.toString()}>
-                        {categoria.nombre}
+                    menus.map((menu) => (
+                      <SelectItem key={menu.id} value={menu.id.toString()}>
+                        {menu.titulo}
                       </SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-gray-500">
+                Este adicional estará disponible solo para el producto seleccionado
+              </p>
             </div>
 
             {/* Descripción */}
@@ -186,7 +191,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
               <Textarea
                 id="descripcion"
                 name="descripcion"
-                placeholder="Describe los ingredientes o características del producto"
+                placeholder="Describe el adicional (opcional)"
                 className="min-h-[60px] border-gray-300 focus:border-red-500 focus:ring-red-500 resize-none"
               />
             </div>
@@ -212,11 +217,11 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
               </div>
             </div>
 
-            {/* Foto del producto */}
+            {/* Foto del adicional */}
             <div className="space-y-2">
               <Label htmlFor="foto" className="text-sm font-medium flex items-center gap-1">
                 <Upload className="h-4 w-4 text-gray-500" />
-                Foto del producto <span className="text-red-500">*</span>
+                Foto del adicional
               </Label>
               <div className="relative">
                 <Input
@@ -259,13 +264,13 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
                 )}
               </div>
               <p className="text-xs text-gray-500">
-                Tamaño máximo: 3MB. Formatos: JPG, PNG, GIF.
+                Tamaño máximo: 5MB. Formatos: JPG, PNG, GIF, WEBP. (Opcional)
               </p>
             </div>
 
-            {/* Estado del producto */}
+            {/* Estado del adicional */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Estado del producto</Label>
+              <Label className="text-sm font-medium">Estado del adicional</Label>
               <RadioGroup value={status} onValueChange={setStatus} className="flex flex-col space-y-1">
                 <div className="flex items-center space-x-2 rounded-md border p-2 hover:bg-gray-50 cursor-pointer">
                   <RadioGroupItem value="active" id="active" />
@@ -302,7 +307,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
               <Button
                 type="submit"
                 className="bg-red-600 hover:bg-red-700 text-white transition-colors w-full sm:w-auto"
-                disabled={isSubmitting || !!imageError}
+                disabled={isSubmitting || !!imageError || !selectedMenu}
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center">
@@ -331,7 +336,7 @@ export function CreateAdicionalModal({ categorias, onSubmit, trigger, defaultCat
                 ) : (
                   <span className="flex items-center justify-center">
                     <Plus className="mr-2 h-4 w-4" />
-                    Crear producto
+                    Crear adicional
                   </span>
                 )}
               </Button>

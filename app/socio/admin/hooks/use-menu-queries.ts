@@ -41,7 +41,7 @@ export function useCreateCategory() {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: (data: { nombre: string }) => menuService.createCategory(data),
+    mutationFn: (data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }) => menuService.createCategory(data),
     onSuccess: (response) => {
       // Actualizar el cache de categorías
       if (response?.data) {
@@ -72,12 +72,12 @@ export function useUpdateCategory() {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: ({ id, nombre }: { id: number; nombre: string }) =>
-      menuService.updateCategory(id.toString(), { nombre }),
+    mutationFn: ({ id, nombre, hora_inicio, hora_fin }: { id: number; nombre: string; hora_inicio?: string | null; hora_fin?: string | null }) =>
+      menuService.updateCategory(id.toString(), { nombre, hora_inicio, hora_fin }),
     onSuccess: (_, variables) => {
       // Actualizar el cache directamente
       queryClient.setQueryData<Category[]>(menuQueryKeys.categories, (old = []) =>
-        old.map((category) => (category.id === variables.id ? { ...category, nombre: variables.nombre } : category)),
+        old.map((category) => (category.id === variables.id ? { ...category, nombre: variables.nombre, hora_inicio: variables.hora_inicio, hora_fin: variables.hora_fin } : category)),
       )
 
       toast({

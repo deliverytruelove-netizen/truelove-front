@@ -1,10 +1,9 @@
 // app\socio\admin\services\adicional.service.ts
 const API_URL = process.env.NEXT_PUBLIC_API_WEB
 
-export interface CategoriaAdicional {
+export interface Menu {
   id: number
-  nombre: string
-  empresa_id: string
+  titulo: string
 }
 
 export interface Adicional {
@@ -15,7 +14,8 @@ export interface Adicional {
   precio: number | string
   status: "active" | "inactive"
   empresa_id: string
-  categoria_adicional_id: number
+  menu_id: number
+  menu?: Menu // Información del menú/producto asociado
 }
 
 // Interfaces para respuestas de API
@@ -92,127 +92,11 @@ export const adicionalService = {
       return user.businessRegistration.id.toString()
     } catch (error) {
       console.error("Error al obtener ID de empresa:", error)
-      // Valor por defecto para desarrollo
-
       return ""
     }
   },
 
-  // Métodos para Categorías de Adicionales
-  getCategoriasAdicionales: async (): Promise<ApiResponse<CategoriaAdicional[]>> => {
-    try {
-      const empresaId = await adicionalService.getEmpresaId()
-      const token = getAuthToken()
-
-      if (!token) {
-        throw new Error("No se encontró el token de autenticación")
-      }
-
-      const response = await fetch(`${API_URL}/categorias-adicionales/web/${empresaId}`, {
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || "Error al obtener categorías de adicionales")
-      }
-
-      return response.json() as Promise<ApiResponse<CategoriaAdicional[]>>
-    } catch (error) {
-      console.error("Error en getCategoriasAdicionales:", error)
-      throw error
-    }
-  },
-
-  createCategoriaAdicional: async (data: { nombre: string }): Promise<ApiResponse<CategoriaAdicional>> => {
-    try {
-      const empresaId = await adicionalService.getEmpresaId()
-      const token = getAuthToken()
-
-      const response = await fetch(`${API_URL}/categorias-adicionales/web`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token || "",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          nombre: data.nombre,
-          empresa_id: empresaId,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || "Error al crear categoría de adicional")
-      }
-
-      return response.json() as Promise<ApiResponse<CategoriaAdicional>>
-    } catch (error) {
-      console.error("Error en createCategoriaAdicional:", error)
-      throw error
-    }
-  },
-
-  updateCategoriaAdicional: async (id: string, data: { nombre: string }): Promise<ApiResponse<CategoriaAdicional>> => {
-    try {
-      const empresaId = await adicionalService.getEmpresaId()
-      const token = getAuthToken()
-
-      const response = await fetch(`${API_URL}/categorias-adicionales/web/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token || "",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          nombre: data.nombre,
-          empresa_id: empresaId,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || "Error al actualizar categoría de adicional")
-      }
-
-      return response.json() as Promise<ApiResponse<CategoriaAdicional>>
-    } catch (error) {
-      console.error("Error en updateCategoriaAdicional:", error)
-      throw error
-    }
-  },
-
-  deleteCategoriaAdicional: async (id: string): Promise<ApiResponse<void>> => {
-    try {
-      const token = getAuthToken()
-
-      const response = await fetch(`${API_URL}/categorias-adicionales/web/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: token || "",
-          Accept: "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || "Error al eliminar categoría de adicional")
-      }
-
-      return response.json() as Promise<ApiResponse<void>>
-    } catch (error) {
-      console.error("Error en deleteCategoriaAdicional:", error)
-      throw error
-    }
-  },
-
-  // Métodos para Adicionales
+  // Obtener todos los adicionales de la empresa (con info del menú)
   getAdicionales: async (): Promise<Adicional[]> => {
     try {
       const empresaId = await adicionalService.getEmpresaId()
@@ -233,6 +117,31 @@ export const adicionalService = {
       return response.json() as Promise<Adicional[]>
     } catch (error) {
       console.error("Error en getAdicionales:", error)
+      return []
+    }
+  },
+
+  // Obtener todos los menús de la empresa (para selector)
+  getMenus: async (): Promise<Menu[]> => {
+    try {
+      const empresaId = await adicionalService.getEmpresaId()
+      const token = getAuthToken()
+
+      const response = await fetch(`${API_URL}/listar/menus/web/${empresaId}`, {
+        headers: {
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al obtener menús")
+      }
+
+      return response.json() as Promise<Menu[]>
+    } catch (error) {
+      console.error("Error en getMenus:", error)
       return []
     }
   },
@@ -317,5 +226,104 @@ export const adicionalService = {
       throw error
     }
   },
-}
 
+  // Métodos para adicionales por producto (menú)
+  getMenuAdicionales: async (menuId: number): Promise<Adicional[]> => {
+    try {
+      const token = getAuthToken()
+
+      const response = await fetch(`${API_URL}/menu/${menuId}/adicionales`, {
+        headers: {
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al obtener adicionales del producto")
+      }
+
+      return response.json() as Promise<Adicional[]>
+    } catch (error) {
+      console.error("Error en getMenuAdicionales:", error)
+      return []
+    }
+  },
+
+  createMenuAdicional: async (menuId: number, formData: FormData): Promise<ApiResponse<Adicional>> => {
+    try {
+      const token = getAuthToken()
+
+      const response = await fetch(`${API_URL}/menu/${menuId}/adicionales`, {
+        method: "POST",
+        headers: {
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al crear adicional")
+      }
+
+      return response.json() as Promise<ApiResponse<Adicional>>
+    } catch (error) {
+      console.error("Error en createMenuAdicional:", error)
+      throw error
+    }
+  },
+
+  updateMenuAdicional: async (menuId: number, adicionalId: number, formData: FormData): Promise<ApiResponse<Adicional>> => {
+    try {
+      const token = getAuthToken()
+      
+      formData.append("_method", "PUT")
+
+      const response = await fetch(`${API_URL}/menu/${menuId}/adicionales/${adicionalId}`, {
+        method: "POST",
+        headers: {
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al actualizar adicional")
+      }
+
+      return response.json() as Promise<ApiResponse<Adicional>>
+    } catch (error) {
+      console.error("Error en updateMenuAdicional:", error)
+      throw error
+    }
+  },
+
+  deleteMenuAdicional: async (menuId: number, adicionalId: number): Promise<ApiResponse<void>> => {
+    try {
+      const token = getAuthToken()
+
+      const response = await fetch(`${API_URL}/menu/${menuId}/adicionales/${adicionalId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al eliminar adicional")
+      }
+
+      return response.json() as Promise<ApiResponse<void>>
+    } catch (error) {
+      console.error("Error en deleteMenuAdicional:", error)
+      throw error
+    }
+  },
+}

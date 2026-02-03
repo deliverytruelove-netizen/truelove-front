@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { PlusCircle, Save, Plus, Trash2, AlertTriangle } from "lucide-react"
+import { PlusCircle, Save, Plus, Trash2, AlertTriangle, Clock } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +23,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { Category } from "../services/menu.service"
 
+interface CategoryFormData {
+  nombre: string
+  hora_inicio?: string | null
+  hora_fin?: string | null
+}
+
 interface CategoryDialogProps {
   category?: Category
-  onSubmit: (nombre: string) => Promise<void>
+  onSubmit: (data: CategoryFormData) => Promise<void>
   onDelete?: (id: number) => Promise<void>
   trigger?: React.ReactNode
 }
@@ -32,14 +39,23 @@ interface CategoryDialogProps {
 export function CategoryDialog({ category, onSubmit, onDelete, trigger }: CategoryDialogProps) {
   const [open, setOpen] = useState(false)
   const [nombre, setNombre] = useState("")
+  const [horaInicio, setHoraInicio] = useState("")
+  const [horaFin, setHoraFin] = useState("")
+  const [usarHorario, setUsarHorario] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (category) {
       setNombre(category.nombre)
+      setHoraInicio(category.hora_inicio || "")
+      setHoraFin(category.hora_fin || "")
+      setUsarHorario(!!(category.hora_inicio && category.hora_fin))
     } else {
       setNombre("")
+      setHoraInicio("")
+      setHoraFin("")
+      setUsarHorario(false)
     }
   }, [category, open])
 
@@ -47,9 +63,19 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
     e.preventDefault()
     if (!nombre.trim()) return
 
+    // Validar horarios si están habilitados
+    if (usarHorario && (!horaInicio || !horaFin)) {
+      alert("Debes completar ambos horarios (inicio y fin)")
+      return
+    }
+
     setIsSubmitting(true)
     try {
-      await onSubmit(nombre)
+      await onSubmit({
+        nombre,
+        hora_inicio: usarHorario ? horaInicio : null,
+        hora_fin: usarHorario ? horaFin : null,
+      })
       setOpen(false)
     } catch (error) {
       console.error("Error al guardar categoría:", error)
@@ -82,7 +108,7 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] dark:bg-gray-700">
+      <DialogContent className="sm:max-w-[500px] p-6 dark:bg-gray-700">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
             {category ? "Editar" : "Crear nueva"} categoría
@@ -99,11 +125,60 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej: Entradas, Platos principales, Postres"
-                className="border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-800"
-                required
+                className="dark:bg-gray-800"
               />
             </div>
-            <DialogFooter className="flex justify-between items-center pt-2">
+
+            {/* Sección de horarios */}
+            <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <Label htmlFor="usar-horario" className="text-sm font-medium">
+                    Disponible solo en horario específico
+                  </Label>
+                </div>
+                <Switch
+                  id="usar-horario"
+                  checked={usarHorario}
+                  onCheckedChange={setUsarHorario}
+                />
+              </div>
+              
+              {usarHorario && (
+                <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="hora_inicio" className="text-sm font-medium">
+                      Hora inicio
+                    </Label>
+                    <Input
+                      id="hora_inicio"
+                      type="time"
+                      value={horaInicio}
+                      onChange={(e) => setHoraInicio(e.target.value)}
+                      className="dark:bg-gray-700"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hora_fin" className="text-sm font-medium">
+                      Hora fin
+                    </Label>
+                    <Input
+                      id="hora_fin"
+                      type="time"
+                      value={horaFin}
+                      onChange={(e) => setHoraFin(e.target.value)}
+                      className="dark:bg-gray-700"
+                    />
+                  </div>
+                  <p className="col-span-2 text-xs text-gray-500 dark:text-gray-400">
+                    Esta categoría solo será visible para los clientes dentro de este horario.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="flex justify-between items-center pt-4">
               <div>
                 {category && onDelete && (
                   <AlertDialog>
@@ -194,4 +269,3 @@ export function CategoryDialog({ category, onSubmit, onDelete, trigger }: Catego
 
 // Añadir el icono Plus como una propiedad estática para CategoryDialog
 CategoryDialog.PlusIcon = Plus
-

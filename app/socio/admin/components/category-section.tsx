@@ -17,10 +17,16 @@ import { Badge } from "@/components/ui/badge"
 import type { Category, MenuItem } from "../services/menu.service"
 import { useState } from "react"
 
+interface CategoryFormData {
+  nombre: string
+  hora_inicio?: string | null
+  hora_fin?: string | null
+}
+
 interface CategorySectionProps {
   category: Category
   menuItems: MenuItem[]
-  onEditCategory: (id: number, nombre: string) => Promise<void>
+  onEditCategory: (id: number, data: CategoryFormData) => Promise<void>
   onDeleteCategory: (id: number) => Promise<void>
   onStatusChange: (id: number, newStatus: string) => Promise<void>
 }
@@ -79,7 +85,7 @@ export function CategorySection({
         <div className="flex items-center">
           <CategoryDialog
             category={category}
-            onSubmit={(nombre) => onEditCategory(category.id, nombre)}
+            onSubmit={(data) => onEditCategory(category.id, data)}
             onDelete={() => onDeleteCategory(category.id)}
             trigger={
               <Button

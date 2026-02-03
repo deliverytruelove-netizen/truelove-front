@@ -8,12 +8,18 @@ import { CategoryDialog } from "./category-dialog"
 import type { Category } from "../services/menu.service"
 import Link from "next/link"
 
+interface CategoryFormData {
+  nombre: string
+  hora_inicio?: string | null
+  hora_fin?: string | null
+}
+
 interface CategoriesListProps {
   categories: Category[]
   productCounts: Record<number, number>
-  onEditCategory: (id: number, nombre: string) => Promise<void>  // ✅ Corregido: Promise<void>
-  onDeleteCategory: (id: number) => Promise<void>  // ✅ Corregido: Promise<void>
-  onCreateCategory: (nombre: string) => Promise<void>  // ✅ Corregido: Promise<void>
+  onEditCategory: (id: number, data: CategoryFormData) => Promise<void>
+  onDeleteCategory: (id: number) => Promise<void>
+  onCreateCategory: (data: CategoryFormData) => Promise<void>
   isLoading: boolean
 }
 
@@ -80,7 +86,7 @@ export const CategoriesList = React.memo<CategoriesListProps>(function Categorie
             <div className="flex items-center gap-2">
               <CategoryDialog
                 category={category}
-                onSubmit={(nombre) => onEditCategory(category.id, nombre)}
+                onSubmit={(data) => onEditCategory(category.id, data)}
                 onDelete={() => onDeleteCategory(category.id)}
                 trigger={
                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-200">

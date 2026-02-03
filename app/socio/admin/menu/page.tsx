@@ -1,12 +1,12 @@
 // app\socio\admin\menu\page.tsx
 "use client"
 
-import { useState, useEffect, Suspense, useMemo } from "react"
+import { useState, Suspense, useMemo } from "react"
 import { Search, LayoutGrid, ListPlus, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+
 import { CreateMenuModal } from "../components/create-menu-modal"
 import { CategoryDialog } from "../components/category-dialog"
 import { CategoriesList } from "../components/categories-list"
@@ -45,15 +45,14 @@ function LoadingCategories() {
 
 // Componente principal que maneja la lógica de datos
 function MenuContent() {
-  const [activeView, setActiveView] = useState<"menu" | "options">("menu")
-  const [searchTerm, setSearchTerm] = useState("")
   const router = useRouter()
+  const [searchTerm, setSearchTerm] = useState("")
 
-  // React Query hooks - eliminamos las variables de error que no usamos
+  // React Query hooks para menú
   const { data: categories = [], isLoading: categoriesLoading } = useCategories()
   const { data: menuItems = [], isLoading: menusLoading } = useMenus()
 
-  // Mutations
+  // Mutations para menú
   const createCategoryMutation = useCreateCategory()
   const updateCategoryMutation = useUpdateCategory()
   const deleteCategoryMutation = useDeleteCategory()
@@ -65,13 +64,6 @@ function MenuContent() {
   // Estado de carga general
   const isLoading = categoriesLoading || menusLoading
 
-  // Efecto para redirigir a la página de adicionales cuando se selecciona esa vista
-  useEffect(() => {
-    if (activeView === "options") {
-      router.push("/socio/admin/menu/adicionales")
-    }
-  }, [activeView, router])
-
   // Handlers optimizados - ahora son async y devuelven Promise<void>
   const handleCreateMenu = async (formData: FormData): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -82,18 +74,18 @@ function MenuContent() {
     })
   }
 
-  const handleCreateCategory = async (nombre: string): Promise<void> => {
+  const handleCreateCategory = async (data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }): Promise<void> => {
     return new Promise((resolve, reject) => {
-      createCategoryMutation.mutate({ nombre }, {
+      createCategoryMutation.mutate(data, {
         onSuccess: () => resolve(),
         onError: (error) => reject(error),
       })
     })
   }
 
-  const handleEditCategory = async (id: number, nombre: string): Promise<void> => {
+  const handleEditCategory = async (id: number, data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }): Promise<void> => {
     return new Promise((resolve, reject) => {
-      updateCategoryMutation.mutate({ id, nombre }, {
+      updateCategoryMutation.mutate({ id, ...data }, {
         onSuccess: () => resolve(),
         onError: (error) => reject(error),
       })
@@ -152,26 +144,19 @@ function MenuContent() {
               <CardContent className="p-2 ">
                 <nav className="flex flex-col gap-1 ">
                   <Button
-                    variant={activeView === "menu" ? "default" : "ghost"}
-                    className={cn(
-                      "w-full justify-start",
-                      activeView === "menu" && "bg-red-600 hover:bg-red-700 text-white",
-                    )}
-                    onClick={() => setActiveView("menu")}
+                    variant="default"
+                    className="w-full justify-start bg-red-600 hover:bg-red-700 text-white"
                   >
                     <LayoutGrid className="mr-2 h-4 w-4" />
                     Secciones y productos
                   </Button>
                   <Button
-                    variant={activeView === "options" ? "default" : "ghost"}
-                    className={cn(
-                      "w-full justify-start",
-                      activeView === "options" && "bg-red-600 hover:bg-red-700 text-white",
-                    )}
-                    onClick={() => setActiveView("options")}
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => router.push("/socio/admin/menu/adicionales")}
                   >
                     <ListPlus className="mr-2 h-4 w-4" />
-                    Opciones y adicionales
+                    Todos los Adicionales
                   </Button>
                 </nav>
               </CardContent>
@@ -183,55 +168,49 @@ function MenuContent() {
             <Card className="border border-gray-200 dark:border-gray-900 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100 dark:bg-gray-700 dark:border-gray-800 sticky top-[4rem] z-20">
                 <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                  {activeView === "menu" ? "Secciones y productos" : "Opciones y adicionales"}
+                  Secciones y productos
                 </CardTitle>
                 <div className="flex gap-2">
-                  {activeView === "menu" && (
-                    <>
-                      <CategoryDialog
-                        onSubmit={handleCreateCategory}
-                        trigger={
-                          <Button
-                            variant="outline"
-                            className="gap-2 border-gray-300 dark:bg-gray-700"
-                            disabled={createCategoryMutation.isPending}
-                          >
-                            <Plus className="h-4 w-4" />
-                            Nueva categoría
-                          </Button>
-                        }
-                      />
-                      <CreateMenuModal categories={categories} onSubmit={handleCreateMenu} />
-                    </>
-                  )}
+                  <CategoryDialog
+                    onSubmit={handleCreateCategory}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        className="gap-2 border-gray-300 dark:bg-gray-700"
+                        disabled={createCategoryMutation.isPending}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Nueva categoría
+                      </Button>
+                    }
+                  />
+                  <CreateMenuModal categories={categories} onSubmit={handleCreateMenu} />
                 </div>
               </CardHeader>
               <CardContent className="p-5 dark:bg-gray-700">
-                {activeView === "menu" && (
-                  <div className="space-y-6 ">
-                    <div className="relative ">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 "  />
-                      <Input
-                        className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-900"
-                        placeholder="Buscar por nombre de categoría o producto..."
-                        type="search"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    <Separator className="my-6" />
-
-                    <CategoriesList
-                      categories={filteredCategories}
-                      productCounts={productCounts}
-                      onEditCategory={handleEditCategory}
-                      onDeleteCategory={handleDeleteCategory}
-                      onCreateCategory={handleCreateCategory}
-                      isLoading={isLoading}
+                <div className="space-y-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    <Input
+                      className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-900"
+                      placeholder="Buscar por nombre de categoría o producto..."
+                      type="search"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                )}
+
+                  <Separator className="my-6" />
+
+                  <CategoriesList
+                    categories={filteredCategories}
+                    productCounts={productCounts}
+                    onEditCategory={handleEditCategory}
+                    onDeleteCategory={handleDeleteCategory}
+                    onCreateCategory={handleCreateCategory}
+                    isLoading={isLoading}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
