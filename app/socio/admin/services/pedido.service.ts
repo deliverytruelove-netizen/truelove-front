@@ -316,13 +316,9 @@ export const actualizarEstadoPedidoActivo = async (
   const body: { estado: number; tiempo?: number } = { estado };
   if (tiempo !== undefined) body.tiempo = tiempo;
 
-  // Estado 0 (cancelar/rechazar) usa la ruta pública PUT igual que el app Flutter
-  // Los demás estados usan la ruta autenticada POST
-  const isCancel = estado === 0;
-  const url = isCancel
-    ? `${API_URL}/socio/update/estado/pedido/${pedidoId}`
-    : `${API_URL}/socio/pedidos/update-estado/${pedidoId}`;
-  const method = isCancel ? "PUT" : "POST";
+  // Usar siempre PedidoController que guarda el tiempo correctamente
+  const url = `${API_URL}/socio/update/estado/pedido/${pedidoId}`;
+  const method = "PUT";
 
   const response = await fetch(url, {
     method,
