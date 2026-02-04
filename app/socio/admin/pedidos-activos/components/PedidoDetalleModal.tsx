@@ -368,20 +368,14 @@ function PedidoDetalleContent({
     window.location.href = `tel:${numero}`;
   };
 
-  // Cálculos de totales
+  // Cálculos de totales - usar siempre detalleArray para consistencia con la tarjeta
   const totalProductos =
     pedido.detalleArray?.reduce((sum, item) => {
       return sum + parseFloat(item.precio) * item.cantidad;
     }, 0) || 0;
 
-  const precioDelivery = pedido.precio_delivery
-    ? parseFloat(pedido.precio_delivery)
-    : 0;
   const descuento = pedido.descuento ? parseFloat(pedido.descuento) : 0;
-  const subtotal = pedido.subtotal
-    ? parseFloat(pedido.subtotal)
-    : totalProductos;
-  const total = subtotal + precioDelivery - descuento;
+  const total = totalProductos - descuento;
 
   return (
     <div className="space-y-3 md:space-y-4">
@@ -606,12 +600,6 @@ function PedidoDetalleContent({
 
         {/* Totales */}
         <div className="border-t mt-2 pt-2 space-y-0.5">
-          {esDelivery && precioDelivery > 0 && (
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Delivery</span>
-              <span className="tabular-nums">S/{precioDelivery.toFixed(2)}</span>
-            </div>
-          )}
           {descuento > 0 && (
             <div className="flex justify-between text-xs text-green-600">
               <span>Descuento</span>
@@ -1008,11 +996,10 @@ function PedidoDetalleDesktop({
     }
   };
 
+  // Cálculos de totales - usar siempre detalleArray para consistencia con la tarjeta
   const totalProductos = pedido.detalleArray?.reduce((sum, item) => sum + parseFloat(item.precio) * item.cantidad, 0) || 0;
-  const precioDelivery = pedido.precio_delivery ? parseFloat(pedido.precio_delivery) : 0;
   const descuento = pedido.descuento ? parseFloat(pedido.descuento) : 0;
-  const subtotal = pedido.subtotal ? parseFloat(pedido.subtotal) : totalProductos;
-  const total = subtotal + precioDelivery - descuento;
+  const total = totalProductos - descuento;
 
   return (
     <>
@@ -1158,12 +1145,6 @@ function PedidoDetalleDesktop({
             ))}
           </div>
           <div className="border-t mt-2 pt-2 space-y-1 text-sm">
-            {esDelivery && precioDelivery > 0 && (
-              <div className="flex justify-between text-muted-foreground">
-                <span>Delivery</span>
-                <span className="tabular-nums">S/{precioDelivery.toFixed(2)}</span>
-              </div>
-            )}
             {descuento > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Descuento</span>

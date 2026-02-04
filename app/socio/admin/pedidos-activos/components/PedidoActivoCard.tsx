@@ -214,19 +214,10 @@ export default function PedidoActivoCard({ pedido }: Props) {
             ))}
           </div>
           <div className="border-t border-gray-200 dark:border-gray-700 mt-1.5 pt-1.5 space-y-0.5">
-            {pedido.precio_delivery &&
-              parseFloat(pedido.precio_delivery) > 0 && (
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Delivery</span>
-                  <span className="tabular-nums">
-                    S/{parseFloat(pedido.precio_delivery).toFixed(2)}
-                  </span>
-                </div>
-              )}
             <div className="flex justify-between text-sm font-bold">
               <span>Total</span>
               <span className="tabular-nums">
-                S/{totalConDelivery.toFixed(2)}
+                S/{totalProductos.toFixed(2)}
               </span>
             </div>
           </div>
