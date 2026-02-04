@@ -1,5 +1,21 @@
 const API_URL = process.env.NEXT_PUBLIC_API_WEB;
 
+export interface PedidoDetalle {
+  id: number;
+  pedido_id: number;
+  nombre: string;
+  cantidad: number;
+  precio: string;
+  tipo: string;
+}
+
+export interface PedidoTracking {
+  id: number;
+  pedido_id: number;
+  estado: string;
+  created_at: string;
+}
+
 export interface Pedido {
   id: number;
   id_cliente: number;
@@ -19,6 +35,22 @@ export interface Pedido {
   lon_local: string;
   ultimo_estado_tracking: string;
   estado: string;
+  // Campos adicionales del backend
+  detalleArray?: PedidoDetalle[];
+  trackings?: PedidoTracking[];
+  motorizado?: string;
+  celular_motorizado?: string;
+  nota?: string;
+  tipo_pago?: string;
+  tipo_pedido?: number;
+  requiere_confirmacion_local?: boolean;
+  foto_pago?: string | null;
+  tiempo?: number;
+  precio_delivery?: string;
+  subtotal?: string;
+  descuento?: string;
+  tipo_comprobante?: string;
+  documento?: string;
 }
 
 export const fetchPedidos = async (
@@ -67,12 +99,12 @@ export const fetchPedidos = async (
       );
     }
 
+    // Usar la misma ruta pública que usa la app móvil para consistencia
     const response = await fetch(
-      `${API_URL}/socio/pedidos/${socioId}?tipo=finalizados&fecha=${fecha}`,
+      `${API_URL}/socio/get/pedidos/${socioId}?tipo=todos&fecha=${fecha}`,
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       },
@@ -129,32 +161,68 @@ export const actualizarEstadoPedido = async (
 };
 
 export const getEstadoLabel = (
-  estado: string,
+  estado: string | number,
 ): { label: string; color: string } => {
-  switch (estado) {
-    case "Pendiente":
+  // Normalizar el estado (puede venir como número o string del backend)
+  const estadoStr = String(estado).toLowerCase();
+  
+  // Mapeo por texto (campo 'estado' del backend)
+  switch (estadoStr) {
+    case "pendiente":
       return { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" };
-    case "Aceptado":
-      return { label: "Aceptado", color: "bg-blue-100 text-blue-800" };
-    case "En preparación":
-      return {
-        label: "En preparación",
-        color: "bg-indigo-100 text-indigo-800",
-      };
-    case "Listo para entrega":
-      return {
-        label: "Listo para entrega",
-        color: "bg-purple-100 text-purple-800",
-      };
-    case "En camino":
+    case "aceptado":
+    case "el restaurante está preparando el pedido":
+      return { label: "Preparando", color: "bg-blue-100 text-blue-800" };
+    case "en preparación":
+    case "el resturante termino el pedido":
+      return { label: "Listo en local", color: "bg-purple-100 text-purple-800" };
+    case "listo para entrega":
+    case "motorizado acepto pedido":
+      return { label: "Motorizado aceptó", color: "bg-cyan-100 text-cyan-800" };
+    case "motorizado llego al restaurante":
+      return { label: "En restaurante", color: "bg-indigo-100 text-indigo-800" };
+    case "en camino":
+    case "motorizado en camino":
       return { label: "En camino", color: "bg-orange-100 text-orange-800" };
-    case "Entregado":
+    case "motorizado llego al domicilio":
+      return { label: "Llegó al destino", color: "bg-teal-100 text-teal-800" };
+    case "entregado":
+    case "pedido entregado":
       return { label: "Entregado", color: "bg-green-100 text-green-800" };
-    case "Cancelado":
+    case "pedido listo para recoger":
+      return { label: "Listo para recoger", color: "bg-indigo-100 text-indigo-800" };
+    case "cancelado":
       return { label: "Cancelado", color: "bg-red-100 text-red-800" };
-    default:
-      return { label: "Sin seguimiento", color: "bg-gray-100 text-gray-800" };
   }
+  
+  // Mapeo por número (campo 'ultimo_estado_tracking')
+  const estadoNum = parseInt(estadoStr);
+  if (!isNaN(estadoNum)) {
+    switch (estadoNum) {
+      case 0:
+        return { label: "Cancelado", color: "bg-red-100 text-red-800" };
+      case 1:
+        return { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" };
+      case 2:
+        return { label: "Preparando", color: "bg-blue-100 text-blue-800" };
+      case 3:
+        return { label: "Listo en local", color: "bg-purple-100 text-purple-800" };
+      case 4:
+        return { label: "Motorizado aceptó", color: "bg-cyan-100 text-cyan-800" };
+      case 5:
+        return { label: "En restaurante", color: "bg-indigo-100 text-indigo-800" };
+      case 6:
+        return { label: "En camino", color: "bg-orange-100 text-orange-800" };
+      case 7:
+        return { label: "Llegó al destino", color: "bg-teal-100 text-teal-800" };
+      case 8:
+        return { label: "Entregado", color: "bg-green-100 text-green-800" };
+      case 9:
+        return { label: "Listo para recoger", color: "bg-indigo-100 text-indigo-800" };
+    }
+  }
+  
+  return { label: "Sin seguimiento", color: "bg-gray-100 text-gray-800" };
 };
 
 export const formatDate = (dateString: string): string => {
@@ -171,23 +239,8 @@ export const formatDate = (dateString: string): string => {
 // PEDIDOS ACTIVOS - Sistema en tiempo real
 // =====================================================
 
-export interface PedidoDetalle {
-  id: number;
-  pedido_id: number;
-  nombre: string;
-  cantidad: number;
-  precio: string;
-  tipo: string;
-}
-
-export interface PedidoTracking {
-  id: number;
-  pedido_id: number;
-  estado: string;
-  created_at: string;
-}
-
-export interface PedidoActivo extends Pedido {
+// PedidoActivo extiende Pedido haciendo los campos opcionales obligatorios
+export interface PedidoActivo extends Omit<Pedido, 'detalleArray' | 'trackings' | 'motorizado' | 'celular_motorizado' | 'nota' | 'tipo_pago' | 'tipo_pedido' | 'requiere_confirmacion_local' | 'foto_pago' | 'tiempo' | 'precio_delivery' | 'subtotal' | 'descuento' | 'tipo_comprobante' | 'documento'> {
   detalleArray: PedidoDetalle[];
   trackings: PedidoTracking[];
   motorizado: string;
