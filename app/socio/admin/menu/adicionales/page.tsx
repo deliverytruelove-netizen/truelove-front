@@ -1,60 +1,63 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
-import { Search, Loader2, ArrowLeft, Package } from "lucide-react"
+import { Search, Loader2, ArrowLeft, Package, Plus, Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Separator } from "@/components/ui/separator"
-import { adicionalService, type Adicional, type Menu } from "../../services/adicional.service"
-import { AdicionalesList } from "../../components/adicionales-list"
-import { CreateAdicionalModal } from "../../components/create-adicional-modal"
 import { useRouter } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { adicionalService, type Adicional } from "../../services/adicional.service"
 
-// Componente de carga para Suspense
 function LoadingAdicionales() {
   return (
     <div className="text-center py-12">
-      <div className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-      </div>
+      <Loader2 className="h-8 w-8 animate-spin text-red-600 mx-auto mb-4" />
       <p className="text-gray-600">Cargando adicionales...</p>
     </div>
   )
 }
 
-// Componente principal que maneja la lógica de datos
 function AdicionalesContent() {
   const router = useRouter()
+  const { toast } = useToast()
   const [adicionales, setAdicionales] = useState<Adicional[]>([])
-  const [menus, setMenus] = useState<Menu[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const { toast } = useToast()
+  
+  // Modal crear/editar
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingAdicional, setEditingAdicional] = useState<Adicional | null>(null)
+  const [formData, setFormData] = useState({ titulo: "", descripcion: "", precio: "" })
+  const [saving, setSaving] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
-
-      // Cargar adicionales (ahora incluyen info del menú)
       const adicionalesResponse = await adicionalService.getAdicionales()
-      console.log("Adicionales cargados:", adicionalesResponse)
       setAdicionales(adicionalesResponse)
-
-      // Cargar menús para el selector de crear/editar
-      const menusResponse = await adicionalService.getMenus()
-      console.log("Menús cargados:", menusResponse)
-      setMenus(menusResponse)
-    } catch (error: unknown) {
-      console.error("Error al cargar datos:", error)
+    } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al cargar datos",
@@ -69,112 +72,118 @@ function AdicionalesContent() {
     loadData()
   }, [loadData])
 
-  const handleCreateAdicional = async (formData: FormData) => {
+  const handleOpenCreate = () => {
+    setEditingAdicional(null)
+    setFormData({ titulo: "", descripcion: "", precio: "" })
+    setModalOpen(true)
+  }
+
+  const handleOpenEdit = (adicional: Adicional) => {
+    setEditingAdicional(adicional)
+    setFormData({
+      titulo: adicional.titulo,
+      descripcion: adicional.descripcion || "",
+      precio: adicional.precio.toString(),
+    })
+    setModalOpen(true)
+  }
+
+  const handleSave = async () => {
+    if (!formData.titulo.trim() || !formData.precio) {
+      toast({ title: "Error", description: "Titulo y precio son requeridos", variant: "destructive" })
+      return
+    }
+
     try {
-      await adicionalService.createAdicional(formData)
-      await loadData()
-      toast({
-        title: "Éxito",
-        description: "Adicional creado correctamente",
-        variant: "default",
-      })
-    } catch (error: unknown) {
-      console.error("Error al crear adicional:", error)
+      setSaving(true)
+      const data = new FormData()
+      data.append("titulo", formData.titulo)
+      data.append("descripcion", formData.descripcion)
+      data.append("precio", formData.precio)
+      data.append("status", "active")
+
+      if (editingAdicional) {
+        // Mantener menu_id si existe
+        if (editingAdicional.menu_id) {
+          data.append("menu_id", editingAdicional.menu_id.toString())
+        }
+        await adicionalService.updateAdicional(editingAdicional.id.toString(), data)
+        toast({ title: "Éxito", description: "Adicional actualizado correctamente" })
+      } else {
+        await adicionalService.createAdicional(data)
+        toast({ title: "Éxito", description: "Adicional creado correctamente" })
+      }
+
+      setModalOpen(false)
+      loadData()
+    } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo crear el adicional",
+        description: error instanceof Error ? error.message : "Error al guardar",
         variant: "destructive",
       })
+    } finally {
+      setSaving(false)
     }
   }
 
-  const handleEditAdicional = async (id: number, formData: FormData) => {
-    try {
-      await adicionalService.updateAdicional(id.toString(), formData)
-      await loadData()
-      toast({
-        title: "Éxito",
-        description: "Adicional actualizado correctamente",
-        variant: "default",
-      })
-    } catch (error: unknown) {
-      console.error("Error al actualizar adicional:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo actualizar el adicional",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleDeleteAdicional = async (id: number) => {
+  const handleDelete = async (id: number) => {
     try {
       await adicionalService.deleteAdicional(id.toString())
-      await loadData()
-      toast({
-        title: "Éxito",
-        description: "Adicional eliminado correctamente",
-        variant: "default",
-      })
-    } catch (error: unknown) {
-      console.error("Error al eliminar adicional:", error)
+      toast({ title: "Éxito", description: "Adicional eliminado correctamente" })
+      loadData()
+    } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo eliminar el adicional",
+        description: error instanceof Error ? error.message : "Error al eliminar",
         variant: "destructive",
       })
     }
   }
 
-  const handleStatusChange = async (id: number, newStatus: string) => {
+  const handleStatusChange = async (adicional: Adicional) => {
     try {
-      const adicional = adicionales.find(a => a.id === id)
-      if (!adicional) return
+      const newStatus = adicional.status === "active" ? "inactive" : "active"
+      const data = new FormData()
+      data.append("titulo", adicional.titulo)
+      data.append("descripcion", adicional.descripcion || "")
+      data.append("precio", adicional.precio.toString())
+      data.append("status", newStatus)
+      if (adicional.menu_id) {
+        data.append("menu_id", adicional.menu_id.toString())
+      }
 
-      const formData = new FormData()
-      formData.append("titulo", adicional.titulo)
-      formData.append("descripcion", adicional.descripcion || "")
-      formData.append("precio", adicional.precio.toString())
-      formData.append("menu_id", adicional.menu_id.toString())
-      formData.append("status", newStatus)
-
-      await adicionalService.updateAdicional(id.toString(), formData)
-      await loadData()
+      await adicionalService.updateAdicional(adicional.id.toString(), data)
       toast({
         title: "Éxito",
-        description: `Adicional ${newStatus === 'active' ? 'activado' : 'desactivado'} correctamente`,
-        variant: "default",
+        description: `Adicional ${newStatus === "active" ? "activado" : "desactivado"}`,
       })
-    } catch (error: unknown) {
-      console.error("Error al cambiar estado:", error)
+      loadData()
+    } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo cambiar el estado",
+        description: error instanceof Error ? error.message : "Error al cambiar estado",
         variant: "destructive",
       })
     }
   }
 
-  // Filtrar adicionales según el término de búsqueda
   const filteredAdicionales = adicionales.filter((adicional) => {
     if (!searchTerm.trim()) return true
-
     const searchLower = searchTerm.toLowerCase()
-    
-    // Buscar en título del adicional
-    if (adicional.titulo.toLowerCase().includes(searchLower)) return true
-    
-    // Buscar en descripción
-    if (adicional.descripcion && adicional.descripcion.toLowerCase().includes(searchLower)) return true
-    
-    // Buscar en nombre del producto/menú
-    if (adicional.menu?.titulo && adicional.menu.titulo.toLowerCase().includes(searchLower)) return true
-
-    return false
+    return (
+      adicional.titulo.toLowerCase().includes(searchLower) ||
+      adicional.descripcion?.toLowerCase().includes(searchLower)
+    )
   })
 
+  const formatPrice = (price: number | string): string => {
+    const num = typeof price === "string" ? parseFloat(price) : price
+    return isNaN(num) ? "0.00" : num.toFixed(2)
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -187,70 +196,187 @@ function AdicionalesContent() {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Volver al menú
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Todos los Adicionales</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                console.log("Datos actuales:")
-                console.log("Adicionales:", adicionales)
-                console.log("Menús:", menus)
-                loadData()
-              }}
-            >
-              <Loader2 className="mr-2 h-4 w-4" />
-              Recargar
-            </Button>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Biblioteca de Adicionales</h1>
           </div>
         </div>
 
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100">
-            <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+        <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <Package className="h-5 w-5 text-red-600" />
-              Adicionales por Producto
+              Adicionales
               <span className="text-sm font-normal text-gray-500">
-                ({filteredAdicionales.length} {filteredAdicionales.length === 1 ? 'adicional' : 'adicionales'})
+                ({filteredAdicionales.length} {filteredAdicionales.length === 1 ? "adicional" : "adicionales"})
               </span>
             </CardTitle>
-            <div className="flex gap-2">
-              <CreateAdicionalModal menus={menus} onSubmit={handleCreateAdicional} />
-            </div>
+            <Button onClick={handleOpenCreate} className="gap-2 bg-red-600 hover:bg-red-700">
+              <Plus className="h-4 w-4" />
+              Nuevo Adicional
+            </Button>
           </CardHeader>
-          <CardContent className="p-5">
-            <div className="space-y-6">
+          <CardContent className="p-5 dark:bg-gray-800">
+            <div className="space-y-4">
+              {/* Buscador */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 <Input
-                  className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
-                  placeholder="Buscar por nombre de adicional o producto..."
+                  className="pl-10 border-gray-300"
+                  placeholder="Buscar adicionales..."
                   type="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
-              <Separator className="my-6" />
+              {/* Info */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Biblioteca de Adicionales:</strong> Crea aquí tus adicionales (ingredientes extras, salsas, etc). 
+                  Luego podrás agregarlos a los <strong>Grupos de Adicionales</strong> y asignar esos grupos a tus productos.
+                </p>
+              </div>
 
-              <AdicionalesList
-                adicionales={filteredAdicionales}
-                menus={menus}
-                onStatusChange={handleStatusChange}
-                onEditAdicional={handleEditAdicional}
-                onDeleteAdicional={handleDeleteAdicional}
-                loading={loading}
-              />
+              {/* Lista */}
+              {loading ? (
+                <LoadingAdicionales />
+              ) : filteredAdicionales.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No hay adicionales</p>
+                  <p className="text-sm">Crea tu primer adicional para comenzar</p>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredAdicionales.map((adicional) => (
+                    <div
+                      key={adicional.id}
+                      className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {adicional.titulo}
+                          </h3>
+                          <Badge
+                            className={`cursor-pointer ${
+                              adicional.status === "active"
+                                ? "bg-green-500 hover:bg-green-600"
+                                : "bg-gray-400 hover:bg-gray-500"
+                            }`}
+                            onClick={() => handleStatusChange(adicional)}
+                          >
+                            {adicional.status === "active" ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </div>
+                        {adicional.descripcion && (
+                          <p className="text-sm text-gray-500 truncate">{adicional.descripcion}</p>
+                        )}
+                        <p className="text-sm font-semibold text-red-600 mt-1">
+                          S/ {formatPrice(adicional.precio)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 ml-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenEdit(adicional)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar adicional?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. El adicional será removido de todos los grupos.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(adicional.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Modal Crear/Editar Adicional */}
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent className="sm:max-w-[425px] p-6">
+            <DialogHeader>
+              <DialogTitle>{editingAdicional ? "Editar Adicional" : "Nuevo Adicional"}</DialogTitle>
+              <DialogDescription>
+                {editingAdicional
+                  ? "Modifica los datos del adicional"
+                  : "Crea un nuevo adicional para tu biblioteca"}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="titulo">Nombre *</Label>
+                <Input
+                  id="titulo"
+                  placeholder="Ej: Queso extra, Salsa BBQ"
+                  value={formData.titulo}
+                  onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="descripcion">Descripción (opcional, máx. 100 caracteres)</Label>
+                <Input
+                  id="descripcion"
+                  placeholder="Descripción breve"
+                  maxLength={100}
+                  value={formData.descripcion}
+                  onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                />
+                <p className="text-xs text-gray-500">{formData.descripcion.length}/100</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="precio">Precio *</Label>
+                <Input
+                  id="precio"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={formData.precio}
+                  onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving} className="bg-red-600 hover:bg-red-700">
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingAdicional ? "Guardar" : "Crear"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
 }
 
-// Página principal que usa Suspense
 export default function Page() {
   return (
     <Suspense fallback={<LoadingAdicionales />}>

@@ -13,8 +13,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Drawer,
@@ -26,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Image from "next/image";
 import {
   Check,
   X,
@@ -1286,7 +1285,7 @@ function PedidoDetalleDesktop({
               </div>
             </div>
             <div className="p-3">
-              <img src={pedido.foto_pago} alt="Comprobante" className="w-full h-auto max-h-[50vh] object-contain rounded-lg" />
+              <Image src={pedido.foto_pago} alt="Comprobante" className="w-full h-auto max-h-[50vh] object-contain rounded-lg" />
             </div>
             <div className="p-3 border-t flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setShowFotoPago(false)}>Cancelar</Button>

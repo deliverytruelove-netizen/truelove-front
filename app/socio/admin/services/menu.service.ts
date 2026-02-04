@@ -1,12 +1,22 @@
 // app\socio\admin\services\menu.service.ts
 const API_URL = process.env.NEXT_PUBLIC_API_WEB
 
+// Estructura para horarios por día
+// Cuando activo=true y hora_inicio/hora_fin son null, significa disponible todo el día
+export interface HorarioDia {
+  dia: string
+  activo: boolean
+  hora_inicio: string | null
+  hora_fin: string | null
+}
+
 export interface Category {
   id: number
   nombre: string
   empresa_id: string
   hora_inicio?: string | null
   hora_fin?: string | null
+  horarios?: HorarioDia[] | null
 }
 
 export interface MenuItem {
@@ -136,7 +146,7 @@ export const menuService = {
     }
   },
 
-  createCategory: async (data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }): Promise<ApiResponse<Category>> => {
+  createCategory: async (data: { nombre: string; horarios?: HorarioDia[] | null }): Promise<ApiResponse<Category>> => {
     try {
       const empresaId = await menuService.getEmpresaId()
       const token = getAuthToken()
@@ -151,8 +161,7 @@ export const menuService = {
         body: JSON.stringify({
           nombre: data.nombre,
           empresa_id: empresaId,
-          hora_inicio: data.hora_inicio || null,
-          hora_fin: data.hora_fin || null,
+          horarios: data.horarios || null,
         }),
       })
 
@@ -175,7 +184,7 @@ export const menuService = {
     }
   },
 
-  updateCategory: async (id: string, data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }): Promise<ApiResponse<Category>> => {
+  updateCategory: async (id: string, data: { nombre: string; horarios?: HorarioDia[] | null }): Promise<ApiResponse<Category>> => {
     try {
       const empresaId = await menuService.getEmpresaId()
       const token = getAuthToken()
@@ -190,8 +199,7 @@ export const menuService = {
         body: JSON.stringify({
           nombre: data.nombre,
           empresa_id: empresaId,
-          hora_inicio: data.hora_inicio || null,
-          hora_fin: data.hora_fin || null,
+          horarios: data.horarios || null,
         }),
       })
 

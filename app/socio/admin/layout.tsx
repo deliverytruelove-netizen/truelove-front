@@ -141,7 +141,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
     if (enPaginaCuotas && tieneAccesoTemporal) {
       // Permitir ver la página de cuotas con un banner de advertencia
       return (
-        <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors">
+        <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors overflow-x-hidden">
           {/* Main Content sin sidebar */}
           <div className="flex-1 w-full">
             {/* Header con advertencia */}
@@ -186,7 +186,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors">
+    <div className="flex min-h-screen bg-gray-50/50 dark:bg-gray-950/50 transition-colors overflow-x-hidden max-w-[100vw]">
       {/* Overlay para móvil y tablet */}
       {isMobileOpen && (
         <div
@@ -398,7 +398,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div
         className={cn(
-          "flex-1 transition-all duration-300 ease-in-out",
+          "flex-1 transition-all duration-300 ease-in-out min-w-0 overflow-x-hidden",
           isCollapsed ? "lg:ml-[72px]" : "lg:ml-[280px]",
         )}
       >
@@ -468,7 +468,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
           )}
 
         {/* Page Content */}
-        <main className="p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)]">
+        <main className="p-3 sm:p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)] overflow-x-hidden">
           {children}
         </main>
       </div>

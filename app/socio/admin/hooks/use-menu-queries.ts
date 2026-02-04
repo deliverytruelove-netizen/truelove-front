@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { menuService, type Category, type MenuItem } from "../services/menu.service"
+import { menuService, type Category, type MenuItem, type HorarioDia } from "../services/menu.service"
 import { useToast } from "@/hooks/use-toast"
 
 // Keys para las queries
@@ -41,7 +41,7 @@ export function useCreateCategory() {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: (data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }) => menuService.createCategory(data),
+    mutationFn: (data: { nombre: string; horarios?: HorarioDia[] | null }) => menuService.createCategory(data),
     onSuccess: (response) => {
       // Actualizar el cache de categorías
       if (response?.data) {
@@ -72,12 +72,12 @@ export function useUpdateCategory() {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: ({ id, nombre, hora_inicio, hora_fin }: { id: number; nombre: string; hora_inicio?: string | null; hora_fin?: string | null }) =>
-      menuService.updateCategory(id.toString(), { nombre, hora_inicio, hora_fin }),
+    mutationFn: ({ id, nombre, horarios }: { id: number; nombre: string; horarios?: HorarioDia[] | null }) =>
+      menuService.updateCategory(id.toString(), { nombre, horarios }),
     onSuccess: (_, variables) => {
       // Actualizar el cache directamente
       queryClient.setQueryData<Category[]>(menuQueryKeys.categories, (old = []) =>
-        old.map((category) => (category.id === variables.id ? { ...category, nombre: variables.nombre, hora_inicio: variables.hora_inicio, hora_fin: variables.hora_fin } : category)),
+        old.map((category) => (category.id === variables.id ? { ...category, nombre: variables.nombre, horarios: variables.horarios } : category)),
       )
 
       toast({

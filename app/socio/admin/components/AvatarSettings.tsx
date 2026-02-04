@@ -115,7 +115,7 @@ const AvatarSettings = () => {
         );
       }
     } catch (e) {
-      // No bloquear el logout si falla
+     console.error("Error al limpiar token FCM web:", e);
     }
 
     // Limpiar localStorage

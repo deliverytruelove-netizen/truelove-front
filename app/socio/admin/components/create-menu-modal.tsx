@@ -169,9 +169,10 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="bg-red-600 hover:bg-red-700 text-white transition-colors gap-2">
+          <Button className="bg-red-600 hover:bg-red-700 text-white transition-colors gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
-            Nuevo producto
+            <span className="hidden sm:inline">Nuevo producto</span>
+            <span className="sm:hidden">Nuevo</span>
           </Button>
         )}
       </DialogTrigger>
@@ -218,7 +219,7 @@ export function CreateMenuModal({ categories, onSubmit, trigger, defaultCategory
                     <div className="p-2 text-sm text-gray-500  ">No hay categorías disponibles</div>
                   ) : (
                     categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()} 
+                      <SelectItem key={category.id} value={category.id.toString()}
                   >
                         {category.nombre}
                       </SelectItem>

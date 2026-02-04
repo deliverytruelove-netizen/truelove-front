@@ -8,6 +8,7 @@ import { fetchPedidos, getEstadoLabel, formatDate, type Pedido } from "../servic
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import Image from "next/image"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { 
   AlertCircle, Search, RefreshCw, X, Phone, MapPin, User, Package, 
@@ -476,7 +477,7 @@ export default function PedidosPage() {
       <Dialog open={!!fotoPagoUrl} onOpenChange={() => setFotoPagoUrl(null)}>
         <DialogContent className="sm:max-w-fit p-0 border-0 bg-transparent shadow-none [&>button]:bg-white [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-lg [&>button]:-right-2 [&>button]:-top-2 [&>button]:opacity-100">
           {fotoPagoUrl && (
-            <img 
+            <Image
               src={fotoPagoUrl} 
               alt="Comprobante de pago" 
               className="max-h-[85vh] max-w-[90vw] object-contain rounded-lg"

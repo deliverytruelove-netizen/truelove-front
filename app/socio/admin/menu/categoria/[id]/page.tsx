@@ -243,35 +243,35 @@ function CategoryContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
-      <div className="container mx-auto py-6 px-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 overflow-x-hidden">
+      <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4 max-w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col gap-3 mb-4 sm:mb-6">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push("/socio/admin/menu")}
-              className="border-gray-300 dark:border-gray-800"
+              className="border-gray-300 dark:border-gray-800 flex-shrink-0"
             >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Volver
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-200">{category?.nombre || "Categoría"}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-200 truncate flex-1 min-w-0">{category?.nombre || "Categoría"}</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={loadData} className="border-gray-300 dark:border-gray-800">
-              <Loader2 className="mr-2 h-4 w-4" />
-              Recargar datos
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={loadData} className="border-gray-300 dark:border-gray-800 flex-1 sm:flex-none">
+              <Loader2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Recargar</span>
             </Button>
             <CreateMenuModal categories={allCategories} onSubmit={handleCreateMenu} defaultCategoryId={categoryId} />
           </div>
         </div>
 
-        <Card className="border border-gray-200  dark:border-gray-800 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b dark:bg-gray-800 border-gray-100 dark:border-gray-800">
-            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">Productos en esta categoría</CardTitle>
+        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+          <CardHeader className="py-3 sm:py-4 px-3 sm:px-4 bg-gray-50 border-b dark:bg-gray-800 border-gray-100 dark:border-gray-800">
+            <CardTitle className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200">Productos en esta categoría</CardTitle>
           </CardHeader>
-          <CardContent className="p-5">
+          <CardContent className="p-3 sm:p-5">
             <ProductsList
               menuItems={menuItems}
               categories={allCategories}

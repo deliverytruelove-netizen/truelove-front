@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Edit, MoreVertical, DollarSign, ShoppingBag, Trash2, Package } from "lucide-react"
+import { Edit, MoreVertical, ShoppingBag, Trash2, Package } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -5,13 +5,12 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Edit, Tag, ChevronRight, Plus } from 'lucide-react'
 import { CategoryDialog } from "./category-dialog"
-import type { Category } from "../services/menu.service"
+import type { Category, HorarioDia } from "../services/menu.service"
 import Link from "next/link"
 
 interface CategoryFormData {
   nombre: string
-  hora_inicio?: string | null
-  hora_fin?: string | null
+  horarios?: HorarioDia[] | null
 }
 
 interface CategoriesListProps {
@@ -71,33 +70,33 @@ export const CategoriesList = React.memo<CategoriesListProps>(function Categorie
   return (
     <div className="space-y-4">
       {categories.map((category) => (
-        <Card key={category.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow dark:border-gray-800">
-          <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b border-gray-100 py-3 dark:bg-gray-800 dark:border-gray-800">
-            <div className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-red-600" />
-              <CardTitle className="text-lg font-medium text-gray-800">
+        <Card key={category.id} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow dark:border-gray-800 overflow-hidden">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 border-b border-gray-100 py-3 px-3 sm:px-4 gap-2 dark:bg-gray-800 dark:border-gray-800">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Tag className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <CardTitle className="text-base sm:text-lg font-medium text-gray-800 truncate">
                 {category.nombre}
-                <span className="ml-2 text-sm text-gray-500">
-                  ({productCounts[category.id] || 0}{" "}
-                  {(productCounts[category.id] || 0) === 1 ? "producto" : "productos"})
+                <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-500">
+                  ({productCounts[category.id] || 0})
                 </span>
               </CardTitle>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <CategoryDialog
                 category={category}
                 onSubmit={(data) => onEditCategory(category.id, data)}
                 onDelete={() => onDeleteCategory(category.id)}
                 trigger={
-                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-200">
+                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-200 h-8 w-8">
                     <Edit className="h-4 w-4 text-gray-600 dark:text-gray-200" />
                     <span className="sr-only">Editar categoría</span>
                   </Button>
                 }
               />
               <Link href={`/socio/admin/menu/categoria/${category.id}`} passHref>
-                <Button variant="outline" size="sm" className="gap-1 dark:bg-brand-900">
-                  Ver productos
+                <Button variant="outline" size="sm" className="gap-1 dark:bg-brand-900 text-xs sm:text-sm whitespace-nowrap">
+                  <span className="hidden sm:inline">Ver productos</span>
+                  <span className="sm:hidden">Ver</span>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>

@@ -14,13 +14,12 @@ import {
 import Image from "next/image"
 import { CategoryDialog } from "./category-dialog"
 import { Badge } from "@/components/ui/badge"
-import type { Category, MenuItem } from "../services/menu.service"
+import type { Category, MenuItem, HorarioDia } from "../services/menu.service"
 import { useState } from "react"
 
 interface CategoryFormData {
   nombre: string
-  hora_inicio?: string | null
-  hora_fin?: string | null
+  horarios?: HorarioDia[] | null
 }
 
 interface CategorySectionProps {

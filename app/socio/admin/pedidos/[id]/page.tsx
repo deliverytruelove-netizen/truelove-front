@@ -24,7 +24,6 @@ import {
   Truck,
   Bike,
   CreditCard,
-  Receipt,
   FileText,
   ShoppingBag,
   CheckCircle2,

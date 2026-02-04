@@ -2,10 +2,16 @@
 "use client"
 
 import { useState, Suspense, useMemo } from "react"
-import { Search, LayoutGrid, ListPlus, Plus } from 'lucide-react'
+import { Search, LayoutGrid, ListPlus, Plus, Layers, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import { CreateMenuModal } from "../components/create-menu-modal"
 import { CategoryDialog } from "../components/category-dialog"
@@ -23,6 +29,7 @@ import {
   useCreateMenu,
 } from "../hooks/use-menu-queries"
 import { useProductCounts } from "../hooks/use-product-counts"
+import type { HorarioDia } from "../services/menu.service"
 
 // Componente de carga para Suspense
 function LoadingCategories() {
@@ -74,7 +81,7 @@ function MenuContent() {
     })
   }
 
-  const handleCreateCategory = async (data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }): Promise<void> => {
+  const handleCreateCategory = async (data: { nombre: string; horarios?: HorarioDia[] | null }): Promise<void> => {
     return new Promise((resolve, reject) => {
       createCategoryMutation.mutate(data, {
         onSuccess: () => resolve(),
@@ -83,7 +90,7 @@ function MenuContent() {
     })
   }
 
-  const handleEditCategory = async (id: number, data: { nombre: string; hora_inicio?: string | null; hora_fin?: string | null }): Promise<void> => {
+  const handleEditCategory = async (id: number, data: { nombre: string; horarios?: HorarioDia[] | null }): Promise<void> => {
     return new Promise((resolve, reject) => {
       updateCategoryMutation.mutate({ id, ...data }, {
         onSuccess: () => resolve(),
@@ -134,15 +141,44 @@ function MenuContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 ">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Navegación móvil - Dropdown */}
+          <div className="lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between dark:bg-gray-700">
+                  <span className="flex items-center">
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    Secciones y productos
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[calc(100vw-2rem)]">
+                <DropdownMenuItem className="bg-red-50 text-red-600">
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Secciones y productos
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/socio/admin/menu/adicionales")}>
+                  <ListPlus className="mr-2 h-4 w-4" />
+                  Adicionales
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/socio/admin/menu/grupos")}>
+                  <Layers className="mr-2 h-4 w-4" />
+                  Grupos de Adicionales
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Sidebar - Solo desktop */}
+          <div className="hidden lg:block lg:col-span-1">
             <Card className="border border-gray-200 shadow-sm sticky top-6 dark:bg-gray-800 dark:border-gray-700">
               <CardHeader className="py-3 px-4 border-b border-gray-100 dark:border-gray-600">
                 <CardTitle className="text-lg font-medium">Navegación</CardTitle>
               </CardHeader>
-              <CardContent className="p-2 ">
-                <nav className="flex flex-col gap-1 ">
+              <CardContent className="p-2">
+                <nav className="flex flex-col gap-1">
                   <Button
                     variant="default"
                     className="w-full justify-start bg-red-600 hover:bg-red-700 text-white"
@@ -156,7 +192,15 @@ function MenuContent() {
                     onClick={() => router.push("/socio/admin/menu/adicionales")}
                   >
                     <ListPlus className="mr-2 h-4 w-4" />
-                    Todos los Adicionales
+                    Adicionales
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => router.push("/socio/admin/menu/grupos")}
+                  >
+                    <Layers className="mr-2 h-4 w-4" />
+                    Grupos de Adicionales
                   </Button>
                 </nav>
               </CardContent>
@@ -166,17 +210,17 @@ function MenuContent() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Card className="border border-gray-200 dark:border-gray-900 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4 py-4 bg-gray-50 border-b border-gray-100 dark:bg-gray-700 dark:border-gray-800 sticky top-[4rem] z-20">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4 bg-gray-50 border-b border-gray-100 dark:bg-gray-700 dark:border-gray-800 sticky top-[4rem] z-20">
                 <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
                   Secciones y productos
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <CategoryDialog
                     onSubmit={handleCreateCategory}
                     trigger={
                       <Button
                         variant="outline"
-                        className="gap-2 border-gray-300 dark:bg-gray-700"
+                        className="gap-2 border-gray-300 dark:bg-gray-700 w-full sm:w-auto"
                         disabled={createCategoryMutation.isPending}
                       >
                         <Plus className="h-4 w-4" />
