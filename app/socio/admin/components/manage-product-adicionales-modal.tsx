@@ -1,7 +1,7 @@
 // app\socio\admin\components\manage-product-adicionales-modal.tsx
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
-  Plus, Loader2, ListPlus, X, Trash2, Edit, DollarSign, 
-  FileText, Upload, CheckCircle2, XCircle, Save
+  Plus, Loader2, ListPlus, Trash2, Edit, DollarSign, 
+  FileText, CheckCircle2, XCircle, Save
 } from "lucide-react"
 import { adicionalService, type Adicional } from "../services/adicional.service"
 import type { MenuItem } from "../services/menu.service"
@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
-import Image from "next/image"
 
 interface ManageProductAdicionalesModalProps {
   menuItem: MenuItem
@@ -57,10 +56,6 @@ export function ManageProductAdicionalesModal({
   const [descripcion, setDescripcion] = useState("")
   const [precio, setPrecio] = useState("")
   const [status, setStatus] = useState("active")
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [imageError, setImageError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const MAX_FILE_SIZE = 5 * 1024 * 1024
 
   // Cargar adicionales cuando se abre el modal
   useEffect(() => {
@@ -98,12 +93,7 @@ export function ManageProductAdicionalesModal({
     setDescripcion("")
     setPrecio("")
     setStatus("active")
-    setPreviewImage(null)
-    setImageError(null)
     setEditingAdicional(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
   }
 
   const handleCreateClick = () => {
@@ -117,43 +107,12 @@ export function ManageProductAdicionalesModal({
     setDescripcion(adicional.descripcion || "")
     setPrecio(typeof adicional.precio === "string" ? adicional.precio : adicional.precio.toString())
     setStatus(adicional.status)
-    setPreviewImage(adicional.foto || null)
     setViewMode("edit")
   }
 
   const handleBackToList = () => {
     resetForm()
     setViewMode("list")
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    setImageError(null)
-
-    if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        setImageError(`Imagen muy grande. Máximo: 5MB`)
-        if (fileInputRef.current) fileInputRef.current.value = ""
-        return
-      }
-
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
-      if (!validTypes.includes(file.type)) {
-        setImageError('Formato no válido. Solo JPG, PNG, GIF o WEBP')
-        if (fileInputRef.current) fileInputRef.current.value = ""
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = () => setPreviewImage(reader.result as string)
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const clearImage = () => {
-    setPreviewImage(null)
-    setImageError(null)
-    if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,10 +125,6 @@ export function ManageProductAdicionalesModal({
       formData.append("descripcion", descripcion)
       formData.append("precio", precio)
       formData.append("status", status)
-
-      if (fileInputRef.current?.files?.[0]) {
-        formData.append("foto", fileInputRef.current.files[0])
-      }
 
       if (viewMode === "create") {
         await adicionalService.createMenuAdicional(menuItem.id, formData)
@@ -252,18 +207,19 @@ export function ManageProductAdicionalesModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {/* Vista de lista */}
           {viewMode === "list" && (
             <div className="flex flex-col h-full">
-              <div className="p-4 border-b bg-gray-50">
+              <div className="p-4 border-b bg-gray-50 flex-shrink-0">
                 <Button onClick={handleCreateClick} className="w-full bg-red-600 hover:bg-red-700 gap-2">
                   <Plus className="h-4 w-4" />
                   Crear nuevo adicional
                 </Button>
               </div>
 
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 max-h-[50vh]">
+                <div className="p-4">
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -282,16 +238,6 @@ export function ManageProductAdicionalesModal({
                         key={adicional.id}
                         className="flex items-center gap-3 p-3 bg-white border rounded-lg hover:border-gray-300 transition-colors"
                       >
-                        {adicional.foto && (
-                          <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
-                            <Image
-                              src={adicional.foto}
-                              alt={adicional.titulo}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-gray-800 truncate">{adicional.titulo}</p>
@@ -349,6 +295,7 @@ export function ManageProductAdicionalesModal({
                     ))}
                   </div>
                 )}
+                </div>
               </ScrollArea>
             </div>
           )}
@@ -407,50 +354,6 @@ export function ManageProductAdicionalesModal({
                         required
                       />
                     </div>
-                  </div>
-
-                  {/* Foto */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
-                      <Upload className="h-4 w-4 text-gray-500" />
-                      Foto (opcional)
-                    </Label>
-                    <Input
-                      type="file"
-                      accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      className={cn(
-                        "text-sm",
-                        previewImage ? "hidden" : "block",
-                        imageError ? "border-red-500" : ""
-                      )}
-                    />
-                    {imageError && (
-                      <p className="text-xs text-red-600 flex items-center gap-1">
-                        <XCircle className="h-3 w-3" />
-                        {imageError}
-                      </p>
-                    )}
-                    {previewImage && (
-                      <div className="relative w-full h-24 rounded-md overflow-hidden border">
-                        <Image
-                          src={previewImage}
-                          alt="Vista previa"
-                          fill
-                          className="object-contain bg-gray-50"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6 rounded-full"
-                          onClick={clearImage}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
                   {/* Estado */}

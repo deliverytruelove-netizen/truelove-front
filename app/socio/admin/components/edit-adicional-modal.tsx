@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -10,10 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Edit, Upload, DollarSign, Package, FileText, X, CheckCircle2, XCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Edit, DollarSign, Package, FileText, CheckCircle2, XCircle } from "lucide-react"
 import type { Adicional, Menu } from "../services/adicional.service"
-import Image from "next/image"
 
 interface EditAdicionalModalProps {
   adicional: Adicional
@@ -25,20 +23,13 @@ interface EditAdicionalModalProps {
 export function EditAdicionalModal({ adicional, menus, onSubmit, trigger }: EditAdicionalModalProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [selectedMenu, setSelectedMenu] = useState<string>("")
   const [status, setStatus] = useState<string>("active")
-  const [imageError, setImageError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const MAX_FILE_SIZE = 5 * 1024 * 1024
 
   useEffect(() => {
     if (adicional) {
       setSelectedMenu(adicional.menu_id.toString())
       setStatus(adicional.status)
-      if (adicional.foto) {
-        setPreviewImage(adicional.foto)
-      }
     }
   }, [adicional, open])
 
@@ -63,56 +54,12 @@ export function EditAdicionalModal({ adicional, menus, onSubmit, trigger }: Edit
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    setImageError(null)
-
-    if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        setImageError(`La imagen es demasiado grande. Tamaño máximo: 5MB. Tu archivo: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
-        return
-      }
-
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
-      if (!validTypes.includes(file.type)) {
-        setImageError('Formato no válido. Solo se permiten imágenes JPG, PNG, GIF o WEBP')
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreviewImage(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const clearImage = () => {
-    setPreviewImage(null)
-    setImageError(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
   return (
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
         setOpen(newOpen)
         if (!newOpen) {
-          if (adicional.foto) {
-            setPreviewImage(adicional.foto)
-          } else {
-            setPreviewImage(null)
-          }
-          setImageError(null)
           setStatus(adicional.status)
           setSelectedMenu(adicional.menu_id.toString())
         }
@@ -219,57 +166,6 @@ export function EditAdicionalModal({ adicional, menus, onSubmit, trigger }: Edit
               </div>
             </div>
 
-            {/* Foto del adicional */}
-            <div className="space-y-2">
-              <Label htmlFor="foto" className="text-sm font-medium flex items-center gap-1">
-                <Upload className="h-4 w-4 text-gray-500" />
-                Foto del adicional
-              </Label>
-              <div className="relative">
-                <Input
-                  id="foto"
-                  name="foto"
-                  type="file"
-                  accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className={cn(
-                    "border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm",
-                    previewImage ? "hidden" : "block",
-                    imageError ? "border-red-500" : ""
-                  )}
-                />
-                {imageError && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <XCircle className="h-3 w-3 flex-shrink-0" />
-                    <span>{imageError}</span>
-                  </p>
-                )}
-                {previewImage && (
-                  <div className="relative w-full h-20 rounded-md overflow-hidden border border-gray-200">
-                    <Image
-                      src={previewImage}
-                      alt="Vista previa"
-                      fill
-                      className="object-contain bg-gray-50"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6 rounded-full"
-                      onClick={clearImage}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500">
-                Tamaño máximo: 5MB. Formatos: JPG, PNG, GIF, WEBP. (Opcional)
-              </p>
-            </div>
-
             {/* Estado del adicional */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Estado del adicional</Label>
@@ -309,7 +205,7 @@ export function EditAdicionalModal({ adicional, menus, onSubmit, trigger }: Edit
               <Button
                 type="submit"
                 className="bg-red-600 hover:bg-red-700 text-white transition-colors w-full sm:w-auto"
-                disabled={isSubmitting || !!imageError || !selectedMenu}
+                disabled={isSubmitting || !selectedMenu}
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center">

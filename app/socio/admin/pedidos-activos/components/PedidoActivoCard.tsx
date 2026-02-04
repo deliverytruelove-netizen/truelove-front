@@ -27,9 +27,11 @@ import {
   ImageIcon,
   ShoppingBag,
   Eye,
+  Printer,
 } from "lucide-react";
 import { showAlert, confirmAlert } from "@/components/ui/DataTable/Alert";
 import PedidoDetalleModal from "./PedidoDetalleModal";
+import { TicketModal } from "../../components/ticket/TicketModal";
 
 interface Props {
   pedido: PedidoActivo;
@@ -371,16 +373,27 @@ export default function PedidoActivoCard({ pedido }: Props) {
               )}
             </div>
 
-            {/* Botón Ver Detalle en su propia fila */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-9"
-              onClick={() => setShowDetalle(true)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Ver Detalle Completo
-            </Button>
+            {/* Botones Ver Detalle e Imprimir Ticket */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-9"
+                onClick={() => setShowDetalle(true)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Ver Detalle
+              </Button>
+              <TicketModal
+                pedido={pedido}
+                trigger={
+                  <Button variant="outline" size="sm" className="flex-1 h-9">
+                    <Printer className="h-4 w-4 mr-2" />
+                    Imprimir Ticket
+                  </Button>
+                }
+              />
+            </div>
           </div>
         )}
       </CardContent>

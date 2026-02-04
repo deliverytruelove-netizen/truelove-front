@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import type { Adicional, Menu } from "../services/adicional.service"
 import {
@@ -118,34 +117,26 @@ export function AdicionalesList({
   }
 
   return (
-    <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {adicionales.map((item) => (
-        <Card key={item.id} className="overflow-hidden border border-gray-200 hover:border-red-200 transition-colors">
-          {/* Imagen más pequeña con aspect ratio 4:3 */}
-          <div className="aspect-[4/3] relative">
-            <Image
-              src={item.foto || "/placeholder.svg?height=150&width=200"}
-              alt={item.titulo}
-              fill
-              className="object-cover"
-            />
-            <div className="absolute top-1.5 right-1.5">{getStatusBadge(item.status)}</div>
-          </div>
+        <Card key={item.id} className="border border-gray-200 hover:border-red-200 transition-colors">
           <CardContent className="p-3">
-            <div className="flex items-start justify-between gap-1">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-800 text-sm truncate">{item.titulo}</h3>
-                
-                {/* Producto asociado */}
-                <div className="mt-1 flex items-center text-xs text-gray-500">
-                  <Package className="h-3 w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">{getMenuName(item)}</span>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-gray-800 text-sm truncate">{item.titulo}</h3>
+                  {getStatusBadge(item.status)}
                 </div>
                 
-                {/* Precio */}
-                <div className="mt-1.5 flex items-center">
-                  <DollarSign className="h-3.5 w-3.5 text-green-600 mr-0.5" />
-                  <p className="font-semibold text-gray-900 text-sm">S/ {formatPrice(item.precio)}</p>
+                {/* Producto asociado y precio en una línea */}
+                <div className="mt-1 flex items-center justify-between text-xs">
+                  <span className="flex items-center text-gray-500">
+                    <Package className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">{getMenuName(item)}</span>
+                  </span>
+                  <span className="font-semibold text-green-600 ml-2">
+                    S/ {formatPrice(item.precio)}
+                  </span>
                 </div>
               </div>
               

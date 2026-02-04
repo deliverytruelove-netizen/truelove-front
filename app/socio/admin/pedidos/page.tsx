@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { 
   AlertCircle, Search, RefreshCw, X, Phone, MapPin, User, Package, 
   Bike, CreditCard, FileText, Receipt, ChevronDown, ChevronUp, ShoppingBag,
-  CheckCircle2, History, Eye, Download
+  CheckCircle2, History, Eye, Download, Printer
 } from 'lucide-react'
 import {
   Dialog,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { TicketModal } from "../components/ticket/TicketModal"
 
 export default function PedidosPage() {
   const router = useRouter()
@@ -36,7 +37,7 @@ export default function PedidosPage() {
     refetch,
   } = useQuery({
     queryKey: ["pedidos", fechaFiltro],
-    queryFn: () => fetchPedidos(fechaFiltro),
+    queryFn: () => fetchPedidos(fechaFiltro, "finalizados"),
   })
 
   // Filtrar pedidos según búsqueda
@@ -61,21 +62,20 @@ export default function PedidosPage() {
     window.open(url, '_blank')
   }
 
-  // Calcular totales
-  const calcularTotal = (pedido: Pedido) => {
+  // Calcular subtotal de productos (sin delivery)
+  const calcularSubtotal = (pedido: Pedido) => {
     const subtotal = pedido.detalleArray?.reduce((sum, item) => {
       return sum + parseFloat(item.precio) * item.cantidad
     }, 0) || 0
-    const delivery = parseFloat(pedido.precio_delivery || "0")
     const descuento = parseFloat(pedido.descuento || "0")
-    return subtotal + delivery - descuento
+    return subtotal - descuento
   }
 
   // Renderizar tarjeta de pedido mejorada
   const renderPedidoCard = (pedido: Pedido) => {
     const estadoInfo = getEstadoLabel(pedido.estado)
     const isExpanded = expandedPedido === pedido.id
-    const total = calcularTotal(pedido)
+    const subtotal = calcularSubtotal(pedido)
     const tipoPedidoLabel = pedido.tipo_pedido === 0 ? "Delivery" : "Recojo"
 
     return (
@@ -128,7 +128,7 @@ export default function PedidosPage() {
               </span>
             )}
             <span className="ml-auto font-bold text-green-600">
-              S/ {total.toFixed(2)}
+              S/ {subtotal.toFixed(2)}
             </span>
           </div>
         </div>
@@ -245,12 +245,6 @@ export default function PedidosPage() {
 
                   {/* Totales */}
                   <div className="border-t mt-3 pt-3 space-y-1.5">
-                    {pedido.precio_delivery && parseFloat(pedido.precio_delivery) > 0 && (
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Delivery</span>
-                        <span className="tabular-nums">S/ {parseFloat(pedido.precio_delivery).toFixed(2)}</span>
-                      </div>
-                    )}
                     {pedido.descuento && parseFloat(pedido.descuento) > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
                         <span>Descuento</span>
@@ -259,7 +253,7 @@ export default function PedidosPage() {
                     )}
                     <div className="flex justify-between text-base font-bold pt-1">
                       <span>Total</span>
-                      <span className="tabular-nums text-green-600">S/ {total.toFixed(2)}</span>
+                      <span className="tabular-nums text-green-600">S/ {subtotal.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -312,8 +306,21 @@ export default function PedidosPage() {
               </div>
             </div>
 
-            {/* Botón ver más detalles */}
-            <div className="flex justify-end mt-4">
+            {/* Botones de acción */}
+            <div className="flex justify-end gap-2 mt-4">
+              <TicketModal
+                pedido={pedido}
+                trigger={
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Imprimir Ticket
+                  </Button>
+                }
+              />
               <Button 
                 variant="outline" 
                 size="sm"

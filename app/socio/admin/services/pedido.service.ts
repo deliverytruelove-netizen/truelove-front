@@ -55,6 +55,7 @@ export interface Pedido {
 
 export const fetchPedidos = async (
   fecha: string = "hoy",
+  tipo: "todos" | "finalizados" | "activos" = "finalizados",
 ): Promise<Pedido[]> => {
   try {
     const token = localStorage.getItem("authToken");
@@ -101,7 +102,7 @@ export const fetchPedidos = async (
 
     // Usar la misma ruta pública que usa la app móvil para consistencia
     const response = await fetch(
-      `${API_URL}/socio/get/pedidos/${socioId}?tipo=todos&fecha=${fecha}`,
+      `${API_URL}/socio/get/pedidos/${socioId}?tipo=${tipo}&fecha=${fecha}`,
       {
         method: "GET",
         headers: {
