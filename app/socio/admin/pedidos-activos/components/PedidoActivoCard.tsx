@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   actualizarEstadoPedidoActivo,
+  verificarConfirmacionPago,
   getEstadoActivoLabel,
   getEstadoNumerico,
   formatDate,
   type PedidoActivo,
+  type PedidoDetalle,
 } from "../../services/pedido.service";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +76,25 @@ export default function PedidoActivoCard({ pedido }: Props) {
     },
   });
 
+  const verificarPagoMutation = useMutation({
+    mutationFn: () => verificarConfirmacionPago(pedido.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] });
+      showAlert({
+        title: "Pago verificado",
+        text: "El pago ha sido verificado correctamente. Ahora puedes aceptar el pedido.",
+        icon: "success",
+      });
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "No se pudo verificar el pago.",
+        icon: "error",
+      });
+    },
+  });
+
   const handleAceptar = () => {
     if (estadoNum === 1) {
       setShowTiempoInput(true);
@@ -108,6 +129,34 @@ export default function PedidoActivoCard({ pedido }: Props) {
     }
   };
 
+  const handleVerificarPago = async () => {
+    if (!pedido.foto_pago) {
+      showAlert({
+        title: "Sin comprobante",
+        text: "El cliente aún no ha subido el comprobante de pago.",
+        icon: "warning",
+      });
+      return;
+    }
+    
+    // Mostrar la foto del pago
+    setShowFotoPago(true);
+  };
+
+  const confirmarVerificacionPago = async () => {
+    const result = await confirmAlert({
+      title: "¿Verificar pago?",
+      text: "¿Confirmas que el pago ha sido recibido correctamente?",
+      icon: "info",
+      confirmButtonText: "Sí, verificar",
+      cancelButtonText: "Cancelar",
+    });
+    if (result.isConfirmed) {
+      verificarPagoMutation.mutate();
+      setShowFotoPago(false);
+    }
+  };
+
   const totalProductos =
     pedido.detalleArray?.reduce((sum, item) => {
       return sum + parseFloat(item.precio) * item.cantidad;
@@ -118,6 +167,34 @@ export default function PedidoActivoCard({ pedido }: Props) {
     (pedido.precio_delivery ? parseFloat(pedido.precio_delivery) : 0);
 
   const tipoPedidoLabel = pedido.tipo_pedido === 0 ? "Delivery" : "Recojo";
+
+  // Agrupar productos con sus adicionales
+  const productosAgrupados = (() => {
+    if (!pedido.detalleArray) return [];
+    
+    const grupos: Array<{
+      producto: PedidoDetalle;
+      adicionales: PedidoDetalle[];
+    }> = [];
+    
+    let ultimoProducto: { producto: PedidoDetalle; adicionales: PedidoDetalle[] } | null = null;
+    
+    pedido.detalleArray.forEach((item) => {
+      if (item.tipo === "item") {
+        // Es un producto principal
+        ultimoProducto = { producto: item, adicionales: [] };
+        grupos.push(ultimoProducto);
+      } else if (item.tipo === "adicional" && ultimoProducto) {
+        // Es un adicional, agregar al último producto
+        ultimoProducto.adicionales.push(item);
+      } else if (item.tipo === "adicional" && !ultimoProducto) {
+        // Adicional sin producto (caso edge), mostrarlo como producto
+        grupos.push({ producto: item, adicionales: [] });
+      }
+    });
+    
+    return grupos;
+  })();
 
   return (
     <Card
@@ -192,24 +269,38 @@ export default function PedidoActivoCard({ pedido }: Props) {
           </div>
         )}
 
-        {/* Productos compactos */}
+        {/* Productos compactos con jerarquía */}
         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-md p-2.5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs font-semibold">Productos</span>
           </div>
           <div className="space-y-0.5">
-            {pedido.detalleArray?.map((item) => (
-              <div key={item.id} className="flex justify-between text-xs">
-                <span>
-                  {item.nombre} x{item.cantidad}
-                  {item.tipo === "adicional" && (
-                    <span className="text-blue-600 ml-1">(adic.)</span>
-                  )}
-                </span>
-                <span className="font-medium tabular-nums">
-                  S/{(parseFloat(item.precio) * item.cantidad).toFixed(2)}
-                </span>
+            {productosAgrupados.map((grupo, index) => (
+              <div key={`grupo-${index}`} className="space-y-0.5">
+                {/* Producto principal */}
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium">
+                    {grupo.producto.nombre} x{grupo.producto.cantidad}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    S/{(parseFloat(grupo.producto.precio) * grupo.producto.cantidad).toFixed(2)}
+                  </span>
+                </div>
+                
+                {/* Adicionales indentados */}
+                {grupo.adicionales.map((adicional) => (
+                  <div key={adicional.id} className="flex justify-between text-xs pl-4 text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="text-gray-400">└─</span>
+                      <span className="italic">{adicional.nombre}</span>
+                      <span className="text-blue-600 text-[10px]">(adic.)</span>
+                    </span>
+                    <span className="tabular-nums">
+                      S/{(parseFloat(adicional.precio) * adicional.cantidad).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
@@ -223,28 +314,51 @@ export default function PedidoActivoCard({ pedido }: Props) {
           </div>
         </div>
 
-        {/* Foto de pago */}
-        {pedido.requiere_confirmacion_local && pedido.foto_pago && (
-          <div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFotoPago(!showFotoPago)}
-              className="text-blue-600 h-7 text-xs px-2"
-            >
-              <ImageIcon className="h-3.5 w-3.5 mr-1" />
-              {showFotoPago ? "Ocultar comprobante" : "Ver comprobante"}
-            </Button>
-            {showFotoPago && (
-              <div className="mt-2">
+        {/* Modal de foto de pago */}
+        {showFotoPago && pedido.foto_pago && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full max-h-[90vh] overflow-hidden">
+              <div className="bg-red-600 text-white p-3 flex items-center justify-between">
+                <h3 className="font-semibold text-sm">Comprobante de pago - Pedido #{pedido.id}</h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-red-700 h-8 w-8"
+                  onClick={() => setShowFotoPago(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={pedido.foto_pago}
-                  alt="Comprobante de pago"
-                  className="max-w-full max-h-48 rounded-md border object-contain"
+                  alt="Comprobante"
+                  className="w-full h-auto max-h-[50vh] object-contain rounded-lg"
                 />
               </div>
-            )}
+              <div className="p-4 border-t flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-10"
+                  onClick={() => setShowFotoPago(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={confirmarVerificacionPago}
+                  disabled={verificarPagoMutation.isPending}
+                >
+                  {verificarPagoMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-2" />
+                  )}
+                  Verificar Pago
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -309,7 +423,35 @@ export default function PedidoActivoCard({ pedido }: Props) {
           <div className="space-y-2">
             {/* Fila principal de acciones */}
             <div className="flex gap-2">
-              {estadoNum === 1 && (
+              {estadoNum === 1 && pedido.requiere_confirmacion_local && (
+                <>
+                  <Button
+                    onClick={handleVerificarPago}
+                    disabled={verificarPagoMutation.isPending}
+                    size="sm"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 h-10"
+                  >
+                    {verificarPagoMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <CreditCard className="h-4 w-4 mr-1" />
+                    )}
+                    Verificar pago
+                  </Button>
+                  <Button
+                    onClick={handleRechazar}
+                    disabled={mutation.isPending}
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1 h-10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Rechazar
+                  </Button>
+                </>
+              )}
+
+              {estadoNum === 1 && !pedido.requiere_confirmacion_local && (
                 <>
                   <Button
                     onClick={handleAceptar}

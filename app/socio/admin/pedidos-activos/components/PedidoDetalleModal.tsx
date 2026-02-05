@@ -9,6 +9,7 @@ import {
   getEstadoNumerico,
   formatDate,
   type PedidoActivo,
+  type PedidoDetalle,
 } from "../../services/pedido.service";
 import {
   Dialog,
@@ -256,6 +257,34 @@ function PedidoDetalleContent({
   const esDelivery = pedido.tipo_pedido === 0;
   const estadosTimeline = esDelivery ? ESTADOS_DELIVERY : ESTADOS_RECOJO;
   const metodoPagoConfig = getMetodoPagoConfig(pedido.tipo_pago);
+
+  // Agrupar productos con sus adicionales
+  const productosAgrupados = (() => {
+    if (!pedido.detalleArray) return [];
+    
+    const grupos: Array<{
+      producto: PedidoDetalle;
+      adicionales: PedidoDetalle[];
+    }> = [];
+    
+    let ultimoProducto: { producto: PedidoDetalle; adicionales: PedidoDetalle[] } | null = null;
+    
+    pedido.detalleArray.forEach((item) => {
+      if (item.tipo === "item") {
+        // Es un producto principal
+        ultimoProducto = { producto: item, adicionales: [] };
+        grupos.push(ultimoProducto);
+      } else if (item.tipo === "adicional" && ultimoProducto) {
+        // Es un adicional, agregar al último producto
+        ultimoProducto.adicionales.push(item);
+      } else if (item.tipo === "adicional" && !ultimoProducto) {
+        // Adicional sin producto (caso edge), mostrarlo como producto
+        grupos.push({ producto: item, adicionales: [] });
+      }
+    });
+    
+    return grupos;
+  })();
 
   // Helper para mostrar alertas
   const showCustomAlert = (title: string, message: string, type: "warning" | "error" | "success" | "info", onCloseCallback?: () => void) => {
@@ -580,20 +609,36 @@ function PedidoDetalleContent({
           <ShoppingBag className="h-4 w-4" />
           Productos
         </h4>
-        <div className="space-y-1">
-          {pedido.detalleArray?.map((item) => (
-            <div key={item.id} className="flex justify-between items-center py-0.5">
-              <div className="flex items-center gap-1">
-                <span className="text-xs md:text-sm">
-                  ({item.cantidad}) {item.nombre}
+        <div className="space-y-1.5">
+          {productosAgrupados.map((grupo, index) => (
+            <div key={`grupo-${index}`} className="space-y-0.5">
+              {/* Producto principal */}
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-xs md:text-sm font-medium">
+                  ({grupo.producto.cantidad}) {grupo.producto.nombre}
                 </span>
-                {item.tipo === "adicional" && (
-                  <Badge variant="secondary" className="text-[9px] md:text-[10px] px-1 py-0">Adic.</Badge>
-                )}
+                <span className="font-medium text-xs md:text-sm tabular-nums">
+                  S/{(parseFloat(grupo.producto.precio) * grupo.producto.cantidad).toFixed(2)}
+                </span>
               </div>
-              <span className="font-medium text-xs md:text-sm tabular-nums">
-                S/{(parseFloat(item.precio) * item.cantidad).toFixed(2)}
-              </span>
+              
+              {/* Adicionales indentados */}
+              {grupo.adicionales.map((adicional) => (
+                <div key={adicional.id} className="flex justify-between items-center py-0.5 pl-4 md:pl-6">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <span className="text-gray-400 text-xs">└─</span>
+                    <span className="text-xs md:text-sm italic">
+                      ({adicional.cantidad}) {adicional.nombre}
+                    </span>
+                    <Badge variant="secondary" className="text-[9px] md:text-[10px] px-1 py-0 bg-blue-100 text-blue-700">
+                      adic.
+                    </Badge>
+                  </div>
+                  <span className="text-xs md:text-sm tabular-nums text-muted-foreground">
+                    S/{(parseFloat(adicional.precio) * adicional.cantidad).toFixed(2)}
+                  </span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -888,6 +933,31 @@ function PedidoDetalleDesktop({
   const estadosTimeline = esDelivery ? ESTADOS_DELIVERY : ESTADOS_RECOJO;
   const metodoPagoConfig = getMetodoPagoConfig(pedido.tipo_pago);
 
+  // Agrupar productos con sus adicionales
+  const productosAgrupadosDesktop = (() => {
+    if (!pedido.detalleArray) return [];
+    
+    const grupos: Array<{
+      producto: PedidoDetalle;
+      adicionales: PedidoDetalle[];
+    }> = [];
+    
+    let ultimoProducto: { producto: PedidoDetalle; adicionales: PedidoDetalle[] } | null = null;
+    
+    pedido.detalleArray.forEach((item) => {
+      if (item.tipo === "item") {
+        ultimoProducto = { producto: item, adicionales: [] };
+        grupos.push(ultimoProducto);
+      } else if (item.tipo === "adicional" && ultimoProducto) {
+        ultimoProducto.adicionales.push(item);
+      } else if (item.tipo === "adicional" && !ultimoProducto) {
+        grupos.push({ producto: item, adicionales: [] });
+      }
+    });
+    
+    return grupos;
+  })();
+
   const showCustomAlert = (title: string, message: string, type: "warning" | "error" | "success" | "info", onCloseCallback?: () => void) => {
     setAlertModal({ isOpen: true, title, message, type, onCloseCallback });
   };
@@ -1130,17 +1200,36 @@ function PedidoDetalleDesktop({
           <h4 className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide flex items-center gap-1">
             <ShoppingBag className="h-3.5 w-3.5" /> Productos
           </h4>
-          <div className="flex-1 space-y-1 text-sm">
-            {pedido.detalleArray?.map((item) => (
-              <div key={item.id} className="flex justify-between items-center py-1 border-b border-dashed last:border-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground">({item.cantidad})</span>
-                  <span>{item.nombre}</span>
-                  {item.tipo === "adicional" && (
-                    <Badge variant="secondary" className="text-[9px] px-1 py-0">Adic.</Badge>
-                  )}
+          <div className="flex-1 space-y-1.5 text-sm">
+            {productosAgrupadosDesktop.map((grupo, index) => (
+              <div key={`grupo-desktop-${index}`} className="space-y-0.5">
+                {/* Producto principal */}
+                <div className="flex justify-between items-center py-1 border-b border-dashed">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground">({grupo.producto.cantidad})</span>
+                    <span className="font-medium">{grupo.producto.nombre}</span>
+                  </div>
+                  <span className="font-medium tabular-nums">
+                    S/{(parseFloat(grupo.producto.precio) * grupo.producto.cantidad).toFixed(2)}
+                  </span>
                 </div>
-                <span className="font-medium tabular-nums">S/{(parseFloat(item.precio) * item.cantidad).toFixed(2)}</span>
+                
+                {/* Adicionales indentados */}
+                {grupo.adicionales.map((adicional) => (
+                  <div key={adicional.id} className="flex justify-between items-center py-0.5 pl-6 text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400 text-xs">└─</span>
+                      <span className="text-xs">({adicional.cantidad})</span>
+                      <span className="italic text-sm">{adicional.nombre}</span>
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 bg-blue-100 text-blue-700">
+                        adic.
+                      </Badge>
+                    </div>
+                    <span className="text-sm tabular-nums">
+                      S/{(parseFloat(adicional.precio) * adicional.cantidad).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
