@@ -387,8 +387,21 @@ function PedidoDetalleContent({
     });
   };
 
-  const handleDescargarComprobante = () => {
-    if (pedido.foto_pago) {
+  const handleDescargarComprobante = async () => {
+    if (!pedido.foto_pago) return;
+    try {
+      const response = await fetch(pedido.foto_pago);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const extension = pedido.foto_pago.split(".").pop()?.split("?")[0] || "jpg";
+      link.download = `comprobante-pedido-${pedido.id}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
       window.open(pedido.foto_pago, "_blank");
     }
   };
@@ -1060,8 +1073,21 @@ function PedidoDetalleDesktop({
     window.location.href = `tel:${numero}`;
   };
 
-  const handleDescargarComprobante = () => {
-    if (pedido.foto_pago) {
+  const handleDescargarComprobante = async () => {
+    if (!pedido.foto_pago) return;
+    try {
+      const response = await fetch(pedido.foto_pago);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const extension = pedido.foto_pago.split(".").pop()?.split("?")[0] || "jpg";
+      link.download = `comprobante-pedido-${pedido.id}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
       window.open(pedido.foto_pago, "_blank");
     }
   };

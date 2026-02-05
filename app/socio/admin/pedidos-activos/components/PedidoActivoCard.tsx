@@ -30,6 +30,7 @@ import {
   ShoppingBag,
   Eye,
   Printer,
+  Download,
 } from "lucide-react";
 import { showAlert, confirmAlert } from "@/components/ui/DataTable/Alert";
 import PedidoDetalleModal from "./PedidoDetalleModal";
@@ -141,6 +142,25 @@ export default function PedidoActivoCard({ pedido }: Props) {
     
     // Mostrar la foto del pago
     setShowFotoPago(true);
+  };
+
+  const handleDescargarComprobante = async () => {
+    if (!pedido.foto_pago) return;
+    try {
+      const response = await fetch(pedido.foto_pago);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const extension = pedido.foto_pago.split(".").pop()?.split("?")[0] || "jpg";
+      link.download = `comprobante-pedido-${pedido.id}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      window.open(pedido.foto_pago, "_blank");
+    }
   };
 
   const confirmarVerificacionPago = async () => {
@@ -320,14 +340,25 @@ export default function PedidoActivoCard({ pedido }: Props) {
             <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full max-h-[90vh] overflow-hidden">
               <div className="bg-red-600 text-white p-3 flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Comprobante de pago - Pedido #{pedido.id}</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-red-700 h-8 w-8"
-                  onClick={() => setShowFotoPago(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-red-700 h-8 w-8"
+                    onClick={handleDescargarComprobante}
+                    title="Descargar comprobante"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-red-700 h-8 w-8"
+                    onClick={() => setShowFotoPago(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
