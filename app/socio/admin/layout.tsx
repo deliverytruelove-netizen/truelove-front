@@ -44,6 +44,18 @@ import {
   PedidosRealtimeProvider,
   usePedidosRealtimeContext,
 } from "./context/PedidosRealtimeContext";
+import { Switch } from "@/components/ui/switch";
+import { socioService } from "./services/socio.service";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const menuItems = [
   { name: "Inicio", href: "/socio/admin", icon: Home },
@@ -83,9 +95,55 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Estados para el toggle de activar/desactivar local
+  const [localActivo, setLocalActivo] = useState<boolean>(true);
+  const [localId, setLocalId] = useState<number | null>(null);
+  const [togglingLocal, setTogglingLocal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingActivoState, setPendingActivoState] = useState<boolean | null>(null);
+
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
+
+  // Cargar estado del local
+  useEffect(() => {
+    const cargarEstadoLocal = async () => {
+      try {
+        const response = await socioService.getProfile();
+        if (response.status === "success" && response.data) {
+          setLocalId(response.data.id);
+          setLocalActivo(response.data.activo ?? true);
+        }
+      } catch (error) {
+        console.error("Error al cargar estado del local:", error);
+      }
+    };
+
+    cargarEstadoLocal();
+  }, []);
+
+  // Manejar cambio de estado del local
+  const handleToggleLocal = (checked: boolean) => {
+    setPendingActivoState(checked);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmarCambioEstado = async () => {
+    if (localId === null || pendingActivoState === null) return;
+
+    try {
+      setTogglingLocal(true);
+      await socioService.actualizarEstadoLocal(localId, pendingActivoState);
+      setLocalActivo(pendingActivoState);
+    } catch (error) {
+      console.error("Error al actualizar estado del local:", error);
+    } finally {
+      setTogglingLocal(false);
+      setShowConfirmDialog(false);
+      setPendingActivoState(null);
+    }
+  };
 
   // Verificar acceso cuando se monta el layout
   useEffect(() => {
@@ -414,16 +472,52 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
               >
                 <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400" />
               </Button>
-              <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+              <h1 className="text-base sm:text-xl font-semibold text-gray-800 dark:text-gray-200">
                 Panel de Administración
               </h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Toggle Activar/Desactivar Local */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className={`text-xs sm:text-sm font-medium ${localActivo ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {localActivo ? 'Activo' : 'Inactivo'}
+                </span>
+                <Switch
+                  checked={localActivo}
+                  onCheckedChange={handleToggleLocal}
+                  disabled={togglingLocal || localId === null}
+                  className="data-[state=checked]:bg-green-500"
+                />
+              </div>
               <ThemeToggle />
               <AvatarSettings />
             </div>
           </div>
         </header>
+
+        {/* Dialog de confirmación para cambio de estado */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar cambio de estado</AlertDialogTitle>
+              <AlertDialogDescription>
+                {pendingActivoState
+                  ? "¿Estás seguro de activar el local? Los clientes podrán ver tu negocio y realizar pedidos."
+                  : "¿Estás seguro de desactivar el local? Los clientes no podrán ver tu negocio ni realizar pedidos."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={togglingLocal}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmarCambioEstado}
+                disabled={togglingLocal}
+                className={pendingActivoState ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+              >
+                {togglingLocal ? "Guardando..." : "Confirmar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Banner de Vencimiento Próximo */}
         {accesoInfo?.motivo === "proximo_vencimiento" &&

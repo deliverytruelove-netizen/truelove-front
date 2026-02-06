@@ -443,4 +443,35 @@ updateBankAccount: async (data: BankAccountFormData): Promise<ApiResponse<unknow
     }
   },
 
+  // Actualizar estado del local (activo/inactivo)
+  actualizarEstadoLocal: async (localId: number, activo: boolean): Promise<{ success: boolean }> => {
+    try {
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("No se encontró el token de autenticación");
+      }
+
+      const response = await fetch(`${API_URL}/socio/estado`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ id: localId, activo }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al actualizar el estado del local");
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error("Error en actualizarEstadoLocal:", error);
+      throw error;
+    }
+  },
+
 };

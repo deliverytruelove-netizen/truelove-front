@@ -280,22 +280,18 @@ export default function GruposPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto py-6 px-4 max-w-4xl">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/socio/admin/menu")}
-              className="border-gray-300"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Volver
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Grupos de Adicionales</h1>
-              <p className="text-sm text-gray-500">Organiza tus adicionales en grupos con reglas de selección</p>
-            </div>
-          </div>
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/socio/admin/menu")}
+            className="border-gray-300 mb-3"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Volver
+          </Button>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Grupos de Adicionales</h1>
+          <p className="text-sm text-gray-500">Organiza tus adicionales en grupos con reglas de selección</p>
         </div>
 
         {/* Buscador y botón nuevo */}
@@ -401,11 +397,11 @@ export default function GruposPage() {
                 >
                   {/* Header del grupo */}
                   <div 
-                    className={`flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${isExpanded ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500' : ''}`}
+                    className={`flex items-center gap-2 sm:gap-4 p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${isExpanded ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500' : ''}`}
                     onClick={() => !isEditing && handleToggleExpand(grupo.id)}
                   >
                     {/* Icono expandir */}
-                    <div className="text-gray-400">
+                    <div className="text-gray-400 flex-shrink-0">
                       {isExpanded ? (
                         <ChevronDown className="h-5 w-5" />
                       ) : (
@@ -415,8 +411,8 @@ export default function GruposPage() {
 
                     {/* Info del grupo */}
                     {isEditing ? (
-                      <div className="flex-1 grid gap-2 sm:grid-cols-4 items-end" onClick={(e) => e.stopPropagation()}>
-                        <div className="sm:col-span-2">
+                      <div className="flex-1 grid gap-2 grid-cols-2 sm:grid-cols-4 items-end min-w-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="col-span-2">
                           <Input
                             value={grupoForm.nombre}
                             onChange={(e) => setGrupoForm({ ...grupoForm, nombre: e.target.value })}
@@ -437,41 +433,41 @@ export default function GruposPage() {
                         />
                       </div>
                     ) : (
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{grupo.nombre}</h3>
-                          <Badge variant="secondary" className="text-xs">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{grupo.nombre}</h3>
+                          <Badge variant="secondary" className="text-xs flex-shrink-0">
                             {itemCount} {itemCount === 1 ? 'item' : 'items'}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {grupo.minimo === 0 ? 'Opcional' : `Mínimo: ${grupo.minimo}`} | Máximo: {grupo.maximo}
                         </p>
                       </div>
                     )}
 
                     {/* Acciones */}
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                       {isEditing ? (
                         <>
                           <Button
                             size="sm"
                             onClick={() => handleSaveEditGrupo(grupo.id)}
                             disabled={savingGrupo}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-700 h-8 w-8 sm:h-9 sm:w-auto sm:px-3 p-0"
                           >
                             {savingGrupo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingGrupoId(null)}>
+                          <Button size="sm" variant="outline" onClick={() => setEditingGrupoId(null)} className="h-8 w-8 sm:h-9 sm:w-9 p-0">
                             <X className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
                         <>
-                          <Badge className={grupo.estado === "active" ? "bg-green-500" : "bg-gray-400"}>
+                          <Badge className={`${grupo.estado === "active" ? "bg-green-500" : "bg-gray-400"} text-xs`}>
                             {grupo.estado === "active" ? "Activo" : "Inactivo"}
                           </Badge>
-                          <Button variant="ghost" size="icon" onClick={(e) => handleStartEditGrupo(e, grupo)}>
+                          <Button variant="ghost" size="icon" onClick={(e) => handleStartEditGrupo(e, grupo)} className="h-8 w-8">
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <AlertDialog>

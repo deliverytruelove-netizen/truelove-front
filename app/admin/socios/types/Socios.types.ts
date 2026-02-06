@@ -55,6 +55,7 @@ export interface BusinessInfo {
 
 export interface DetallesSocio {
   id: number
+  activo?: boolean
   personal: {
     documentNumber: string
     name: string
