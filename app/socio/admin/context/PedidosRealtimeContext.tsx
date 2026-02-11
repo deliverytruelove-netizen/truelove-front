@@ -201,6 +201,13 @@ export function PedidosRealtimeProvider({
     staleTime: 0,
   });
 
+  const pedidosPendientes = pedidos.filter(
+    (p) => Number(p.ultimo_estado_tracking) === 1,
+  );
+  const pedidosEnProceso = pedidos.filter((p) =>
+    [2, 3, 9].includes(Number(p.ultimo_estado_tracking)),
+  );
+
   // Detectar pedidos nuevos via polling y reproducir sonido
   useEffect(() => {
     if (isLoading) return;
@@ -217,6 +224,7 @@ export function PedidosRealtimeProvider({
 
     if (newPedidos.length > 0 && !fcmJustNotified.current) {
       // Solo notificar si FCM no lo hizo ya (evitar duplicados)
+      console.log("Nuevos pedidos detectados via polling:", newPedidos.length);
       playSound();
       newPedidos.forEach((p) =>
         showBrowserNotification(
@@ -229,6 +237,35 @@ export function PedidosRealtimeProvider({
     prevIdsRef.current = currentIds;
   }, [pedidos, isLoading, playSound, showBrowserNotification]);
 
+  // Asegurar que suene al volver a la pestaña si hay pedidos pendientes sin atender
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Al volver a la pestaña, si hay pedidos nuevos (pendientes) desde la última carga,
+        // intentar refrescar y sonar si es necesario.
+        console.log("Pestaña enfocada, verificando pedidos...");
+        refetch();
+
+        // Si hay pedidos pendientes que son muy recientes, podríamos forzar un sonido
+        // como recordatorio por si falló en segundo plano
+        if (pedidosPendientes.length > 0 && hasInteracted && soundEnabled) {
+          // Opcional: Sonar un pequeño recordatorio si hay pendientes
+          // playSound();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [
+    pedidosPendientes.length,
+    refetch,
+    hasInteracted,
+    soundEnabled,
+    playSound,
+  ]);
+
   // Solicitar permiso de notificación al montar
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
@@ -240,12 +277,6 @@ export function PedidosRealtimeProvider({
     setSoundEnabled((prev) => !prev);
   }, []);
 
-  const pedidosPendientes = pedidos.filter(
-    (p) => Number(p.ultimo_estado_tracking) === 1,
-  );
-  const pedidosEnProceso = pedidos.filter((p) =>
-    [2, 3, 9].includes(Number(p.ultimo_estado_tracking)),
-  );
 
   return (
     <PedidosRealtimeContext.Provider

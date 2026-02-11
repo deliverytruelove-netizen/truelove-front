@@ -26,7 +26,6 @@ import {
   FileText,
   Bike,
   Loader2,
-  ImageIcon,
   ShoppingBag,
   Eye,
   Printer,
@@ -182,8 +181,6 @@ export default function PedidoActivoCard({ pedido }: Props) {
       return sum + parseFloat(item.precio) * item.cantidad;
     }, 0) || 0;
 
-  const totalConDelivery =
-    totalProductos +
     (pedido.precio_delivery ? parseFloat(pedido.precio_delivery) : 0);
 
   const tipoPedidoLabel = pedido.tipo_pedido === 0 ? "Delivery" : "Recojo";

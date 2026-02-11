@@ -1,7 +1,7 @@
 // app\socio\admin\components\manage-product-adicionales-modal.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,21 +57,7 @@ export function ManageProductAdicionalesModal({
   const [precio, setPrecio] = useState("")
   const [status, setStatus] = useState("active")
 
-  // Cargar adicionales cuando se abre el modal
-  useEffect(() => {
-    if (open) {
-      loadAdicionales()
-    }
-  }, [open, menuItem.id])
-
-  // Si no hay adicionales y terminó de cargar, mostrar formulario de crear
-  useEffect(() => {
-    if (!loading && adicionales.length === 0 && viewMode === "list") {
-      setViewMode("create")
-    }
-  }, [loading, adicionales.length, viewMode])
-
-  const loadAdicionales = async () => {
+  const loadAdicionales = useCallback(async () => {
     setLoading(true)
     try {
       const data = await adicionalService.getMenuAdicionales(menuItem.id)
@@ -86,7 +72,21 @@ export function ManageProductAdicionalesModal({
     } finally {
       setLoading(false)
     }
-  }
+  }, [menuItem.id, toast])
+
+  // Cargar adicionales cuando se abre el modal
+  useEffect(() => {
+    if (open) {
+      loadAdicionales()
+    }
+  }, [open, menuItem.id, loadAdicionales])
+
+  // Si no hay adicionales y terminó de cargar, mostrar formulario de crear
+  useEffect(() => {
+    if (!loading && adicionales.length === 0 && viewMode === "list") {
+      setViewMode("create")
+    }
+  }, [loading, adicionales.length, viewMode])
 
   const resetForm = () => {
     setTitulo("")
