@@ -309,19 +309,20 @@ export default function PedidosPage() {
 
             {/* Botones de acción */}
             <div className="flex justify-end gap-2 mt-4">
-              <TicketModal
-                pedido={pedido}
-                trigger={
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Printer className="h-4 w-4 mr-2" />
-                    Imprimir Ticket
-                  </Button>
-                }
-              />
+              <span onClick={(e) => e.stopPropagation()}>
+                <TicketModal
+                  pedido={pedido}
+                  trigger={
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Printer className="h-4 w-4 mr-2" />
+                      Imprimir Ticket
+                    </Button>
+                  }
+                />
+              </span>
               <Button 
                 variant="outline" 
                 size="sm"

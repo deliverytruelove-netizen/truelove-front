@@ -15,7 +15,7 @@ export interface Socio {
   user_id?: number
   documentType?: string
   documentNumber?: string
- 
+  cuota_socio_id?: number | null
 }
 
 export interface DatosBancarios {

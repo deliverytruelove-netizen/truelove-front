@@ -75,6 +75,7 @@ export function Pagination({
             <SelectValue placeholder={perPage.toString()} />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="5">5</SelectItem>
             <SelectItem value="10">10</SelectItem>
             <SelectItem value="25">25</SelectItem>
             <SelectItem value="50">50</SelectItem>
@@ -100,6 +101,7 @@ export function Pagination({
       <div className="flex items-center order-2 sm:order-3">
         {/* Primera página */}
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={() => onPageChange(1)}
@@ -111,6 +113,7 @@ export function Pagination({
 
         {/* Página anterior */}
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={() => onPageChange(currentPage - 1)}
@@ -124,6 +127,7 @@ export function Pagination({
         <div className="flex items-center mx-1 sm:mx-2">
           {getPageNumbers().map((pageNum) => (
             <Button
+              type="button"
               key={pageNum}
               variant={currentPage === pageNum ? "default" : "outline"}
               size="icon"
@@ -139,6 +143,7 @@ export function Pagination({
 
         {/* Página siguiente */}
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={() => onPageChange(currentPage + 1)}
@@ -150,6 +155,7 @@ export function Pagination({
 
         {/* Última página */}
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={() => onPageChange(totalPages)}

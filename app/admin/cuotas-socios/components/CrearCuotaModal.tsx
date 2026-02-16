@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { X } from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { crearCuota } from "../services/cuota-socio.service"
 import type { CrearCuotaRequest } from "../types/cuota-socio.types"
 import { Input } from "@/components/ui/input"
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import Swal from "sweetalert2"
+import { showAlert } from "@/components/ui/DataTable/Alert"
 
 interface Banco {
   id: number
@@ -31,13 +32,13 @@ interface TipoCuenta {
 interface CrearCuotaModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
 }
 
-export default function CrearCuotaModal({ isOpen, onClose, onSuccess }: CrearCuotaModalProps) {
-  const [loading, setLoading] = useState(false)
+export default function CrearCuotaModal({ isOpen, onClose }: CrearCuotaModalProps) {
+  const queryClient = useQueryClient()
   const [formData, setFormData] = useState<CrearCuotaRequest>({
     periodicidad: "semanal",
+    tipo_cuota: "monto_fijo",
     monto_cuota: 0,
     numero_cuenta: "",
     tipo_cuenta: "",
@@ -45,41 +46,63 @@ export default function CrearCuotaModal({ isOpen, onClose, onSuccess }: CrearCuo
     metodos_pago_disponibles: [],
     estado: "activo",
   })
-
   const [metodosSeleccionados, setMetodosSeleccionados] = useState<string[]>([])
-  const [bancos, setBancos] = useState<Banco[]>([])
-  const [tiposCuenta, setTiposCuenta] = useState<TipoCuenta[]>([])
-  const [loadingData, setLoadingData] = useState(false)
 
-  useEffect(() => {
-    if (isOpen) {
-      loadBancosYTipos()
-    }
-  }, [isOpen])
+  const { data: bancos = [], isLoading: loadingBancos } = useQuery<Banco[]>({
+    queryKey: ["bancos"],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/bancos`)
+      if (!res.ok) throw new Error("Error al cargar bancos")
+      const data = await res.json()
+      return data.data || data
+    },
+    enabled: isOpen,
+  })
 
-  const loadBancosYTipos = async () => {
-    setLoadingData(true)
-    try {
-      const [bancosRes, tiposRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_WEB}/bancos`),
-        fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-cuenta`),
-      ])
+  const { data: tiposCuenta = [], isLoading: loadingTipos } = useQuery<TipoCuenta[]>({
+    queryKey: ["tipos-cuenta"],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-cuenta`)
+      if (!res.ok) throw new Error("Error al cargar tipos de cuenta")
+      const data = await res.json()
+      return data.data || data
+    },
+    enabled: isOpen,
+  })
 
-      if (bancosRes.ok) {
-        const bancosData = await bancosRes.json()
-        setBancos(bancosData.data || bancosData)
-      }
+  const loadingData = loadingBancos || loadingTipos
 
-      if (tiposRes.ok) {
-        const tiposData = await tiposRes.json()
-        setTiposCuenta(tiposData.data || tiposData)
-      }
-    } catch (error) {
-      console.error("Error al cargar bancos y tipos de cuenta:", error)
-    } finally {
-      setLoadingData(false)
-    }
-  }
+  const mutation = useMutation({
+    mutationFn: crearCuota,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cuotas-socios"] })
+      queryClient.invalidateQueries({ queryKey: ["cuotas-estadisticas"] })
+      showAlert({
+        title: "¡Éxito!",
+        text: "Cuota creada exitosamente",
+        icon: "success",
+      })
+      onClose()
+      setFormData({
+        periodicidad: "semanal",
+        tipo_cuota: "monto_fijo",
+        monto_cuota: 0,
+        numero_cuenta: "",
+        tipo_cuenta: "",
+        banco: "",
+        metodos_pago_disponibles: [],
+        estado: "activo",
+      })
+      setMetodosSeleccionados([])
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "Error al crear cuota",
+        icon: "error",
+      })
+    },
+  })
 
   const handleMetodoChange = (metodo: string) => {
     if (metodosSeleccionados.includes(metodo)) {
@@ -89,47 +112,17 @@ export default function CrearCuotaModal({ isOpen, onClose, onSuccess }: CrearCuo
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-
-    try {
-      await crearCuota({
-        ...formData,
-        metodos_pago_disponibles: metodosSeleccionados,
-      })
-      await Swal.fire({
-        title: "¡Éxito!",
-        text: "Cuota creada exitosamente",
-        icon: "success",
-        confirmButtonColor: "#dc2626",
-      })
-      onSuccess()
-      onClose()
-      // Reset form
-      setFormData({
-        periodicidad: "semanal",
-        monto_cuota: 0,
-        numero_cuenta: "",
-        tipo_cuenta: "",
-        banco: "",
-        metodos_pago_disponibles: [],
-        estado: "activo",
-      })
-      setMetodosSeleccionados([])
-    } catch (error) {
-      await Swal.fire({
-        title: "Error",
-        text: error instanceof Error ? error.message : "Error al crear cuota",
-        icon: "error",
-        confirmButtonColor: "#dc2626",
-      })
-    } finally {
-      setLoading(false)
-    }
+    mutation.mutate({
+      ...formData,
+      metodos_pago_disponibles: metodosSeleccionados,
+    })
   }
 
   if (!isOpen) return null
+
+  const esPorcentaje = formData.tipo_cuota === "porcentaje"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -146,51 +139,132 @@ export default function CrearCuotaModal({ isOpen, onClose, onSuccess }: CrearCuo
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="periodicidad">Periodicidad *</Label>
-              <Select
-                value={formData.periodicidad}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, periodicidad: value as CrearCuotaRequest["periodicidad"] })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar periodicidad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="diario">Diario</SelectItem>
-                  <SelectItem value="semanal">Semanal</SelectItem>
-                  <SelectItem value="quincenal">Quincenal</SelectItem>
-                  <SelectItem value="mensual">Mensual</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="periodicidad">Periodicidad *</Label>
+                <Select
+                  value={formData.periodicidad}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, periodicidad: value as CrearCuotaRequest["periodicidad"] })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar periodicidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="diario">Diario</SelectItem>
+                    <SelectItem value="semanal">Semanal</SelectItem>
+                    <SelectItem value="quincenal">Quincenal</SelectItem>
+                    <SelectItem value="mensual">Mensual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tipo_cuota">Tipo de Cuota *</Label>
+                <Select
+                  value={formData.tipo_cuota}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tipo_cuota: value as "monto_fijo" | "porcentaje" })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monto_fijo">Monto Fijo</SelectItem>
+                    <SelectItem value="porcentaje">Porcentaje (Comisión)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
+            {/* Campos según tipo de cuota */}
+            {!esPorcentaje ? (
+              <div className="space-y-2">
+                <Label htmlFor="monto">Monto de la Cuota *</Label>
+                <Input
+                  id="monto"
+                  type="number"
+                  step="0.01"
+                  value={formData.monto_cuota}
+                  onChange={(e) => setFormData({ ...formData, monto_cuota: parseFloat(e.target.value) || 0 })}
+                  placeholder="50.00"
+                  required
+                />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="porcentaje">Porcentaje de Comisión (%) *</Label>
+                  <Input
+                    id="porcentaje"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.porcentaje_comision || ""}
+                    onChange={(e) => setFormData({ ...formData, porcentaje_comision: parseFloat(e.target.value) || 0 })}
+                    placeholder="10.00"
+                    required
+                  />
+                  <p className="text-xs text-gray-500">Ejemplo: 10 = 10% de las ventas</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="minimo_pedidos">Mínimo de Pedidos</Label>
+                    <Input
+                      id="minimo_pedidos"
+                      type="number"
+                      min="0"
+                      value={formData.minimo_pedidos || ""}
+                      onChange={(e) => setFormData({ ...formData, minimo_pedidos: parseInt(e.target.value) || undefined })}
+                      placeholder="4"
+                    />
+                    <p className="text-xs text-gray-500">Mínimo de pedidos para cobrar comisión</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="monto_minimo">Monto Mínimo (S/)</Label>
+                    <Input
+                      id="monto_minimo"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.monto_minimo || ""}
+                      onChange={(e) => setFormData({ ...formData, monto_minimo: parseFloat(e.target.value) || undefined })}
+                      placeholder="20.00"
+                    />
+                    <p className="text-xs text-gray-500">Cobra el mayor entre monto mínimo y porcentaje</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="exonerar"
+                    checked={formData.exonerar_si_menos_pedidos || false}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, exonerar_si_menos_pedidos: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="exonerar" className="font-normal cursor-pointer text-sm">
+                    No cobrar si no cumple el mínimo de pedidos
+                  </Label>
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="monto">Monto de la Cuota *</Label>
+              <Label htmlFor="numero_cuenta">Número de Cuenta *</Label>
               <Input
-                id="monto"
-                type="number"
-                step="0.01"
-                value={formData.monto_cuota}
-                onChange={(e) => setFormData({ ...formData, monto_cuota: parseFloat(e.target.value) })}
-                placeholder="50.00"
+                id="numero_cuenta"
+                type="text"
+                value={formData.numero_cuenta}
+                onChange={(e) => setFormData({ ...formData, numero_cuenta: e.target.value })}
+                placeholder="191-12345678-0-99"
                 required
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="numero_cuenta">Número de Cuenta *</Label>
-            <Input
-              id="numero_cuenta"
-              type="text"
-              value={formData.numero_cuenta}
-              onChange={(e) => setFormData({ ...formData, numero_cuenta: e.target.value })}
-              placeholder="191-12345678-0-99"
-              required
-            />
-          </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -211,38 +285,38 @@ export default function CrearCuotaModal({ isOpen, onClose, onSuccess }: CrearCuo
                     ))}
                   </SelectContent>
                 </Select>
-            </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="banco">Banco</Label>
-              <Select
-                value={formData.banco}
-                onValueChange={(value) => setFormData({ ...formData, banco: value })}
-                disabled={loadingData}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingData ? "Cargando..." : "Seleccionar banco"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {bancos.map((banco) => (
-                    <SelectItem key={banco.id} value={banco.nombre}>
-                      {banco.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="banco">Banco</Label>
+                <Select
+                  value={formData.banco}
+                  onValueChange={(value) => setFormData({ ...formData, banco: value })}
+                  disabled={loadingData}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingData ? "Cargando..." : "Seleccionar banco"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bancos.map((banco) => (
+                      <SelectItem key={banco.id} value={banco.nombre}>
+                        {banco.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
             <div className="space-y-2">
               <Label>Métodos de Pago Disponibles</Label>
               <div className="flex flex-wrap gap-3 sm:gap-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="yape"
-                  checked={metodosSeleccionados.includes("yape")}
-                  onCheckedChange={() => handleMetodoChange("yape")}
-                />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="yape"
+                    checked={metodosSeleccionados.includes("yape")}
+                    onCheckedChange={() => handleMetodoChange("yape")}
+                  />
                   <Label htmlFor="yape" className="font-normal cursor-pointer text-sm">
                     Yape
                   </Label>
@@ -288,8 +362,8 @@ export default function CrearCuotaModal({ isOpen, onClose, onSuccess }: CrearCuo
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="bg-red-600 hover:bg-red-700">
-              {loading ? "Creando..." : "Crear Cuota"}
+            <Button type="submit" disabled={mutation.isPending} className="bg-red-600 hover:bg-red-700">
+              {mutation.isPending ? "Creando..." : "Crear Cuota"}
             </Button>
           </div>
         </form>

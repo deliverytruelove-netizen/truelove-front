@@ -181,7 +181,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
       return sum + parseFloat(item.precio) * item.cantidad;
     }, 0) || 0;
 
-    (pedido.precio_delivery ? parseFloat(pedido.precio_delivery) : 0);
+  // const precioDelivery = (pedido.precio_delivery ? parseFloat(pedido.precio_delivery) : 0);
 
   const tipoPedidoLabel = pedido.tipo_pedido === 0 ? "Delivery" : "Recojo";
 

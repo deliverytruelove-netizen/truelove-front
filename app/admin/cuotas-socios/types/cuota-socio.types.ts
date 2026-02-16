@@ -3,7 +3,12 @@
 export interface CuotaSocio {
   id: number
   periodicidad: "diario" | "semanal" | "quincenal" | "mensual"
+  tipo_cuota: "monto_fijo" | "porcentaje"
   monto_cuota: number
+  porcentaje_comision?: number | null
+  minimo_pedidos?: number | null
+  exonerar_si_menos_pedidos?: boolean
+  monto_minimo?: number | null
   numero_cuenta: string
   tipo_cuenta?: string
   banco?: string
@@ -12,6 +17,8 @@ export interface CuotaSocio {
   fecha_inicio: string
   fecha_fin?: string
   descripcion?: string
+  dia_pago?: number | null
+  dia_pago_nota?: string | null
   created_at: string
   updated_at: string
 }
@@ -53,18 +60,29 @@ export interface EstadisticasPagos {
 
 export interface CrearCuotaRequest {
   periodicidad: "diario" | "semanal" | "quincenal" | "mensual"
-  monto_cuota: number
+  tipo_cuota: "monto_fijo" | "porcentaje"
+  monto_cuota?: number
+  porcentaje_comision?: number
+  minimo_pedidos?: number
+  exonerar_si_menos_pedidos?: boolean
+  monto_minimo?: number
   numero_cuenta: string
   tipo_cuenta?: string
   banco?: string
   metodos_pago_disponibles?: string[]
   descripcion?: string
   estado?: "activo" | "inactivo"
+  dia_pago?: number
 }
 
 export interface ActualizarCuotaRequest {
   periodicidad?: "diario" | "semanal" | "quincenal" | "mensual"
+  tipo_cuota?: "monto_fijo" | "porcentaje"
   monto_cuota?: number
+  porcentaje_comision?: number
+  minimo_pedidos?: number
+  exonerar_si_menos_pedidos?: boolean
+  monto_minimo?: number
   numero_cuenta?: string
   tipo_cuenta?: string
   banco?: string
@@ -73,4 +91,57 @@ export interface ActualizarCuotaRequest {
   fecha_inicio?: string
   fecha_fin?: string
   descripcion?: string
+  dia_pago?: number
+}
+
+// Tipos para períodos de cuotas
+export interface PeriodoCuotaSocio {
+  id: number
+  cuota_socio_id: number
+  socio_id: number
+  periodo_inicio: string
+  periodo_fin: string
+  monto_esperado: number
+  total_ventas: number
+  cantidad_pedidos: number
+  monto_calculado?: number | null
+  fecha_calculo?: string | null
+  estado: string
+  fecha_vencimiento: string
+  created_at: string
+  updated_at: string
+  cuota?: CuotaSocio
+}
+
+// Respuesta del cálculo de período
+export interface CalculoPeriodoResponse {
+  success: boolean
+  message: string
+  data: {
+    periodo_id: number
+    total_ventas: number
+    cantidad_pedidos: number
+    monto_calculado: number
+    monto_esperado: number
+    fecha_calculo: string
+  }
+}
+
+// Respuesta del detalle de período
+export interface DetallePeriodoResponse {
+  success: boolean
+  data: {
+    periodo: PeriodoCuotaSocio
+    detalle_calculo: {
+      total_ventas: number
+      cantidad_pedidos: number
+      tipo_cuota: string
+      porcentaje_comision?: number
+      minimo_pedidos?: number
+      exonerar_si_menos_pedidos?: boolean
+      monto_minimo?: number
+      monto_calculado: number
+      monto_esperado: number
+    }
+  }
 }

@@ -1,6 +1,7 @@
 // app/admin/cuotas-socios/services/cuota-admin.service.ts
 
 import type { Periodo } from "@/app/socio/admin/cuotas/types/pago-cuota.types"
+import type { CalculoPeriodoResponse, DetallePeriodoResponse } from "../types/cuota-socio.types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_WEB
 
@@ -18,7 +19,12 @@ const getAuthHeaders = () => {
 export interface CuotaSocio {
   id: number
   periodicidad: "diario" | "semanal" | "quincenal" | "mensual"
+  tipo_cuota: "monto_fijo" | "porcentaje"
   monto_cuota: number
+  porcentaje_comision?: number | null
+  minimo_pedidos?: number | null
+  exonerar_si_menos_pedidos?: boolean
+  monto_minimo?: number | null
   numero_cuenta: string
   tipo_cuenta?: string
   banco?: string
@@ -142,4 +148,73 @@ export const actualizarDiaPago = async (cuotaId: number, diaPago: number, diaPag
 
   const data = await response.json()
   return data.data
+}
+
+// ==================== NUEVOS ENDPOINTS PARA COMISIONES POR PORCENTAJE ====================
+
+/**
+ * Calcular manualmente la cuota/comisión de un período específico
+ */
+export const calcularPeriodo = async (periodoId: number): Promise<CalculoPeriodoResponse> => {
+  const response = await fetch(`${API_URL}/admin/cuotas-socios/calcular-periodo/${periodoId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Error al calcular el período")
+  }
+
+  return await response.json()
+}
+
+/**
+ * Calcular todas las cuotas pendientes de un socio
+ */
+export const calcularCuotasSocio = async (socioId: number): Promise<unknown> => {
+  const response = await fetch(`${API_URL}/admin/cuotas-socios/calcular-socio/${socioId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Error al calcular las cuotas del socio")
+  }
+
+  return await response.json()
+}
+
+/**
+ * Calcular cuotas para todos los socios de una cuota específica
+ */
+export const calcularTodasLasCuotas = async (cuotaId: number): Promise<unknown> => {
+  const response = await fetch(`${API_URL}/admin/cuotas-socios/calcular-todos/${cuotaId}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Error al calcular las cuotas")
+  }
+
+  return await response.json()
+}
+
+/**
+ * Obtener detalle completo de un período con cálculos
+ */
+export const obtenerDetallePeriodo = async (periodoId: number): Promise<DetallePeriodoResponse> => {
+  const response = await fetch(`${API_URL}/admin/cuotas-socios/detalle-periodo/${periodoId}`, {
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Error al obtener el detalle del período")
+  }
+
+  return await response.json()
 }

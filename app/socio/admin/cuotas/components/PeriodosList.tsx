@@ -99,6 +99,34 @@ export default function PeriodosList({ periodos, periodoActualId }: PeriodosList
                 <div>
                   <p className="text-xs opacity-75">Monto</p>
                   <p className="font-bold text-lg">S/ {Number(periodo.monto_esperado).toFixed(2)}</p>
+                  
+                  {/* Mostrar detalles de comisión si es tipo porcentaje */}
+                  {periodo.cuota?.tipo_cuota === "porcentaje" && (
+                    <div className="mt-2 pt-2 border-t border-current opacity-70 space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Ventas del período:</span>
+                        <span className="font-semibold">S/ {Number(periodo.total_ventas || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span>Pedidos completados:</span>
+                        <span className="font-semibold">{periodo.cantidad_pedidos || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span>Comisión ({periodo.cuota.porcentaje_comision}%):</span>
+                        <span className="font-semibold">S/ {Number(periodo.monto_calculado || 0).toFixed(2)}</span>
+                      </div>
+                      {periodo.fecha_calculo && (
+                        <p className="text-xs italic opacity-60 mt-1">
+                          Calculado el {new Date(periodo.fecha_calculo).toLocaleDateString("es-PE")}
+                        </p>
+                      )}
+                      {!periodo.fecha_calculo && periodo.estado === "pendiente" && (
+                        <p className="text-xs italic opacity-60 mt-1 text-yellow-700">
+                          ⚠️ Pendiente de cálculo
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-current opacity-50">

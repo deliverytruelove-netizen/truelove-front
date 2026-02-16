@@ -613,7 +613,14 @@ export function DetallesSocioModal({
                       <h3 className="font-semibold text-blue-900">Información de Cuota</h3>
                       <p className="text-sm text-blue-700">
                         {estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)} - 
-                        S/ {Number(estadoPagos.cuota.monto_cuota).toFixed(2)}
+                        {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
+                          <span className="text-purple-600 font-semibold">
+                            {Number(estadoPagos.cuota.porcentaje_comision || 0).toFixed(2)}% comisión
+                            {estadoPagos.cuota.minimo_pedidos && ` (Mín. ${estadoPagos.cuota.minimo_pedidos} pedidos)`}
+                          </span>
+                        ) : (
+                          `S/ ${Number(estadoPagos.cuota.monto_cuota).toFixed(2)}`
+                        )}
                       </p>
                       {estadoPagos.cuota.dia_pago && (
                         <p className="text-sm text-blue-700 font-medium">
@@ -712,6 +719,18 @@ export function DetallesSocioModal({
                           <p className="text-lg font-bold text-gray-900">
                             S/ {Number(periodo.monto_esperado).toFixed(2)}
                           </p>
+                          {/* Mostrar detalles si es tipo porcentaje */}
+                          {estadoPagos?.cuota?.tipo_cuota === "porcentaje" && (
+                            <div className="mt-1 text-xs text-gray-600 space-y-0.5">
+                              <div>Ventas: S/ {Number(periodo.total_ventas || 0).toFixed(2)}</div>
+                              <div>Pedidos: {periodo.cantidad_pedidos || 0}</div>
+                              {periodo.fecha_calculo ? (
+                                <div className="text-green-600">✓ Calculado</div>
+                              ) : (
+                                <div className="text-yellow-600">⚠ Pendiente</div>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getEstadoBadge(

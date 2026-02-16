@@ -118,12 +118,27 @@ export default function AsignarCuotaModal({
         numero: i + 1,
         fechaInicio: periodoInicio,
         fechaFin,
-        monto: cuota.monto_cuota,
+        monto: cuota.tipo_cuota === "porcentaje" ? 0 : cuota.monto_cuota,
       })
     }
 
     return periodos
   }, [cuotaSeleccionada, cantidadPeriodos, cuotas, fechaInicio])
+
+  // Efecto para auto-detectar el día de pago desde la fecha de vencimiento del primer período
+  useEffect(() => {
+    if (cuotaSeleccionada && periodosPreview.length > 0) {
+      const cuota = cuotas.find((c) => c.id.toString() === cuotaSeleccionada)
+      
+      // Solo auto-establecer si es tipo porcentaje y aún no se ha seleccionado manualmente
+      if (cuota?.tipo_cuota === "porcentaje" && diaPago === "0") {
+        // Extraer el día del mes de la fecha de vencimiento del primer período
+        const primerPeriodo = periodosPreview[0]
+        const diaVencimiento = primerPeriodo.fechaFin.getDate()
+        setDiaPago(diaVencimiento.toString())
+      }
+    }
+  }, [cuotaSeleccionada, cuotas, periodosPreview, diaPago])
 
   // Función auxiliar para formatear fechas
   const formatDate = (date: Date) => {
@@ -249,8 +264,15 @@ export default function AsignarCuotaModal({
                         <SelectItem key={cuota.id} value={cuota.id.toString()}>
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {cuota.periodicidad.charAt(0).toUpperCase() + cuota.periodicidad.slice(1)} - S/{" "}
-                              {Number(cuota.monto_cuota).toFixed(2)}
+                              {cuota.periodicidad.charAt(0).toUpperCase() + cuota.periodicidad.slice(1)} - 
+                              {cuota.tipo_cuota === "porcentaje" ? (
+                                <span className="text-purple-600">
+                                  {" "}{Number(cuota.porcentaje_comision || 0).toFixed(2)}% comisión
+                                  {cuota.minimo_pedidos && ` (Mín. ${cuota.minimo_pedidos} pedidos)`}
+                                </span>
+                              ) : (
+                                <span> S/ {Number(cuota.monto_cuota).toFixed(2)}</span>
+                              )}
                             </span>
                             <span className="text-xs text-gray-500">
                               {cuota.banco} - {cuota.numero_cuenta}
@@ -526,14 +548,49 @@ export default function AsignarCuotaModal({
                         </div>
                       </div>
                       <div className="text-sm font-semibold text-gray-900">
-                        S/ {Number(periodo.monto).toFixed(2)}
+                        {(() => {
+                          const cuota = cuotas.find(c => c.id.toString() === cuotaSeleccionada)
+                          if (cuota?.tipo_cuota === "porcentaje") {
+                            return (
+                              <span className="text-purple-600">
+                                {Number(cuota.porcentaje_comision || 0).toFixed(2)}% de ventas
+                              </span>
+                            )
+                          }
+                          return `S/ ${Number(periodo.monto).toFixed(2)}`
+                        })()}
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <p className="text-xs text-blue-800">
-                    <strong>Total:</strong> S/ {(periodosPreview.reduce((sum, p) => sum + Number(p.monto), 0)).toFixed(2)} en {periodosPreview.length} período{periodosPreview.length !== 1 ? "s" : ""}
+                    {(() => {
+                      const cuota = cuotas.find(c => c.id.toString() === cuotaSeleccionada)
+                      if (cuota?.tipo_cuota === "porcentaje") {
+                        return (
+                          <>
+                            <strong>Comisión por período:</strong> {Number(cuota.porcentaje_comision || 0).toFixed(2)}% de las ventas del socio
+                            {cuota.minimo_pedidos && (
+                              <div className="mt-1">
+                                <strong>Mínimo de pedidos:</strong> {cuota.minimo_pedidos} pedidos
+                                {cuota.exonerar_si_menos_pedidos && " (No se cobrará si no cumple el mínimo)"}
+                              </div>
+                            )}
+                            {cuota.monto_minimo && (
+                              <div className="mt-1">
+                                <strong>Monto mínimo:</strong> S/ {Number(cuota.monto_minimo).toFixed(2)} (Se cobrará el mayor entre el monto mínimo y el porcentaje)
+                              </div>
+                            )}
+                          </>
+                        )
+                      }
+                      return (
+                        <>
+                          <strong>Total:</strong> S/ {(periodosPreview.reduce((sum, p) => sum + Number(p.monto), 0)).toFixed(2)} en {periodosPreview.length} período{periodosPreview.length !== 1 ? "s" : ""}
+                        </>
+                      )
+                    })()}
                   </p>
                 </div>
               </div>

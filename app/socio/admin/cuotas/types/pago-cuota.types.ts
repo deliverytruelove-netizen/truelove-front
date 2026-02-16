@@ -3,7 +3,12 @@
 export interface CuotaActiva {
   id: number
   periodicidad: "diario" | "semanal" | "quincenal" | "mensual"
+  tipo_cuota: "monto_fijo" | "porcentaje"
   monto_cuota: number | string // El backend puede enviar string
+  porcentaje_comision?: number | null
+  minimo_pedidos?: number | null
+  exonerar_si_menos_pedidos?: boolean
+  monto_minimo?: number | null
   numero_cuenta: string
   tipo_cuenta?: string
   banco?: string
@@ -49,6 +54,10 @@ export interface Periodo {
   periodo_fin: string
   fecha_vencimiento: string
   monto_esperado: number | string // El backend puede enviar string
+  total_ventas?: number | string
+  cantidad_pedidos?: number
+  monto_calculado?: number | string | null
+  fecha_calculo?: string | null
   estado: "pendiente" | "pagado" | "vencido" | "en_revision"
   pago_id?: number
   notificado_vencimiento: boolean
@@ -57,6 +66,7 @@ export interface Periodo {
   dias_para_vencer?: number
   esta_vencido?: boolean
   pago?: MiPago
+  cuota?: CuotaActiva
 }
 
 export interface PeriodoActual {

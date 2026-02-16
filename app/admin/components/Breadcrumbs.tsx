@@ -15,6 +15,7 @@ const customTitles: Record<string, string> = {
   "/admin/cuotas-socios": "Cuotas de Socios",
   "/admin/cuotas-motorizados": "Cuotas de Motorizados",
   "/admin/kilometros-tarifa": "Kilómetros Tarifa",
+  "/admin/tarifas-rangos": "Tarifas por Rangos",
 }
 
 // Función para obtener el título del módulo basado en la última parte de la ruta
@@ -48,6 +49,7 @@ const breadcrumbNames: Record<string, string> = {
   "cuotas-socios": "Cuotas de Socios",
   "cuotas-motorizados": "Cuotas de Motorizados",
   "kilometros-tarifa": "Kilómetros Tarifa",
+  "tarifas-rangos": "Tarifas por Rangos",
   socios: "Socios",
   motorizados: "Motorizados",
   usuarios: "Usuarios",

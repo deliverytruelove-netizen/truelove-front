@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { actualizarCuota } from "../services/cuota-socio.service"
 import type { CuotaSocio, ActualizarCuotaRequest } from "../types/cuota-socio.types"
 import { Input } from "@/components/ui/input"
@@ -16,17 +17,16 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import Swal from "sweetalert2"
+import { showAlert } from "@/components/ui/DataTable/Alert"
 
 interface EditarCuotaModalProps {
   isOpen: boolean
   cuota: CuotaSocio | null
   onClose: () => void
-  onSuccess: () => void
 }
 
-export default function EditarCuotaModal({ isOpen, cuota, onClose, onSuccess }: EditarCuotaModalProps) {
-  const [loading, setLoading] = useState(false)
+export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuotaModalProps) {
+  const queryClient = useQueryClient()
   const [formData, setFormData] = useState<ActualizarCuotaRequest>({})
   const [metodosSeleccionados, setMetodosSeleccionados] = useState<string[]>([])
 
@@ -34,7 +34,12 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose, onSuccess }: 
     if (cuota) {
       setFormData({
         periodicidad: cuota.periodicidad,
+        tipo_cuota: cuota.tipo_cuota,
         monto_cuota: cuota.monto_cuota,
+        porcentaje_comision: cuota.porcentaje_comision || undefined,
+        minimo_pedidos: cuota.minimo_pedidos || undefined,
+        exonerar_si_menos_pedidos: cuota.exonerar_si_menos_pedidos || false,
+        monto_minimo: cuota.monto_minimo || undefined,
         numero_cuenta: cuota.numero_cuenta,
         tipo_cuenta: cuota.tipo_cuenta || "",
         banco: cuota.banco || "",
@@ -47,6 +52,27 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose, onSuccess }: 
     }
   }, [cuota])
 
+  const mutation = useMutation({
+    mutationFn: (data: ActualizarCuotaRequest) => actualizarCuota(cuota!.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cuotas-socios"] })
+      queryClient.invalidateQueries({ queryKey: ["cuotas-estadisticas"] })
+      showAlert({
+        title: "¡Éxito!",
+        text: "Cuota actualizada exitosamente",
+        icon: "success",
+      })
+      onClose()
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "Error al actualizar cuota",
+        icon: "error",
+      })
+    },
+  })
+
   const handleMetodoChange = (metodo: string) => {
     if (metodosSeleccionados.includes(metodo)) {
       setMetodosSeleccionados(metodosSeleccionados.filter((m) => m !== metodo))
@@ -55,37 +81,19 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose, onSuccess }: 
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!cuota) return
 
-    setLoading(true)
-    try {
-      await actualizarCuota(cuota.id, {
-        ...formData,
-        metodos_pago_disponibles: metodosSeleccionados,
-      })
-      await Swal.fire({
-        title: "¡Éxito!",
-        text: "Cuota actualizada exitosamente",
-        icon: "success",
-        confirmButtonColor: "#dc2626",
-      })
-      onSuccess()
-      onClose()
-    } catch (error) {
-      await Swal.fire({
-        title: "Error",
-        text: error instanceof Error ? error.message : "Error al actualizar cuota",
-        icon: "error",
-        confirmButtonColor: "#dc2626",
-      })
-    } finally {
-      setLoading(false)
-    }
+    mutation.mutate({
+      ...formData,
+      metodos_pago_disponibles: metodosSeleccionados,
+    })
   }
 
   if (!isOpen || !cuota) return null
+
+  const esPorcentaje = formData.tipo_cuota === "porcentaje"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -123,16 +131,90 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose, onSuccess }: 
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="tipo_cuota">Tipo de Cuota</Label>
+                <Select
+                  value={formData.tipo_cuota}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tipo_cuota: value as "monto_fijo" | "porcentaje" })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monto_fijo">Monto Fijo</SelectItem>
+                    <SelectItem value="porcentaje">Porcentaje (Comisión)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Campos según tipo de cuota */}
+            {!esPorcentaje ? (
+              <div className="space-y-2">
                 <Label htmlFor="monto">Monto de la Cuota</Label>
                 <Input
                   id="monto"
                   type="number"
                   step="0.01"
                   value={formData.monto_cuota}
-                  onChange={(e) => setFormData({ ...formData, monto_cuota: parseFloat(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, monto_cuota: parseFloat(e.target.value) || 0 })}
                 />
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="porcentaje">Porcentaje de Comisión (%)</Label>
+                  <Input
+                    id="porcentaje"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.porcentaje_comision || ""}
+                    onChange={(e) => setFormData({ ...formData, porcentaje_comision: parseFloat(e.target.value) || undefined })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="minimo_pedidos">Mínimo de Pedidos</Label>
+                    <Input
+                      id="minimo_pedidos"
+                      type="number"
+                      min="0"
+                      value={formData.minimo_pedidos || ""}
+                      onChange={(e) => setFormData({ ...formData, minimo_pedidos: parseInt(e.target.value) || undefined })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="monto_minimo">Monto Mínimo (S/)</Label>
+                    <Input
+                      id="monto_minimo"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.monto_minimo || ""}
+                      onChange={(e) => setFormData({ ...formData, monto_minimo: parseFloat(e.target.value) || undefined })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="exonerar"
+                    checked={formData.exonerar_si_menos_pedidos || false}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, exonerar_si_menos_pedidos: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="exonerar" className="font-normal cursor-pointer text-sm">
+                    No cobrar si no cumple el mínimo de pedidos
+                  </Label>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="numero_cuenta">Número de Cuenta</Label>
@@ -258,8 +340,8 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose, onSuccess }: 
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="bg-red-600 hover:bg-red-700">
-              {loading ? "Actualizando..." : "Actualizar"}
+            <Button type="submit" disabled={mutation.isPending} className="bg-red-600 hover:bg-red-700">
+              {mutation.isPending ? "Actualizando..." : "Actualizar"}
             </Button>
           </div>
         </form>

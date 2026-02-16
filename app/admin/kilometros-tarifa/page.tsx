@@ -2,15 +2,10 @@
 'use client';
 
 import React from 'react';
-import MainLayout from '../components/MainLayout';
-import KilometrosTarifaList from '@/components/KilometrosTarifaList';
+import TarifasRangosList from './components/TarifasRangosList';
 
 const KilometrosTarifa: React.FC = () => {
-    return (
-        <MainLayout>
-            <KilometrosTarifaList />
-        </MainLayout>
-    );
+    return <TarifasRangosList />;
 };
 
 export default KilometrosTarifa;

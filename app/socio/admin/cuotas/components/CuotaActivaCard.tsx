@@ -1,6 +1,6 @@
 "use client";
 
-import { CuotaActiva } from "../types/pago-cuota.types";
+import { CuotaActiva, Periodo } from "../types/pago-cuota.types";
 import { Coins, Calendar, CreditCard, Building2, Clock } from "lucide-react";
 import {
   calcularDiasHastaPago,
@@ -10,9 +10,10 @@ import {
 
 interface CuotaActivaCardProps {
   cuota: CuotaActiva;
+  periodoActual?: Periodo | null;
 }
 
-export default function CuotaActivaCard({ cuota }: CuotaActivaCardProps) {
+export default function CuotaActivaCard({ cuota, periodoActual }: CuotaActivaCardProps) {
   const getPeriodicidadLabel = (periodicidad: string) => {
     const labels: Record<string, string> = {
       diario: "Diaria",
@@ -22,6 +23,90 @@ export default function CuotaActivaCard({ cuota }: CuotaActivaCardProps) {
     };
     return labels[periodicidad] || periodicidad;
   };
+
+  // Calcular el monto a mostrar según el tipo de cuota y las condiciones
+  const getMontoAPagar = () => {
+    // Si es cuota de porcentaje y hay período actual
+    if (cuota.tipo_cuota === "porcentaje" && periodoActual) {
+      // Si ya está calculado por el backend, usar ese valor
+      if (periodoActual.monto_calculado) {
+        return parseFloat(periodoActual.monto_calculado.toString());
+      }
+      
+      // Si no está calculado, calcular en tiempo real siguiendo la misma lógica del backend
+      const cantidadPedidos = periodoActual.cantidad_pedidos || 0;
+      const totalVentas = periodoActual.total_ventas ? parseFloat(periodoActual.total_ventas.toString()) : 0;
+      
+      // CASO 1: Verificar si debe exonerar por mínimo de pedidos
+      if (cuota.exonerar_si_menos_pedidos && cuota.minimo_pedidos) {
+        if (cantidadPedidos < cuota.minimo_pedidos) {
+          return 0; // Exonerado, no paga
+        }
+      }
+      
+      // CASO 2: Calcular porcentaje sobre ventas
+      if (cuota.porcentaje_comision) {
+        const porcentaje = parseFloat(cuota.porcentaje_comision.toString()) / 100;
+        const montoCalculado = totalVentas * porcentaje;
+        
+        // CASO 3: Aplicar monto mínimo si corresponde
+        if (cuota.monto_minimo && montoCalculado < parseFloat(cuota.monto_minimo.toString())) {
+          return parseFloat(cuota.monto_minimo.toString());
+        }
+        
+        return montoCalculado;
+      }
+      
+      return 0;
+    }
+    // Si es cuota fija, mostrar el monto de la cuota
+    return parseFloat(cuota.monto_cuota?.toString() || "0");
+  };
+
+  // Determinar el estado de la cuota
+  const getEstadoCuota = () => {
+    if (cuota.tipo_cuota !== "porcentaje" || !periodoActual) {
+      return null;
+    }
+    
+    const cantidadPedidos = periodoActual.cantidad_pedidos || 0;
+    const totalVentas = periodoActual.total_ventas ? parseFloat(periodoActual.total_ventas.toString()) : 0;
+    
+    // Verificar exoneración por mínimo de pedidos
+    if (cuota.exonerar_si_menos_pedidos && cuota.minimo_pedidos) {
+      if (cantidadPedidos < cuota.minimo_pedidos) {
+        return {
+          tipo: 'exonerado',
+          mensaje: `Exonerado - Pedidos insuficientes (${cantidadPedidos}/${cuota.minimo_pedidos})`,
+          color: 'text-green-600'
+        };
+      }
+    }
+    
+    // Verificar si aplica monto mínimo
+    if (cuota.monto_minimo && cuota.porcentaje_comision) {
+      const porcentaje = parseFloat(cuota.porcentaje_comision.toString()) / 100;
+      const montoCalculado = totalVentas * porcentaje;
+      
+      if (montoCalculado < parseFloat(cuota.monto_minimo.toString())) {
+        return {
+          tipo: 'minimo',
+          mensaje: `Monto mínimo aplicado (comisión calculada: S/ ${montoCalculado.toFixed(2)})`,
+          color: 'text-blue-600'
+        };
+      }
+    }
+    
+    // Cálculo normal
+    return {
+      tipo: 'normal',
+      mensaje: periodoActual.monto_calculado ? '✓ Calculado' : '⚠ Pendiente de cálculo',
+      color: periodoActual.monto_calculado ? 'text-green-600' : 'text-amber-600'
+    };
+  };
+
+  const montoAPagar = getMontoAPagar();
+  const estadoCuota = getEstadoCuota();
 
   // Calcular información del día de pago
   const diasRestantes = cuota.dia_pago
@@ -38,11 +123,40 @@ export default function CuotaActivaCard({ cuota }: CuotaActivaCardProps) {
       <div className="space-y-4">
         <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
           <Coins className="w-8 h-8 text-blue-600" />
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-gray-600">Monto a Pagar</p>
             <p className="text-2xl font-bold text-blue-600">
-              S/ {parseFloat(cuota.monto_cuota?.toString() || "0").toFixed(2)}
+              S/ {montoAPagar.toFixed(2)}
             </p>
+            {cuota.tipo_cuota === "porcentaje" && periodoActual && estadoCuota && (
+              <div className="mt-2 space-y-1">
+                {/* Información de ventas y pedidos */}
+                <div className="text-xs text-gray-600">
+                  {periodoActual.total_ventas && (
+                    <p>💰 Ventas: S/ {parseFloat(periodoActual.total_ventas.toString()).toFixed(2)}</p>
+                  )}
+                  {periodoActual.cantidad_pedidos !== undefined && (
+                    <p>📦 Pedidos: {periodoActual.cantidad_pedidos}
+                      {cuota.minimo_pedidos && ` / ${cuota.minimo_pedidos} mínimo`}
+                    </p>
+                  )}
+                  {cuota.porcentaje_comision && (
+                    <p>📊 Comisión: {cuota.porcentaje_comision}%</p>
+                  )}
+                </div>
+                
+                {/* Estado de la cuota con mensaje descriptivo */}
+                <div className={`text-xs font-semibold ${estadoCuota.color} mt-2 p-2 rounded ${
+                  estadoCuota.tipo === 'exonerado' ? 'bg-green-50' : 
+                  estadoCuota.tipo === 'minimo' ? 'bg-blue-50' : 
+                  'bg-gray-50'
+                }`}>
+                  {estadoCuota.tipo === 'exonerado' && '🎉 '}
+                  {estadoCuota.tipo === 'minimo' && 'ℹ️ '}
+                  {estadoCuota.mensaje}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

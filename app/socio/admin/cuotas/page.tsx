@@ -112,7 +112,7 @@ export default function CuotasSocioPage() {
           {/* Información de la Cuota */}
           {cuota && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <CuotaActivaCard cuota={cuota} />
+              <CuotaActivaCard cuota={cuota} periodoActual={periodoActual?.periodo} />
 
               {periodoActual && periodoActual.puede_pagar && periodoActual.periodo && (
                 <div id="formulario-pago">

@@ -87,16 +87,17 @@ export const navigationItems: NavItem[] = [
     path: "/admin/coutas-drivers",
     icon: RiAncientGateLine,
   },
+    {
+    title: "Cuotas Socios",
+    path: "/admin/cuotas-socios",
+    icon: RiShieldUserLine,
+  },
   {
     title: "kilómetros de la tarifa",
     path: "/admin/kilometros-tarifa",
     icon: RiAncientGateLine,
   },
-  {
-    title: "Cuotas Socios",
-    path: "/admin/cuotas-socios",
-    icon: RiShieldUserLine,
-  },
+
   {
     title: "Tipos de Negocio",
     path: "/admin/tiposNegocio",

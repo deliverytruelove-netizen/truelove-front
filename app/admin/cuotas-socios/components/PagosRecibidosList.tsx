@@ -1,122 +1,137 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { PagoCuotaSocio } from "../types/cuota-socio.types"
-import { CheckCircle, XCircle, Clock, Eye } from "lucide-react"
+import { CheckCircle, XCircle, Clock, Eye, Search } from "lucide-react"
 import { aprobarPago, rechazarPago } from "../services/cuota-socio.service"
 import Image from "next/image"
-import Swal from "sweetalert2"
+import { showAlert, confirmAlert } from "@/components/ui/DataTable/Alert"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
+import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 
 interface PagosRecibidosListProps {
   pagos: PagoCuotaSocio[]
-  onRefresh: () => void
 }
 
-export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosListProps) {
-  const [loading, setLoading] = useState(false)
+export default function PagosRecibidosList({ pagos }: PagosRecibidosListProps) {
+  const queryClient = useQueryClient()
   const [selectedPago, setSelectedPago] = useState<PagoCuotaSocio | null>(null)
   const [showImageModal, setShowImageModal] = useState(false)
   const [showRechazarModal, setShowRechazarModal] = useState(false)
   const [motivoRechazo, setMotivoRechazo] = useState("")
+  const [search, setSearch] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [perPage, setPerPage] = useState(DEFAULT_PAGE_SIZE)
+
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["cuotas-pagos"] })
+    queryClient.invalidateQueries({ queryKey: ["cuotas-socios-estadisticas"] })
+  }
+
+  const mutationAprobar = useMutation({
+    mutationFn: (id: number) => aprobarPago(id),
+    onSuccess: () => {
+      invalidateQueries()
+      showAlert({
+        title: "¡Aprobado!",
+        text: "Pago aprobado exitosamente",
+        icon: "success",
+      })
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "Error al aprobar",
+        icon: "error",
+      })
+    },
+  })
+
+  const mutationRechazar = useMutation({
+    mutationFn: ({ id, motivo }: { id: number; motivo: string }) =>
+      rechazarPago(id, motivo),
+    onSuccess: () => {
+      invalidateQueries()
+      setMotivoRechazo("")
+      setSelectedPago(null)
+      showAlert({
+        title: "Rechazado",
+        text: "Pago rechazado exitosamente",
+        icon: "success",
+      })
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "Error al rechazar",
+        icon: "error",
+      })
+      setShowRechazarModal(true)
+    },
+  })
 
   const handleAprobar = async (id: number) => {
-    const result = await Swal.fire({
+    const result = await confirmAlert({
       title: "¿Aprobar este pago?",
       text: "Esta acción marcará el pago como aprobado",
       icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#6b7280",
       confirmButtonText: "Sí, aprobar",
       cancelButtonText: "Cancelar",
     })
 
     if (!result.isConfirmed) return
 
-    // Mostrar loader profesional
-    Swal.fire({
-      title: "Aprobando pago...",
-      html: "Por favor espera mientras procesamos la aprobación",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading()
-      }
-    })
-
-    setLoading(true)
-    try {
-      await aprobarPago(id)
-      await Swal.fire({
-        title: "¡Aprobado!",
-        text: "Pago aprobado exitosamente",
-        icon: "success",
-        confirmButtonColor: "#dc2626",
-      })
-      onRefresh()
-    } catch (error) {
-      await Swal.fire({
-        title: "Error",
-        text: error instanceof Error ? error.message : "Error al aprobar",
-        icon: "error",
-        confirmButtonColor: "#dc2626",
-      })
-    } finally {
-      setLoading(false)
-    }
+    mutationAprobar.mutate(id)
   }
 
   const handleRechazar = async () => {
     if (!selectedPago || !motivoRechazo.trim()) {
-      await Swal.fire({
+      showAlert({
         title: "Motivo requerido",
         text: "Debe indicar un motivo de rechazo",
         icon: "warning",
-        confirmButtonColor: "#dc2626",
       })
       return
     }
 
-    // Cerrar el modal de rechazo
     setShowRechazarModal(false)
+    mutationRechazar.mutate({ id: selectedPago.id, motivo: motivoRechazo })
+  }
 
-    // Mostrar loader profesional
-    Swal.fire({
-      title: "Rechazando pago...",
-      html: "Por favor espera mientras procesamos el rechazo",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading()
-      }
+  const isLoading = mutationAprobar.isPending || mutationRechazar.isPending
+
+  const filteredPagos = useMemo(() => {
+    if (!search.trim()) return pagos
+    const term = search.toLowerCase()
+    return pagos.filter((pago) => {
+      const nombre = `${pago.socio?.name ?? ""} ${pago.socio?.lastName ?? ""}`.toLowerCase()
+      const email = (pago.socio?.email ?? "").toLowerCase()
+      const metodo = (pago.metodo_pago ?? "").toLowerCase()
+      return nombre.includes(term) || email.includes(term) || metodo.includes(term)
     })
+  }, [pagos, search])
 
-    setLoading(true)
-    try {
-      await rechazarPago(selectedPago.id, motivoRechazo)
-      await Swal.fire({
-        title: "Rechazado",
-        text: "Pago rechazado exitosamente",
-        icon: "success",
-        confirmButtonColor: "#dc2626",
-      })
-      setMotivoRechazo("")
-      setSelectedPago(null)
-      onRefresh()
-    } catch (error) {
-      await Swal.fire({
-        title: "Error",
-        text: error instanceof Error ? error.message : "Error al rechazar",
-        icon: "error",
-        confirmButtonColor: "#dc2626",
-      })
-      // Reabrir el modal si hay error
-      setShowRechazarModal(true)
-    } finally {
-      setLoading(false)
-    }
+  const totalPages = Math.max(1, Math.ceil(filteredPagos.length / perPage))
+  const paginatedPagos = filteredPagos.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  )
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage)
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    setCurrentPage(1)
   }
 
   const getEstadoBadge = (estado: string) => {
@@ -146,10 +161,23 @@ export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosL
 
   return (
     <>
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar por nombre, email o método de pago..."
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
       <div className="relative overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
             <tr>
+              <th scope="col" className="px-4 py-3">#</th>
               <th scope="col" className="px-4 py-3">Socio</th>
               <th scope="col" className="px-4 py-3">Monto</th>
               <th scope="col" className="px-4 py-3">Método</th>
@@ -160,15 +188,18 @@ export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosL
             </tr>
           </thead>
           <tbody>
-            {pagos.length === 0 ? (
+            {paginatedPagos.length === 0 ? (
               <tr className="bg-white">
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={8} className="px-4 py-12 text-center">
                   <div className="text-gray-500">No hay pagos registrados</div>
                 </td>
               </tr>
             ) : (
-              pagos.map((pago) => (
+              paginatedPagos.map((pago, index) => (
                 <tr key={pago.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3 text-gray-500">
+                    {(currentPage - 1) * perPage + index + 1}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-800">
                       {pago.socio?.name} {pago.socio?.lastName}
@@ -182,16 +213,18 @@ export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosL
                   <td className="px-4 py-3 text-gray-600">{new Date(pago.fecha_pago).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-center">
                     {pago.comprobante_pago ? (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           setSelectedPago(pago)
                           setShowImageModal(true)
                         }}
-                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded inline-flex items-center gap-1 transition-colors"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 inline-flex items-center gap-1"
                       >
                         <Eye className="w-4 h-4" />
                         Ver
-                      </button>
+                      </Button>
                     ) : (
                       <span className="text-gray-400">Sin comprobante</span>
                     )}
@@ -200,34 +233,40 @@ export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosL
                   <td className="px-4 py-3">
                     {pago.estado_pago === "pendiente" && (
                       <div className="flex items-center justify-center gap-2">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleAprobar(pago.id)}
-                          disabled={loading}
-                          className="text-green-600 hover:text-green-800 hover:bg-green-50 p-1.5 rounded disabled:opacity-50 transition-colors"
+                          disabled={isLoading}
+                          className="text-green-600 hover:text-green-800 hover:bg-green-50 h-8 w-8"
                           title="Aprobar"
                         >
                           <CheckCircle className="w-5 h-5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => {
                             setSelectedPago(pago)
                             setShowRechazarModal(true)
                           }}
-                          disabled={loading}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded disabled:opacity-50 transition-colors"
+                          disabled={isLoading}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8"
                           title="Rechazar"
                         >
                           <XCircle className="w-5 h-5" />
-                        </button>
+                        </Button>
                       </div>
                     )}
                     {pago.estado_pago === "rechazado" && pago.motivo_rechazo && (
-                      <button
-                        className="text-xs text-red-600 hover:text-red-800 hover:underline"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-red-600 hover:text-red-800"
                         title={pago.motivo_rechazo}
                       >
                         Ver motivo
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -236,6 +275,18 @@ export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosL
           </tbody>
         </table>
       </div>
+
+      {filteredPagos.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredPagos.length}
+          perPage={perPage}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+          itemsInCurrentPage={paginatedPagos.length}
+        />
+      )}
 
       {/* Modal Ver Imagen */}
       {showImageModal && selectedPago?.comprobante_pago && (
@@ -281,23 +332,23 @@ export default function PagosRecibidosList({ pagos, onRefresh }: PagosRecibidosL
               required
             />
             <div className="flex justify-end gap-3 mt-4">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setShowRechazarModal(false)
                   setMotivoRechazo("")
                   setSelectedPago(null)
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
                 onClick={handleRechazar}
-                disabled={loading || !motivoRechazo.trim()}
-                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+                disabled={mutationRechazar.isPending || !motivoRechazo.trim()}
               >
-                {loading ? "Rechazando..." : "Rechazar Pago"}
-              </button>
+                {mutationRechazar.isPending ? "Rechazando..." : "Rechazar Pago"}
+              </Button>
             </div>
           </div>
         </div>

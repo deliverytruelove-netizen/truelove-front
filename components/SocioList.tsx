@@ -13,7 +13,7 @@ import {
   aprobarSocio,
   deleteSocio,
 } from "@/app/admin/socios/services/Socios.service"
-import type { DetallesSocio, Socio } from "@/app/admin/socios/types/Socios.types"
+import type { DetallesSocio } from "@/app/admin/socios/types/Socios.types"
 import { obtenerDetalleCuota, type CuotaSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service"
 // import type { ColumnSort } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
@@ -59,49 +59,44 @@ const SocioList: React.FC = () => {
     isLoading,
     refetch,
   } = useQuery<DetallesSocioConCuota[], Error>({
-    queryKey: ["socios-detalles"],
+    queryKey: ["socios-lista"],
     queryFn: async () => {
       const socios = await fetchSocios()
-      console.log("Socios (antes de detalles):", socios)
+      console.log("Socios obtenidos:", socios)
 
-      const detallesPromises = socios.map((socio) => fetchSocioDetails(socio.id))
-      const detalles = await Promise.all(detallesPromises)
-      console.log("Socios con detalles (antes del filtro):", detalles)
+      // Mapear socios básicos con información de cuota (sin fetchSocioDetails)
+      const sociosConCuotas = await Promise.all(
+        socios.map(async (socio) => {
+          // Crear objeto base con los datos del socio en la estructura que espera la tabla
+          const socioBase: DetallesSocioConCuota = {
+            ...socio,
+            personal: {
+              name: socio.name,
+              lastName: socio.lastName,
+              businessType: socio.businessType,
+              phone: socio.phone,
+              email: socio.email,
+              cuota_socio_id: socio.cuota_socio_id || null,
+              created_at: socio.created_at,
+            },
+          } as unknown as DetallesSocioConCuota
 
-      // Mapear los valores de aprobado desde los socios originales a los detalles
-      const detallesConAprobado = await Promise.all(
-        detalles.map(async (detalle, index) => {
-          // Asegurarse de que el detalle tenga la propiedad aprobado del socio original
-          if (detalle && socios[index]) {
-            const socioOriginal = socios[index] as Socio
-            const detalleBase: DetallesSocioConCuota = {
-              ...detalle,
-              aprobado: socioOriginal.aprobado,
-              // Añadir documentType y documentNumber a los detalles
-              documentType: socioOriginal.documentType,
-              documentNumber: socioOriginal.documentNumber,
+          // Si tiene cuota asignada, obtener solo los detalles de la cuota
+          if (socio.cuota_socio_id) {
+            try {
+              const cuotaDetalle = await obtenerDetalleCuota(socio.cuota_socio_id)
+              socioBase.cuotaDetalle = cuotaDetalle
+            } catch (error) {
+              console.error(`Error al obtener cuota ${socio.cuota_socio_id}:`, error)
             }
-
-            // Si tiene cuota asignada, obtener sus detalles
-            if (detalle.personal?.cuota_socio_id) {
-              try {
-                const cuotaDetalle = await obtenerDetalleCuota(detalle.personal.cuota_socio_id)
-                detalleBase.cuotaDetalle = cuotaDetalle
-              } catch (error) {
-                console.error(`Error al obtener cuota ${detalle.personal.cuota_socio_id}:`, error)
-              }
-            }
-
-            return detalleBase
           }
-          return detalle
+
+          return socioBase
         })
       )
 
-      console.log("Detalles con aprobado y cuotas mapeado:", detallesConAprobado)
-
-      // Mostrar todos los registros, no solo los completos
-      return detallesConAprobado
+      console.log("Socios con cuotas mapeados:", sociosConCuotas)
+      return sociosConCuotas
     },
   })
 
@@ -143,7 +138,7 @@ const SocioList: React.FC = () => {
   const mutationAprobar = useMutation({
     mutationFn: aprobarSocio,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socios-detalles"] })
+      queryClient.invalidateQueries({ queryKey: ["socios-lista"] })
       queryClient.invalidateQueries({
         queryKey: ["socio-details", selectedSocioId],
       })
@@ -171,7 +166,7 @@ const SocioList: React.FC = () => {
   const mutationDelete = useMutation({
     mutationFn: deleteSocio,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socios-detalles"] })
+      queryClient.invalidateQueries({ queryKey: ["socios-lista"] })
       showAlert({
         title: "Éxito",
         text: "Se eliminó el socio correctamente.",
@@ -504,8 +499,23 @@ const SocioList: React.FC = () => {
                               <Coins className="w-3 h-3 mr-1" />
                               {socio.cuotaDetalle.periodicidad}
                             </span>
-                            <span className="text-xs text-gray-500">
-                              S/ {Number(socio.cuotaDetalle.monto_cuota).toFixed(2)}
+                            <span className={`text-xs font-medium ${
+                              socio.cuotaDetalle.tipo_cuota === "porcentaje" 
+                                ? "text-purple-600" 
+                                : "text-gray-500"
+                            }`}>
+                              {socio.cuotaDetalle.tipo_cuota === "porcentaje" ? (
+                                <>
+                                  {Number(socio.cuotaDetalle.porcentaje_comision || 0).toFixed(2)}% comisión
+                                  {socio.cuotaDetalle.minimo_pedidos && (
+                                    <span className="block text-gray-500 font-normal">
+                                      Mín. {socio.cuotaDetalle.minimo_pedidos} pedidos
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                `S/ ${Number(socio.cuotaDetalle.monto_cuota).toFixed(2)}`
+                              )}
                             </span>
                             {socio.cuotaDetalle.dia_pago && (
                               <span className="text-xs text-blue-600 font-medium">

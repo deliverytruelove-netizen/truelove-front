@@ -182,3 +182,201 @@ export const fetchKilometrosTarifaActiva = async (): Promise<KilometrosTarifa | 
     throw error
   }
 }
+
+// Servicios para el sistema de rangos
+import type { 
+  TarifaConfiguracion, 
+  CalculadoraRequest, 
+  CalculadoraResponse, 
+  LocalOption, 
+  ClienteOption 
+} from '../types/KilometrosTarifa.types'
+
+interface TarifaConfiguracionApiResponse {
+  success: boolean
+  data?: TarifaConfiguracion | TarifaConfiguracion[]
+  message?: string
+  errors?: Record<string, string[]>
+}
+
+export const fetchTarifasRangos = async (): Promise<TarifaConfiguracion[]> => {
+  try {
+    const response = await axios.get<TarifaConfiguracionApiResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos`,
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.data.success) {
+      // La API ahora devuelve un solo objeto (no array) porque solo hay una configuración
+      // Lo convertimos a array para mantener compatibilidad con el frontend
+      if (Array.isArray(response.data.data)) {
+        return response.data.data
+      } else if (response.data.data) {
+        return [response.data.data]
+      }
+    }
+
+    throw new Error(response.data.message || 'Error al obtener las configuraciones de rangos')
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || error.message || 'Error de conexión'
+      throw new Error(message)
+    }
+    throw error
+  }
+}
+
+export const createTarifaRango = async (data: Partial<TarifaConfiguracion>): Promise<TarifaConfiguracion> => {
+  try {
+    const response = await axios.post<TarifaConfiguracionApiResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos`,
+      data,
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.data.success && response.data.data && !Array.isArray(response.data.data)) {
+      return response.data.data
+    }
+
+    throw new Error(response.data.message || 'Error al crear la configuración')
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data
+      if (errorData?.errors) {
+        const errorMessages = Object.values(errorData.errors).flat().join(', ')
+        throw new Error(errorMessages)
+      }
+      const message = errorData?.message || error.message || 'Error de conexión'
+      throw new Error(message)
+    }
+    throw error
+  }
+}
+
+export const updateTarifaRango = async ({
+  id,
+  data
+}: {
+  id: number
+  data: Partial<TarifaConfiguracion>
+}): Promise<TarifaConfiguracion> => {
+  try {
+    const response = await axios.put<TarifaConfiguracionApiResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos/${id}`,
+      data,
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.data.success && response.data.data && !Array.isArray(response.data.data)) {
+      return response.data.data
+    }
+
+    throw new Error(response.data.message || 'Error al actualizar la configuración')
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data
+      if (errorData?.errors) {
+        const errorMessages = Object.values(errorData.errors).flat().join(', ')
+        throw new Error(errorMessages)
+      }
+      const message = errorData?.message || error.message || 'Error de conexión'
+      throw new Error(message)
+    }
+    throw error
+  }
+}
+
+export const deleteTarifaRango = async (id: number): Promise<void> => {
+  try {
+    const response = await axios.delete<TarifaConfiguracionApiResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos/${id}`,
+      { headers: getAuthHeaders() }
+    )
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Error al eliminar la configuración')
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || error.message || 'Error de conexión'
+      throw new Error(message)
+    }
+    throw error
+  }
+}
+
+export const activarTarifaRango = async (id: number): Promise<TarifaConfiguracion> => {
+  try {
+    const response = await axios.post<TarifaConfiguracionApiResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos/${id}/activar`,
+      {},
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.data.success && response.data.data && !Array.isArray(response.data.data)) {
+      return response.data.data
+    }
+
+    throw new Error(response.data.message || 'Error al activar la configuración')
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || error.message || 'Error de conexión'
+      throw new Error(message)
+    }
+    throw error
+  }
+}
+
+export const calcularPreview = async (request: CalculadoraRequest): Promise<CalculadoraResponse> => {
+  try {
+    const response = await axios.post<CalculadoraResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos/calcular-preview`,
+      request,
+      { headers: getAuthHeaders() }
+    )
+
+    return response.data
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || error.message || 'Error de conexión'
+      throw new Error(message)
+    }
+    throw error
+  }
+}
+
+export const fetchLocales = async (): Promise<LocalOption[]> => {
+  try {
+    const response = await axios.get<{ success: boolean; data: LocalOption[] }>(
+      `${API_BASE_URL}/admin/tarifas-rangos/locales`,
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.data.success) {
+      return response.data.data
+    }
+
+    return []
+  } catch (error) {
+    console.error('Error fetching locales:', error)
+    return []
+  }
+}
+
+export const fetchClientes = async (): Promise<ClienteOption[]> => {
+  try {
+    const response = await axios.get<{ success: boolean; data: ClienteOption[] }>(
+      `${API_BASE_URL}/admin/tarifas-rangos/clientes`,
+      { headers: getAuthHeaders() }
+    )
+
+    if (response.data.success) {
+      return response.data.data
+    }
+
+    return []
+  } catch (error) {
+    console.error('Error fetching clientes:', error)
+    return []
+  }
+}
