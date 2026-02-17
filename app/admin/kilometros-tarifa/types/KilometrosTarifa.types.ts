@@ -84,14 +84,14 @@ export interface CalculadoraResponse {
   data?: {
     distancia_km: number
     precio_calculado: string | number
-    modo_tarifa: 'rangos' | 'precio_por_km'
+    modo_tarifa: 'rangos' | 'precio_por_km' | 'global'
     rango_aplicado?: {
       distancia_desde: string | number
       distancia_hasta: string | number | null
       precio_diurno: string | number
       precio_nocturno: string | number
     } | null
-    horario_nocturno?: { inicio: string; fin: string }
+    horario_nocturno?: { inicio: string; fin: string } | null
     config_nombre?: string
     local: {
       id: number

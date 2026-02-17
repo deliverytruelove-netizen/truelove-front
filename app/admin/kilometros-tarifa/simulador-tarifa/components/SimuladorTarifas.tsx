@@ -246,7 +246,12 @@ const SimuladorTarifas: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-4 py-2.5 text-gray-900 font-medium">
-                          {calculadoraResult.data?.modo_tarifa === 'precio_por_km' ? 'Precio por kilómetro' : 'Por rangos de distancia'}
+                          {calculadoraResult.data?.modo_tarifa === 'precio_por_km'
+                            ? 'Precio por kilómetro'
+                            : calculadoraResult.data?.modo_tarifa === 'rangos'
+                              ? 'Por rangos de distancia'
+                              : 'Global (precio proporcional)'
+                          }
                         </td>
                       </tr>
                       {calculadoraResult.data?.rango_aplicado && (

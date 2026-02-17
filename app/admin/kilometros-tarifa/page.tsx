@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import LocalTarifaModal from './components/LocalTarifaModal';
+import GlobalTarifaForm from './components/GlobalTarifaForm';
 import { useQuery } from '@tanstack/react-query';
 import { fetchLocalesConConfig } from './services/KilometrosTarifa.service';
 import type { LocalConConfig } from './types/KilometrosTarifa.types';
@@ -36,6 +37,9 @@ const KilometrosTarifaPage: React.FC = () => {
   return (
     <div className="space-y-4 pt-4 pb-20">
 
+      {/* Config Global */}
+      <GlobalTarifaForm />
+
       {/* Notificación flotante */}
       {mostrarNotif && (
         <div className="fixed bottom-5 right-4 z-40 max-w-xs w-[calc(100vw-2rem)] sm:w-80 bg-amber-500 text-white rounded-xl shadow-lg px-4 py-3 flex items-start gap-3">
@@ -66,8 +70,7 @@ const KilometrosTarifaPage: React.FC = () => {
             <div className="flex items-start gap-2 px-4 py-2.5 border-b border-blue-100">
               <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">
-                Los locales marcados como <span className="font-semibold">Global</span> usan esta configuración por defecto.
-                Para modificarla ve a la pestaña <span className="font-semibold">Configuración de Tarifas</span>.
+                Los locales marcados como <span className="font-semibold">Global</span> usan la configuración global del sistema (precio base + proporcional por km). Puedes editarla en la sección superior.
               </p>
             </div>
 
