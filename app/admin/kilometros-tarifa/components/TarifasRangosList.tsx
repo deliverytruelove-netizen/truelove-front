@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-import Section from "@/components/layout/Section"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   fetchTarifasRangos,
@@ -67,23 +66,19 @@ const TarifasRangosList: React.FC = () => {
 
   if (isLoadingRangos) {
     return (
-      <Section title="">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
-          <span className="ml-3 text-gray-600">Cargando configuración...</span>
-        </div>
-      </Section>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+        <span className="ml-3 text-gray-600">Cargando configuración...</span>
+      </div>
     )
   }
 
   return (
-    <Section title="" >
-      <TarifasRangosForm
-        configuracion={configuracionActiva}
-        onSubmit={handleSubmit}
-        isLoading={createMutation.isPending || updateMutation.isPending}
-      />
-    </Section>
+    <TarifasRangosForm
+      configuracion={configuracionActiva}
+      onSubmit={handleSubmit}
+      isLoading={createMutation.isPending || updateMutation.isPending}
+    />
   )
 }
 

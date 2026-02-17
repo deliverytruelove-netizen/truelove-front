@@ -189,7 +189,8 @@ import type {
   CalculadoraRequest, 
   CalculadoraResponse, 
   LocalOption, 
-  ClienteOption 
+  ClienteOption,
+  LocalConConfig,
 } from '../types/KilometrosTarifa.types'
 
 interface TarifaConfiguracionApiResponse {
@@ -378,5 +379,75 @@ export const fetchClientes = async (): Promise<ClienteOption[]> => {
   } catch (error) {
     console.error('Error fetching clientes:', error)
     return []
+  }
+}
+
+export const fetchLocalesConConfig = async (): Promise<LocalConConfig[]> => {
+  try {
+    const response = await axios.get<{ success: boolean; data: LocalConConfig[] }>(
+      `${API_BASE_URL}/admin/tarifas-rangos/locales-con-config`,
+      { headers: getAuthHeaders() }
+    )
+    if (response.data.success) return response.data.data
+    return []
+  } catch (error) {
+    console.error('Error fetching locales con config:', error)
+    return []
+  }
+}
+
+export const fetchConfigLocal = async (idLocal: number): Promise<{ data: TarifaConfiguracion | null; usa_global: boolean }> => {
+  try {
+    const response = await axios.get<{ success: boolean; data: TarifaConfiguracion | null; usa_global: boolean }>(
+      `${API_BASE_URL}/admin/tarifas-rangos/config-local/${idLocal}`,
+      { headers: getAuthHeaders() }
+    )
+    return { data: response.data.data ?? null, usa_global: response.data.usa_global }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Error al obtener config del local')
+    }
+    throw error
+  }
+}
+
+export const saveConfigLocal = async (idLocal: number, data: Partial<TarifaConfiguracion>): Promise<TarifaConfiguracion> => {
+  try {
+    const response = await axios.post<TarifaConfiguracionApiResponse>(
+      `${API_BASE_URL}/admin/tarifas-rangos/config-local/${idLocal}`,
+      data,
+      { headers: getAuthHeaders() }
+    )
+    if (response.data.success && response.data.data && !Array.isArray(response.data.data)) {
+      return response.data.data
+    }
+    throw new Error(response.data.message || 'Error al guardar config del local')
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data
+      if (errorData?.errors) {
+        const msgs = Object.values(errorData.errors).flat().join(', ')
+        throw new Error(msgs)
+      }
+      throw new Error(errorData?.message || 'Error de conexión')
+    }
+    throw error
+  }
+}
+
+export const deleteConfigLocal = async (idLocal: number): Promise<void> => {
+  try {
+    const response = await axios.delete<{ success: boolean; message: string }>(
+      `${API_BASE_URL}/admin/tarifas-rangos/config-local/${idLocal}`,
+      { headers: getAuthHeaders() }
+    )
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Error al eliminar config del local')
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Error de conexión')
+    }
+    throw error
   }
 }

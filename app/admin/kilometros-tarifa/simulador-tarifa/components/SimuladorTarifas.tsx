@@ -167,7 +167,7 @@ const SimuladorTarifas: React.FC = () => {
 
               <div className="p-5">
                 {/* Métricas principales en fila */}
-                <div className="grid grid-cols-3 gap-4 mb-5">
+                <div className="grid grid-cols-2 gap-4 mb-5">
                   <div className="text-center p-4 rounded-lg bg-gray-50 border border-gray-100">
                     <div className="flex items-center justify-center gap-1.5 mb-1">
                       <MapPin className="w-3.5 h-3.5 text-gray-500" />
@@ -179,24 +179,15 @@ const SimuladorTarifas: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="text-center p-4 rounded-lg bg-amber-50 border border-amber-100">
+                  <div className="text-center p-4 rounded-lg bg-brand-50 border border-brand-100">
                     <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <span className="text-sm">☀️</span>
-                      <span className="text-xs font-medium text-amber-700 uppercase tracking-wide">Diurno</span>
+                      <TrendingUp className="w-3.5 h-3.5 text-brand-500" />
+                      <span className="text-xs font-medium text-brand-600 uppercase tracking-wide">Precio calculado</span>
                     </div>
-                    <div className="text-2xl font-bold text-amber-700">
-                      {formatCurrency(calculadoraResult.data?.precio_diurno)}
+                    <div className="text-2xl font-bold text-brand-600">
+                      {formatCurrency(calculadoraResult.data?.precio_calculado)}
                     </div>
-                  </div>
-
-                  <div className="text-center p-4 rounded-lg bg-indigo-50 border border-indigo-100">
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <span className="text-sm">🌙</span>
-                      <span className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Nocturno</span>
-                    </div>
-                    <div className="text-2xl font-bold text-indigo-700">
-                      {formatCurrency(calculadoraResult.data?.precio_nocturno)}
-                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">según hora actual</p>
                   </div>
                 </div>
 
@@ -229,7 +220,12 @@ const SimuladorTarifas: React.FC = () => {
                             Configuración
                           </div>
                         </td>
-                        <td className="px-4 py-2.5 text-gray-900 font-medium">{calculadoraResult.data?.configuracion?.nombre || 'Sistema por Km'}</td>
+                        <td className="px-4 py-2.5 text-gray-900 font-medium">
+                          {calculadoraResult.data?.config_nombre || 'Global'}
+                          {calculadoraResult.data?.local?.tiene_config_propia && (
+                            <span className="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Personalizada</span>
+                          )}
+                        </td>
                       </tr>
                       <tr className="hover:bg-gray-50/50">
                         <td className="px-4 py-2.5 text-gray-500 font-medium">
@@ -239,21 +235,32 @@ const SimuladorTarifas: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-4 py-2.5 text-gray-900 font-medium">
-                          {calculadoraResult.data?.configuracion?.hora_inicio_nocturno || '23:00'} - {calculadoraResult.data?.configuracion?.hora_fin_nocturno || '05:00'}
+                          {calculadoraResult.data?.horario_nocturno?.inicio || '--'} → {calculadoraResult.data?.horario_nocturno?.fin || '--'}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50">
+                        <td className="px-4 py-2.5 text-gray-500 font-medium">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            Modo tarifa
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-gray-900 font-medium">
+                          {calculadoraResult.data?.modo_tarifa === 'precio_por_km' ? 'Precio por kilómetro' : 'Por rangos de distancia'}
                         </td>
                       </tr>
                       {calculadoraResult.data?.rango_aplicado && (
                         <tr className="hover:bg-gray-50/50">
                           <td className="px-4 py-2.5 text-gray-500 font-medium">
                             <div className="flex items-center gap-2">
-                              <TrendingUp className="w-3.5 h-3.5" />
+                              <MapPin className="w-3.5 h-3.5" />
                               Rango aplicado
                             </div>
                           </td>
                           <td className="px-4 py-2.5">
-                            <span className="inline-flex items-center gap-3">
+                            <span className="inline-flex flex-wrap items-center gap-2">
                               <span className="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-xs font-semibold border border-brand-200">
-                                {formatNumber(calculadoraResult.data.rango_aplicado.distancia_desde)} - {calculadoraResult.data.rango_aplicado.distancia_hasta ? formatNumber(calculadoraResult.data.rango_aplicado.distancia_hasta) : '∞'} km
+                                {formatNumber(calculadoraResult.data.rango_aplicado.distancia_desde)} – {calculadoraResult.data.rango_aplicado.distancia_hasta ? formatNumber(calculadoraResult.data.rango_aplicado.distancia_hasta) : '∞'} km
                               </span>
                               <span className="text-xs text-gray-500">
                                 ☀️ {formatCurrency(calculadoraResult.data.rango_aplicado.precio_diurno)} · 🌙 {formatCurrency(calculadoraResult.data.rango_aplicado.precio_nocturno)}

@@ -55,8 +55,23 @@ export interface TarifaConfiguracion {
   hora_fin_nocturno: string
   activo: boolean
   rangos?: TarifaRango[]
+  business_registration_id?: number | null
+  modo_tarifa?: 'rangos' | 'precio_por_km'
+  // Campos para modo precio_por_km
+  precio_base_diurno?: number | string
+  precio_base_nocturno?: number | string
+  precio_por_km_diurno?: number | string
+  precio_por_km_nocturno?: number | string
+  precio_maximo?: number | string | null
   created_at: string
   updated_at: string
+}
+
+export interface LocalConConfig {
+  id: number
+  nombre: string
+  tiene_config_propia: boolean
+  config?: TarifaConfiguracion | null
 }
 
 export interface CalculadoraRequest {
@@ -68,15 +83,20 @@ export interface CalculadoraResponse {
   success: boolean
   data?: {
     distancia_km: number
-    es_nocturno: boolean
-    rango_aplicado: TarifaRango | null
-    precio_diurno: number
-    precio_nocturno: number
-    configuracion: TarifaConfiguracion
+    precio_calculado: string | number
+    modo_tarifa: 'rangos' | 'precio_por_km'
+    rango_aplicado?: {
+      distancia_desde: string | number
+      distancia_hasta: string | number | null
+      precio_diurno: string | number
+      precio_nocturno: string | number
+    } | null
+    horario_nocturno?: { inicio: string; fin: string }
+    config_nombre?: string
     local: {
       id: number
       nombre: string
-      coordenadas: string
+      tiene_config_propia: boolean
     }
     cliente: {
       id: number
