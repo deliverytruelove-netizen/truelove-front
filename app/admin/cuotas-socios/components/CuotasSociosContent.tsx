@@ -167,7 +167,7 @@ export default function CuotasSociosContent() {
       </div>
 
       <CrearCuotaModal isOpen={showCrearModal} onClose={() => setShowCrearModal(false)} />
-      <EditarCuotaModal isOpen={showEditarModal} cuota={cuotaToEdit} onClose={() => { setShowEditarModal(false); setCuotaToEdit(null) }} />
+      <EditarCuotaModal key={cuotaToEdit?.id} isOpen={showEditarModal} cuota={cuotaToEdit} onClose={() => { setShowEditarModal(false); setCuotaToEdit(null) }} />
     </>
   )
 }

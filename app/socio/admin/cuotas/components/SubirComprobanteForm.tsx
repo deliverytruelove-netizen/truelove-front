@@ -10,6 +10,7 @@ interface SubirComprobanteFormProps {
   periodoId: number
   montoPeriodo: number | string // Puede venir como string del backend
   periodosDisponibles?: number // Cuántos períodos pendientes tiene el socio
+  tipoCuota?: "monto_fijo" | "porcentaje"
   onSuccess: () => void
 }
 
@@ -17,6 +18,7 @@ export default function SubirComprobanteForm({
   periodoId,
   montoPeriodo,
   periodosDisponibles = 1,
+  tipoCuota = "monto_fijo",
   onSuccess
 }: SubirComprobanteFormProps) {
   const [loading, setLoading] = useState(false)
@@ -145,45 +147,47 @@ export default function SubirComprobanteForm({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Subir Comprobante de Pago</h2>
+    <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
+      <h2 className="text-lg font-bold text-gray-900 mb-3">Subir Comprobante de Pago</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Selector de cantidad de períodos */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            ¿Cuántos períodos deseas pagar?
-          </label>
-          <select
-            value={cantidadPeriodos}
-            onChange={(e) => setCantidadPeriodos(parseInt(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            {Array.from({ length: Math.min(periodosDisponibles, 12) }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num}>
-                {num} período{num !== 1 ? "s" : ""} {num > 1 && `(adelantados)`}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-600 mt-2">
-            Tienes {periodosDisponibles} período{periodosDisponibles !== 1 ? "s" : ""} disponible{periodosDisponibles !== 1 ? "s" : ""} para pagar
-          </p>
-        </div>
+        {/* Selector de cantidad de períodos - solo para monto fijo */}
+        {tipoCuota === "monto_fijo" && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              ¿Cuántos períodos deseas pagar?
+            </label>
+            <select
+              value={cantidadPeriodos}
+              onChange={(e) => setCantidadPeriodos(parseInt(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {Array.from({ length: Math.min(periodosDisponibles, 12) }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  {num} período{num !== 1 ? "s" : ""} {num > 1 && `(adelantados)`}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-600 mt-2">
+              Tienes {periodosDisponibles} período{periodosDisponibles !== 1 ? "s" : ""} disponible{periodosDisponibles !== 1 ? "s" : ""} para pagar
+            </p>
+          </div>
+        )}
 
         {/* Monto calculado automáticamente (NO editable) */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
             <Calculator className="w-4 h-4 text-gray-700" />
-            <label className="block text-sm font-medium text-gray-700">
-              Monto Total a Pagar
-            </label>
+            <span className="text-sm font-medium text-gray-700">Monto Total a Pagar</span>
           </div>
-          <div className="text-3xl font-bold text-green-600">
+          <p className="text-2xl font-bold text-green-600">
             S/ {Number(formData.monto_pagado || 0).toFixed(2)}
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            {cantidadPeriodos} × S/ {Number(montoBase).toFixed(2)} = S/ {Number(formData.monto_pagado || 0).toFixed(2)}
           </p>
+          {tipoCuota === "monto_fijo" && cantidadPeriodos > 1 && (
+            <p className="text-xs text-gray-600 mt-1">
+              {cantidadPeriodos} × S/ {Number(montoBase).toFixed(2)}
+            </p>
+          )}
         </div>
 
         <div>

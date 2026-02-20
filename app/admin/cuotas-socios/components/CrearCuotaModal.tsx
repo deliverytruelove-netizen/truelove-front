@@ -212,20 +212,7 @@ export default function CrearCuotaModal({ isOpen, onClose }: CrearCuotaModalProp
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="minimo_pedidos">Mínimo de Pedidos</Label>
-                    <Input
-                      id="minimo_pedidos"
-                      type="number"
-                      min="0"
-                      value={formData.minimo_pedidos || ""}
-                      onChange={(e) => setFormData({ ...formData, minimo_pedidos: parseInt(e.target.value) || undefined })}
-                      placeholder="4"
-                    />
-                    <p className="text-xs text-gray-500">Mínimo de pedidos para cobrar comisión</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="monto_minimo">Monto Mínimo (S/)</Label>
+                    <Label htmlFor="monto_minimo">Monto Mínimo de Comisión (S/)</Label>
                     <Input
                       id="monto_minimo"
                       type="number"
@@ -233,24 +220,41 @@ export default function CrearCuotaModal({ isOpen, onClose }: CrearCuotaModalProp
                       min="0"
                       value={formData.monto_minimo || ""}
                       onChange={(e) => setFormData({ ...formData, monto_minimo: parseFloat(e.target.value) || undefined })}
-                      placeholder="20.00"
+                      placeholder="200.00"
                     />
-                    <p className="text-xs text-gray-500">Cobra el mayor entre monto mínimo y porcentaje</p>
+                    <p className="text-xs text-gray-500">Si la comisión no llega a este monto, se cobra solo el uso de app</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="exonerar"
-                    checked={formData.exonerar_si_menos_pedidos || false}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, exonerar_si_menos_pedidos: checked as boolean })
-                    }
+                <div className="space-y-2">
+                  <Label htmlFor="monto_uso_app">Cobro por Uso de Aplicación (S/)</Label>
+                  <Input
+                    id="monto_uso_app"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.monto_uso_app || ""}
+                    onChange={(e) => setFormData({ ...formData, monto_uso_app: parseFloat(e.target.value) || undefined })}
+                    placeholder="30.00"
                   />
-                  <Label htmlFor="exonerar" className="font-normal cursor-pointer text-sm">
-                    No cobrar si no cumple el mínimo de pedidos
-                  </Label>
+                  <p className="text-xs text-gray-500">Monto fijo a cobrar cuando la comisión no alcanza el monto mínimo</p>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="monto_maximo">Monto Máximo / Límite (S/)</Label>
+                  <Input
+                    id="monto_maximo"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.monto_maximo || ""}
+                    onChange={(e) => setFormData({ ...formData, monto_maximo: parseFloat(e.target.value) || undefined })}
+                    placeholder="120.00"
+                  />
+                  <p className="text-xs text-gray-500">Tope máximo de comisión a cobrar por período. El socio verá una barra de progreso hacia este límite.</p>
+                </div>
+
+
               </>
             )}
 

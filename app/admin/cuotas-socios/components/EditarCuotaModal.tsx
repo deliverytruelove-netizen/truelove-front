@@ -27,27 +27,32 @@ interface EditarCuotaModalProps {
 
 export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuotaModalProps) {
   const queryClient = useQueryClient()
-  const [formData, setFormData] = useState<ActualizarCuotaRequest>({})
-  const [metodosSeleccionados, setMetodosSeleccionados] = useState<string[]>([])
+
+  const getInitialFormData = (c: CuotaSocio | null): ActualizarCuotaRequest => {
+    if (!c) return {}
+    return {
+      periodicidad: c.periodicidad,
+      tipo_cuota: c.tipo_cuota,
+      monto_cuota: Number(c.monto_cuota) || 0,
+      porcentaje_comision: c.porcentaje_comision ? Number(c.porcentaje_comision) : undefined,
+      minimo_pedidos: c.minimo_pedidos || undefined,
+      exonerar_si_menos_pedidos: c.exonerar_si_menos_pedidos ?? true,
+      monto_minimo: c.monto_minimo ? Number(c.monto_minimo) : undefined,
+      monto_uso_app: c.monto_uso_app ? Number(c.monto_uso_app) : undefined,
+      monto_maximo: c.monto_maximo ? Number(c.monto_maximo) : undefined,
+      numero_cuenta: c.numero_cuenta,
+      tipo_cuenta: c.tipo_cuenta || "",
+      banco: c.banco || "",
+      descripcion: c.descripcion || "",
+    }
+  }
+
+  const [formData, setFormData] = useState<ActualizarCuotaRequest>(() => getInitialFormData(cuota))
+  const [metodosSeleccionados, setMetodosSeleccionados] = useState<string[]>(cuota?.metodos_pago_disponibles || [])
 
   useEffect(() => {
     if (cuota) {
-      setFormData({
-        periodicidad: cuota.periodicidad,
-        tipo_cuota: cuota.tipo_cuota,
-        monto_cuota: cuota.monto_cuota,
-        porcentaje_comision: cuota.porcentaje_comision || undefined,
-        minimo_pedidos: cuota.minimo_pedidos || undefined,
-        exonerar_si_menos_pedidos: cuota.exonerar_si_menos_pedidos || false,
-        monto_minimo: cuota.monto_minimo || undefined,
-        numero_cuenta: cuota.numero_cuenta,
-        tipo_cuenta: cuota.tipo_cuenta || "",
-        banco: cuota.banco || "",
-        estado: cuota.estado,
-        fecha_inicio: cuota.fecha_inicio,
-        fecha_fin: cuota.fecha_fin || "",
-        descripcion: cuota.descripcion || "",
-      })
+      setFormData(getInitialFormData(cuota))
       setMetodosSeleccionados(cuota.metodos_pago_disponibles || [])
     }
   }, [cuota])
@@ -85,8 +90,9 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
     e.preventDefault()
     if (!cuota) return
 
+    const { estado: _estado, ...formDataSinEstado } = formData
     mutation.mutate({
-      ...formData,
+      ...formDataSinEstado,
       metodos_pago_disponibles: metodosSeleccionados,
     })
   }
@@ -178,18 +184,7 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="minimo_pedidos">Mínimo de Pedidos</Label>
-                    <Input
-                      id="minimo_pedidos"
-                      type="number"
-                      min="0"
-                      value={formData.minimo_pedidos || ""}
-                      onChange={(e) => setFormData({ ...formData, minimo_pedidos: parseInt(e.target.value) || undefined })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="monto_minimo">Monto Mínimo (S/)</Label>
+                    <Label htmlFor="monto_minimo">Monto Mínimo de Comisión (S/)</Label>
                     <Input
                       id="monto_minimo"
                       type="number"
@@ -198,21 +193,39 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
                       value={formData.monto_minimo || ""}
                       onChange={(e) => setFormData({ ...formData, monto_minimo: parseFloat(e.target.value) || undefined })}
                     />
+                    <p className="text-xs text-gray-500">Si la comisión no llega a este monto, se cobra solo el uso de app</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="exonerar"
-                    checked={formData.exonerar_si_menos_pedidos || false}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, exonerar_si_menos_pedidos: checked as boolean })
-                    }
+                <div className="space-y-2">
+                  <Label htmlFor="monto_uso_app">Cobro por Uso de Aplicación (S/)</Label>
+                  <Input
+                    id="monto_uso_app"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.monto_uso_app || ""}
+                    onChange={(e) => setFormData({ ...formData, monto_uso_app: parseFloat(e.target.value) || undefined })}
+                    placeholder="30.00"
                   />
-                  <Label htmlFor="exonerar" className="font-normal cursor-pointer text-sm">
-                    No cobrar si no cumple el mínimo de pedidos
-                  </Label>
+                  <p className="text-xs text-gray-500">Monto fijo a cobrar cuando la comisión no alcanza el monto mínimo</p>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="monto_maximo">Monto Máximo / Límite (S/)</Label>
+                  <Input
+                    id="monto_maximo"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.monto_maximo || ""}
+                    onChange={(e) => setFormData({ ...formData, monto_maximo: parseFloat(e.target.value) || undefined })}
+                    placeholder="120.00"
+                  />
+                  <p className="text-xs text-gray-500">Tope máximo de comisión por período. El socio verá barra de progreso hacia este límite.</p>
+                </div>
+
+
               </>
             )}
 
@@ -281,45 +294,6 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
                     Depósito
                   </Label>
                 </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="estado">Estado</Label>
-                <Select
-                  value={formData.estado}
-                  onValueChange={(value) => setFormData({ ...formData, estado: value as "activo" | "inactivo" })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="inactivo">Inactivo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fecha_inicio">Fecha Inicio</Label>
-                <Input
-                  id="fecha_inicio"
-                  type="date"
-                  value={formData.fecha_inicio}
-                  onChange={(e) => setFormData({ ...formData, fecha_inicio: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fecha_fin">Fecha Fin</Label>
-                <Input
-                  id="fecha_fin"
-                  type="date"
-                  value={formData.fecha_fin || ""}
-                  onChange={(e) => setFormData({ ...formData, fecha_fin: e.target.value })}
-                  placeholder="Opcional"
-                />
               </div>
             </div>
 

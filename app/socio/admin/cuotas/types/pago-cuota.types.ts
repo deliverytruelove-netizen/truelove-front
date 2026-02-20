@@ -9,6 +9,8 @@ export interface CuotaActiva {
   minimo_pedidos?: number | null
   exonerar_si_menos_pedidos?: boolean
   monto_minimo?: number | null
+  monto_uso_app?: number | null
+  monto_maximo?: number | null
   numero_cuenta: string
   tipo_cuenta?: string
   banco?: string

@@ -507,11 +507,6 @@ const SocioList: React.FC = () => {
                               {socio.cuotaDetalle.tipo_cuota === "porcentaje" ? (
                                 <>
                                   {Number(socio.cuotaDetalle.porcentaje_comision || 0).toFixed(2)}% comisión
-                                  {socio.cuotaDetalle.minimo_pedidos && (
-                                    <span className="block text-gray-500 font-normal">
-                                      Mín. {socio.cuotaDetalle.minimo_pedidos} pedidos
-                                    </span>
-                                  )}
                                 </>
                               ) : (
                                 `S/ ${Number(socio.cuotaDetalle.monto_cuota).toFixed(2)}`
