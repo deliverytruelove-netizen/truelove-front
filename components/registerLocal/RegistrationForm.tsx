@@ -28,6 +28,7 @@ export default function RegistrationForm() {
     email: "",
     posToDriver: 0,
     entrega_documento_venta: 0,
+    omitir_pago_adelantado: false,
   })
   const [error, setError] = useState<string | null>(null)
   const [isFieldsLocked, setIsFieldsLocked] = useState(false)
@@ -89,6 +90,7 @@ export default function RegistrationForm() {
       formDataToSend.append("email", formData.email)
       formDataToSend.append("posToDriver", formData.posToDriver.toString())
       formDataToSend.append("entrega_documento_venta", formData.entrega_documento_venta.toString())
+      formDataToSend.append("omitir_pago_adelantado", formData.omitir_pago_adelantado ? "1" : "0")
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/register`, {
         method: "POST",

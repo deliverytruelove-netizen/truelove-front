@@ -47,6 +47,7 @@ export const FormFields: React.FC<FormFieldsProps> = ({
       email: "",
       posToDriver: 0,
       entrega_documento_venta: 0,
+      omitir_pago_adelantado: false,
     };
 
     setFormData(datosLimpios);
@@ -247,9 +248,34 @@ export const FormFields: React.FC<FormFieldsProps> = ({
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-500 mt-1">
-            Esta opción indica si tu negocio puede emitir facturas o boletas para las entregas. 
+            Esta opción indica si tu negocio puede emitir facturas o boletas para las entregas.
             Ideal para carritos ambulantes que no cuentan con sistema de facturación.
           </p>
+        </div>
+
+        <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <input
+            type="checkbox"
+            id="omitir_pago_adelantado"
+            checked={formData.omitir_pago_adelantado}
+            onChange={(e) => {
+              setFormData({
+                ...formData,
+                omitir_pago_adelantado: e.target.checked,
+              });
+            }}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-400"
+          />
+          <div>
+            <Label htmlFor="omitir_pago_adelantado" className="cursor-pointer">
+              Omitir pago adelantado al cliente
+            </Label>
+            <p className="text-xs text-gray-500 mt-1">
+              Si activas esta opción, no se le cobrará adelantado al cliente ni se mostrará
+              tu nombre y número de Yape/Plin en la app. Ideal para negocios que prefieren
+              manejar el cobro directamente.
+            </p>
+          </div>
         </div>
       </div>
     </div>

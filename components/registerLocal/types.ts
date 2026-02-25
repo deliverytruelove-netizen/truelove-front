@@ -9,6 +9,7 @@ export interface FormData {
     email: string
     posToDriver: number
     entrega_documento_venta: number
+    omitir_pago_adelantado: boolean
   }
   
   export interface BusinessType {
