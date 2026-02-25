@@ -199,9 +199,9 @@ export const FormFields: React.FC<FormFieldsProps> = ({
       </div>
 
       {/* Configuración de Servicios */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <Label htmlFor="posToDriver">¿Deseas facilitar tu máquina POS al driver?</Label>
+          <Label htmlFor="posToDriver">Máquina POS al driver</Label>
           <Select
             value={formData.posToDriver.toString()}
             onValueChange={(value) => {
@@ -218,16 +218,13 @@ export const FormFields: React.FC<FormFieldsProps> = ({
               <SelectItem value="0">No facilitar POS</SelectItem>
               <SelectItem value="1">POS Estilos</SelectItem>
               <SelectItem value="2">POS Visa</SelectItem>
-              <SelectItem value="3">Ambos POS </SelectItem>
+              <SelectItem value="3">Ambos POS</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500 mt-1">
-            Esta opción permite que el repartidor use tu dispositivo para cobros con tarjeta a los clientes.
-          </p>
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="entrega_documento_venta">¿Emites documentos de venta (facturas/boletas)?</Label>
+          <Label htmlFor="entrega_documento_venta">Documentos de venta</Label>
           <Select
             value={formData.entrega_documento_venta.toString()}
             onValueChange={(value) => {
@@ -241,43 +238,30 @@ export const FormFields: React.FC<FormFieldsProps> = ({
               <SelectValue placeholder="Seleccione una opción" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0">No emito documentos de venta</SelectItem>
-              <SelectItem value="1">Sí emito Boleta de venta</SelectItem>
-              <SelectItem value="2">Sí emito Factura de venta</SelectItem>
-              <SelectItem value="3">Sí emito Ambos</SelectItem>
+              <SelectItem value="0">No emito documentos</SelectItem>
+              <SelectItem value="1">Boleta de venta</SelectItem>
+              <SelectItem value="2">Factura de venta</SelectItem>
+              <SelectItem value="3">Ambos</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500 mt-1">
-            Esta opción indica si tu negocio puede emitir facturas o boletas para las entregas.
-            Ideal para carritos ambulantes que no cuentan con sistema de facturación.
-          </p>
-        </div>
-
-        <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <input
-            type="checkbox"
-            id="omitir_pago_adelantado"
-            checked={formData.omitir_pago_adelantado}
-            onChange={(e) => {
-              setFormData({
-                ...formData,
-                omitir_pago_adelantado: e.target.checked,
-              });
-            }}
-            className="mt-1 h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-400"
-          />
-          <div>
-            <Label htmlFor="omitir_pago_adelantado" className="cursor-pointer">
-              Omitir pago adelantado al cliente
-            </Label>
-            <p className="text-xs text-gray-500 mt-1">
-              Si activas esta opción, no se le cobrará adelantado al cliente ni se mostrará
-              tu nombre y número de Yape/Plin en la app. Ideal para negocios que prefieren
-              manejar el cobro directamente.
-            </p>
-          </div>
         </div>
       </div>
+
+      <label htmlFor="omitir_pago_adelantado" className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg cursor-pointer">
+        <input
+          type="checkbox"
+          id="omitir_pago_adelantado"
+          checked={formData.omitir_pago_adelantado}
+          onChange={(e) => {
+            setFormData({
+              ...formData,
+              omitir_pago_adelantado: e.target.checked,
+            });
+          }}
+          className="h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-400"
+        />
+        <span className="text-sm font-medium">Omitir pago adelantado (no mostrar Yape/Plin al cliente)</span>
+      </label>
     </div>
   );
 };
