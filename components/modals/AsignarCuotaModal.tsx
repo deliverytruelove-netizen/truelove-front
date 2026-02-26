@@ -306,23 +306,55 @@ export default function AsignarCuotaModal({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div className="space-y-2">
+                <Label htmlFor="fechaInicio" className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {(() => {
+                    const cuota = cuotas.find(c => c.id.toString() === cuotaSeleccionada)
+                    return cuota?.tipo_cuota === "porcentaje"
+                      ? "Inicio del primer periodo"
+                      : "Fecha de Inicio de Períodos"
+                  })()}
+                </Label>
+                <Input
+                  id="fechaInicio"
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                  disabled={!cuotaSeleccionada}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500">
+                  {(() => {
+                    const cuota = cuotas.find(c => c.id.toString() === cuotaSeleccionada)
+                    return cuota?.tipo_cuota === "porcentaje"
+                      ? "Desde esta fecha se empezará a contabilizar las ventas del socio para calcular la comisión"
+                      : "Selecciona desde qué fecha comenzarán a contar los períodos de pago"
+                  })()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="diaPago" className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   {(() => {
                     const cuota = cuotas.find(c => c.id.toString() === cuotaSeleccionada)
-                    if (!cuota) return "Día de Pago"
-                    
+                    if (!cuota) return "Día límite de pago"
+
+                    if (cuota.tipo_cuota === "porcentaje") {
+                      switch (cuota.periodicidad) {
+                        case "semanal": return "Día límite de pago semanal"
+                        case "quincenal": return "Día límite de pago quincenal"
+                        case "mensual": return "Día límite de pago mensual"
+                        default: return "Día límite de pago"
+                      }
+                    }
+
                     switch (cuota.periodicidad) {
-                      case "semanal":
-                        return "Día de Pago de la Semana"
-                      case "quincenal":
-                        return "Día de Pago de la Quincena"
-                      case "mensual":
-                        return "Día de Pago del Mes"
-                      case "diario":
-                        return "Día de Pago del Mes"
-                      default:
-                        return "Día de Pago"
+                      case "semanal": return "Día de Pago de la Semana"
+                      case "quincenal": return "Día de Pago de la Quincena"
+                      case "mensual": return "Día de Pago del Mes"
+                      case "diario": return "Día de Pago del Mes"
+                      default: return "Día de Pago"
                     }
                   })()}
                 </Label>
@@ -335,7 +367,7 @@ export default function AsignarCuotaModal({
                     {(() => {
                       const cuota = cuotas.find(c => c.id.toString() === cuotaSeleccionada)
                       if (!cuota) return null
-                      
+
                       switch (cuota.periodicidad) {
                         case "semanal":
                           return [
@@ -351,14 +383,14 @@ export default function AsignarCuotaModal({
                               {dia.label}
                             </SelectItem>
                           ))
-                        
+
                         case "quincenal":
                           return Array.from({length: 15}, (_, i) => i + 1).map(dia => (
                             <SelectItem key={dia} value={dia.toString()}>
                               Día {dia} de la quincena
                             </SelectItem>
                           ))
-                        
+
                         case "mensual":
                         case "diario":
                         default:
@@ -378,15 +410,36 @@ export default function AsignarCuotaModal({
                     if (!cuota || !diaPago || diaPago === "0") {
                       return "Si no se especifica, se usará el día de la fecha de inicio"
                     }
-                    
+
+                    if (cuota.tipo_cuota === "porcentaje") {
+                      switch (cuota.periodicidad) {
+                        case "semanal":
+                          const diasSemP = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+                          return `Cada ${diasSemP[parseInt(diaPago)]}, al finalizar el periodo, se calculará la comisión y el socio tendrá hasta ese día para pagar`
+                        case "quincenal":
+                          return `Al finalizar cada quincena, se calcula la comisión. El socio debe pagar antes del día ${diaPago}`
+                        case "mensual":
+                          return (
+                            <>
+                              Al finalizar cada mes, se calcula la comisión sobre las ventas. El socio debe pagar antes del día {diaPago}
+                              {parseInt(diaPago) > 28 && (
+                                <div className="text-amber-600 mt-1">
+                                  * En meses con menos días, se usará el último día del mes
+                                </div>
+                              )}
+                            </>
+                          )
+                        default:
+                          return `El socio deberá pagar según el día ${diaPago} configurado`
+                      }
+                    }
+
                     switch (cuota.periodicidad) {
                       case "semanal":
                         const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
                         return `El socio deberá pagar cada ${diasSemana[parseInt(diaPago)]} de la semana`
-                      
                       case "quincenal":
                         return `El socio deberá pagar el día ${diaPago} de cada quincena`
-                      
                       case "mensual":
                         return (
                           <>
@@ -398,33 +451,13 @@ export default function AsignarCuotaModal({
                             )}
                           </>
                         )
-                      
                       case "diario":
                         return `El socio deberá pagar cada día ${diaPago} del mes`
-                      
                       default:
                         return `El socio deberá pagar según el día ${diaPago} configurado`
                     }
                   })()}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fechaInicio" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Fecha de Inicio de Períodos
-                </Label>
-                <Input
-                  id="fechaInicio"
-                  type="date"
-                  value={fechaInicio}
-                  onChange={(e) => setFechaInicio(e.target.value)}
-                  disabled={!cuotaSeleccionada}
-                  className="w-full"
-                />
-                <p className="text-xs text-gray-500">
-                  Selecciona desde qué fecha comenzarán a contar los períodos de pago
-                </p>
               </div>
             </div>
 

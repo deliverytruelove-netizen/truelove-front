@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPedidosActivos,
   guardarTokenFcmWeb,
+  reportNotificationStatus,
   type PedidoActivo,
 } from "../services/pedido.service";
 import { requestFCMToken, onForegroundMessage } from "@/lib/firebase";
@@ -148,7 +149,15 @@ export function PedidosRealtimeProvider({
       try {
         // Registrar Service Worker manualmente
         if ("serviceWorker" in navigator) {
-          await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          // Enviar API URL al SW para que pueda reportar notificaciones
+          const sw = registration.active || registration.installing || registration.waiting;
+          if (sw) {
+            sw.postMessage({
+              type: "SET_API_URL",
+              apiUrl: process.env.NEXT_PUBLIC_API_WEB,
+            });
+          }
         }
 
         // Obtener token FCM web
@@ -163,6 +172,10 @@ export function PedidosRealtimeProvider({
         // Escuchar mensajes en primer plano (cuando la pestaña está activa)
         onForegroundMessage((payload) => {
           console.log("FCM foreground:", payload.title);
+          // Reportar received_at al backend
+          if (payload.notificationId) {
+            reportNotificationStatus(payload.notificationId, "received");
+          }
           // Marcar que FCM ya notificó para evitar duplicado con polling
           fcmJustNotified.current = true;
           setTimeout(() => {

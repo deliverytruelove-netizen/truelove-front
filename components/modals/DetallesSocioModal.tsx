@@ -25,10 +25,11 @@ import {
   Coins,
   AlertCircle,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import NextImage from "next/image";
 import { PDFViewer } from "../PDFViewer";
-import { verPeriodosDeSocio, obtenerEstadoPagosSocio, type EstadoPagosSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service";
+import { verPeriodosDeSocio, obtenerEstadoPagosSocio, calcularPeriodo, type EstadoPagosSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service";
 import type { Periodo } from "@/app/socio/admin/cuotas/types/pago-cuota.types";
 import EditarDiaPagoModal from "./EditarDiaPagoModal";
 
@@ -709,7 +710,7 @@ export function DetallesSocioModal({
                         <div>
                           <p className="font-medium text-gray-900">Período {periodo.numero_periodo}</p>
                           <p className="text-sm text-gray-600">
-                            {formatFecha(periodo.periodo_inicio)} - {formatFecha(periodo.fecha_vencimiento)}
+                            {formatFecha(periodo.periodo_inicio)} - {formatFecha(periodo.periodo_fin)}
                           </p>
                         </div>
                       </div>
@@ -719,15 +720,42 @@ export function DetallesSocioModal({
                           <p className="text-lg font-bold text-gray-900">
                             S/ {Number(periodo.monto_esperado).toFixed(2)}
                           </p>
-                          {/* Mostrar detalles si es tipo porcentaje */}
+                          {/* Desglose mejorado para tipo porcentaje */}
                           {estadoPagos?.cuota?.tipo_cuota === "porcentaje" && (
                             <div className="mt-1 text-xs text-gray-600 space-y-0.5">
                               <div>Ventas: S/ {Number(periodo.total_ventas || 0).toFixed(2)}</div>
                               <div>Pedidos: {periodo.cantidad_pedidos || 0}</div>
+                              {Number(periodo.total_ventas || 0) > 0 && estadoPagos?.cuota?.porcentaje_comision && (
+                                <div className="text-purple-600">
+                                  Comisión ({Number(estadoPagos.cuota.porcentaje_comision)}%): S/ {(Number(periodo.total_ventas || 0) * Number(estadoPagos.cuota.porcentaje_comision) / 100).toFixed(2)}
+                                </div>
+                              )}
                               {periodo.fecha_calculo ? (
-                                <div className="text-green-600">✓ Calculado</div>
+                                <div className="text-green-600 flex items-center gap-1 justify-end">
+                                  ✓ Calculado
+                                  <button
+                                    type="button"
+                                    title="Recalcular"
+                                    className="ml-1 p-0.5 hover:bg-gray-100 rounded transition-colors"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        await calcularPeriodo(periodo.id);
+                                        if (data?.id) {
+                                          const periodosData = await verPeriodosDeSocio(data.id);
+                                          setPeriodos(periodosData);
+                                          cargarEstadoPagos(data.id);
+                                        }
+                                      } catch (err) {
+                                        console.error("Error al recalcular:", err);
+                                      }
+                                    }}
+                                  >
+                                    <RefreshCw className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                                  </button>
+                                </div>
                               ) : (
-                                <div className="text-yellow-600">⚠ Pendiente</div>
+                                <div className="text-yellow-600">⚠ Sin calcular</div>
                               )}
                             </div>
                           )}
@@ -960,6 +988,7 @@ export function DetallesSocioModal({
           isOpen={showEditarDiaPagoModal}
           cuota={estadoPagos.cuota}
           socioNombre={`${data.personal?.name || ""} ${data.personal?.lastName || ""}`.trim()}
+          periodos={periodos}
           onClose={() => setShowEditarDiaPagoModal(false)}
           onSuccess={() => {
             setShowEditarDiaPagoModal(false);

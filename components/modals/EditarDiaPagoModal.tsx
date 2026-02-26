@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Calendar, AlertTriangle } from "lucide-react"
+import { X, Calendar, AlertTriangle, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/select"
 import Swal from "sweetalert2"
 import { actualizarDiaPago, type CuotaSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service"
+import type { Periodo } from "@/app/socio/admin/cuotas/types/pago-cuota.types"
 
 interface EditarDiaPagoModalProps {
   isOpen: boolean
   cuota: CuotaSocio
   socioNombre: string
+  periodos?: Periodo[]
   onClose: () => void
   onSuccess: () => void
 }
@@ -26,6 +28,7 @@ export default function EditarDiaPagoModal({
   isOpen,
   cuota,
   socioNombre,
+  periodos = [],
   onClose,
   onSuccess,
 }: EditarDiaPagoModalProps) {
@@ -37,6 +40,18 @@ export default function EditarDiaPagoModal({
       setDiaPago(cuota.dia_pago?.toString() || "")
     }
   }, [isOpen, cuota])
+
+  const formatFechCorta = (fecha: string) => {
+    const [year, month, day] = fecha.split('T')[0].split('-')
+    const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })
+  }
+
+  const getNombreMes = (fecha: string) => {
+    const [year, month] = fecha.split('T')[0].split('-')
+    const d = new Date(parseInt(year), parseInt(month) - 1, 1)
+    return d.toLocaleDateString("es-PE", { month: "long", year: "numeric" })
+  }
 
   const handleActualizar = async () => {
     if (!diaPago) {
@@ -50,7 +65,7 @@ export default function EditarDiaPagoModal({
     }
 
     const diaPagoNumero = parseInt(diaPago)
-    const notaExplicativa = diaPagoNumero > 28 
+    const notaExplicativa = diaPagoNumero > 28
       ? `En meses con menos de ${diaPagoNumero} días, el pago se realizará el último día del mes.`
       : undefined
 
@@ -59,10 +74,10 @@ export default function EditarDiaPagoModal({
         case "semanal":
           const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
           return `<strong>${diasSemana[diaPagoNumero]} de cada semana</strong>`
-        
+
         case "quincenal":
           return `<strong>Día ${diaPagoNumero} de cada quincena</strong>`
-        
+
         case "mensual":
         case "diario":
         default:
@@ -94,10 +109,10 @@ export default function EditarDiaPagoModal({
           case "semanal":
             const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
             return `El socio ahora pagará cada ${diasSemana[diaPagoNumero]} de la semana`
-          
+
           case "quincenal":
             return `El socio ahora pagará el día ${diaPagoNumero} de cada quincena`
-          
+
           case "mensual":
           case "diario":
           default:
@@ -128,9 +143,15 @@ export default function EditarDiaPagoModal({
 
   if (!isOpen) return null
 
+  // Mostrar solo los primeros 4 periodos pendientes/vencidos como contexto
+  const periodosContexto = periodos
+    .filter(p => p.estado === "pendiente" || p.estado === "vencido")
+    .sort((a, b) => a.numero_periodo - b.numero_periodo)
+    .slice(0, 4)
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">Editar Día de Pago</h2>
@@ -185,14 +206,14 @@ export default function EditarDiaPagoModal({
                             {dia.label}
                           </SelectItem>
                         ))
-                      
+
                       case "quincenal":
                         return Array.from({length: 15}, (_, i) => i + 1).map(dia => (
                           <SelectItem key={dia} value={dia.toString()}>
                             Día {dia} de la quincena
                           </SelectItem>
                         ))
-                      
+
                       case "mensual":
                       case "diario":
                       default:
@@ -214,16 +235,16 @@ export default function EditarDiaPagoModal({
                         case "semanal":
                           const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
                           return `El socio deberá pagar cada ${diasSemana[parseInt(diaPago)]} de la semana`
-                        
+
                         case "quincenal":
                           return `El socio deberá pagar el día ${diaPago} de cada quincena`
-                        
+
                         case "mensual":
                           return `El socio deberá pagar cada día ${diaPago} del mes`
-                        
+
                         case "diario":
                           return `El socio deberá pagar cada día ${diaPago} del mes`
-                        
+
                         default:
                           return `El socio deberá pagar según el día ${diaPago} configurado`
                       }
@@ -262,10 +283,10 @@ export default function EditarDiaPagoModal({
                       case "semanal":
                         const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
                         return `${diasSemana[cuota.dia_pago]} de cada semana`
-                      
+
                       case "quincenal":
                         return `Día ${cuota.dia_pago} de cada quincena`
-                      
+
                       case "mensual":
                       case "diario":
                       default:
@@ -275,6 +296,46 @@ export default function EditarDiaPagoModal({
                 </p>
                 {cuota.dia_pago_nota && (
                   <p className="text-xs text-gray-500 mt-1">{cuota.dia_pago_nota}</p>
+                )}
+              </div>
+            )}
+
+            {/* Contexto de periodos con meses */}
+            {periodosContexto.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="w-4 h-4 text-blue-600" />
+                  <p className="text-xs font-medium text-blue-800">Próximos periodos del socio:</p>
+                </div>
+                <div className="space-y-1.5">
+                  {periodosContexto.map((periodo) => (
+                    <div key={periodo.id} className="flex items-center justify-between text-xs">
+                      <span className="text-blue-700">
+                        <span className="font-medium">#{periodo.numero_periodo}</span>{" "}
+                        {formatFechCorta(periodo.periodo_inicio)} - {formatFechCorta(periodo.periodo_fin)}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                        periodo.estado === "vencido" ? "bg-red-100 text-red-700"
+                        : periodo.estado === "pagado" ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {periodo.estado}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {diaPago && cuota.periodicidad === "mensual" && (
+                  <div className="mt-2 pt-2 border-t border-blue-200">
+                    <p className="text-[11px] text-blue-700">
+                      Con día {diaPago}, los vencimientos serán:{" "}
+                      {periodosContexto.slice(0, 3).map((p, i) => (
+                        <span key={p.id}>
+                          {i > 0 && ", "}
+                          <strong>{diaPago}/{getNombreMes(p.periodo_fin)}</strong>
+                        </span>
+                      ))}
+                    </p>
+                  </div>
                 )}
               </div>
             )}

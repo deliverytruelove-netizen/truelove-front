@@ -212,7 +212,7 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="monto_maximo">Monto Máximo / Límite (S/)</Label>
+                  <Label htmlFor="monto_maximo">Monto Máximo / Tope (Opcional)</Label>
                   <Input
                     id="monto_maximo"
                     type="number"
@@ -220,9 +220,9 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
                     min="0"
                     value={formData.monto_maximo || ""}
                     onChange={(e) => setFormData({ ...formData, monto_maximo: parseFloat(e.target.value) || undefined })}
-                    placeholder="120.00"
+                    placeholder="Dejar vacío = sin tope"
                   />
-                  <p className="text-xs text-gray-500">Tope máximo de comisión por período. El socio verá barra de progreso hacia este límite.</p>
+                  <p className="text-xs text-gray-500">Opcional. Si se deja vacío, no habrá tope y se cobrará el porcentaje real de las ventas sin límite.</p>
                 </div>
 
 

@@ -452,6 +452,21 @@ export const verificarConfirmacionPago = async (
   }
 };
 
+export const reportNotificationStatus = async (
+  notificationId: string,
+  status: "received" | "opened",
+): Promise<void> => {
+  try {
+    await fetch(`${API_URL}/notifications/update-status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notification_id: notificationId, status }),
+    });
+  } catch (error) {
+    console.warn("Error reportando estado de notificación:", error);
+  }
+};
+
 export const fetchPedidoDetalle = async (
   pedidoId: number,
 ): Promise<PedidoActivo[]> => {

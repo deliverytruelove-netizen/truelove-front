@@ -57,16 +57,25 @@ export async function requestFCMToken(): Promise<string | null> {
 }
 
 export async function onForegroundMessage(
-  callback: (payload: { title: string; body: string }) => void,
+  callback: (payload: {
+    title: string;
+    body: string;
+    notificationId?: string;
+    data?: Record<string, string>;
+  }) => void,
 ) {
   const msg = await getMessagingInstance();
   if (!msg) return;
 
   onMessage(msg, (payload) => {
     console.log("Mensaje FCM en primer plano:", payload);
+    // data-only messages: title/body vienen en payload.data, no en payload.notification
+    const data = payload.data as Record<string, string> | undefined;
     callback({
-      title: payload.notification?.title || "Nueva notificación",
-      body: payload.notification?.body || "",
+      title: data?.title || payload.notification?.title || "Nueva notificación",
+      body: data?.body || payload.notification?.body || "",
+      notificationId: data?.notification_id,
+      data,
     });
   });
 }
