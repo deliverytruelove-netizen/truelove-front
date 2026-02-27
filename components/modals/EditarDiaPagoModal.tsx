@@ -35,6 +35,8 @@ export default function EditarDiaPagoModal({
   const [loading, setLoading] = useState(false)
   const [diaPago, setDiaPago] = useState<string>("")
 
+  const esPorcentaje = cuota.tipo_cuota === "porcentaje"
+
   useEffect(() => {
     if (isOpen && cuota) {
       setDiaPago(cuota.dia_pago?.toString() || "")
@@ -53,11 +55,16 @@ export default function EditarDiaPagoModal({
     return d.toLocaleDateString("es-PE", { month: "long", year: "numeric" })
   }
 
+  const getDiaNombre = (dia: number) => {
+    const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    return diasSemana[dia] || `Día ${dia}`
+  }
+
   const handleActualizar = async () => {
     if (!diaPago) {
       await Swal.fire({
-        title: "Día de pago requerido",
-        text: "Debes seleccionar un día de pago",
+        title: esPorcentaje ? "Día de vencimiento requerido" : "Día de pago requerido",
+        text: esPorcentaje ? "Debes seleccionar un día de vencimiento" : "Debes seleccionar un día de pago",
         icon: "warning",
         confirmButtonColor: "#dc2626",
       })
@@ -72,14 +79,9 @@ export default function EditarDiaPagoModal({
     const mensajeDiaPago = (() => {
       switch (cuota.periodicidad) {
         case "semanal":
-          const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-          return `<strong>${diasSemana[diaPagoNumero]} de cada semana</strong>`
-
+          return `<strong>${getDiaNombre(diaPagoNumero)} de cada semana</strong>`
         case "quincenal":
           return `<strong>Día ${diaPagoNumero} de cada quincena</strong>`
-
-        case "mensual":
-        case "diario":
         default:
           return `<strong>Día ${diaPagoNumero} de cada mes</strong>`
       }
@@ -87,7 +89,9 @@ export default function EditarDiaPagoModal({
 
     const result = await Swal.fire({
       title: "¿Confirmar cambio?",
-      html: `Se actualizará el día de pago para:<br><strong>${socioNombre}</strong><br><br>Nuevo día de pago: ${mensajeDiaPago}${
+      html: `Se actualizará el ${esPorcentaje ? "día de vencimiento" : "día de pago"} para:<br><strong>${socioNombre}</strong><br><br>Nuevo ${esPorcentaje ? "vencimiento" : "día de pago"}: ${mensajeDiaPago}${
+        esPorcentaje ? `<br><br><small class="text-gray-500">Los períodos pendientes se actualizarán con el nuevo vencimiento</small>` : ""
+      }${
         cuota.periodicidad === "mensual" && diaPagoNumero > 28 ? `<br><br><small class="text-amber-600">⚠️ En meses con menos días, se usará el último día del mes</small>` : ""
       }`,
       icon: "question",
@@ -105,24 +109,20 @@ export default function EditarDiaPagoModal({
       await actualizarDiaPago(cuota.id, diaPagoNumero, notaExplicativa)
 
       const mensajeExito = (() => {
+        const tipoLabel = esPorcentaje ? "vencerá" : "pagará"
         switch (cuota.periodicidad) {
           case "semanal":
-            const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-            return `El socio ahora pagará cada ${diasSemana[diaPagoNumero]} de la semana`
-
+            return `El socio ahora ${tipoLabel} cada ${getDiaNombre(diaPagoNumero)} de la semana`
           case "quincenal":
-            return `El socio ahora pagará el día ${diaPagoNumero} de cada quincena`
-
-          case "mensual":
-          case "diario":
+            return `El socio ahora ${tipoLabel} el día ${diaPagoNumero} de cada quincena`
           default:
-            return `El socio ahora pagará el día ${diaPagoNumero} de cada mes`
+            return `El socio ahora ${tipoLabel} el día ${diaPagoNumero} de cada mes`
         }
       })()
 
       await Swal.fire({
         title: "¡Éxito!",
-        html: `Día de pago actualizado exitosamente<br><small>${mensajeExito}</small>`,
+        html: `${esPorcentaje ? "Día de vencimiento" : "Día de pago"} actualizado exitosamente<br><small>${mensajeExito}</small>`,
         icon: "success",
         confirmButtonColor: "#dc2626",
       })
@@ -132,7 +132,7 @@ export default function EditarDiaPagoModal({
     } catch (error) {
       await Swal.fire({
         title: "Error",
-        text: error instanceof Error ? error.message : "Error al actualizar día de pago",
+        text: error instanceof Error ? error.message : "Error al actualizar",
         icon: "error",
         confirmButtonColor: "#dc2626",
       })
@@ -143,18 +143,19 @@ export default function EditarDiaPagoModal({
 
   if (!isOpen) return null
 
-  // Mostrar solo los primeros 4 periodos pendientes/vencidos como contexto
   const periodosContexto = periodos
     .filter(p => p.estado === "pendiente" || p.estado === "vencido")
     .sort((a, b) => a.numero_periodo - b.numero_periodo)
     .slice(0, 4)
+
+  const tituloModal = esPorcentaje ? "Editar Día de Vencimiento" : "Editar Día de Pago"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">Editar Día de Pago</h2>
+          <h2 className="text-xl font-semibold">{tituloModal}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-6 h-6" />
           </button>
@@ -164,24 +165,36 @@ export default function EditarDiaPagoModal({
         <div className="p-6 space-y-4">
           <div>
             <p className="text-sm text-gray-600 mb-4">
-              Editar día de pago para: <strong>{socioNombre}</strong>
+              {esPorcentaje
+                ? <>Editar día de vencimiento para: <strong>{socioNombre}</strong></>
+                : <>Editar día de pago para: <strong>{socioNombre}</strong></>
+              }
             </p>
+
+            {/* Explicación para porcentaje */}
+            {esPorcentaje && (
+              <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
+                <p className="text-xs text-purple-700">
+                  Este día determina cuándo vence el plazo de pago de cada período.
+                  El socio deberá pagar su comisión antes de esta fecha.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="diaPago" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 {(() => {
+                  const prefix = esPorcentaje ? "Día de Vencimiento" : "Día de Pago"
                   switch (cuota.periodicidad) {
                     case "semanal":
-                      return "Día de Pago de la Semana"
+                      return `${prefix} de la Semana`
                     case "quincenal":
-                      return "Día de Pago de la Quincena"
+                      return `${prefix} de la Quincena`
                     case "mensual":
-                      return "Día de Pago del Mes"
                     case "diario":
-                      return "Día de Pago del Mes"
                     default:
-                      return "Día de Pago"
+                      return `${prefix} del Mes`
                   }
                 })()}
               </Label>
@@ -231,22 +244,16 @@ export default function EditarDiaPagoModal({
                 {diaPago ? (
                   <>
                     {(() => {
+                      const verbo = esPorcentaje ? "vencerá" : "deberá pagar"
                       switch (cuota.periodicidad) {
                         case "semanal":
-                          const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-                          return `El socio deberá pagar cada ${diasSemana[parseInt(diaPago)]} de la semana`
-
+                          return `El período ${verbo} cada ${getDiaNombre(parseInt(diaPago))} de la semana`
                         case "quincenal":
-                          return `El socio deberá pagar el día ${diaPago} de cada quincena`
-
+                          return `El período ${verbo} el día ${diaPago} de cada quincena`
                         case "mensual":
-                          return `El socio deberá pagar cada día ${diaPago} del mes`
-
                         case "diario":
-                          return `El socio deberá pagar cada día ${diaPago} del mes`
-
                         default:
-                          return `El socio deberá pagar según el día ${diaPago} configurado`
+                          return `El período ${verbo} cada día ${diaPago} del mes`
                       }
                     })()}
                     {cuota.periodicidad === "mensual" && parseInt(diaPago) > 28 && (
@@ -257,18 +264,18 @@ export default function EditarDiaPagoModal({
                     )}
                   </>
                 ) : (
-                  (() => {
-                    switch (cuota.periodicidad) {
-                      case "semanal":
-                        return "Selecciona el día de la semana en que el socio debe realizar su pago"
-                      case "quincenal":
-                        return "Selecciona el día de la quincena en que el socio debe realizar su pago"
-                      case "mensual":
-                      case "diario":
-                      default:
-                        return "Selecciona el día del mes en que el socio debe realizar su pago"
-                    }
-                  })()
+                  esPorcentaje
+                    ? "Selecciona el día en que vencerá el plazo de pago del socio"
+                    : (() => {
+                        switch (cuota.periodicidad) {
+                          case "semanal":
+                            return "Selecciona el día de la semana en que el socio debe realizar su pago"
+                          case "quincenal":
+                            return "Selecciona el día de la quincena en que el socio debe realizar su pago"
+                          default:
+                            return "Selecciona el día del mes en que el socio debe realizar su pago"
+                        }
+                      })()
                 )}
               </div>
             </div>
@@ -276,19 +283,14 @@ export default function EditarDiaPagoModal({
             {/* Información actual */}
             {cuota.dia_pago && (
               <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                <p className="text-xs text-gray-600 mb-1">Día de pago actual:</p>
+                <p className="text-xs text-gray-600 mb-1">{esPorcentaje ? "Día de vencimiento actual:" : "Día de pago actual:"}</p>
                 <p className="font-medium text-gray-900">
                   {(() => {
                     switch (cuota.periodicidad) {
                       case "semanal":
-                        const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-                        return `${diasSemana[cuota.dia_pago]} de cada semana`
-
+                        return `${getDiaNombre(cuota.dia_pago)} de cada semana`
                       case "quincenal":
                         return `Día ${cuota.dia_pago} de cada quincena`
-
-                      case "mensual":
-                      case "diario":
                       default:
                         return `Día ${cuota.dia_pago} de cada mes`
                     }
@@ -300,7 +302,7 @@ export default function EditarDiaPagoModal({
               </div>
             )}
 
-            {/* Contexto de periodos con meses */}
+            {/* Contexto de periodos */}
             {periodosContexto.length > 0 && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <div className="flex items-center gap-2 mb-2">
@@ -352,7 +354,7 @@ export default function EditarDiaPagoModal({
             disabled={loading || !diaPago}
             className="bg-red-600 hover:bg-red-700"
           >
-            {loading ? "Actualizando..." : "Actualizar Día de Pago"}
+            {loading ? "Actualizando..." : `Actualizar ${esPorcentaje ? "Vencimiento" : "Día de Pago"}`}
           </Button>
         </div>
       </div>

@@ -1,117 +1,143 @@
 "use client"
 
 import { Calendar, Clock, AlertTriangle } from "lucide-react"
-import { CuotaActiva } from "../types/pago-cuota.types"
+import { CuotaActiva, Periodo } from "../types/pago-cuota.types"
+import { formatearFechaSafe } from "../utils/fecha-pago.utils"
 
 interface RecordatorioPagoCardProps {
   cuota: CuotaActiva
   diasRestantes?: number | null
+  periodoActual?: Periodo | null
 }
 
-export default function RecordatorioPagoCard({ cuota, diasRestantes }: RecordatorioPagoCardProps) {
-  // Si no hay día de pago definido o días restantes, no mostrar nada
-  if (!cuota.dia_pago || diasRestantes === null || diasRestantes === undefined) {
+export default function RecordatorioPagoCard({ cuota, diasRestantes, periodoActual }: RecordatorioPagoCardProps) {
+  if (diasRestantes === null || diasRestantes === undefined) {
     return null
+  }
+
+  const esPorcentaje = cuota.tipo_cuota === "porcentaje"
+
+  const getVencimientoLabel = () => {
+    // Para porcentaje: mostrar fecha de vencimiento del período
+    if (esPorcentaje && periodoActual?.fecha_vencimiento) {
+      return `Vence: ${formatearFechaSafe(periodoActual.fecha_vencimiento, { day: "2-digit", month: "short" })}`
+    }
+    // Para monto fijo: mostrar día de la semana/mes
+    if (!cuota.dia_pago) return ""
+    switch (cuota.periodicidad) {
+      case "semanal": {
+        const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        return `${diasSemana[cuota.dia_pago!] || cuota.dia_pago} de cada semana`
+      }
+      case "quincenal":
+        return `${cuota.dia_pago} de cada quincena`
+      default:
+        return `${cuota.dia_pago} de cada mes`
+    }
   }
 
   const getAlertaInfo = (dias: number) => {
     if (dias === 0) {
       return {
-        color: "bg-green-100 border-green-400 text-green-800",
-        icon: <Calendar className="w-5 h-5 text-green-600" />,
-        titulo: "¡Hoy es tu día de pago!",
+        bg: "bg-yellow-50 dark:bg-yellow-900/20",
+        border: "border-yellow-300 dark:border-yellow-800",
+        iconBg: "bg-yellow-100 dark:bg-yellow-900/40",
+        icon: <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />,
+        titulo: esPorcentaje ? "¡Tu pago vence hoy!" : "¡Hoy es tu día de pago!",
+        tituloColor: "text-yellow-800 dark:text-yellow-300",
         mensaje: "Recuerda realizar tu pago antes de que termine el día.",
         urgencia: "alta"
       }
     }
     if (dias > 0 && dias <= 3) {
       return {
-        color: "bg-yellow-100 border-yellow-400 text-yellow-800",
-        icon: <Clock className="w-5 h-5 text-yellow-600" />,
+        bg: "bg-yellow-50 dark:bg-yellow-900/20",
+        border: "border-yellow-300 dark:border-yellow-800",
+        iconBg: "bg-yellow-100 dark:bg-yellow-900/40",
+        icon: <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />,
         titulo: `Pago próximo en ${dias} día${dias !== 1 ? "s" : ""}`,
+        tituloColor: "text-yellow-800 dark:text-yellow-300",
         mensaje: "Prepara tu comprobante de pago.",
         urgencia: "media"
       }
     }
     if (dias < 0) {
       return {
-        color: "bg-red-100 border-red-400 text-red-800",
-        icon: <AlertTriangle className="w-5 h-5 text-red-600" />,
+        bg: "bg-brand-50 dark:bg-brand-900/20",
+        border: "border-brand-300 dark:border-brand-800",
+        iconBg: "bg-brand-100 dark:bg-brand-900/40",
+        icon: <AlertTriangle className="w-4 h-4 text-brand-600 dark:text-brand-400" />,
         titulo: `Pago vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? "s" : ""}`,
-        mensaje: "Realiza tu pago lo antes posible para evitar inconvenientes.",
+        tituloColor: "text-brand-800 dark:text-brand-300",
+        mensaje: "Realiza tu pago lo antes posible.",
         urgencia: "critica"
       }
     }
-    // Si faltan más de 3 días, mostrar recordatorio suave
     if (dias > 3 && dias <= 7) {
       return {
-        color: "bg-blue-100 border-blue-400 text-blue-800",
-        icon: <Calendar className="w-5 h-5 text-blue-600" />,
+        bg: "bg-gray-50 dark:bg-gray-800",
+        border: "border-gray-300 dark:border-gray-700",
+        iconBg: "bg-gray-100 dark:bg-gray-700",
+        icon: <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />,
         titulo: `Próximo pago en ${dias} días`,
-        mensaje: `Tu día de pago es el ${cuota.dia_pago} de cada mes.`,
+        tituloColor: "text-gray-800 dark:text-gray-200",
+        mensaje: esPorcentaje
+          ? `Tu pago vence el ${formatearFechaSafe(periodoActual?.fecha_vencimiento, { day: "2-digit", month: "short" })}.`
+          : cuota.periodicidad === "semanal"
+            ? `Tu día de pago es cada ${["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][cuota.dia_pago!] || `día ${cuota.dia_pago}`}.`
+            : `Tu día de pago es el ${cuota.dia_pago} de cada ${cuota.periodicidad === "quincenal" ? "quincena" : "mes"}.`,
         urgencia: "baja"
       }
     }
-    
+
     return null
   }
 
   const alertaInfo = getAlertaInfo(diasRestantes)
 
-  // Solo mostrar alertas para casos importantes (próximo, hoy, vencido, o recordatorio semanal)
   if (!alertaInfo) {
     return null
   }
 
   return (
-    <div className={`border-2 rounded-lg p-4 ${alertaInfo.color} transition-all duration-300`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 mt-0.5">
+    <div className={`${alertaInfo.bg} border ${alertaInfo.border} rounded-lg px-3 py-2.5 transition-all duration-300`}>
+      <div className="flex items-center gap-2.5">
+        <div className={`${alertaInfo.iconBg} rounded-full p-1.5 flex-shrink-0`}>
           {alertaInfo.icon}
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-lg mb-1">
-            {alertaInfo.titulo}
-          </h3>
-          <p className="text-sm mb-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className={`font-semibold text-sm ${alertaInfo.tituloColor}`}>
+              {alertaInfo.titulo}
+            </h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {getVencimientoLabel()}
+            </span>
+          </div>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
             {alertaInfo.mensaje}
           </p>
-          
-          {/* Información adicional del día de pago */}
-          <div className="text-xs opacity-75 border-t border-current pt-2 mt-2">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-3 h-3" />
-              <span>Día de pago: {cuota.dia_pago} de cada mes</span>
-            </div>
-            {cuota.dia_pago_nota && (
-              <div className="mt-1 text-xs">
-                <span className="font-medium">Nota:</span> {cuota.dia_pago_nota}
-              </div>
-            )}
-          </div>
-
-          {/* Botón de acción según la urgencia */}
-          {(alertaInfo.urgencia === "alta" || alertaInfo.urgencia === "critica") && (
-            <div className="mt-3">
-              <button
-                onClick={() => {
-                  // Scroll al formulario de pago si existe
-                  const formulario = document.getElementById("formulario-pago")
-                  if (formulario) {
-                    formulario.scrollIntoView({ behavior: "smooth", block: "center" })
-                  }
-                }}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  alertaInfo.urgencia === "critica"
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-green-600 hover:bg-green-700 text-white"
-                }`}
-              >
-                {alertaInfo.urgencia === "critica" ? "Pagar Ahora" : "Realizar Pago"}
-              </button>
-            </div>
-          )}
         </div>
+
+        {/* Botón de acción para urgencia alta/critica */}
+        {(alertaInfo.urgencia === "alta" || alertaInfo.urgencia === "critica") && (
+          <button
+            onClick={() => {
+              const formulario = document.getElementById("formulario-pago")
+              if (formulario) {
+                formulario.scrollIntoView({ behavior: "smooth", block: "center" })
+              }
+            }}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              alertaInfo.urgencia === "critica"
+                ? "bg-brand-600 hover:bg-brand-700 text-white"
+                : "bg-yellow-600 hover:bg-yellow-700 text-white"
+            }`}
+          >
+            Pagar
+          </button>
+        )}
       </div>
     </div>
   )

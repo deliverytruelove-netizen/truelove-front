@@ -240,20 +240,6 @@ export default function CrearCuotaModal({ isOpen, onClose }: CrearCuotaModalProp
                   <p className="text-xs text-gray-500">Monto fijo a cobrar cuando la comisión no alcanza el monto mínimo</p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="monto_maximo">Monto Máximo / Tope (Opcional)</Label>
-                  <Input
-                    id="monto_maximo"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.monto_maximo || ""}
-                    onChange={(e) => setFormData({ ...formData, monto_maximo: parseFloat(e.target.value) || undefined })}
-                    placeholder="Dejar vacío = sin tope"
-                  />
-                  <p className="text-xs text-gray-500">Opcional. Si se deja vacío, no habrá tope y se cobrará el porcentaje real de las ventas sin límite.</p>
-                </div>
-
 
               </>
             )}

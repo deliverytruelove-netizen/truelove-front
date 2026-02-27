@@ -117,6 +117,37 @@ export const verificarAcceso = async (): Promise<VerificarAccesoResponse> => {
   return data.data
 }
 
+export interface PedidoPeriodo {
+  id: number
+  codigo: string | null
+  cliente: string | null
+  fecha: string
+  subtotal: number
+  comision: number
+  neto: number
+  num_productos: number
+}
+
+export interface PedidosPeriodoResponse {
+  pedidos: PedidoPeriodo[]
+  porcentaje: number | null
+  periodo_inicio: string
+  periodo_fin: string
+}
+
+export const fetchPedidosPeriodo = async (periodoId: number): Promise<PedidosPeriodoResponse> => {
+  const response = await fetch(`${API_URL}/socio/pedidos-periodo/${periodoId}`, {
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    throw new Error("Error al obtener los pedidos del período")
+  }
+
+  const data = await response.json()
+  return data.data
+}
+
 export const subirComprobantePeriodo = async (
   periodoId: number,
   comprobante: File,

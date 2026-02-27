@@ -32,6 +32,7 @@ import { PDFViewer } from "../PDFViewer";
 import { verPeriodosDeSocio, obtenerEstadoPagosSocio, calcularPeriodo, type EstadoPagosSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service";
 import type { Periodo } from "@/app/socio/admin/cuotas/types/pago-cuota.types";
 import EditarDiaPagoModal from "./EditarDiaPagoModal";
+import AsignarCuotaModal from "./AsignarCuotaModal";
 
 interface DetallesSocioModalProps {
   isOpen: boolean;
@@ -157,6 +158,7 @@ export function DetallesSocioModal({
   const [estadoPagos, setEstadoPagos] = useState<EstadoPagosSocio | null>(null);
   const [loadingCuotas, setLoadingCuotas] = useState(false);
   const [showEditarDiaPagoModal, setShowEditarDiaPagoModal] = useState(false);
+  const [showCambiarCuotaModal, setShowCambiarCuotaModal] = useState(false);
   const { shouldRender: renderNotification, isLeaving: isNotificationLeaving } =
     useAnimatedUnmount(showNotification, 300);
 
@@ -626,18 +628,18 @@ export function DetallesSocioModal({
                       {estadoPagos.cuota.dia_pago && (
                         <p className="text-sm text-blue-700 font-medium">
                           <Calendar className="w-4 h-4 inline mr-1" />
-                          Día de pago: {(() => {
+                          {estadoPagos.cuota.tipo_cuota === "porcentaje" ? "Día de vencimiento" : "Día de pago"}: {(() => {
                             const diaPago = estadoPagos.cuota.dia_pago
                             const periodicidad = estadoPagos.cuota.periodicidad
-                            
+
                             switch (periodicidad) {
                               case "semanal":
                                 const diasSemana = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
                                 return `${diasSemana[diaPago]} de cada semana`
-                              
+
                               case "quincenal":
                                 return `Día ${diaPago} de cada quincena`
-                              
+
                               case "mensual":
                               case "diario":
                               default:
@@ -648,56 +650,104 @@ export function DetallesSocioModal({
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowEditarDiaPagoModal(true)}
-                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Editar Día de Pago
-                  </Button>
+                  {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCambiarCuotaModal(true)}
+                      className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Cambiar Cuota
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowEditarDiaPagoModal(true)}
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Editar Día de Pago
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Resumen */}
-            {estadoPagos && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="text-sm font-medium text-green-900">Pagados</span>
+            {estadoPagos && (() => {
+              // Para porcentaje: solo contar períodos que ya iniciaron
+              const esPorcentaje = estadoPagos.cuota?.tipo_cuota === "porcentaje"
+              let pagados = estadoPagos.periodos_pagados
+              let pendientes = estadoPagos.periodos_pendientes
+              let vencidos = estadoPagos.periodos_vencidos
+
+              if (esPorcentaje && periodos.length > 0) {
+                const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+                const periodosIniciados = periodos.filter(p => {
+                  const inicio = new Date(p.periodo_inicio); inicio.setHours(0, 0, 0, 0)
+                  return inicio <= hoy
+                })
+                pagados = periodosIniciados.filter(p => p.estado === "pagado").length
+                pendientes = periodosIniciados.filter(p => p.estado === "pendiente").length
+                vencidos = periodosIniciados.filter(p => p.estado === "vencido").length
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <span className="text-sm font-medium text-green-900">Pagados</span>
+                    </div>
+                    <p className="text-2xl font-bold text-green-700">{pagados}</p>
                   </div>
-                  <p className="text-2xl font-bold text-green-700">{estadoPagos.periodos_pagados}</p>
-                </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertCircle className="w-5 h-5 text-yellow-600" />
-                    <span className="text-sm font-medium text-yellow-900">Pendientes</span>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertCircle className="w-5 h-5 text-yellow-600" />
+                      <span className="text-sm font-medium text-yellow-900">{esPorcentaje ? "Por cobrar" : "Pendientes"}</span>
+                    </div>
+                    <p className="text-2xl font-bold text-yellow-700">{pendientes}</p>
                   </div>
-                  <p className="text-2xl font-bold text-yellow-700">{estadoPagos.periodos_pendientes}</p>
-                </div>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                    <span className="text-sm font-medium text-red-900">Vencidos</span>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                      <span className="text-sm font-medium text-red-900">Vencidos</span>
+                    </div>
+                    <p className="text-2xl font-bold text-red-700">{vencidos}</p>
                   </div>
-                  <p className="text-2xl font-bold text-red-700">{estadoPagos.periodos_vencidos}</p>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Lista de períodos */}
             <div>
               <h3 className="text-lg font-semibold mb-4">
-                {estadoPagos?.cuota ? 
-                  `Períodos ${estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)}es` : 
-                  'Períodos de Pago'
+                {estadoPagos?.cuota ?
+                  estadoPagos.cuota.tipo_cuota === "porcentaje"
+                    ? "Historial de Comisiones"
+                    : `Períodos ${estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)}es`
+                  : 'Períodos de Pago'
                 }
               </h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {periodos.sort((a, b) => a.numero_periodo - b.numero_periodo).map((periodo) => (
+                {periodos
+                  .filter((periodo) => {
+                    // Para porcentaje: solo mostrar períodos que ya iniciaron o tienen actividad
+                    if (estadoPagos?.cuota?.tipo_cuota === "porcentaje") {
+                      const hoy = new Date()
+                      hoy.setHours(0, 0, 0, 0)
+                      const inicio = new Date(periodo.periodo_inicio)
+                      inicio.setHours(0, 0, 0, 0)
+                      const tieneActividad = periodo.estado !== "pendiente" || periodo.fecha_calculo || Number(periodo.total_ventas || 0) > 0 || Number(periodo.monto_esperado || 0) > 0
+                      return inicio <= hoy || tieneActividad
+                    }
+                    // Para monto fijo: mostrar todos
+                    return true
+                  })
+                  .sort((a, b) => a.numero_periodo - b.numero_periodo)
+                  .map((periodo) => (
                   <div
                     key={periodo.id}
                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -771,6 +821,24 @@ export function DetallesSocioModal({
                     </div>
                   </div>
                 ))}
+                {/* Mensaje si no hay períodos visibles para porcentaje */}
+                {estadoPagos?.cuota?.tipo_cuota === "porcentaje" && periodos.filter((p) => {
+                  const hoy = new Date(); hoy.setHours(0,0,0,0)
+                  const inicio = new Date(p.periodo_inicio); inicio.setHours(0,0,0,0)
+                  const tieneActividad = p.estado !== "pendiente" || p.fecha_calculo || Number(p.total_ventas || 0) > 0 || Number(p.monto_esperado || 0) > 0
+                  return inicio <= hoy || tieneActividad
+                }).length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                    <Coins className="w-12 h-12 mb-3" />
+                    <p className="text-sm font-medium text-gray-500">Sin períodos activos aún</p>
+                    <p className="text-xs mt-1 text-center max-w-xs">
+                      {periodos.length > 0
+                        ? `El primer período inicia el ${formatFecha(periodos.sort((a, b) => a.numero_periodo - b.numero_periodo)[0].periodo_inicio)}. Las comisiones se calcularán automáticamente.`
+                        : "Los períodos aparecerán conforme avancen las fechas de cobro."
+                      }
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -803,6 +871,8 @@ export function DetallesSocioModal({
                     ? "bg-green-50 border-green-200"
                     : (estadoPagos?.periodos_vencidos ?? 0) > 0
                     ? "bg-red-50 border-red-200"
+                    : estadoPagos?.cuota?.tipo_cuota === "porcentaje"
+                    ? "bg-blue-50 border-blue-200"
                     : (estadoPagos?.periodos_pendientes ?? 0) > 0
                     ? "bg-yellow-50 border-yellow-200"
                     : "bg-blue-50 border-blue-200"
@@ -818,6 +888,8 @@ export function DetallesSocioModal({
                       ? "bg-green-100"
                       : (estadoPagos?.periodos_vencidos ?? 0) > 0
                       ? "bg-red-100"
+                      : estadoPagos?.cuota?.tipo_cuota === "porcentaje"
+                      ? "bg-blue-100"
                       : (estadoPagos?.periodos_pendientes ?? 0) > 0
                       ? "bg-yellow-100"
                       : "bg-blue-100"
@@ -827,6 +899,8 @@ export function DetallesSocioModal({
                     <CheckCircle className="h-5 w-5 text-green-600" />
                   ) : (estadoPagos?.periodos_vencidos ?? 0) > 0 ? (
                     <AlertTriangle className="h-5 w-5 text-red-600" />
+                  ) : estadoPagos?.cuota?.tipo_cuota === "porcentaje" ? (
+                    <Coins className="h-5 w-5 text-blue-600" />
                   ) : (estadoPagos?.periodos_pendientes ?? 0) > 0 ? (
                     <AlertCircle className="h-5 w-5 text-yellow-600" />
                   ) : (
@@ -840,6 +914,8 @@ export function DetallesSocioModal({
                         ? "text-green-800"
                         : (estadoPagos?.periodos_vencidos ?? 0) > 0
                         ? "text-red-800"
+                        : estadoPagos?.cuota?.tipo_cuota === "porcentaje"
+                        ? "text-blue-800"
                         : (estadoPagos?.periodos_pendientes ?? 0) > 0
                         ? "text-yellow-800"
                         : "text-blue-800"
@@ -851,13 +927,19 @@ export function DetallesSocioModal({
                       ? `Socio tiene ${estadoPagos?.periodos_vencidos} período${
                           (estadoPagos?.periodos_vencidos ?? 0) > 1 ? "s" : ""
                         } vencido${(estadoPagos?.periodos_vencidos ?? 0) > 1 ? "s" : ""}`
+                      : estadoPagos?.cuota?.tipo_cuota === "porcentaje"
+                      ? "Cuota de comisión activa"
                       : (estadoPagos?.periodos_pendientes ?? 0) > 0
                       ? `Socio tiene ${estadoPagos?.periodos_pendientes} período${
                           (estadoPagos?.periodos_pendientes ?? 0) > 1 ? "s" : ""
                         } pendiente${(estadoPagos?.periodos_pendientes ?? 0) > 1 ? "s" : ""}`
                       : "Socio sin cuota asignada"}
                   </p>
-                  {(estadoPagos?.total_adeudado ?? 0) > 0 && (
+                  {estadoPagos?.cuota?.tipo_cuota === "porcentaje" && (estadoPagos?.periodos_vencidos ?? 0) === 0 ? (
+                    <p className="text-sm text-blue-600">
+                      Se calculará automáticamente conforme avancen los períodos
+                    </p>
+                  ) : (estadoPagos?.total_adeudado ?? 0) > 0 ? (
                     <p
                       className={`text-sm ${
                         (estadoPagos?.periodos_vencidos ?? 0) > 0 ? "text-red-600" : "text-yellow-600"
@@ -865,7 +947,7 @@ export function DetallesSocioModal({
                     >
                       Total adeudado: S/ {estadoPagos?.total_adeudado?.toFixed(2)}
                     </p>
-                  )}
+                  ) : null}
                 </div>
                 <button
                   onClick={handleCloseNotification}
@@ -874,6 +956,8 @@ export function DetallesSocioModal({
                       ? "text-green-600 hover:text-green-800"
                       : (estadoPagos?.periodos_vencidos ?? 0) > 0
                       ? "text-red-600 hover:text-red-800"
+                      : estadoPagos?.cuota?.tipo_cuota === "porcentaje"
+                      ? "text-blue-600 hover:text-blue-800"
                       : (estadoPagos?.periodos_pendientes ?? 0) > 0
                       ? "text-yellow-600 hover:text-yellow-800"
                       : "text-blue-600 hover:text-blue-800"
@@ -883,6 +967,7 @@ export function DetallesSocioModal({
                 </button>
               </div>
             )}
+
 
             {/* Contenido con scroll */}
             <div className="flex-1 overflow-y-auto">
@@ -982,7 +1067,7 @@ export function DetallesSocioModal({
         </div>
       )}
 
-      {/* Modal de editar día de pago */}
+      {/* Modal de editar día de pago (solo monto_fijo) */}
       {showEditarDiaPagoModal && estadoPagos?.cuota && data && (
         <EditarDiaPagoModal
           isOpen={showEditarDiaPagoModal}
@@ -992,7 +1077,22 @@ export function DetallesSocioModal({
           onClose={() => setShowEditarDiaPagoModal(false)}
           onSuccess={() => {
             setShowEditarDiaPagoModal(false);
-            // Recargar el estado de pagos para mostrar los cambios
+            if (data.id) {
+              cargarEstadoPagos(data.id);
+            }
+          }}
+        />
+      )}
+
+      {/* Modal de cambiar cuota (reasignar a otra cuota) */}
+      {showCambiarCuotaModal && data && (
+        <AsignarCuotaModal
+          isOpen={showCambiarCuotaModal}
+          socioId={data.id}
+          socioNombre={`${data.personal?.name || ""} ${data.personal?.lastName || ""}`.trim()}
+          onClose={() => setShowCambiarCuotaModal(false)}
+          onSuccess={() => {
+            setShowCambiarCuotaModal(false);
             if (data.id) {
               cargarEstadoPagos(data.id);
             }
