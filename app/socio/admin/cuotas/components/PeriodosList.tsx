@@ -79,15 +79,6 @@ export default function PeriodosList({ periodos, periodoActualId, tipoCuota }: P
   }
 
   const sortedPeriodos = [...periodos]
-    .filter((periodo) => {
-      if (esPorcentaje) {
-        const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
-        const inicio = new Date(periodo.periodo_inicio); inicio.setHours(0, 0, 0, 0)
-        const tieneActividad = periodo.estado !== "pendiente" || periodo.fecha_calculo || Number(periodo.total_ventas || 0) > 0 || Number(periodo.monto_esperado || 0) > 0
-        return inicio <= hoy || tieneActividad
-      }
-      return true
-    })
     .sort((a, b) => a.numero_periodo - b.numero_periodo)
 
   return (
