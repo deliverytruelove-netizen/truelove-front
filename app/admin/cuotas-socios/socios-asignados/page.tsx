@@ -160,7 +160,7 @@ export default function SociosAsignadosPage() {
 
       {/* Lista */}
       <Section title="">
-        <div className="p-6">
+        <div className="p-2 sm:p-6">
           {/* Filtros */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">

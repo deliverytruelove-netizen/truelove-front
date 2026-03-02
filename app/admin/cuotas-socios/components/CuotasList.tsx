@@ -112,7 +112,7 @@ export default function CuotasList({ cuotas, onEdit }: CuotasListProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-gray-200">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 py-3 sm:p-4 border-b border-gray-200">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none z-10" />
@@ -146,7 +146,66 @@ export default function CuotasList({ cuotas, onEdit }: CuotasListProps) {
         </div>
       </div>
 
-      <div className="relative overflow-x-auto">
+      {/* Vista mobile: cards */}
+      <div className="md:hidden">
+        {filteredCuotas.length === 0 ? (
+          <div className="px-4 py-12 text-center">
+            <Search className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500">{globalFilter ? "Intenta con otra búsqueda." : "No hay cuotas registradas."}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {paginatedCuotas.map((cuota) => (
+              <div key={cuota.id} className="px-2 py-3 sm:p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">{getPeriodicidadLabel(cuota.periodicidad)}</span>
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                      cuota.tipo_cuota === "porcentaje" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
+                    }`}>
+                      {cuota.tipo_cuota === "porcentaje" ? "%" : "Fijo"}
+                    </span>
+                  </div>
+                  {cuota.estado === "activo" ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Activo</span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><XCircle className="w-3 h-3 mr-1" />Inactivo</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">
+                    {cuota.tipo_cuota === "porcentaje"
+                      ? `${Number(cuota.porcentaje_comision).toFixed(2)}% comisión`
+                      : `S/ ${Number(cuota.monto_cuota).toFixed(2)}`}
+                  </span>
+                  {cuota.minimo_pedidos && (
+                    <span className="text-xs text-gray-500">Mín. {cuota.minimo_pedidos} pedidos</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {cuota.banco} - {cuota.numero_cuenta} {cuota.tipo_cuenta && `(${cuota.tipo_cuenta})`}
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(cuota)} className="text-blue-600 hover:bg-blue-50 h-7 text-xs">
+                    <Pencil className="w-3.5 h-3.5 mr-1" /> Editar
+                  </Button>
+                  {cuota.tipo_cuota === "porcentaje" && (
+                    <Button variant="ghost" size="sm" onClick={() => handleCalcular(cuota)} disabled={mutationCalcular.isPending} className="text-purple-600 hover:bg-purple-50 h-7 text-xs">
+                      <Calculator className="w-3.5 h-3.5 mr-1" /> Calcular
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => handleEliminar(cuota.id)} disabled={mutationDelete.isPending} className="text-red-600 hover:bg-red-50 h-7 text-xs ml-auto">
+                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Eliminar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Vista desktop: tabla */}
+      <div className="hidden md:block relative overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
             <tr>
@@ -163,7 +222,7 @@ export default function CuotasList({ cuotas, onEdit }: CuotasListProps) {
           <tbody>
             {filteredCuotas.length === 0 ? (
               <tr className="bg-white">
-                <td colSpan={7} className="px-4 py-12 text-center">
+                <td colSpan={8} className="px-4 py-12 text-center">
                   <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                     <Search className="w-8 h-8 text-gray-400" />
                   </div>
@@ -172,29 +231,20 @@ export default function CuotasList({ cuotas, onEdit }: CuotasListProps) {
                     {globalFilter ? "Intenta con otra búsqueda." : "No hay cuotas registradas."}
                   </p>
                   {globalFilter && (
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={() => setGlobalFilter("")}
-                    >
-                      Limpiar filtros
-                    </Button>
+                    <Button variant="outline" className="mt-4" onClick={() => setGlobalFilter("")}>Limpiar filtros</Button>
                   )}
                 </td>
               </tr>
             ) : (
               paginatedCuotas.map((cuota, index) => {
                 const rowNumber = pagination.pageSize * pagination.pageIndex + index + 1
-
                 return (
                   <tr key={cuota.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 text-center font-medium text-gray-600">{rowNumber}</td>
                     <td className="px-4 py-3"><span className="font-medium text-gray-800">{getPeriodicidadLabel(cuota.periodicidad)}</span></td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        cuota.tipo_cuota === "porcentaje" 
-                          ? "bg-purple-100 text-purple-800" 
-                          : "bg-blue-100 text-blue-800"
+                        cuota.tipo_cuota === "porcentaje" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
                       }`}>
                         {cuota.tipo_cuota === "porcentaje" ? "Porcentaje" : "Monto Fijo"}
                       </span>
@@ -203,11 +253,7 @@ export default function CuotasList({ cuotas, onEdit }: CuotasListProps) {
                       {cuota.tipo_cuota === "porcentaje" ? (
                         <div>
                           <div className="font-medium">{Number(cuota.porcentaje_comision).toFixed(2)}%</div>
-                          {cuota.minimo_pedidos && (
-                            <div className="text-xs text-gray-500">
-                              Mín. {cuota.minimo_pedidos} pedidos
-                            </div>
-                          )}
+                          {cuota.minimo_pedidos && <div className="text-xs text-gray-500">Mín. {cuota.minimo_pedidos} pedidos</div>}
                         </div>
                       ) : (
                         <span>S/ {Number(cuota.monto_cuota).toFixed(2)}</span>
@@ -227,35 +273,15 @@ export default function CuotasList({ cuotas, onEdit }: CuotasListProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(cuota)}
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                          title="Editar"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => onEdit(cuota)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50" title="Editar">
                           <Pencil className="w-4 h-4" />
                         </Button>
                         {cuota.tipo_cuota === "porcentaje" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleCalcular(cuota)}
-                            disabled={mutationCalcular.isPending}
-                            className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                            title="Calcular comisiones"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleCalcular(cuota)} disabled={mutationCalcular.isPending} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50" title="Calcular comisiones">
                             <Calculator className="w-4 h-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEliminar(cuota.id)}
-                          disabled={mutationDelete.isPending}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                          title="Eliminar"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleEliminar(cuota.id)} disabled={mutationDelete.isPending} className="text-red-600 hover:text-red-800 hover:bg-red-50" title="Eliminar">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

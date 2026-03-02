@@ -1,7 +1,8 @@
 "use client";
 
 import { CuotaActiva, Periodo } from "../types/pago-cuota.types";
-import { Calendar, CreditCard, Building2, Clock, TrendingUp, Percent, Info } from "lucide-react";
+import { Calendar, CreditCard, Building2, Clock, TrendingUp, Percent, Info, Phone } from "lucide-react";
+import Image from "next/image";
 import {
   calcularDiasHastaPago,
   formatearFechaSafe,
@@ -257,6 +258,29 @@ export default function CuotaActivaCard({ cuota, periodoActual }: CuotaActivaCar
                   {metodo}
                 </span>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Datos de Yape */}
+        {cuota.numero_yape && cuota.metodos_pago_disponibles?.includes("yape") && (
+          <div className="border-t dark:border-gray-700 pt-3">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-1.5">
+              <Image src="/images/yape.svg" alt="Yape" width={16} height={16} /> Datos de Yape
+            </h3>
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-md p-3 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5" /> Número
+                </span>
+                <span className="font-mono font-semibold text-purple-800 dark:text-purple-200">{cuota.numero_yape}</span>
+              </div>
+              {cuota.titular_yape && (
+                <div className="flex justify-between">
+                  <span className="text-purple-600 dark:text-purple-400">Titular</span>
+                  <span className="font-medium text-purple-800 dark:text-purple-200">{cuota.titular_yape}</span>
+                </div>
+              )}
             </div>
           </div>
         )}

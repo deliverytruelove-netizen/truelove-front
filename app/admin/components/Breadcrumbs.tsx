@@ -78,12 +78,12 @@ export const Breadcrumbs: React.FC = () => {
   const moduleTitle = getModuleTitle(pathname)
 
   return (
-    <div className="flex items-center justify-between mb-6 py-3 border-b border-gray-100">
-      {/* Título del módulo a la izquierda */}
-      <h1 className="text-2xl font-bold text-gray-800">{moduleTitle}</h1>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 py-2 sm:py-3 border-b border-gray-100 gap-1">
+      {/* Título del módulo */}
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">{moduleTitle}</h1>
 
-      {/* Ruta de navegación a la derecha */}
-      <nav className="flex items-center text-sm text-gray-500">
+      {/* Ruta de navegación - oculta en móvil muy pequeño */}
+      <nav className="hidden sm:flex items-center text-sm text-gray-500">
         {paths.map((path, index) => {
           const isLast = index === paths.length - 1
           const href = `/${paths.slice(0, index + 1).join("/")}`

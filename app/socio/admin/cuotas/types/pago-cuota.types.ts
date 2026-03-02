@@ -15,6 +15,8 @@ export interface CuotaActiva {
   tipo_cuenta?: string
   banco?: string
   metodos_pago_disponibles?: string[]
+  numero_yape?: string | null
+  titular_yape?: string | null
   fecha_inicio: string
   fecha_fin?: string
   descripcion?: string

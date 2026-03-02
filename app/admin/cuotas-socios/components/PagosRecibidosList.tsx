@@ -173,7 +173,75 @@ export default function PagosRecibidosList({ pagos }: PagosRecibidosListProps) {
         </div>
       </div>
 
-      <div className="relative overflow-x-auto">
+      {/* Vista mobile: cards */}
+      <div className="md:hidden space-y-3">
+        {paginatedPagos.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">No hay pagos registrados</div>
+        ) : (
+          paginatedPagos.map((pago, index) => (
+            <div key={pago.id} className="bg-white border border-gray-200 rounded-lg px-2 py-3 sm:p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-medium text-gray-800">
+                    {pago.socio?.name} {pago.socio?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">{pago.socio?.email}</p>
+                </div>
+                {getEstadoBadge(pago.estado_pago)}
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-gray-800">S/ {Number(pago.monto_pagado).toFixed(2)}</span>
+                <span className="text-gray-500 capitalize">{pago.metodo_pago || "-"}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{new Date(pago.fecha_pago).toLocaleDateString()}</span>
+                {pago.comprobante_pago && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setSelectedPago(pago); setShowImageModal(true) }}
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 inline-flex items-center gap-1 h-7 text-xs"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Ver comprobante
+                  </Button>
+                )}
+              </div>
+              {pago.estado_pago === "pendiente" && (
+                <div className="flex gap-2 pt-1 border-t border-gray-100">
+                  <Button
+                    size="sm"
+                    onClick={() => handleAprobar(pago.id)}
+                    disabled={isLoading}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white h-8 text-xs"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                    Aprobar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => { setSelectedPago(pago); setShowRechazarModal(true) }}
+                    disabled={isLoading}
+                    className="flex-1 h-8 text-xs"
+                  >
+                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                    Rechazar
+                  </Button>
+                </div>
+              )}
+              {pago.estado_pago === "rechazado" && pago.motivo_rechazo && (
+                <div className="pt-1 border-t border-gray-100">
+                  <p className="text-xs text-red-600"><strong>Motivo:</strong> {pago.motivo_rechazo}</p>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Vista desktop: tabla */}
+      <div className="hidden md:block relative overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
             <tr>

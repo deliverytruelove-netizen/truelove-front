@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
+import { X, Phone, User } from "lucide-react"
+import Image from "next/image"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { actualizarCuota } from "../services/cuota-socio.service"
 import type { CuotaSocio, ActualizarCuotaRequest } from "../types/cuota-socio.types"
@@ -39,10 +40,11 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
       exonerar_si_menos_pedidos: c.exonerar_si_menos_pedidos ?? true,
       monto_minimo: c.monto_minimo ? Number(c.monto_minimo) : undefined,
       monto_uso_app: c.monto_uso_app ? Number(c.monto_uso_app) : undefined,
-      monto_maximo: c.monto_maximo ? Number(c.monto_maximo) : undefined,
       numero_cuenta: c.numero_cuenta,
       tipo_cuenta: c.tipo_cuenta || "",
       banco: c.banco || "",
+      numero_yape: c.numero_yape || "",
+      titular_yape: c.titular_yape || "",
       descripcion: c.descripcion || "",
     }
   }
@@ -94,6 +96,8 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
     mutation.mutate({
       ...formDataSinEstado,
       metodos_pago_disponibles: metodosSeleccionados,
+      numero_yape: metodosSeleccionados.includes("yape") ? formData.numero_yape : undefined,
+      titular_yape: metodosSeleccionados.includes("yape") ? formData.titular_yape : undefined,
     })
   }
 
@@ -283,6 +287,45 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
                 </div>
               </div>
             </div>
+
+            {/* Campos Yape: solo si seleccionaron yape como método de pago */}
+            {metodosSeleccionados.includes("yape") && (
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Image src="/images/yape.svg" alt="Yape" width={20} height={20} />
+                  <span className="text-sm font-semibold text-purple-800">Datos de Yape</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="numero_yape_edit" className="text-xs text-purple-700 flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5" /> Número de Yape *
+                    </Label>
+                    <Input
+                      id="numero_yape_edit"
+                      type="tel"
+                      maxLength={9}
+                      value={formData.numero_yape || ""}
+                      onChange={(e) => setFormData({ ...formData, numero_yape: e.target.value.replace(/\D/g, "").slice(0, 9) })}
+                      placeholder="987654321"
+                      className="bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="titular_yape_edit" className="text-xs text-purple-700 flex items-center gap-1">
+                      <User className="w-3.5 h-3.5" /> Titular de Yape *
+                    </Label>
+                    <Input
+                      id="titular_yape_edit"
+                      type="text"
+                      value={formData.titular_yape || ""}
+                      onChange={(e) => setFormData({ ...formData, titular_yape: e.target.value })}
+                      placeholder="Nombre que aparece en Yape"
+                      className="bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="descripcion">Descripción</Label>

@@ -512,7 +512,7 @@ const SocioList: React.FC = () => {
                                 `S/ ${Number(socio.cuotaDetalle.monto_cuota).toFixed(2)}`
                               )}
                             </span>
-                            {socio.cuotaDetalle.dia_pago && (
+                            {socio.cuotaDetalle.tipo_cuota !== "porcentaje" && socio.cuotaDetalle.dia_pago && (
                               <span className="text-xs text-blue-600 font-medium">
                                 Día {socio.cuotaDetalle.dia_pago}
                               </span>

@@ -15,6 +15,8 @@ export interface CuotaSocio {
   tipo_cuenta?: string
   banco?: string
   metodos_pago_disponibles?: string[]
+  numero_yape?: string | null
+  titular_yape?: string | null
   estado: "activo" | "inactivo"
   fecha_inicio: string
   fecha_fin?: string
@@ -74,6 +76,8 @@ export interface CrearCuotaRequest {
   tipo_cuenta?: string
   banco?: string
   metodos_pago_disponibles?: string[]
+  numero_yape?: string
+  titular_yape?: string
   descripcion?: string
   estado?: "activo" | "inactivo"
   dia_pago?: number
@@ -93,6 +97,8 @@ export interface ActualizarCuotaRequest {
   tipo_cuenta?: string
   banco?: string
   metodos_pago_disponibles?: string[]
+  numero_yape?: string
+  titular_yape?: string
   estado?: "activo" | "inactivo"
   fecha_inicio?: string
   fecha_fin?: string

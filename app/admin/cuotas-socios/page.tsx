@@ -48,46 +48,46 @@ export default function CuotasSociosPage() {
 
         {/* Estadísticas */}
         {estadisticas ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Pagos</p>
-                  <p className="text-2xl font-bold text-gray-900">{estadisticas.total_pagos}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Pagos</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{estadisticas.total_pagos}</p>
                 </div>
-                <Coins className="w-8 h-8 text-blue-500" />
+                <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+            <div className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Pendientes</p>
-                  <p className="text-2xl font-bold text-yellow-600">{estadisticas.pagos_pendientes}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Pendientes</p>
+                  <p className="text-lg sm:text-2xl font-bold text-yellow-600">{estadisticas.pagos_pendientes}</p>
                 </div>
-                <Clock className="w-8 h-8 text-yellow-500" />
+                <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+            <div className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Aprobados</p>
-                  <p className="text-2xl font-bold text-green-600">{estadisticas.pagos_aprobados}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Aprobados</p>
+                  <p className="text-lg sm:text-2xl font-bold text-green-600">{estadisticas.pagos_aprobados}</p>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
+                <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+            <div className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Monto Aprobado</p>
-                  <p className="text-2xl font-bold text-gray-900">S/ {Number(estadisticas.monto_total_aprobado).toFixed(2)}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Monto Aprobado</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">S/ {Number(estadisticas.monto_total_aprobado).toFixed(2)}</p>
                 </div>
-                <Coins className="w-8 h-8 text-green-500" />
+                <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
               </div>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-[80px] w-full" />
             ))}
@@ -96,7 +96,7 @@ export default function CuotasSociosPage() {
 
         {/* Lista de cuotas */}
         <Section title="">
-          <div className="p-6">
+          <div className="p-2 sm:p-6">
             {isLoadingCuotas ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
