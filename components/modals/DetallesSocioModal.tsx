@@ -625,10 +625,15 @@ export function DetallesSocioModal({
                           `S/ ${Number(estadoPagos.cuota.monto_cuota).toFixed(2)}`
                         )}
                       </p>
-                      {estadoPagos.cuota.dia_pago && (
+                      {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
                         <p className="text-sm text-blue-700 font-medium">
                           <Calendar className="w-4 h-4 inline mr-1" />
-                          {estadoPagos.cuota.tipo_cuota === "porcentaje" ? "Día de vencimiento" : "Día de pago"}: {(() => {
+                          Vencimiento: al fin de cada periodo
+                        </p>
+                      ) : estadoPagos.cuota.dia_pago ? (
+                        <p className="text-sm text-blue-700 font-medium">
+                          <Calendar className="w-4 h-4 inline mr-1" />
+                          Día de pago: {(() => {
                             const diaPago = estadoPagos.cuota.dia_pago
                             const periodicidad = estadoPagos.cuota.periodicidad
 
@@ -647,7 +652,7 @@ export function DetallesSocioModal({
                             }
                           })()}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
