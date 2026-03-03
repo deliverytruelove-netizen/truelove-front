@@ -320,18 +320,36 @@ export const actualizarEstadoPedidoActivo = async (
   const url = `${API_URL}/socio/update/estado/pedido/${pedidoId}`;
   const method = "PUT";
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  // Timeout de 8s: el backend guarda el estado rápido pero luego se demora
+  // enviando notificaciones FCM a motorizados (sendMotorizadosCerca).
+  // Si pasan 8s, el estado ya se guardó correctamente.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Error al actualizar el estado");
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al actualizar el estado");
+    }
+  } catch (error: unknown) {
+    clearTimeout(timeoutId);
+    // Si es timeout (abort), no es error real — el backend ya guardó el estado
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return;
+    }
+    throw error;
   }
 };
 

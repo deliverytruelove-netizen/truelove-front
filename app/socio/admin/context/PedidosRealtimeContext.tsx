@@ -23,6 +23,7 @@ interface PedidosRealtimeContextType {
   pedidos: PedidoActivo[];
   pedidosPendientes: PedidoActivo[];
   pedidosEnProceso: PedidoActivo[];
+  pedidosListos: PedidoActivo[];
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -217,8 +218,11 @@ export function PedidosRealtimeProvider({
   const pedidosPendientes = pedidos.filter(
     (p) => Number(p.ultimo_estado_tracking) === 1,
   );
-  const pedidosEnProceso = pedidos.filter((p) =>
-    [2, 3, 9].includes(Number(p.ultimo_estado_tracking)),
+  const pedidosEnProceso = pedidos.filter(
+    (p) => Number(p.ultimo_estado_tracking) === 2,
+  );
+  const pedidosListos = pedidos.filter((p) =>
+    [3, 9].includes(Number(p.ultimo_estado_tracking)),
   );
 
   // Detectar pedidos nuevos via polling y reproducir sonido
@@ -297,6 +301,7 @@ export function PedidosRealtimeProvider({
         pedidos,
         pedidosPendientes,
         pedidosEnProceso,
+        pedidosListos,
         isLoading,
         isError,
         error: error as Error | null,

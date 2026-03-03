@@ -20,9 +20,9 @@ import {
 
 export default function PedidosActivosPage() {
   const {
-    pedidos,
     pedidosPendientes,
     pedidosEnProceso,
+    pedidosListos,
     isLoading,
     isError,
     error,
@@ -32,16 +32,16 @@ export default function PedidosActivosPage() {
     hasInteracted,
   } = usePedidosRealtimeContext();
 
-  const [filtro, setFiltro] = useState<"todos" | "pendientes" | "en_proceso">(
-    "todos",
+  const [tab, setTab] = useState<"por_aceptar" | "en_preparacion" | "por_entregar">(
+    "por_aceptar",
   );
 
   const pedidosFiltrados =
-    filtro === "pendientes"
+    tab === "por_aceptar"
       ? pedidosPendientes
-      : filtro === "en_proceso"
+      : tab === "en_preparacion"
         ? pedidosEnProceso
-        : pedidos;
+        : pedidosListos;
 
   return (
     <div className="max-w-6xl mx-auto space-y-5">
@@ -94,43 +94,69 @@ export default function PedidosActivosPage() {
         </Alert>
       )}
 
-      {/* Contadores compactos */}
-      <div className="flex gap-2">
+      {/* Tabs estilo Flutter */}
+      <div className="bg-red-600 rounded-lg p-1 flex gap-1">
         <button
-          onClick={() => setFiltro("todos")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-all ${
-            filtro === "todos"
-              ? "bg-red-50 border-red-300 text-red-700 dark:bg-red-950 dark:border-red-800 dark:text-red-300"
-              : "border-gray-200 text-muted-foreground hover:border-gray-300 dark:border-gray-700"
+          onClick={() => setTab("por_aceptar")}
+          className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
+            tab === "por_aceptar"
+              ? "bg-white text-red-700 shadow-sm"
+              : "text-red-100 hover:text-white hover:bg-red-500"
           }`}
         >
-          <Package className="h-3.5 w-3.5" />
-          <span className="font-semibold">{pedidos.length}</span>
-          <span className="hidden sm:inline">Activos</span>
+          <Clock className="h-3.5 w-3.5 hidden sm:block flex-shrink-0" />
+          <span>Por Aceptar</span>
+          {pedidosPendientes.length > 0 && (
+            <span className={`ml-0.5 sm:ml-1 text-[10px] sm:text-xs font-bold rounded-full px-1 sm:px-1.5 py-0.5 min-w-[18px] sm:min-w-[20px] text-center ${
+              tab === "por_aceptar"
+                ? "bg-red-600 text-white"
+                : "bg-white/20 text-white"
+            }`}>
+              {pedidosPendientes.length}
+            </span>
+          )}
         </button>
         <button
-          onClick={() => setFiltro("pendientes")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-all ${
-            filtro === "pendientes"
-              ? "bg-yellow-50 border-yellow-300 text-yellow-700 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300"
-              : "border-gray-200 text-muted-foreground hover:border-gray-300 dark:border-gray-700"
+          onClick={() => setTab("en_preparacion")}
+          className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
+            tab === "en_preparacion"
+              ? "bg-white text-red-700 shadow-sm"
+              : "text-red-100 hover:text-white hover:bg-red-500"
           }`}
         >
-          <Clock className="h-3.5 w-3.5" />
-          <span className="font-semibold">{pedidosPendientes.length}</span>
-          <span className="hidden sm:inline">Nuevos</span>
+          <ChefHat className="h-3.5 w-3.5 hidden sm:block flex-shrink-0" />
+          <span className="sm:hidden">Preparando</span>
+          <span className="hidden sm:inline">En Preparación</span>
+          {pedidosEnProceso.length > 0 && (
+            <span className={`ml-0.5 sm:ml-1 text-[10px] sm:text-xs font-bold rounded-full px-1 sm:px-1.5 py-0.5 min-w-[18px] sm:min-w-[20px] text-center ${
+              tab === "en_preparacion"
+                ? "bg-red-600 text-white"
+                : "bg-white/20 text-white"
+            }`}>
+              {pedidosEnProceso.length}
+            </span>
+          )}
         </button>
         <button
-          onClick={() => setFiltro("en_proceso")}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-all ${
-            filtro === "en_proceso"
-              ? "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300"
-              : "border-gray-200 text-muted-foreground hover:border-gray-300 dark:border-gray-700"
+          onClick={() => setTab("por_entregar")}
+          className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
+            tab === "por_entregar"
+              ? "bg-white text-red-700 shadow-sm"
+              : "text-red-100 hover:text-white hover:bg-red-500"
           }`}
         >
-          <ChefHat className="h-3.5 w-3.5" />
-          <span className="font-semibold">{pedidosEnProceso.length}</span>
-          <span className="hidden sm:inline">En proceso</span>
+          <Package className="h-3.5 w-3.5 hidden sm:block flex-shrink-0" />
+          <span className="sm:hidden">Entregar</span>
+          <span className="hidden sm:inline">Por Entregar</span>
+          {pedidosListos.length > 0 && (
+            <span className={`ml-0.5 sm:ml-1 text-[10px] sm:text-xs font-bold rounded-full px-1 sm:px-1.5 py-0.5 min-w-[18px] sm:min-w-[20px] text-center ${
+              tab === "por_entregar"
+                ? "bg-red-600 text-white"
+                : "bg-white/20 text-white"
+            }`}>
+              {pedidosListos.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -176,14 +202,18 @@ export default function PedidosActivosPage() {
             <Package className="h-8 w-8 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-            {filtro === "pendientes"
-              ? "No hay pedidos nuevos"
-              : filtro === "en_proceso"
-                ? "No hay pedidos en proceso"
-                : "No hay pedidos activos"}
+            {tab === "por_aceptar"
+              ? "No hay pedidos por aceptar"
+              : tab === "en_preparacion"
+                ? "No hay pedidos en preparación"
+                : "No hay pedidos por entregar"}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Cuando llegue un nuevo pedido, sonara una alerta y aparecera aqui.
+            {tab === "por_aceptar"
+              ? "Cuando llegue un nuevo pedido, sonará una alerta y aparecerá aquí."
+              : tab === "en_preparacion"
+                ? "Los pedidos que aceptes aparecerán aquí mientras se preparan."
+                : "Los pedidos listos para entregar aparecerán aquí."}
           </p>
         </div>
       ) : (
