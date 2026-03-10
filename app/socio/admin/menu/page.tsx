@@ -27,6 +27,7 @@ import {
   useUpdateCategory,
   useDeleteCategory,
   useCreateMenu,
+  useReorderCategories,
 } from "../hooks/use-menu-queries"
 import { useProductCounts } from "../hooks/use-product-counts"
 import type { HorarioDia } from "../services/menu.service"
@@ -63,6 +64,7 @@ function MenuContent() {
   const createCategoryMutation = useCreateCategory()
   const updateCategoryMutation = useUpdateCategory()
   const deleteCategoryMutation = useDeleteCategory()
+  const reorderMutation = useReorderCategories()
   const createMenuMutation = useCreateMenu()
 
   // Hook personalizado para contadores
@@ -252,6 +254,7 @@ function MenuContent() {
                     onEditCategory={handleEditCategory}
                     onDeleteCategory={handleDeleteCategory}
                     onCreateCategory={handleCreateCategory}
+                    onReorder={(cats) => reorderMutation.mutate(cats)}
                     isLoading={isLoading}
                   />
                 </div>

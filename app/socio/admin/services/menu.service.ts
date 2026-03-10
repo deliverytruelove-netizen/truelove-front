@@ -17,6 +17,7 @@ export interface Category {
   hora_inicio?: string | null
   hora_fin?: string | null
   horarios?: HorarioDia[] | null
+  orden?: number
 }
 
 export interface MenuItem {
@@ -434,6 +435,31 @@ export const menuService = {
       return response.json() as Promise<ApiResponse<void>>
     } catch (error) {
       console.error("Error en deleteMenu:", error)
+      throw error
+    }
+  },
+
+  reorderCategories: async (categorias: { id: number; orden: number }[]): Promise<ApiResponse<void>> => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${API_URL}/categoria/web/reordenar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ categorias }),
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al reordenar categorías")
+      }
+
+      return response.json() as Promise<ApiResponse<void>>
+    } catch (error) {
+      console.error("Error en reorderCategories:", error)
       throw error
     }
   },

@@ -135,6 +135,31 @@ export function useDeleteCategory() {
   })
 }
 
+// Hook para reordenar categorías
+export function useReorderCategories() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: (categorias: { id: number; orden: number }[]) =>
+      menuService.reorderCategories(categorias),
+    onSuccess: () => {
+      toast({
+        title: "Éxito",
+        description: "Orden actualizado correctamente",
+      })
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo reordenar",
+        variant: "destructive",
+      })
+      queryClient.invalidateQueries({ queryKey: menuQueryKeys.categories })
+    },
+  })
+}
+
 // Hook para crear menú/producto
 export function useCreateMenu() {
   const queryClient = useQueryClient()
