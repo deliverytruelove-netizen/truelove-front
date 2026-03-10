@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { showAlert, confirmAlert } from "@/components/ui/DataTable/Alert";
 import PedidoDetalleModal from "./PedidoDetalleModal";
+import CountdownTimer from "./CountdownTimer";
 import { TicketModal } from "../../components/ticket/TicketModal";
 
 interface Props {
@@ -236,12 +237,18 @@ export default function PedidoActivoCard({ pedido }: Props) {
             </Badge>
           </div>
           <div className="flex items-center gap-2">
-            {pedido.tiempo > 0 && (
+            {pedido.tiempo > 0 && pedido.fecha_inicio && estadoNum === 2 ? (
+              <CountdownTimer
+                tiempoMinutos={pedido.tiempo}
+                fechaInicio={pedido.fecha_inicio}
+                size={44}
+              />
+            ) : pedido.tiempo > 0 ? (
               <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full">
                 <Clock className="h-3 w-3" />
                 {pedido.tiempo} min
               </span>
-            )}
+            ) : null}
             <span className="text-xs text-muted-foreground">
               {formatDate(pedido.created_at)}
             </span>

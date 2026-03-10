@@ -46,6 +46,8 @@ export interface Pedido {
   requiere_confirmacion_local?: boolean;
   foto_pago?: string | null;
   tiempo?: number;
+  fecha_inicio?: string | null;
+  fecha_hora_inicio?: string | null;
   precio_delivery?: string;
   subtotal?: string;
   descuento?: string;
@@ -241,7 +243,7 @@ export const formatDate = (dateString: string): string => {
 // =====================================================
 
 // PedidoActivo extiende Pedido haciendo los campos opcionales obligatorios
-export interface PedidoActivo extends Omit<Pedido, 'detalleArray' | 'trackings' | 'motorizado' | 'celular_motorizado' | 'nota' | 'tipo_pago' | 'tipo_pedido' | 'requiere_confirmacion_local' | 'foto_pago' | 'tiempo' | 'precio_delivery' | 'subtotal' | 'descuento' | 'tipo_comprobante' | 'documento'> {
+export interface PedidoActivo extends Omit<Pedido, 'detalleArray' | 'trackings' | 'motorizado' | 'celular_motorizado' | 'nota' | 'tipo_pago' | 'tipo_pedido' | 'requiere_confirmacion_local' | 'foto_pago' | 'tiempo' | 'fecha_inicio' | 'fecha_hora_inicio' | 'precio_delivery' | 'subtotal' | 'descuento' | 'tipo_comprobante' | 'documento'> {
   detalleArray: PedidoDetalle[];
   trackings: PedidoTracking[];
   motorizado: string;
@@ -252,6 +254,8 @@ export interface PedidoActivo extends Omit<Pedido, 'detalleArray' | 'trackings' 
   requiere_confirmacion_local: boolean;
   foto_pago: string | null;
   tiempo: number;
+  fecha_inicio: string | null;
+  fecha_hora_inicio: string | null;
   precio_delivery: string;
   subtotal: string;
   descuento: string;
