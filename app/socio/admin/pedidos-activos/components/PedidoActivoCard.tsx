@@ -371,20 +371,22 @@ export default function PedidoActivoCard({ pedido }: Props) {
                   className="flex-1 h-10"
                   onClick={() => setShowFotoPago(false)}
                 >
-                  Cancelar
+                  Cerrar
                 </Button>
-                <Button
-                  className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white"
-                  onClick={confirmarVerificacionPago}
-                  disabled={verificarPagoMutation.isPending}
-                >
-                  {verificarPagoMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Check className="h-4 w-4 mr-2" />
-                  )}
-                  Verificar Pago
-                </Button>
+                {estadoNum === 1 && (
+                  <Button
+                    className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={confirmarVerificacionPago}
+                    disabled={verificarPagoMutation.isPending}
+                  >
+                    {verificarPagoMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-2" />
+                    )}
+                    Verificar Pago
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -508,29 +510,55 @@ export default function PedidoActivoCard({ pedido }: Props) {
               )}
 
               {estadoNum === 2 && (
-                <Button
-                  onClick={handleMarcarListo}
-                  disabled={mutation.isPending}
-                  size="sm"
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 h-10"
-                >
-                  {mutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  ) : (
-                    <Check className="h-4 w-4 mr-1" />
+                <>
+                  <Button
+                    onClick={handleMarcarListo}
+                    disabled={mutation.isPending}
+                    size="sm"
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 h-10"
+                  >
+                    {mutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-1" />
+                    )}
+                    Marcar como Listo
+                  </Button>
+                  {pedido.foto_pago && (
+                    <Button
+                      onClick={() => setShowFotoPago(true)}
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-blue-300 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver pago
+                    </Button>
                   )}
-                  Marcar como Listo
-                </Button>
+                </>
               )}
 
               {(estadoNum === 3 || estadoNum === 9) && (
-                <div className="flex-1 text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <p className="text-xs text-muted-foreground">
-                    {estadoNum === 3
-                      ? "Esperando motorizado..."
-                      : "Esperando que el cliente recoja..."}
-                  </p>
-                </div>
+                <>
+                  <div className="flex-1 text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+                    <p className="text-xs text-muted-foreground">
+                      {estadoNum === 3
+                        ? "Esperando motorizado..."
+                        : "Esperando que el cliente recoja..."}
+                    </p>
+                  </div>
+                  {pedido.foto_pago && (
+                    <Button
+                      onClick={() => setShowFotoPago(true)}
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-blue-300 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver pago
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
