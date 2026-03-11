@@ -186,7 +186,7 @@ export function ProductsList({
         item.descripcion.toLowerCase().includes(query) ||
         item.precio.toString().includes(query)
     )
-  }, [menuItems, searchQuery])
+  }, [sortedItems, searchQuery])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
