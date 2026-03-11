@@ -4,7 +4,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Edit, MoreVertical, ShoppingBag, Trash2, Search, Layers, ChevronDown, ChevronRight, Loader2, Check, X } from "lucide-react"
+import { Edit, MoreVertical, ShoppingBag, Trash2, Search, Layers, ChevronDown, ChevronRight, Loader2, Check, X, GripVertical } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,48 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+
+function SortableProductWrapper({ id, children }: { id: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute left-1 top-1/2 -translate-y-1/2 z-10 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 touch-none"
+        title="Arrastrar para reordenar"
+      >
+        <GripVertical className="h-4 w-4 text-gray-400" />
+      </button>
+      <div className="pl-7">{children}</div>
+    </div>
+  )
+}
 
 interface ProductsListProps {
   menuItems: MenuItem[]
@@ -56,6 +98,7 @@ interface ProductsListProps {
   onStatusChange: (id: number, newStatus: string) => Promise<void>
   onEditMenu: (id: number, formData: FormData) => Promise<void>
   onDeleteMenu: (id: number) => Promise<void>
+  onReorder?: (menus: { id: number; orden: number }[]) => void
   loading: boolean
 }
 
@@ -65,6 +108,7 @@ export function ProductsList({
   onStatusChange,
   onEditMenu,
   onDeleteMenu,
+  onReorder,
   loading,
 }: ProductsListProps) {
   const { toast } = useToast()
@@ -90,6 +134,31 @@ export function ProductsList({
   const [selectedItemPrice, setSelectedItemPrice] = useState("")
   const [addingItem, setAddingItem] = useState(false)
 
+  // Estado para drag & drop de productos
+  const [sortedItems, setSortedItems] = useState<MenuItem[]>(menuItems)
+  useEffect(() => {
+    setSortedItems(menuItems)
+  }, [menuItems])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = sortedItems.findIndex((i) => i.id === active.id)
+    const newIndex = sortedItems.findIndex((i) => i.id === over.id)
+    const newItems = arrayMove(sortedItems, oldIndex, newIndex)
+    setSortedItems(newItems)
+
+    if (onReorder) {
+      onReorder(newItems.map((item, index) => ({ id: item.id, orden: index + 1 })))
+    }
+  }
+
   // Cargar todos los grupos una vez
   const loadAllGrupos = useCallback(async () => {
     if (gruposLoaded) return
@@ -108,10 +177,10 @@ export function ProductsList({
 
   // Filtrar productos según la búsqueda
   const filteredMenuItems = useMemo(() => {
-    if (!searchQuery.trim()) return menuItems
+    if (!searchQuery.trim()) return sortedItems
 
     const query = searchQuery.toLowerCase()
-    return menuItems.filter(
+    return sortedItems.filter(
       (item) =>
         item.titulo.toLowerCase().includes(query) ||
         item.descripcion.toLowerCase().includes(query) ||
@@ -377,14 +446,16 @@ export function ProductsList({
       )}
 
       {/* Lista de productos */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={filteredMenuItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
       <div className="space-y-3">
         {filteredMenuItems.map((item) => {
           const isExpanded = expandedProductId === item.id
           const productGrupos = selectedGrupos[item.id] || []
 
           return (
-            <Card 
-              key={item.id} 
+            <SortableProductWrapper key={item.id} id={item.id}>
+            <Card
               className="overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-gray-300 transition-colors"
             >
               {/* Contenido principal del producto */}
@@ -735,9 +806,12 @@ export function ProductsList({
                 </div>
               )}
             </Card>
+            </SortableProductWrapper>
           )
         })}
       </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Mensaje cuando no hay resultados de búsqueda */}
       {searchQuery && filteredMenuItems.length === 0 && (

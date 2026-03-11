@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft, Plus, Loader2, Layers, Pencil, Trash2, ChevronDown, ChevronRight, Check, X, Search } from "lucide-react"
+import { ArrowLeft, Plus, Loader2, Layers, Pencil, Trash2, ChevronDown, ChevronRight, Check, X, Search, GripVertical } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,10 +35,54 @@ import {
   addItemToGrupo,
   removeItemFromGrupo,
   getAvailableItems,
+  reorderGrupos,
   type GrupoAdicional,
   type GrupoAdicionalItem,
 } from "../../services/grupo-adicional.service"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { CreateAdicionalInline } from "../../components/create-adicional-inline"
+
+function SortableGrupoWrapper({ id, children }: { id: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute left-1 top-4 z-10 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 touch-none"
+        title="Arrastrar para reordenar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-4 w-4 text-gray-400" />
+      </button>
+      <div className="pl-7">{children}</div>
+    </div>
+  )
+}
 
 export default function GruposPage() {
   const router = useRouter()
@@ -64,6 +108,30 @@ export default function GruposPage() {
 
   // Crear nuevo adicional inline
   const [creatingAdicionalInGrupo, setCreatingAdicionalInGrupo] = useState<number | null>(null)
+
+  // Drag & drop
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = grupos.findIndex((g) => g.id === active.id)
+    const newIndex = grupos.findIndex((g) => g.id === over.id)
+    const newGrupos = arrayMove(grupos, oldIndex, newIndex)
+    setGrupos(newGrupos)
+
+    try {
+      await reorderGrupos(newGrupos.map((g, i) => ({ id: g.id, orden: i + 1 })))
+      toast({ title: "Éxito", description: "Orden actualizado" })
+    } catch {
+      toast({ title: "Error", description: "No se pudo reordenar", variant: "destructive" })
+      loadGrupos()
+    }
+  }
 
   const loadGrupos = useCallback(async () => {
     try {
@@ -384,6 +452,8 @@ export default function GruposPage() {
             </CardContent>
           </Card>
         ) : (
+          <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filteredGrupos.map((g) => g.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
             {filteredGrupos.map((grupo) => {
               const isExpanded = expandedGrupo === grupo.id
@@ -391,12 +461,12 @@ export default function GruposPage() {
               const itemCount = grupo.items?.length || 0
 
               return (
-                <Card 
-                  key={grupo.id} 
+                <SortableGrupoWrapper key={grupo.id} id={grupo.id}>
+                <Card
                   className="overflow-hidden transition-all"
                 >
                   {/* Header del grupo */}
-                  <div 
+                  <div
                     className={`flex items-center gap-2 sm:gap-4 p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${isExpanded ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500' : ''}`}
                     onClick={() => !isEditing && handleToggleExpand(grupo.id)}
                   >
@@ -615,9 +685,12 @@ export default function GruposPage() {
                     </div>
                   )}
                 </Card>
+                </SortableGrupoWrapper>
               )
             })}
           </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>

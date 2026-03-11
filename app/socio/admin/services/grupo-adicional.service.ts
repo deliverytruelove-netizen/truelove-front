@@ -103,6 +103,25 @@ export interface AddItemData {
   orden?: number
 }
 
+// Reordenar grupos
+export const reorderGrupos = async (grupos: { id: number; orden: number }[]): Promise<void> => {
+  const token = getAuthToken()
+
+  const response = await fetch(`${API_URL}/grupos-adicionales/reordenar`, {
+    method: "POST",
+    headers: {
+      Authorization: token || "",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ grupos }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || "Error al reordenar grupos")
+  }
+}
+
 // Obtener todos los grupos de la empresa
 export const getGrupos = async (): Promise<GrupoAdicional[]> => {
   const token = getAuthToken()

@@ -439,6 +439,31 @@ export const menuService = {
     }
   },
 
+  reorderMenus: async (menus: { id: number; orden: number }[]): Promise<ApiResponse<void>> => {
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`${API_URL}/menus/web/reordenar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token || "",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ menus }),
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || "Error al reordenar productos")
+      }
+
+      return response.json() as Promise<ApiResponse<void>>
+    } catch (error) {
+      console.error("Error en reorderMenus:", error)
+      throw error
+    }
+  },
+
   reorderCategories: async (categorias: { id: number; orden: number }[]): Promise<ApiResponse<void>> => {
     try {
       const token = getAuthToken()

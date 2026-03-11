@@ -213,6 +213,15 @@ function CategoryContent() {
     }
   }
 
+  const handleReorderMenus = async (menus: { id: number; orden: number }[]) => {
+    try {
+      await menuService.reorderMenus(menus)
+      toast({ title: "Éxito", description: "Orden actualizado" })
+    } catch {
+      toast({ title: "Error", description: "No se pudo reordenar", variant: "destructive" })
+    }
+  }
+
   const handleDeleteMenu = async (id: number) => {
     try {
       await menuService.deleteMenu(id.toString())
@@ -278,6 +287,7 @@ function CategoryContent() {
               onStatusChange={handleStatusChange}
               onEditMenu={handleEditMenu}
               onDeleteMenu={handleDeleteMenu}
+              onReorder={handleReorderMenus}
               loading={false}
             />
           </CardContent>
