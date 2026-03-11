@@ -222,7 +222,7 @@ export function PedidosRealtimeProvider({
     (p) => Number(p.ultimo_estado_tracking) === 2,
   );
   const pedidosListos = pedidos.filter((p) =>
-    [3, 9].includes(Number(p.ultimo_estado_tracking)),
+    [3, 4, 5, 6, 7, 9].includes(Number(p.ultimo_estado_tracking)),
   );
 
   // Detectar pedidos nuevos via polling y reproducir sonido
