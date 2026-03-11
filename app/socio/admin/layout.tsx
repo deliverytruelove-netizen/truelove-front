@@ -562,7 +562,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
           )}
 
         {/* Page Content */}
-        <main className="p-3 sm:p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)] overflow-x-hidden">
+        <main className="p-2 sm:p-4 md:p-6 bg-gray-50/50 dark:bg-gray-950/50 min-h-[calc(100vh-4rem)] overflow-x-hidden">
           {children}
         </main>
       </div>

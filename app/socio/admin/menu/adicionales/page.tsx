@@ -184,7 +184,7 @@ function AdicionalesContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto py-6 px-4">
+      <div className="mx-auto py-4 px-2 sm:px-4 sm:py-6 max-w-7xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-3">
             <Button
@@ -214,7 +214,7 @@ function AdicionalesContent() {
               Nuevo Adicional
             </Button>
           </CardHeader>
-          <CardContent className="p-5 dark:bg-gray-800">
+          <CardContent className="p-3 sm:p-5 dark:bg-gray-800">
             <div className="space-y-4">
               {/* Buscador */}
               <div className="relative">
@@ -250,13 +250,13 @@ function AdicionalesContent() {
                   {filteredAdicionales.map((adicional) => (
                     <div
                       key={adicional.id}
-                      className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 transition-colors"
+                      className="p-3 sm:p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 transition-colors overflow-hidden"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {adicional.titulo}
-                          </h3>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 break-words line-clamp-2 min-w-0 flex-1">
+                          {adicional.titulo}
+                        </h3>
+                        <div className="flex items-center gap-1 shrink-0">
                           <Badge
                             className={`cursor-pointer ${
                               adicional.status === "active"
@@ -267,47 +267,46 @@ function AdicionalesContent() {
                           >
                             {adicional.status === "active" ? "Activo" : "Inactivo"}
                           </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleOpenEdit(adicional)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Eliminar adicional?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. El adicional será removido de todos los grupos.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(adicional.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
-                        {adicional.descripcion && (
-                          <p className="text-sm text-gray-500 truncate">{adicional.descripcion}</p>
-                        )}
-                        <p className="text-sm font-semibold text-red-600 mt-1">
-                          S/ {formatPrice(adicional.precio)}
-                        </p>
                       </div>
-                      <div className="flex items-center gap-1 ml-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenEdit(adicional)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Eliminar adicional?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción no se puede deshacer. El adicional será removido de todos los grupos.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(adicional.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                      {adicional.descripcion && (
+                        <p className="text-sm text-gray-500 truncate mt-1">{adicional.descripcion}</p>
+                      )}
+                      <p className="text-sm font-semibold text-red-600 mt-1">
+                        S/ {formatPrice(adicional.precio)}
+                      </p>
                     </div>
                   ))}
                 </div>

@@ -133,7 +133,7 @@ function MenuContent() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 dark:text-gray-200">
-      <div className="container mx-auto py-6 px-4">
+      <div className="mx-auto py-4 px-1 sm:px-4 sm:py-6 max-w-7xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Menú</h1>
           <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ function MenuContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6">
           {/* Navegación móvil - Dropdown */}
           <div className="lg:hidden">
             <DropdownMenu>
@@ -216,7 +216,7 @@ function MenuContent() {
                 <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">
                   Secciones y productos
                 </CardTitle>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="flex flex-row gap-2 w-full sm:w-auto">
                   <CategoryDialog
                     onSubmit={handleCreateCategory}
                     trigger={
@@ -233,7 +233,7 @@ function MenuContent() {
                   <CreateMenuModal categories={categories} onSubmit={handleCreateMenu} />
                 </div>
               </CardHeader>
-              <CardContent className="p-5 dark:bg-gray-700">
+              <CardContent className="p-2 sm:p-5 dark:bg-gray-700">
                 <div className="space-y-6">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
