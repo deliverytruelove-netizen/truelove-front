@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
-import { Search, Loader2, ArrowLeft, Package, Plus, Pencil, Trash2 } from "lucide-react"
+import { Search, Loader2, ArrowLeft, Package, Plus, Pencil, Trash2, MoreVertical } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +33,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { adicionalService, type Adicional } from "../../services/adicional.service"
 
@@ -51,6 +52,7 @@ function AdicionalesContent() {
   const [adicionales, setAdicionales] = useState<Adicional[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   
   // Modal crear/editar
   const [modalOpen, setModalOpen] = useState(false)
@@ -263,27 +265,30 @@ function AdicionalesContent() {
                           {adicional.titulo}
                         </h3>
                         <div className="flex items-center gap-1 shrink-0">
+                          <Badge
+                            className={
+                              adicional.status === "active"
+                                ? "bg-green-500"
+                                : adicional.status === "out-of-stock"
+                                  ? "bg-amber-500"
+                                  : "bg-gray-400"
+                            }
+                          >
+                            {adicional.status === "active" ? "Activo" : adicional.status === "out-of-stock" ? "Agotado" : "Inactivo"}
+                          </Badge>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Badge
-                                className={`cursor-pointer ${
-                                  adicional.status === "active"
-                                    ? "bg-green-500 hover:bg-green-600"
-                                    : adicional.status === "out-of-stock"
-                                      ? "bg-amber-500 hover:bg-amber-600"
-                                      : "bg-gray-400 hover:bg-gray-500"
-                                }`}
-                              >
-                                {adicional.status === "active" ? "Activo" : adicional.status === "out-of-stock" ? "Agotado" : "Inactivo"}
-                              </Badge>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem
                                 className="text-green-600 focus:text-green-600 focus:bg-green-50"
                                 onClick={() => handleStatusChange(adicional, "active")}
                               >
                                 <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                                Activo
+                                Activar
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-amber-600 focus:text-amber-600 focus:bg-amber-50"
@@ -297,42 +302,22 @@ function AdicionalesContent() {
                                 onClick={() => handleStatusChange(adicional, "inactive")}
                               >
                                 <span className="h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
-                                Inactivo
+                                Desactivar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleOpenEdit(adicional)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                onClick={() => setDeletingId(adicional.id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleOpenEdit(adicional)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Eliminar adicional?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta acción no se puede deshacer. El adicional será removido de todos los grupos.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(adicional.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </div>
                       </div>
                       {adicional.descripcion && (
@@ -348,6 +333,27 @@ function AdicionalesContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Confirmación de eliminar */}
+        <AlertDialog open={deletingId !== null} onOpenChange={(open) => !open && setDeletingId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar adicional?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. El adicional será removido de todos los grupos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { if (deletingId) handleDelete(deletingId); setDeletingId(null) }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Modal Crear/Editar Adicional */}
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
