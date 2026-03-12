@@ -28,6 +28,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { adicionalService, type Adicional } from "../../services/adicional.service"
 
 function LoadingAdicionales() {
@@ -141,9 +147,8 @@ function AdicionalesContent() {
     }
   }
 
-  const handleStatusChange = async (adicional: Adicional) => {
+  const handleStatusChange = async (adicional: Adicional, newStatus: string) => {
     try {
-      const newStatus = adicional.status === "active" ? "inactive" : "active"
       const data = new FormData()
       data.append("titulo", adicional.titulo)
       data.append("descripcion", adicional.descripcion || "")
@@ -154,9 +159,10 @@ function AdicionalesContent() {
       }
 
       await adicionalService.updateAdicional(adicional.id.toString(), data)
+      const labels: Record<string, string> = { active: "activado", inactive: "desactivado", "out-of-stock": "marcado como agotado" }
       toast({
         title: "Éxito",
-        description: `Adicional ${newStatus === "active" ? "activado" : "desactivado"}`,
+        description: `Adicional ${labels[newStatus] || newStatus}`,
       })
       loadData()
     } catch (error) {
@@ -257,16 +263,44 @@ function AdicionalesContent() {
                           {adicional.titulo}
                         </h3>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Badge
-                            className={`cursor-pointer ${
-                              adicional.status === "active"
-                                ? "bg-green-500 hover:bg-green-600"
-                                : "bg-gray-400 hover:bg-gray-500"
-                            }`}
-                            onClick={() => handleStatusChange(adicional)}
-                          >
-                            {adicional.status === "active" ? "Activo" : "Inactivo"}
-                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Badge
+                                className={`cursor-pointer ${
+                                  adicional.status === "active"
+                                    ? "bg-green-500 hover:bg-green-600"
+                                    : adicional.status === "out-of-stock"
+                                      ? "bg-amber-500 hover:bg-amber-600"
+                                      : "bg-gray-400 hover:bg-gray-500"
+                                }`}
+                              >
+                                {adicional.status === "active" ? "Activo" : adicional.status === "out-of-stock" ? "Agotado" : "Inactivo"}
+                              </Badge>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem
+                                className="text-green-600 focus:text-green-600 focus:bg-green-50"
+                                onClick={() => handleStatusChange(adicional, "active")}
+                              >
+                                <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                                Activo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-amber-600 focus:text-amber-600 focus:bg-amber-50"
+                                onClick={() => handleStatusChange(adicional, "out-of-stock")}
+                              >
+                                <span className="h-2 w-2 rounded-full bg-amber-500 mr-2"></span>
+                                Agotado
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-gray-600 focus:text-gray-600 focus:bg-gray-50"
+                                onClick={() => handleStatusChange(adicional, "inactive")}
+                              >
+                                <span className="h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
+                                Inactivo
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           <Button
                             variant="ghost"
                             size="icon"

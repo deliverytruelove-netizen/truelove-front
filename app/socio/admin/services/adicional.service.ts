@@ -12,7 +12,7 @@ export interface Adicional {
   descripcion: string
   foto: string
   precio: number | string
-  status: "active" | "inactive"
+  status: "active" | "inactive" | "out-of-stock"
   empresa_id: string
   menu_id: number
   menu?: Menu // Información del menú/producto asociado
