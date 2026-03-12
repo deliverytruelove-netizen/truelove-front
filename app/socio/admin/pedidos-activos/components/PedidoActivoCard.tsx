@@ -545,14 +545,37 @@ export default function PedidoActivoCard({ pedido }: Props) {
                 </>
               )}
 
-              {(estadoNum === 3 || estadoNum === 9) && (
+              {[3, 4, 5, 6, 7, 9].includes(estadoNum) && (
                 <>
-                  <div className="flex-1 text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-md">
-                    <p className="text-xs text-muted-foreground">
-                      {estadoNum === 3
-                        ? "Esperando motorizado..."
-                        : "Esperando que el cliente recoja..."}
-                    </p>
+                  <div className="flex-1 space-y-2">
+                    {/* Estado actual del pedido */}
+                    <div className="text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+                      <p className="text-xs text-muted-foreground">
+                        {estadoNum === 3 && "Esperando motorizado..."}
+                        {estadoNum === 4 && "Motorizado aceptó el pedido"}
+                        {estadoNum === 5 && "Motorizado llegó al restaurante"}
+                        {estadoNum === 6 && "Motorizado en camino al cliente"}
+                        {estadoNum === 7 && "Motorizado llegó al destino"}
+                        {estadoNum === 9 && "Esperando que el cliente recoja..."}
+                      </p>
+                    </div>
+                    {/* Info del motorizado */}
+                    {pedido.motorizado && [3, 4, 5, 6, 7].includes(estadoNum) && (
+                      <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md border border-orange-200 dark:border-orange-800">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-orange-500 flex-shrink-0">
+                          <Bike className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-sm font-medium flex-1 truncate">{pedido.motorizado}</span>
+                        {pedido.celular_motorizado && (
+                          <a
+                            href={`tel:${pedido.celular_motorizado}`}
+                            className="flex items-center justify-center h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex-shrink-0"
+                          >
+                            <Phone className="h-3.5 w-3.5 text-white" />
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {pedido.foto_pago && (
                     <Button
