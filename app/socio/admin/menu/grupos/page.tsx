@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ArrowLeft, Plus, Loader2, Layers, Pencil, Trash2, ChevronDown, ChevronRight, Check, X, Search, GripVertical } from "lucide-react"
+import { ArrowLeft, Plus, Loader2, Layers, Pencil, Trash2, ChevronDown, ChevronRight, Check, X, Search, GripVertical, MoreVertical } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -57,6 +64,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { CreateAdicionalInline } from "../../components/create-adicional-inline"
+import { adicionalService } from "../../services/adicional.service"
 
 function SortableGrupoWrapper({ id, children }: { id: number; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
@@ -306,6 +314,34 @@ export default function GruposPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al remover adicional",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Cambiar estado de un adicional desde el grupo
+  const handleItemStatusChange = async (item: GrupoAdicionalItem, newStatus: string) => {
+    try {
+      const data = new FormData()
+      data.append("titulo", item.titulo)
+      data.append("descripcion", item.descripcion || "")
+      data.append("precio", (typeof item.precio === "string" ? item.precio : item.precio.toString()))
+      data.append("status", newStatus)
+      if (item.menu_id) {
+        data.append("menu_id", item.menu_id.toString())
+      }
+
+      await adicionalService.updateAdicional(item.id.toString(), data)
+      const labels: Record<string, string> = { active: "activado", inactive: "desactivado", "out-of-stock": "marcado como agotado" }
+      toast({
+        title: "Éxito",
+        description: `Adicional ${labels[newStatus] || newStatus}`,
+      })
+      loadGrupos()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al cambiar estado",
         variant: "destructive",
       })
     }
@@ -584,20 +620,63 @@ export default function GruposPage() {
                               key={item.id}
                               className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                             >
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-gray-100">{item.titulo}</p>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{item.titulo}</p>
+                                  <Badge
+                                    className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${
+                                      item.status === "active"
+                                        ? "bg-green-500"
+                                        : item.status === "out-of-stock"
+                                          ? "bg-amber-500"
+                                          : "bg-gray-400"
+                                    }`}
+                                  >
+                                    {item.status === "active" ? "Activo" : item.status === "out-of-stock" ? "Agotado" : "Inactivo"}
+                                  </Badge>
+                                </div>
                                 <p className="text-sm text-green-600 font-semibold">
                                   S/ {formatPrice(item.pivot?.precio || item.precio)}
                                 </p>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-gray-400 hover:text-red-600 hover:bg-red-50"
-                                onClick={() => handleRemoveItem(grupo.id, item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem
+                                    className="text-green-600 focus:text-green-600 focus:bg-green-50"
+                                    onClick={() => handleItemStatusChange(item, "active")}
+                                  >
+                                    <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                                    Activar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-amber-600 focus:text-amber-600 focus:bg-amber-50"
+                                    onClick={() => handleItemStatusChange(item, "out-of-stock")}
+                                  >
+                                    <span className="h-2 w-2 rounded-full bg-amber-500 mr-2"></span>
+                                    Agotado
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-gray-600 focus:text-gray-600 focus:bg-gray-50"
+                                    onClick={() => handleItemStatusChange(item, "inactive")}
+                                  >
+                                    <span className="h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
+                                    Desactivar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    onClick={() => handleRemoveItem(grupo.id, item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Quitar del grupo
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           ))}
                         </div>

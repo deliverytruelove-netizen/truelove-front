@@ -70,7 +70,10 @@ async function getEmpresaId(): Promise<string | null> {
 export interface GrupoAdicionalItem {
   id: number
   titulo: string
+  descripcion?: string
   precio: string | number
+  status?: "active" | "inactive" | "out-of-stock"
+  menu_id?: number
   pivot?: {
     grupo_id: number
     adicional_id: number
