@@ -363,6 +363,21 @@ function PedidoDetalleContent({
     });
   };
 
+  const handleCancelar = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "¿Cancelar pedido?",
+      message: `¿Estás seguro de cancelar el pedido #${pedido.id}? Esta acción no se puede deshacer.`,
+      type: "danger",
+      confirmText: "Sí, cancelar",
+      cancelText: "No, mantener",
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        mutation.mutate({ estado: 0 });
+      },
+    });
+  };
+
   const handleVerificarPago = () => {
     if (!pedido.foto_pago) {
       showCustomAlert("Sin comprobante", "El cliente aún no ha subido el comprobante de pago.", "warning");
@@ -831,37 +846,70 @@ function PedidoDetalleContent({
           )}
 
           {estadoNum === 2 && (
-            <Button
-              onClick={handleAceptar}
-              disabled={mutation.isPending}
-              className="flex-1 h-11 bg-purple-600 hover:bg-purple-700 text-sm"
-            >
-              {mutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Check className="h-4 w-4 mr-2" />
-              )}
-              Marcar como Listo
-            </Button>
+            <>
+              <Button
+                onClick={handleAceptar}
+                disabled={mutation.isPending}
+                className="flex-1 h-11 bg-purple-600 hover:bg-purple-700 text-sm"
+              >
+                {mutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Check className="h-4 w-4 mr-2" />
+                )}
+                Marcar como Listo
+              </Button>
+              <Button
+                onClick={handleCancelar}
+                disabled={mutation.isPending}
+                variant="destructive"
+                className="h-11 text-sm"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </>
           )}
 
           {(estadoNum === 3 || estadoNum === 9) && (
-            <div className="flex-1 text-center py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-xs md:text-sm text-muted-foreground">
-                {estadoNum === 3 ? "Esperando motorizado..." : "Esperando al cliente..."}
-              </p>
-            </div>
+            <>
+              <div className="flex-1 text-center py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  {estadoNum === 3 ? "Esperando motorizado..." : "Esperando al cliente..."}
+                </p>
+              </div>
+              <Button
+                onClick={handleCancelar}
+                disabled={mutation.isPending}
+                variant="destructive"
+                className="h-11 text-sm"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </>
           )}
 
           {estadoNum >= 4 && estadoNum <= 7 && (
-            <div className="flex-1 text-center py-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-xs md:text-sm text-blue-700 dark:text-blue-300">
-                {estadoNum === 4 && "Motorizado en camino al local..."}
-                {estadoNum === 5 && "Motorizado recogiendo pedido..."}
-                {estadoNum === 6 && "Pedido en camino..."}
-                {estadoNum === 7 && "Motorizado llegó al destino..."}
-              </p>
-            </div>
+            <>
+              <div className="flex-1 text-center py-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs md:text-sm text-blue-700 dark:text-blue-300">
+                  {estadoNum === 4 && "Motorizado en camino al local..."}
+                  {estadoNum === 5 && "Motorizado recogiendo pedido..."}
+                  {estadoNum === 6 && "Pedido en camino..."}
+                  {estadoNum === 7 && "Motorizado llegó al destino..."}
+                </p>
+              </div>
+              <Button
+                onClick={handleCancelar}
+                disabled={mutation.isPending}
+                variant="destructive"
+                className="h-11 text-sm"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            </>
           )}
         </div>
       )}
@@ -1065,6 +1113,21 @@ function PedidoDetalleDesktop({
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         verificarPagoMutation.mutate();
         setShowFotoPago(false);
+      },
+    });
+  };
+
+  const handleCancelar = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "¿Cancelar pedido?",
+      message: `¿Estás seguro de cancelar el pedido #${pedido.id}? Esta acción no se puede deshacer.`,
+      type: "danger",
+      confirmText: "Sí, cancelar",
+      cancelText: "No, mantener",
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        mutation.mutate({ estado: 0 });
       },
     });
   };
@@ -1328,25 +1391,40 @@ function PedidoDetalleDesktop({
             </>
           )}
           {estadoNum === 2 && (
-            <Button onClick={handleAceptar} disabled={mutation.isPending} className="flex-1 bg-purple-600 hover:bg-purple-700">
-              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
-              Marcar como Listo
-            </Button>
+            <>
+              <Button onClick={handleAceptar} disabled={mutation.isPending} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
+                Marcar como Listo
+              </Button>
+              <Button onClick={handleCancelar} disabled={mutation.isPending} variant="destructive">
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            </>
           )}
           {(estadoNum === 3 || estadoNum === 9) && (
-            <div className="flex-1 text-center py-2 bg-gray-50 rounded-lg">
-              <p className="text-sm text-muted-foreground">{estadoNum === 3 ? "Esperando motorizado..." : "Esperando al cliente..."}</p>
-            </div>
+            <>
+              <div className="flex-1 text-center py-2 bg-gray-50 rounded-lg">
+                <p className="text-sm text-muted-foreground">{estadoNum === 3 ? "Esperando motorizado..." : "Esperando al cliente..."}</p>
+              </div>
+              <Button onClick={handleCancelar} disabled={mutation.isPending} variant="destructive">
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            </>
           )}
           {estadoNum >= 4 && estadoNum <= 7 && (
-            <div className="flex-1 text-center py-2 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-                {estadoNum === 4 && "Motorizado en camino al local..."}
-                {estadoNum === 5 && "Motorizado recogiendo pedido..."}
-                {estadoNum === 6 && "Pedido en camino..."}
-                {estadoNum === 7 && "Motorizado llegó al destino..."}
-              </p>
-            </div>
+            <>
+              <div className="flex-1 text-center py-2 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  {estadoNum === 4 && "Motorizado en camino al local..."}
+                  {estadoNum === 5 && "Motorizado recogiendo pedido..."}
+                  {estadoNum === 6 && "Pedido en camino..."}
+                  {estadoNum === 7 && "Motorizado llegó al destino..."}
+                </p>
+              </div>
+              <Button onClick={handleCancelar} disabled={mutation.isPending} variant="destructive">
+                <X className="h-4 w-4 mr-2" /> Cancelar
+              </Button>
+            </>
           )}
         </div>
       )}

@@ -117,6 +117,19 @@ export default function PedidoActivoCard({ pedido }: Props) {
     mutation.mutate({ estado: 3 });
   };
 
+  const handleCancelar = async () => {
+    const result = await confirmAlert({
+      title: "¿Cancelar pedido?",
+      text: `¿Estás seguro de cancelar el pedido #${pedido.id}? Esta acción no se puede deshacer.`,
+      icon: "warning",
+      confirmButtonText: "Sí, cancelar",
+      cancelButtonText: "No, mantener",
+    });
+    if (result.isConfirmed) {
+      mutation.mutate({ estado: 0 });
+    }
+  };
+
   const handleRechazar = async () => {
     const result = await confirmAlert({
       title: "¿Rechazar pedido?",
@@ -542,6 +555,16 @@ export default function PedidoActivoCard({ pedido }: Props) {
                       Ver pago
                     </Button>
                   )}
+                  <Button
+                    onClick={handleCancelar}
+                    disabled={mutation.isPending}
+                    variant="destructive"
+                    size="sm"
+                    className="h-10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancelar
+                  </Button>
                 </>
               )}
 
@@ -588,6 +611,16 @@ export default function PedidoActivoCard({ pedido }: Props) {
                       Ver pago
                     </Button>
                   )}
+                  <Button
+                    onClick={handleCancelar}
+                    disabled={mutation.isPending}
+                    variant="destructive"
+                    size="sm"
+                    className="h-10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancelar
+                  </Button>
                 </>
               )}
             </div>
