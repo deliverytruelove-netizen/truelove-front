@@ -20,6 +20,7 @@ import {
   X,
   Bell,
   History,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarSettings from "./components/AvatarSettings";
@@ -34,12 +35,17 @@ import "./admin-dark-mode.css";
 import {
   verificarAcceso,
   fetchMisPeriodos,
+  fetchMiPeriodoActual,
+  fetchCuotaActiva,
 } from "./cuotas/services/pago-cuota.service";
 import type {
   VerificarAccesoResponse,
   Periodo,
+  PeriodoActual,
+  CuotaActiva,
 } from "./cuotas/types/pago-cuota.types";
 import PantallaBloqueoCuota from "./cuotas/components/PantallaBloqueoCuota";
+import AdvertenciaVencimientoModal from "./cuotas/components/AdvertenciaVencimientoModal";
 import {
   PedidosRealtimeProvider,
   usePedidosRealtimeContext,
@@ -77,7 +83,7 @@ const menuItems = [
   { name: "Información", href: "/socio/admin/info-socio", icon: ShoppingBag },
 
   { name: "Configuración", href: "/socio/admin/configuracion", icon: Settings },
-  { name: "Cuota", href: "/socio/admin/cuotas", icon: Settings },
+  { name: "Cuota", href: "/socio/admin/cuotas", icon: Coins },
 ];
 
 function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
@@ -90,6 +96,9 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [loadingAcceso, setLoadingAcceso] = useState(true);
   const [showBannerVencimiento, setShowBannerVencimiento] = useState(true);
+  const [periodoActual, setPeriodoActual] = useState<PeriodoActual | null>(null);
+  const [cuotaActiva, setCuotaActiva] = useState<CuotaActiva | null>(null);
+  const [showRecordatorioModal, setShowRecordatorioModal] = useState(false);
   const pathname = usePathname();
   const { pedidosPendientes } = usePedidosRealtimeContext();
   const router = useRouter();
@@ -149,12 +158,16 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const verificarAccesoSocio = async () => {
       try {
-        const [accesoData, periodosData] = await Promise.all([
+        const [accesoData, periodosData, periodoActualData, cuotaData] = await Promise.all([
           verificarAcceso(),
           fetchMisPeriodos(),
+          fetchMiPeriodoActual(),
+          fetchCuotaActiva(),
         ]);
         setAccesoInfo(accesoData);
         setPeriodos(periodosData);
+        setPeriodoActual(periodoActualData);
+        setCuotaActiva(cuotaData);
       } catch (error) {
         console.error("Error al verificar acceso:", error);
       } finally {
@@ -164,6 +177,20 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
 
     verificarAccesoSocio();
   }, []);
+
+  // Mostrar modal de recordatorio de pago globalmente
+  useEffect(() => {
+    if (periodoActual?.periodo) {
+      const { dias_para_vencer, estado, monto_esperado } = periodoActual.periodo;
+      const monto = Number(monto_esperado || 0);
+      const esTipoPorcentaje = cuotaActiva?.tipo_cuota === "porcentaje";
+      if (esTipoPorcentaje && monto <= 0) return;
+
+      if (estado === "pendiente" && dias_para_vencer !== undefined && dias_para_vencer <= 5) {
+        setShowRecordatorioModal(true);
+      }
+    }
+  }, [periodoActual, cuotaActiva]);
 
   const toggleSubmenu = (menuName: string) => {
     setExpandedMenus((prev) =>
@@ -566,6 +593,18 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* Modal global de Recordatorio de Pago (no mostrar en página de cuotas, ahí tiene su propio modal) */}
+      {showRecordatorioModal && periodoActual?.periodo && pathname !== "/socio/admin/cuotas" && (
+        <AdvertenciaVencimientoModal
+          periodo={periodoActual.periodo}
+          onClose={() => setShowRecordatorioModal(false)}
+          onPagar={() => {
+            setShowRecordatorioModal(false);
+            router.push("/socio/admin/cuotas");
+          }}
+        />
+      )}
     </div>
   );
 }

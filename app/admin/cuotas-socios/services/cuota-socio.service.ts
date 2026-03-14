@@ -145,6 +145,31 @@ export const rechazarPago = async (id: number, motivo_rechazo: string): Promise<
   return data.data
 }
 
+export interface EstadoPagosSocio {
+  tiene_cuota: boolean
+  cuota?: CuotaSocio
+  periodos_vencidos: number
+  periodos_pendientes: number
+  periodos_pagados: number
+  total_adeudado: number
+  esta_al_dia: boolean
+  dias_vencimiento: number | null
+  monto_esperado: number
+}
+
+export const fetchEstadoPagosSocio = async (socioId: number): Promise<EstadoPagosSocio> => {
+  const response = await fetch(`${API_URL}/admin/cuotas-socios/estado-pagos/${socioId}`, {
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    throw new Error("Error al obtener estado de pagos")
+  }
+
+  const data = await response.json()
+  return data.data
+}
+
 export const fetchEstadisticas = async (): Promise<EstadisticasPagos> => {
   const response = await fetch(`${API_URL}/admin/cuotas-socios/estadisticas`, {
     headers: getAuthHeaders(),

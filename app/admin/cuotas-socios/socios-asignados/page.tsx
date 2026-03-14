@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useQuery } from "@tanstack/react-query"
 import Section from "@/components/layout/Section"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -9,16 +9,17 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/pagination"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
 import { fetchSocios } from "@/app/admin/socios/services/Socios.service"
-import { fetchCuotas } from "../services/cuota-socio.service"
+import { fetchCuotas, fetchEstadoPagosSocio, type EstadoPagosSocio } from "../services/cuota-socio.service"
 import type { Socio } from "@/app/admin/socios/types/Socios.types"
 import type { CuotaSocio } from "../types/cuota-socio.types"
-import { Search, Users, DollarSign, Percent } from "lucide-react"
+import { Search, Users, DollarSign, Percent, AlertTriangle, CheckCircle, Clock } from "lucide-react"
 
 export default function SociosAsignadosPage() {
   const [search, setSearch] = useState("")
   const [filtroTipo, setFiltroTipo] = useState<string>("")
   const [currentPage, setCurrentPage] = useState(1)
   const [perPage, setPerPage] = useState(DEFAULT_PAGE_SIZE)
+  const [estadosPagos, setEstadosPagos] = useState<Map<number, EstadoPagosSocio>>(new Map())
 
   const { data: socios = [], isLoading: isLoadingSocios } = useQuery({
     queryKey: ["socios"],
@@ -39,6 +40,33 @@ export default function SociosAsignadosPage() {
   const sociosConCuota = useMemo(() => {
     return socios.filter((s: Socio) => s.cuota_socio_id != null)
   }, [socios])
+
+  // Cargar estados de pago de los socios paginados
+  const loadEstadosPagos = useCallback(async (sociosList: Socio[]) => {
+    const newEstados = new Map(estadosPagos)
+    const promises = sociosList
+      .filter((s) => !newEstados.has(s.id))
+      .map(async (s) => {
+        try {
+          const estado = await fetchEstadoPagosSocio(s.id)
+          return { id: s.id, estado }
+        } catch {
+          return null
+        }
+      })
+
+    const results = await Promise.all(promises)
+    let changed = false
+    results.forEach((r) => {
+      if (r) {
+        newEstados.set(r.id, r.estado)
+        changed = true
+      }
+    })
+    if (changed) {
+      setEstadosPagos(new Map(newEstados))
+    }
+  }, [estadosPagos])
 
   const filteredSocios = useMemo(() => {
     let result = sociosConCuota
@@ -68,6 +96,13 @@ export default function SociosAsignadosPage() {
     (currentPage - 1) * perPage,
     currentPage * perPage
   )
+
+  // Cargar estados de pago cuando cambia la página
+  useEffect(() => {
+    if (paginatedSocios.length > 0) {
+      loadEstadosPagos(paginatedSocios)
+    }
+  }, [paginatedSocios.map(s => s.id).join(",")]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
@@ -117,6 +152,61 @@ export default function SociosAsignadosPage() {
       return `${Number(cuota.porcentaje_comision || 0)}%`
     }
     return `S/ ${Number(cuota.monto_cuota).toFixed(2)}`
+  }
+
+  const getEstadoPagoBadge = (socioId: number) => {
+    const estado = estadosPagos.get(socioId)
+    if (!estado) {
+      return <span className="text-gray-300 text-xs">Cargando...</span>
+    }
+
+    if (estado.periodos_vencidos > 0) {
+      return (
+        <div className="flex flex-col items-center gap-1">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <AlertTriangle className="w-3 h-3 mr-1" />
+            Vencido
+          </span>
+          <span className="text-[10px] text-red-600 font-medium">
+            {estado.dias_vencimiento} {estado.dias_vencimiento === 1 ? "día" : "días"} vencido
+          </span>
+          {estado.periodos_vencidos > 1 && (
+            <span className="text-[10px] text-red-500">
+              ({estado.periodos_vencidos} períodos)
+            </span>
+          )}
+        </div>
+      )
+    }
+
+    if (estado.periodos_pendientes > 0) {
+      const dias = estado.dias_vencimiento ?? 0
+      const esUrgente = dias <= 1
+      return (
+        <div className="flex flex-col items-center gap-1">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            esUrgente ? "bg-orange-100 text-orange-800" : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {esUrgente ? <AlertTriangle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
+            {dias === 0 ? "Vence hoy" : "Por vencer"}
+          </span>
+          {dias > 0 && (
+            <span className={`text-[10px] font-medium ${esUrgente ? "text-orange-600" : "text-yellow-600"}`}>
+              {dias} {dias === 1 ? "día" : "días"} restantes
+            </span>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Al día
+        </span>
+      </div>
+    )
   }
 
   const isLoading = isLoadingSocios || isLoadingCuotas
@@ -212,17 +302,19 @@ export default function SociosAsignadosPage() {
                     <tr>
                       <th scope="col" className="px-4 py-3">#</th>
                       <th scope="col" className="px-4 py-3">Socio</th>
-                      <th scope="col" className="px-4 py-3">Tipo Negocio</th>
+                      {/* <th scope="col" className="px-4 py-3">Tipo Negocio</th> */}
                       <th scope="col" className="px-4 py-3 text-center">Tipo Cuota</th>
                       <th scope="col" className="px-4 py-3 text-center">Monto / %</th>
                       <th scope="col" className="px-4 py-3 text-center">Periodicidad</th>
-                      <th scope="col" className="px-4 py-3 text-center">Estado</th>
+                      <th scope="col" className="px-4 py-3 text-center">Estado Cuota</th>
+                      <th scope="col" className="px-4 py-3 text-center">Monto a Pagar</th>
+                      <th scope="col" className="px-4 py-3 text-center">Estado Pago</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedSocios.length === 0 ? (
                       <tr className="bg-white">
-                        <td colSpan={7} className="px-4 py-12 text-center">
+                        <td colSpan={8} className="px-4 py-12 text-center">
                           <div className="text-gray-500">No se encontraron socios con cuota asignada</div>
                         </td>
                       </tr>
@@ -243,9 +335,9 @@ export default function SociosAsignadosPage() {
                                 <div className="text-xs text-gray-400">{socio.phone}</div>
                               )}
                             </td>
-                            <td className="px-4 py-3 text-gray-600 capitalize">
+                            {/* <td className="px-4 py-3 text-gray-600 capitalize">
                               {socio.businessType || "-"}
-                            </td>
+                            </td> */}
                             <td className="px-4 py-3 text-center">
                               {getTipoCuotaBadge(cuota)}
                             </td>
@@ -267,6 +359,22 @@ export default function SociosAsignadosPage() {
                               ) : (
                                 <span className="text-gray-400 text-xs">-</span>
                               )}
+                            </td>
+                            <td className="px-4 py-3 text-center font-semibold">
+                              {(() => {
+                                const estado = estadosPagos.get(socio.id)
+                                if (!estado) return <span className="text-gray-300 text-xs">Cargando...</span>
+                                if (estado.periodos_vencidos > 0) {
+                                  return <span className="text-red-600">S/ {Number(estado.total_adeudado).toFixed(2)}</span>
+                                }
+                                if (estado.monto_esperado > 0) {
+                                  return <span className="text-gray-800">S/ {Number(estado.monto_esperado).toFixed(2)}</span>
+                                }
+                                return <span className="text-green-600">-</span>
+                              })()}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {getEstadoPagoBadge(socio.id)}
                             </td>
                           </tr>
                         )

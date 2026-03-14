@@ -7,9 +7,10 @@ import { Periodo } from "../types/pago-cuota.types"
 interface AdvertenciaVencimientoModalProps {
   periodo: Periodo | null
   onClose: () => void
+  onPagar?: () => void
 }
 
-export default function AdvertenciaVencimientoModal({ periodo, onClose }: AdvertenciaVencimientoModalProps) {
+export default function AdvertenciaVencimientoModal({ periodo, onClose, onPagar }: AdvertenciaVencimientoModalProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -50,10 +51,10 @@ export default function AdvertenciaVencimientoModal({ periodo, onClose }: Advert
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={handleClose} />
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-[60]" onClick={handleClose} />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-2xl max-w-md w-full animate-in fade-in zoom-in duration-200">
           {/* Header */}
           <div className={`${getColorClass()} text-white px-6 py-4 rounded-t-lg flex items-center justify-between`}>
@@ -121,10 +122,14 @@ export default function AdvertenciaVencimientoModal({ periodo, onClose }: Advert
             <button
               onClick={() => {
                 handleClose()
-                // Scroll to the payment form
-                const paymentForm = document.querySelector('[class*="SubirComprobante"]')
-                if (paymentForm) {
-                  paymentForm.scrollIntoView({ behavior: "smooth", block: "center" })
+                if (onPagar) {
+                  onPagar()
+                } else {
+                  // Scroll to the payment form (cuando se usa dentro de la página de cuotas)
+                  const paymentForm = document.querySelector('[class*="SubirComprobante"]')
+                  if (paymentForm) {
+                    paymentForm.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }
                 }
               }}
               className={`flex-1 px-4 py-2 ${getColorClass()} text-white font-medium rounded-lg hover:opacity-90 transition-opacity`}
