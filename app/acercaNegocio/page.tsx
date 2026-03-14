@@ -96,12 +96,17 @@ function FormularioDetallesNegocioContent() {
           branches: negocioData.total_sucursales,
           isStreetLocation: negocioData.es_local_calle ? "Si" : "No",
           contactMethod: negocioData.metodo_contacto,
-          phoneNumber: negocioData.telefono,
+          phoneNumber: negocioData.telefono || localStorage.getItem("registrationPhone") || "+51",
           digitalWallet: negocioData.tipo_pago_digital || "0",
           useSamePhone: true,
           walletOwnerName: negocioData.nombre_titular_pago_digital || "",
         });
-
+      } else {
+        // Precargar teléfono del registro si no hay negocio aún
+        const savedPhone = localStorage.getItem("registrationPhone")
+        if (savedPhone) {
+          form.setValue("phoneNumber", savedPhone)
+        }
       }
 
       setIsLoading(false);

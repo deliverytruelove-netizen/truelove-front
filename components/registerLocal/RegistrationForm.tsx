@@ -119,6 +119,8 @@ export default function RegistrationForm() {
       }
 
       if (data.registration_id) {
+        // Guardar teléfono para usarlo en acercaNegocio
+        localStorage.setItem("registrationPhone", formData.phone)
         await createRegistrationToken(data.registration_id.toString(), "/email")
         router.push(`/email?email=${encodeURIComponent(formData.email)}`)
       } else {

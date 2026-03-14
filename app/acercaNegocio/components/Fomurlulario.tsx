@@ -143,7 +143,7 @@ export function BusinessForm({
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Número de Teléfono del Negocio *</FormLabel>
+                <FormLabel>Teléfono del Negocio</FormLabel>
                 <FormControl>
                   <PhoneInput
                     value={field.value}
@@ -153,7 +153,7 @@ export function BusinessForm({
                 </FormControl>
                 <FormMessage />
                 <p className="text-sm text-muted-foreground">
-                  El número debe comenzar con +51 seguido de 9 dígitos
+                  Se usará el número registrado. Puede cambiarlo si el negocio tiene otro número.
                 </p>
               </FormItem>
             )}
