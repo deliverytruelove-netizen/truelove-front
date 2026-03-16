@@ -14,7 +14,9 @@ export default function AdvertenciaVencimientoModal({ periodo, onClose, onPagar 
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    if (periodo && periodo.estado === "pendiente" && periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer <= 5) {
+    if (periodo && periodo.estado === "vencido") {
+      setIsOpen(true)
+    } else if (periodo && periodo.estado === "pendiente" && periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer <= 5) {
       setIsOpen(true)
     }
   }, [periodo])
@@ -34,7 +36,10 @@ export default function AdvertenciaVencimientoModal({ periodo, onClose, onPagar 
     })
   }
 
+  const esVencido = periodo.estado === "vencido"
+
   const getColorClass = () => {
+    if (esVencido) return "bg-red-600"
     if (!periodo.dias_para_vencer) return "bg-yellow-600"
     if (periodo.dias_para_vencer <= 2) return "bg-red-600"
     if (periodo.dias_para_vencer <= 5) return "bg-yellow-600"
@@ -42,6 +47,7 @@ export default function AdvertenciaVencimientoModal({ periodo, onClose, onPagar 
   }
 
   const getMensaje = () => {
+    if (esVencido) return "¡Tu período está VENCIDO!"
     if (!periodo.dias_para_vencer) return "Tu período está próximo a vencer"
     if (periodo.dias_para_vencer === 0) return "¡Tu período vence HOY!"
     if (periodo.dias_para_vencer === 1) return "¡Tu período vence MAÑANA!"
@@ -102,7 +108,7 @@ export default function AdvertenciaVencimientoModal({ periodo, onClose, onPagar 
               </div>
             </div>
 
-            {periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer <= 2 && (
+            {(esVencido || (periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer <= 2)) && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-sm text-red-800 font-medium text-center">
                   ⚠️ Recuerda que si no pagas a tiempo, tu acceso al sistema será bloqueado

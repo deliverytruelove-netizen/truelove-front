@@ -41,7 +41,9 @@ export default function CuotasSocioPage() {
       const esTipoPorcentaje = cuota?.tipo_cuota === "porcentaje"
       if (esTipoPorcentaje && monto <= 0) return
 
-      if (estado === "pendiente" && dias_para_vencer !== undefined && dias_para_vencer <= 5) {
+      if (estado === "vencido") {
+        setShowAdvertenciaModal(true)
+      } else if (estado === "pendiente" && dias_para_vencer !== undefined && dias_para_vencer <= 5) {
         setShowAdvertenciaModal(true)
       }
     }
@@ -157,15 +159,32 @@ export default function CuotasSocioPage() {
             <CuotaActivaCard cuota={cuota} periodoActual={periodoActual?.periodo} />
           )}
 
+          {/* Alerta de período vencido */}
+          {periodoActual?.periodo?.estado === "vencido" && tieneMontoParaPagar && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-red-800 dark:text-red-300 font-semibold text-sm">Pago vencido</h3>
+                <p className="text-red-700 dark:text-red-400 mt-1 text-sm">
+                  Tienes un período vencido (#{periodoActual.periodo.numero_periodo}). Por favor, realiza el pago lo antes posible para evitar restricciones en tu cuenta.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Botón Pagar */}
           {cuota && periodoActual && periodoActual.puede_pagar && periodoActual.periodo && tieneMontoParaPagar && (
             <Button
               onClick={() => setShowPagoModal(true)}
-              className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm"
+              className={`w-full py-3 font-semibold text-sm text-white ${
+                periodoActual.periodo.estado === "vencido"
+                  ? "bg-red-600 hover:bg-red-700 animate-pulse"
+                  : "bg-brand-600 hover:bg-brand-700"
+              }`}
               id="formulario-pago"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Pagar S/ {Number(periodoActual.periodo.monto_esperado || 0).toFixed(2)}
+              {periodoActual.periodo.estado === "vencido" ? "Pagar ahora" : "Pagar"} S/ {Number(periodoActual.periodo.monto_esperado || 0).toFixed(2)}
             </Button>
           )}
 
@@ -218,6 +237,7 @@ export default function CuotasSocioPage() {
           <AdvertenciaVencimientoModal
             periodo={periodoActual.periodo}
             onClose={() => setShowAdvertenciaModal(false)}
+            onPagar={() => setShowPagoModal(true)}
           />
         )}
 
