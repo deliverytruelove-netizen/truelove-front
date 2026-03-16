@@ -25,6 +25,9 @@ export default function PeriodosList({ periodos, periodoActualId, tipoCuota }: P
       }
     }
     if (periodo.estado === "vencido") {
+      const diasVencido = periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer !== null && periodo.dias_para_vencer < 0
+        ? Math.abs(periodo.dias_para_vencer)
+        : null
       return {
         icon: <XCircle className="w-4 h-4" />,
         bg: "bg-red-50 dark:bg-red-900/20",
@@ -32,7 +35,7 @@ export default function PeriodosList({ periodos, periodoActualId, tipoCuota }: P
         badgeBg: "bg-red-100 dark:bg-red-900/40",
         badgeText: "text-red-700 dark:text-red-400",
         iconColor: "text-red-600",
-        label: "Vencido",
+        label: diasVencido ? `Venció hace ${diasVencido} día${diasVencido !== 1 ? "s" : ""}` : "Vencido",
       }
     }
     if (periodo.estado === "en_revision") {
@@ -46,7 +49,20 @@ export default function PeriodosList({ periodos, periodoActualId, tipoCuota }: P
         label: "En revisión",
       }
     }
-    if (periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer <= 5) {
+    if (periodo.dias_para_vencer !== undefined && periodo.dias_para_vencer !== null && periodo.dias_para_vencer <= 5) {
+      // Si dias_para_vencer es negativo, ya venció (caso donde el cron no actualizó el estado)
+      if (periodo.dias_para_vencer < 0) {
+        const diasVencido = Math.abs(periodo.dias_para_vencer)
+        return {
+          icon: <XCircle className="w-4 h-4" />,
+          bg: "bg-red-50 dark:bg-red-900/20",
+          border: "border-red-200 dark:border-red-800",
+          badgeBg: "bg-red-100 dark:bg-red-900/40",
+          badgeText: "text-red-700 dark:text-red-400",
+          iconColor: "text-red-600",
+          label: `Venció hace ${diasVencido} día${diasVencido !== 1 ? "s" : ""}`,
+        }
+      }
       return {
         icon: <AlertTriangle className="w-4 h-4" />,
         bg: "bg-yellow-50 dark:bg-yellow-900/20",
