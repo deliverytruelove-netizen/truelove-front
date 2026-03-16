@@ -21,6 +21,7 @@ import {
   Bell,
   History,
   Coins,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarSettings from "./components/AvatarSettings";
@@ -103,6 +104,35 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { pedidosPendientes } = usePedidosRealtimeContext();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Función de cerrar sesión para pantallas bloqueadas
+  const handleLogoutBloqueado = () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        fetch(`${process.env.NEXT_PUBLIC_API_WEB}/socio/update-token-web`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token_fcm: "" }),
+        });
+      }
+    } catch (e) {
+      console.error("Error al limpiar token FCM web:", e);
+    }
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userProfile");
+    localStorage.removeItem("lastProfileUpdate");
+    localStorage.removeItem("socioId");
+    const cookieOptions = "path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = `authToken=; ${cookieOptions}`;
+    document.cookie = `userRole=; ${cookieOptions}`;
+    window.location.href = "/login";
+  };
 
   // Estados para el toggle de activar/desactivar local
   const [localActivo, setLocalActivo] = useState<boolean>(true);
@@ -243,6 +273,13 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
                       aquí. Una vez aprobado, tu acceso será restaurado.
                     </p>
                   </div>
+                  <button
+                    onClick={handleLogoutBloqueado}
+                    className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg border border-white border-opacity-30 hover:bg-opacity-30 transition-all text-sm font-medium flex-shrink-0"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="hidden sm:inline">Cerrar Sesión</span>
+                  </button>
                 </div>
               </div>
             </header>
@@ -266,6 +303,7 @@ function SocioAdminLayoutContent({ children }: { children: React.ReactNode }) {
         onIrAPagar={() => {
           router.push("/socio/admin/cuotas?acceso_temporal=true");
         }}
+        onCerrarSesion={handleLogoutBloqueado}
       />
     );
   }

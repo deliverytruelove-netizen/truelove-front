@@ -1,6 +1,6 @@
 "use client"
 
-import { Ban, Calendar, Coins, AlertTriangle, ArrowRight, Mail } from "lucide-react"
+import { Ban, Calendar, Coins, AlertTriangle, ArrowRight, Mail, LogOut } from "lucide-react"
 import { Periodo } from "../types/pago-cuota.types"
 
 interface PantallaBloqueoCuotaProps {
@@ -8,6 +8,7 @@ interface PantallaBloqueoCuotaProps {
   mensaje?: string
   diasVencimiento?: number
   onIrAPagar?: () => void
+  onCerrarSesion?: () => void
 }
 
 export default function PantallaBloqueoCuota({
@@ -15,6 +16,7 @@ export default function PantallaBloqueoCuota({
   mensaje,
   diasVencimiento,
   onIrAPagar,
+  onCerrarSesion,
 }: PantallaBloqueoCuotaProps) {
   const formatFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString("es-PE", {
@@ -47,18 +49,29 @@ export default function PantallaBloqueoCuota({
                 </div>
               </div>
 
-              {diasVencimiento !== undefined && (
-                <div className="hidden sm:flex items-center px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg border border-white border-opacity-30">
-                  <AlertTriangle className="w-5 h-5 mr-2" />
-                  <span className="font-semibold text-sm">
-                    {diasVencimiento === 0
-                      ? "Vencido hoy"
-                      : diasVencimiento === 1
-                        ? "Vencido hace 1 día"
-                        : `Vencido hace ${diasVencimiento} días`}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                {diasVencimiento !== undefined && (
+                  <div className="hidden sm:flex items-center px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg border border-white border-opacity-30">
+                    <AlertTriangle className="w-5 h-5 mr-2" />
+                    <span className="font-semibold text-sm">
+                      {diasVencimiento === 0
+                        ? "Vencido hoy"
+                        : diasVencimiento === 1
+                          ? "Vencido hace 1 día"
+                          : `Vencido hace ${diasVencimiento} días`}
+                    </span>
+                  </div>
+                )}
+                {onCerrarSesion && (
+                  <button
+                    onClick={onCerrarSesion}
+                    className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg border border-white border-opacity-30 hover:bg-opacity-30 transition-all text-sm font-medium"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="hidden sm:inline">Cerrar Sesión</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </header>
