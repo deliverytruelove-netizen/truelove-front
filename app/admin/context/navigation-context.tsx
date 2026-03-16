@@ -10,7 +10,8 @@ import {
   RiBankCardFill,
   RiCalendar2Fill,
   RiDeleteBin6Line,
-  RiUser2Line
+  RiUser2Line,
+  RiNotification3Line,
 } from "react-icons/ri";
 
 export interface NavItem {
@@ -107,6 +108,11 @@ export const navigationItems: NavItem[] = [
     title: "Solicitudes Eliminación",
     path: "/admin/solicitudes-eliminacion",
     icon: RiDeleteBin6Line,
+  },
+  {
+    title: "Notificaciones",
+    path: "/admin/notificaciones",
+    icon: RiNotification3Line,
   },
 ];
 
