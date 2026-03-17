@@ -92,7 +92,7 @@ export default function EditarCuotaModal({ isOpen, cuota, onClose }: EditarCuota
     e.preventDefault()
     if (!cuota) return
 
-    const { estado: _estado, ...formDataSinEstado } = formData
+    const { estado: _, ...formDataSinEstado } = formData
     mutation.mutate({
       ...formDataSinEstado,
       metodos_pago_disponibles: metodosSeleccionados,

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ShoppingBag, User, RefreshCw } from "lucide-react"
 import { fetchPedidosPeriodo, type PedidoPeriodo } from "../services/pago-cuota.service"
 
@@ -9,16 +9,12 @@ interface PedidosPeriodoListProps {
   porcentajeComision?: number | null
 }
 
-export default function PedidosPeriodoList({ periodoId, porcentajeComision }: PedidosPeriodoListProps) {
+export default function PedidosPeriodoList({ periodoId }: PedidosPeriodoListProps) {
   const [pedidos, setPedidos] = useState<PedidoPeriodo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadPedidos()
-  }, [periodoId])
-
-  const loadPedidos = async () => {
+  const loadPedidos = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -29,7 +25,11 @@ export default function PedidosPeriodoList({ periodoId, porcentajeComision }: Pe
     } finally {
       setLoading(false)
     }
-  }
+  }, [periodoId])
+
+  useEffect(() => {
+    loadPedidos()
+  }, [loadPedidos])
 
   const totalVentas = pedidos.reduce((sum, p) => sum + p.subtotal, 0)
   const totalComision = pedidos.reduce((sum, p) => sum + p.comision, 0)

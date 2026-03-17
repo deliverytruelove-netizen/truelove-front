@@ -62,18 +62,17 @@ const TestNotificationsModule: React.FC = () => {
     
     const term = searchTerm.toLowerCase();
     return list.filter(u => {
-      const uAny = u as any;
-      const name = (uAny.nombre || uAny.nombres || uAny.name || "").toLowerCase();
-      const lastName = (uAny.apellido || uAny.apellidos || uAny.lastName || "").toLowerCase();
-      const email = (uAny.email || "").toLowerCase();
-      const phone = (uAny.celular || uAny.phone || "").toLowerCase();
+      const name = (("nombre" in u ? u.nombre : "nombres" in u ? u.nombres : "name" in u ? u.name || "" : "") || "").toLowerCase();
+      const lastName = (("apellido" in u ? u.apellido : "apellidos" in u ? u.apellidos : "lastName" in u ? u.lastName || "" : "") || "").toLowerCase();
+      const email = (u.email || "").toLowerCase();
+      const phone = (("celular" in u ? u.celular : "phone" in u ? u.phone : "") || "").toLowerCase();
       return name.includes(term) || lastName.includes(term) || email.includes(term) || phone.includes(term);
     });
   };
 
   const users = getCurrentUsers();
   const selectedUser = users.find(u => u.id.toString() === selectedUserId);
-  const token = (selectedUser as any)?.token_fmc || (selectedUser as any)?.token_fmc_web || "";
+  const token = selectedUser ? (("token_fmc" in selectedUser ? selectedUser.token_fmc : null) || ("token_fmc_web" in selectedUser ? (selectedUser as Socio).token_fmc_web : null) || "") : "";
 // ... rest of handleSend ...
 
   const handleSend = async () => {
@@ -177,7 +176,9 @@ const TestNotificationsModule: React.FC = () => {
               ) : (
                 <div className="divide-y text-sm">
                   {users.map(u => {
-                    const uAny = u as any;
+                    const name = ("nombre" in u ? u.nombre : "nombres" in u ? u.nombres : "name" in u ? u.name || "" : "");
+                    const lastName = ("apellido" in u ? u.apellido : "apellidos" in u ? u.apellidos : "lastName" in u ? u.lastName || "" : "");
+                    const uToken = ("token_fmc" in u ? u.token_fmc : null) || ("token_fmc_web" in u ? (u as Socio).token_fmc_web : null);
                     return (
                       <div 
                         key={u.id} 
@@ -185,11 +186,11 @@ const TestNotificationsModule: React.FC = () => {
                         className={`p-3 cursor-pointer hover:bg-gray-50 flex justify-between items-center ${selectedUserId === u.id.toString() ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
                       >
                         <div>
-                          <p className="font-semibold">{uAny.nombre || uAny.nombres || uAny.name} {uAny.apellido || uAny.apellidos || uAny.lastName}</p>
-                          <p className="text-xs text-gray-500 italic">{uAny.email}</p>
+                          <p className="font-semibold">{name} {lastName}</p>
+                          <p className="text-xs text-gray-500 italic">{u.email}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          {uAny.token_fmc || uAny.token_fmc_web ? (
+                          {uToken ? (
                             <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">CON TOKEN</span>
                           ) : (
                             <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">SIN TOKEN</span>
@@ -280,7 +281,11 @@ const TestNotificationsModule: React.FC = () => {
             <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
               <User size={16} className="text-gray-400" />
               <span className="text-sm font-medium">
-                {selectedUser ? `${(selectedUser as any).nombre || (selectedUser as any).nombres || (selectedUser as any).name || ""} ${(selectedUser as any).apellido || (selectedUser as any).apellidos || (selectedUser as any).lastName || ""}` : "No seleccionado"}
+                {selectedUser ? (() => {
+                  const name = ("nombre" in selectedUser ? selectedUser.nombre : "nombres" in selectedUser ? selectedUser.nombres : "name" in selectedUser ? selectedUser.name || "" : "");
+                  const lastName = ("apellido" in selectedUser ? selectedUser.apellido : "apellidos" in selectedUser ? selectedUser.apellidos : "lastName" in selectedUser ? selectedUser.lastName || "" : "");
+                  return `${name} ${lastName}`;
+                })() : "No seleccionado"}
               </span>
             </div>
           </div>

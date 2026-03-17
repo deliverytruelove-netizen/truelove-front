@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { ChevronDown } from "lucide-react"
 import MainLayout from "../components/MainLayout"
@@ -17,7 +17,7 @@ const tabs = [
 export default function CuotasSociosLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const activeTab = tabs.find((tab) => tab.href === pathname) || tabs[0]
+  tabs.find((tab) => tab.href === pathname) || tabs[0]
   const [alertCount, setAlertCount] = useState<number>(0)
   const [pagosPendientesCount, setPagosPendientesCount] = useState<number>(0)
 

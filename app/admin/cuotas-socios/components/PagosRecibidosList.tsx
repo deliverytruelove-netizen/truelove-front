@@ -178,7 +178,7 @@ export default function PagosRecibidosList({ pagos }: PagosRecibidosListProps) {
         {paginatedPagos.length === 0 ? (
           <div className="text-center py-12 text-gray-500">No hay pagos registrados</div>
         ) : (
-          paginatedPagos.map((pago, index) => (
+          paginatedPagos.map((pago) => (
             <div key={pago.id} className="bg-white border border-gray-200 rounded-lg px-2 py-3 sm:p-4 space-y-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -263,10 +263,10 @@ export default function PagosRecibidosList({ pagos }: PagosRecibidosListProps) {
                 </td>
               </tr>
             ) : (
-              paginatedPagos.map((pago, index) => (
+              paginatedPagos.map((pago, idx) => (
                 <tr key={pago.id} className="bg-white border-b hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-gray-500">
-                    {(currentPage - 1) * perPage + index + 1}
+                    {(currentPage - 1) * perPage + idx + 1}
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-800">
