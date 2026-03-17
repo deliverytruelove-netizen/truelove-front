@@ -807,7 +807,7 @@ function PedidoDetalleContent({
 
       {/* Botones de acción - sticky en móvil */}
       {!showTiempoInput && estadoNum < 8 && (
-        <div className="flex gap-2 pt-2 sticky bottom-0 bg-background pb-2">
+        <div className="flex flex-wrap gap-2 pt-2 sticky bottom-0 bg-background pb-2">
           {estadoNum === 1 && pedido.requiere_confirmacion_local && (
             <Button
               onClick={handleVerificarPago}
@@ -850,20 +850,20 @@ function PedidoDetalleContent({
               <Button
                 onClick={handleAceptar}
                 disabled={mutation.isPending}
-                className="flex-1 h-11 bg-purple-600 hover:bg-purple-700 text-sm"
+                className="flex-1 min-w-0 h-11 bg-purple-600 hover:bg-purple-700 text-sm"
               >
                 {mutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <Check className="h-4 w-4 mr-2" />
                 )}
-                Marcar como Listo
+                <span className="truncate">Marcar como Listo</span>
               </Button>
               <Button
                 onClick={handleCancelar}
                 disabled={mutation.isPending}
                 variant="destructive"
-                className="h-11 text-sm"
+                className="flex-1 min-w-0 h-11 text-sm"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
@@ -873,8 +873,8 @@ function PedidoDetalleContent({
 
           {(estadoNum === 3 || estadoNum === 9) && (
             <>
-              <div className="flex-1 text-center py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <p className="text-xs md:text-sm text-muted-foreground">
+              <div className="flex-1 min-w-0 text-center py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-xs md:text-sm text-muted-foreground truncate">
                   {estadoNum === 3 ? "Esperando motorizado..." : "Esperando al cliente..."}
                 </p>
               </div>
@@ -882,7 +882,7 @@ function PedidoDetalleContent({
                 onClick={handleCancelar}
                 disabled={mutation.isPending}
                 variant="destructive"
-                className="h-11 text-sm"
+                className="shrink-0 h-11 text-sm"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancelar
@@ -892,8 +892,8 @@ function PedidoDetalleContent({
 
           {estadoNum >= 4 && estadoNum <= 7 && (
             <>
-              <div className="flex-1 text-center py-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-xs md:text-sm text-blue-700 dark:text-blue-300">
+              <div className="flex-1 min-w-0 text-center py-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs md:text-sm text-blue-700 dark:text-blue-300 truncate">
                   {estadoNum === 4 && "Motorizado en camino al local..."}
                   {estadoNum === 5 && "Motorizado recogiendo pedido..."}
                   {estadoNum === 6 && "Pedido en camino..."}
@@ -904,7 +904,7 @@ function PedidoDetalleContent({
                 onClick={handleCancelar}
                 disabled={mutation.isPending}
                 variant="destructive"
-                className="h-11 text-sm"
+                className="shrink-0 h-11 text-sm"
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancelar

@@ -472,7 +472,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
         {!showTiempoInput && (
           <div className="space-y-2">
             {/* Fila principal de acciones */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {estadoNum === 1 && pedido.requiere_confirmacion_local && (
                 <>
                   <Button
@@ -535,14 +535,14 @@ export default function PedidoActivoCard({ pedido }: Props) {
                     onClick={handleMarcarListo}
                     disabled={mutation.isPending}
                     size="sm"
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 h-10"
+                    className="flex-1 min-w-0 bg-purple-600 hover:bg-purple-700 h-10"
                   >
                     {mutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-1" />
                     ) : (
                       <Check className="h-4 w-4 mr-1" />
                     )}
-                    Marcar como Listo
+                    <span className="truncate">Marcar como Listo</span>
                   </Button>
                   {pedido.foto_pago && (
                     <Button
@@ -552,7 +552,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
                       className="h-10 border-blue-300 text-blue-600 hover:bg-blue-50"
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      Ver pago
+                      <span className="hidden sm:inline">Ver pago</span>
                     </Button>
                   )}
                   <Button
@@ -563,14 +563,14 @@ export default function PedidoActivoCard({ pedido }: Props) {
                     className="h-10"
                   >
                     <X className="h-4 w-4 mr-1" />
-                    Cancelar
+                    <span className="hidden sm:inline">Cancelar</span>
                   </Button>
                 </>
               )}
 
               {[3, 4, 5, 6, 7, 9].includes(estadoNum) && (
                 <>
-                  <div className="flex-1 space-y-2">
+                  <div className="w-full space-y-2">
                     {/* Estado actual del pedido */}
                     <div className="text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-md">
                       <p className="text-xs text-muted-foreground">
@@ -599,28 +599,31 @@ export default function PedidoActivoCard({ pedido }: Props) {
                         )}
                       </div>
                     )}
+                    {/* Botones de acción */}
+                    <div className="flex gap-2">
+                      {pedido.foto_pago && (
+                        <Button
+                          onClick={() => setShowFotoPago(true)}
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 h-10 border-blue-300 text-blue-600 hover:bg-blue-50"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver pago
+                        </Button>
+                      )}
+                      <Button
+                        onClick={handleCancelar}
+                        disabled={mutation.isPending}
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1 h-10"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
-                  {pedido.foto_pago && (
-                    <Button
-                      onClick={() => setShowFotoPago(true)}
-                      size="sm"
-                      variant="outline"
-                      className="h-10 border-blue-300 text-blue-600 hover:bg-blue-50"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver pago
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleCancelar}
-                    disabled={mutation.isPending}
-                    variant="destructive"
-                    size="sm"
-                    className="h-10"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Cancelar
-                  </Button>
                 </>
               )}
             </div>
