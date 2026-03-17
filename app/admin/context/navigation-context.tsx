@@ -114,6 +114,11 @@ export const navigationItems: NavItem[] = [
     path: "/admin/notificaciones",
     icon: RiNotification3Line,
   },
+  {
+    title: "Pruebas Notificaciones",
+    path: "/admin/test-notificaciones",
+    icon: RiNotification3Line,
+  },
 ];
 
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {
