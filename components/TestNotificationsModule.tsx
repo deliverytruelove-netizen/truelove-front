@@ -1,7 +1,7 @@
 // components/TestNotificationsModule.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,9 @@ import { fetchMotorizados } from "@/app/admin/motorizado/services/motorizado.ser
 import { fetchSocios } from "@/app/admin/socios/services/Socios.service";
 import { sendLiveActivityTest, sendPushTest } from "@/app/admin/notificaciones/services/notification-test.service";
 import { showAlert } from "@/components/ui/DataTable/Alert";
+import { Cliente } from "@/app/admin/clientes/types/cliente.types";
+import { Motorizado } from "@/app/admin/motorizado/types/motorizado.types";
+import { Socio } from "@/app/admin/socios/types/Socios.types";
 
 type UserType = "cliente" | "motorizado" | "socio";
 
@@ -50,7 +53,7 @@ const TestNotificationsModule: React.FC = () => {
 
   // Get current users based on type and search
   const getCurrentUsers = () => {
-    let list: any[] = [];
+    let list: (Cliente | Motorizado | Socio)[] = [];
     if (userType === "cliente") list = clientes;
     else if (userType === "motorizado") list = motorizados;
     else if (userType === "socio") list = socios;
@@ -59,17 +62,19 @@ const TestNotificationsModule: React.FC = () => {
     
     const term = searchTerm.toLowerCase();
     return list.filter(u => {
-      const name = (u.nombre || u.nombres || u.name || "").toLowerCase();
-      const lastName = (u.apellido || u.apellidos || u.lastName || "").toLowerCase();
-      const email = (u.email || "").toLowerCase();
-      const phone = (u.celular || u.phone || "").toLowerCase();
+      const uAny = u as any;
+      const name = (uAny.nombre || uAny.nombres || uAny.name || "").toLowerCase();
+      const lastName = (uAny.apellido || uAny.apellidos || uAny.lastName || "").toLowerCase();
+      const email = (uAny.email || "").toLowerCase();
+      const phone = (uAny.celular || uAny.phone || "").toLowerCase();
       return name.includes(term) || lastName.includes(term) || email.includes(term) || phone.includes(term);
     });
   };
 
   const users = getCurrentUsers();
   const selectedUser = users.find(u => u.id.toString() === selectedUserId);
-  const token = selectedUser?.token_fmc || selectedUser?.token_fcm || "";
+  const token = (selectedUser as any)?.token_fmc || (selectedUser as any)?.token_fmc_web || "";
+// ... rest of handleSend ...
 
   const handleSend = async () => {
     if (!token) {
@@ -105,10 +110,11 @@ const TestNotificationsModule: React.FC = () => {
         text: "La notificación de prueba ha sido enviada con éxito.",
         icon: "success"
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "No se pudo enviar la notificación.";
       showAlert({
         title: "Error de Envío",
-        text: error.message || "No se pudo enviar la notificación.",
+        text: errorMessage,
         icon: "error"
       });
     } finally {
@@ -170,25 +176,28 @@ const TestNotificationsModule: React.FC = () => {
                 <div className="p-4 text-center text-gray-500 text-sm">No se encontraron usuarios con token.</div>
               ) : (
                 <div className="divide-y text-sm">
-                  {users.map(u => (
-                    <div 
-                      key={u.id} 
-                      onClick={() => setSelectedUserId(u.id.toString())}
-                      className={`p-3 cursor-pointer hover:bg-gray-50 flex justify-between items-center ${selectedUserId === u.id.toString() ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
-                    >
-                      <div>
-                        <p className="font-semibold">{u.nombre || u.nombres || u.name} {u.apellido || u.apellidos || u.lastName}</p>
-                        <p className="text-xs text-gray-500 italic">{u.email}</p>
+                  {users.map(u => {
+                    const uAny = u as any;
+                    return (
+                      <div 
+                        key={u.id} 
+                        onClick={() => setSelectedUserId(u.id.toString())}
+                        className={`p-3 cursor-pointer hover:bg-gray-50 flex justify-between items-center ${selectedUserId === u.id.toString() ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
+                      >
+                        <div>
+                          <p className="font-semibold">{uAny.nombre || uAny.nombres || uAny.name} {uAny.apellido || uAny.apellidos || uAny.lastName}</p>
+                          <p className="text-xs text-gray-500 italic">{uAny.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {uAny.token_fmc || uAny.token_fmc_web ? (
+                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">CON TOKEN</span>
+                          ) : (
+                            <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">SIN TOKEN</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {u.token_fmc || u.token_fcm ? (
-                          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">CON TOKEN</span>
-                        ) : (
-                          <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">SIN TOKEN</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -271,7 +280,7 @@ const TestNotificationsModule: React.FC = () => {
             <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
               <User size={16} className="text-gray-400" />
               <span className="text-sm font-medium">
-                {selectedUser ? `${selectedUser.nombre || selectedUser.nombres || selectedUser.name} ${selectedUser.apellido || selectedUser.apellidos || selectedUser.lastName}` : "No seleccionado"}
+                {selectedUser ? `${(selectedUser as any).nombre || (selectedUser as any).nombres || (selectedUser as any).name || ""} ${(selectedUser as any).apellido || (selectedUser as any).apellidos || (selectedUser as any).lastName || ""}` : "No seleccionado"}
               </span>
             </div>
           </div>

@@ -11,6 +11,7 @@ export interface Motorizado {
   aprobado: boolean;
   created_at: string;
   documento_imagen?: string;
+  token_fmc?: string | null;
 }
 
 export interface EntregaCalendario {

@@ -16,6 +16,8 @@ export interface Socio {
   documentType?: string
   documentNumber?: string
   cuota_socio_id?: number | null
+  token_fmc?: string | null
+  token_fmc_web?: string | null
 }
 
 export interface DatosBancarios {

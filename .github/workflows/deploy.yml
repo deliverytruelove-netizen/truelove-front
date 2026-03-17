@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Actualizado a v4 para evitar el aviso de Node 20
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.10
@@ -22,6 +22,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e  # <--- Esto detiene el script si hay un error
+            
             cd /usr/share/nginx/html/truelove-front
 
             echo "➡️ Haciendo git pull..."
@@ -30,13 +32,12 @@ jobs:
             echo "➡️ Instalando dependencias..."
             npm install
 
-            echo "➡️ Reiniciando PM2..."
-            pm2 delete true-love 
-
             echo "➡️ Generando build..."
-            npm run build
+            npm run build # <--- Primero el build
 
-            echo "➡️ Iniciando aplicación con PM2..."
-            pm2 start npm --name "true-love" -- start
+            echo "➡️ Reiniciando aplicación en PM2..."
+            # Usamos 'restart' o 'reload' para no borrarla. 
+            # Si no existe, la iniciamos.
+            pm2 start npm --name "true-love" -- start || pm2 restart true-love
 
-            echo "⬅️ Deploy completado."
+            echo "⬅️ Deploy completado con éxito."
