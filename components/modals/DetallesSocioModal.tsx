@@ -48,13 +48,13 @@ interface InfoItemProps {
 }
 
 const InfoItem = ({ icon, label, value }: InfoItemProps) => (
-  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-    <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+    <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
       {icon}
     </div>
-    <div className="flex-1">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
+    <div className="flex-1 min-w-0">
+      <p className="text-xs sm:text-sm text-gray-500">{label}</p>
+      <p className="text-xs sm:text-sm font-medium truncate">{value}</p>
     </div>
   </div>
 );
@@ -72,14 +72,14 @@ const TabButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+    className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg transition-all text-xs sm:text-sm ${
       isActive
         ? "bg-white shadow-md text-red-600"
         : "hover:bg-white/50 text-gray-600"
     }`}
   >
-    {icon}
-    <span>{label}</span>
+    <span className="shrink-0">{icon}</span>
+    <span className="truncate">{label}</span>
   </button>
 );
 
@@ -608,12 +608,12 @@ export function DetallesSocioModal({
           <div className="space-y-4">
             {/* Información de la cuota y día de pago */}
             {estadoPagos?.cuota && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Coins className="w-6 h-6 text-blue-600" />
-                    <div>
-                      <h3 className="font-semibold text-blue-900">Información de Cuota</h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-blue-900 text-sm sm:text-base">Información de Cuota</h3>
                       <p className="text-sm text-blue-700">
                         {estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)} - 
                         {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
@@ -660,20 +660,20 @@ export function DetallesSocioModal({
                       variant="outline"
                       size="sm"
                       onClick={() => setShowCambiarCuotaModal(true)}
-                      className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                      className="text-purple-600 border-purple-300 hover:bg-purple-50 shrink-0 text-xs sm:text-sm"
                     >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Cambiar Cuota
+                      <RefreshCw className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Cambiar Cuota</span>
                     </Button>
                   ) : (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowEditarDiaPagoModal(true)}
-                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50 shrink-0 text-xs sm:text-sm"
                     >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Editar Día de Pago
+                      <Calendar className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Editar Día de Pago</span>
                     </Button>
                   )}
                 </div>
@@ -700,27 +700,27 @@ export function DetallesSocioModal({
               }
 
               return (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-sm font-medium text-green-900">Pagados</span>
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-2 sm:p-4">
+                    <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-green-900">Pagados</span>
                     </div>
-                    <p className="text-2xl font-bold text-green-700">{pagados}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-700">{pagados}</p>
                   </div>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertCircle className="w-5 h-5 text-yellow-600" />
-                      <span className="text-sm font-medium text-yellow-900">{esPorcentaje ? "Por cobrar" : "Pendientes"}</span>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-4">
+                    <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                      <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-yellow-900 truncate">{esPorcentaje ? "Por cobrar" : "Pendientes"}</span>
                     </div>
-                    <p className="text-2xl font-bold text-yellow-700">{pendientes}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-yellow-700">{pendientes}</p>
                   </div>
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
-                      <span className="text-sm font-medium text-red-900">Vencidos</span>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-4">
+                    <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                      <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-red-900">Vencidos</span>
                     </div>
-                    <p className="text-2xl font-bold text-red-700">{vencidos}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-red-700">{vencidos}</p>
                   </div>
                 </div>
               )
@@ -862,16 +862,16 @@ export function DetallesSocioModal({
             isLeaving ? "opacity-0" : "opacity-100"
           }`}
         >
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col relative">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] mx-2 sm:mx-4 flex flex-col relative">
             {/* Encabezado fijo */}
-            <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white p-6 rounded-t-lg">
-              <h2 className="text-2xl font-bold">Detalles del Socio</h2>
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white p-4 sm:p-6 rounded-t-lg">
+              <h2 className="text-lg sm:text-2xl font-bold">Detalles del Socio</h2>
             </div>
 
             {/* Notificación de estado - Posicionada en la esquina superior derecha con animaciones */}
             {isAprobado && renderNotification && (
               <div
-                className={`absolute z-[60] top-8 right-6 max-w-md w-auto ${
+                className={`absolute z-[60] top-2 right-2 sm:top-8 sm:right-6 max-w-[calc(100%-1rem)] sm:max-w-md w-auto ${
                   estadoPagos?.esta_al_dia
                     ? "bg-green-50 border-green-200"
                     : (estadoPagos?.periodos_vencidos ?? 0) > 0
@@ -976,9 +976,9 @@ export function DetallesSocioModal({
 
             {/* Contenido con scroll */}
             <div className="flex-1 overflow-y-auto">
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 {/* Pestañas de navegación */}
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-2 bg-gray-100 rounded-lg mb-6">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-2 p-1.5 sm:p-2 bg-gray-100 rounded-lg mb-4 sm:mb-6">
                   <TabButton
                     isActive={activeTab === "personal"}
                     icon={<User className="w-5 h-5" />}
@@ -1017,12 +1017,12 @@ export function DetallesSocioModal({
                   />
                 </div>
 
-                <div className="mt-6">{renderContent()}</div>
+                <div className="mt-3 sm:mt-6">{renderContent()}</div>
               </div>
             </div>
 
             {/* Pie fijo */}
-            <div className="bg-gray-50 border-t p-6 flex justify-end gap-3 rounded-b-lg">
+            <div className="bg-gray-50 border-t p-3 sm:p-6 flex justify-end gap-3 rounded-b-lg">
               <Button variant="outline" onClick={onClose}>
                 Cerrar
               </Button>
