@@ -614,25 +614,25 @@ export function DetallesSocioModal({
                     <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
                     <div className="min-w-0">
                       <h3 className="font-semibold text-blue-900 text-sm sm:text-base">Información de Cuota</h3>
-                      <p className="text-sm text-blue-700">
-                        {estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)} - 
+                      <p className="text-xs sm:text-sm text-blue-700">
+                        {estadoPagos.cuota.periodicidad.charAt(0).toUpperCase() + estadoPagos.cuota.periodicidad.slice(1)} -{" "}
                         {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
                           <span className="text-purple-600 font-semibold">
                             {Number(estadoPagos.cuota.porcentaje_comision || 0).toFixed(2)}% comisión
-                            {estadoPagos.cuota.minimo_pedidos && ` (Mín. ${estadoPagos.cuota.minimo_pedidos} pedidos)`}
+                            {estadoPagos.cuota.minimo_pedidos && ` (Mín. ${estadoPagos.cuota.minimo_pedidos} ped.)`}
                           </span>
                         ) : (
                           `S/ ${Number(estadoPagos.cuota.monto_cuota).toFixed(2)}`
                         )}
                       </p>
                       {estadoPagos.cuota.tipo_cuota === "porcentaje" ? (
-                        <p className="text-sm text-blue-700 font-medium">
-                          <Calendar className="w-4 h-4 inline mr-1" />
+                        <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1" />
                           Vencimiento: al fin de cada periodo
                         </p>
                       ) : estadoPagos.cuota.dia_pago ? (
-                        <p className="text-sm text-blue-700 font-medium">
-                          <Calendar className="w-4 h-4 inline mr-1" />
+                        <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1" />
                           Día de pago: {(() => {
                             const diaPago = estadoPagos.cuota.dia_pago
                             const periodicidad = estadoPagos.cuota.periodicidad
@@ -662,7 +662,8 @@ export function DetallesSocioModal({
                       onClick={() => setShowCambiarCuotaModal(true)}
                       className="text-purple-600 border-purple-300 hover:bg-purple-50 shrink-0 text-xs sm:text-sm"
                     >
-                      <RefreshCw className="w-4 h-4 sm:mr-2" />
+                      <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="sm:hidden">Cambiar</span>
                       <span className="hidden sm:inline">Cambiar Cuota</span>
                     </Button>
                   ) : (
@@ -672,7 +673,8 @@ export function DetallesSocioModal({
                       onClick={() => setShowEditarDiaPagoModal(true)}
                       className="text-blue-600 border-blue-300 hover:bg-blue-50 shrink-0 text-xs sm:text-sm"
                     >
-                      <Calendar className="w-4 h-4 sm:mr-2" />
+                      <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="sm:hidden">Editar</span>
                       <span className="hidden sm:inline">Editar Día de Pago</span>
                     </Button>
                   )}
@@ -728,7 +730,7 @@ export function DetallesSocioModal({
 
             {/* Lista de períodos */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">
+              <h3 className="text-sm sm:text-lg font-semibold mb-3 sm:mb-4">
                 {estadoPagos?.cuota ?
                   estadoPagos.cuota.tipo_cuota === "porcentaje"
                     ? "Historial de Comisiones"
@@ -736,10 +738,9 @@ export function DetallesSocioModal({
                   : 'Períodos de Pago'
                 }
               </h3>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
                 {periodos
                   .filter((periodo) => {
-                    // Para porcentaje: solo mostrar períodos que ya iniciaron o tienen actividad
                     if (estadoPagos?.cuota?.tipo_cuota === "porcentaje") {
                       const hoy = new Date()
                       hoy.setHours(0, 0, 0, 0)
@@ -748,81 +749,80 @@ export function DetallesSocioModal({
                       const tieneActividad = periodo.estado !== "pendiente" || periodo.fecha_calculo || Number(periodo.total_ventas || 0) > 0 || Number(periodo.monto_esperado || 0) > 0
                       return inicio <= hoy || tieneActividad
                     }
-                    // Para monto fijo: mostrar todos
                     return true
                   })
                   .sort((a, b) => a.numero_periodo - b.numero_periodo)
                   .map((periodo) => (
                   <div
                     key={periodo.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-700 font-bold text-sm">#{periodo.numero_periodo}</span>
+                    {/* Header: número + badge estado */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                          <span className="text-gray-700 font-bold text-xs sm:text-sm">#{periodo.numero_periodo}</span>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">Período {periodo.numero_periodo}</p>
-                          <p className="text-sm text-gray-600">
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 text-sm">Período {periodo.numero_periodo}</p>
+                          <p className="text-xs sm:text-sm text-gray-600">
                             {formatFecha(periodo.periodo_inicio)} - {formatFecha(periodo.periodo_fin)}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right flex items-center gap-3">
-                        <div>
-                          <p className="text-sm text-gray-500">Monto</p>
-                          <p className="text-lg font-bold text-gray-900">
-                            S/ {Number(periodo.monto_esperado).toFixed(2)}
-                          </p>
-                          {/* Desglose mejorado para tipo porcentaje */}
-                          {estadoPagos?.cuota?.tipo_cuota === "porcentaje" && (
-                            <div className="mt-1 text-xs text-gray-600 space-y-0.5">
-                              <div>Ventas: S/ {Number(periodo.total_ventas || 0).toFixed(2)}</div>
-                              <div>Pedidos: {periodo.cantidad_pedidos || 0}</div>
-                              {Number(periodo.total_ventas || 0) > 0 && estadoPagos?.cuota?.porcentaje_comision && (
-                                <div className="text-purple-600">
-                                  Comisión ({Number(estadoPagos.cuota.porcentaje_comision)}%): S/ {(Number(periodo.total_ventas || 0) * Number(estadoPagos.cuota.porcentaje_comision) / 100).toFixed(2)}
-                                </div>
-                              )}
-                              {periodo.fecha_calculo ? (
-                                <div className="text-green-600 flex items-center gap-1 justify-end">
-                                  ✓ Calculado
-                                  <button
-                                    type="button"
-                                    title="Recalcular"
-                                    className="ml-1 p-0.5 hover:bg-gray-100 rounded transition-colors"
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      try {
-                                        await calcularPeriodo(periodo.id);
-                                        if (data?.id) {
-                                          const periodosData = await verPeriodosDeSocio(data.id);
-                                          setPeriodos(periodosData);
-                                          cargarEstadoPagos(data.id);
-                                        }
-                                      } catch (err) {
-                                        console.error("Error al recalcular:", err);
-                                      }
-                                    }}
-                                  >
-                                    <RefreshCw className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="text-yellow-600">⚠ Sin calcular</div>
-                              )}
+                      <span
+                        className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border capitalize shrink-0 ${getEstadoBadge(
+                          periodo.estado
+                        )}`}
+                      >
+                        {periodo.estado}
+                      </span>
+                    </div>
+                    {/* Monto + detalles */}
+                    <div className="flex items-end justify-between gap-2 pl-10 sm:pl-12">
+                      <div className="text-sm">
+                        <p className="text-base sm:text-lg font-bold text-gray-900">
+                          S/ {Number(periodo.monto_esperado).toFixed(2)}
+                        </p>
+                      </div>
+                      {estadoPagos?.cuota?.tipo_cuota === "porcentaje" && (
+                        <div className="text-xs text-gray-600 text-right space-y-0.5">
+                          <div>Ventas: S/ {Number(periodo.total_ventas || 0).toFixed(2)}</div>
+                          <div>Pedidos: {periodo.cantidad_pedidos || 0}</div>
+                          {Number(periodo.total_ventas || 0) > 0 && estadoPagos?.cuota?.porcentaje_comision && (
+                            <div className="text-purple-600 font-medium">
+                              {Number(estadoPagos.cuota.porcentaje_comision)}%: S/ {(Number(periodo.total_ventas || 0) * Number(estadoPagos.cuota.porcentaje_comision) / 100).toFixed(2)}
                             </div>
                           )}
+                          {periodo.fecha_calculo ? (
+                            <div className="text-green-600 flex items-center gap-1 justify-end">
+                              ✓ Calculado
+                              <button
+                                type="button"
+                                title="Recalcular"
+                                className="ml-1 p-0.5 hover:bg-gray-100 rounded transition-colors"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await calcularPeriodo(periodo.id);
+                                    if (data?.id) {
+                                      const periodosData = await verPeriodosDeSocio(data.id);
+                                      setPeriodos(periodosData);
+                                      cargarEstadoPagos(data.id);
+                                    }
+                                  } catch (err) {
+                                    console.error("Error al recalcular:", err);
+                                  }
+                                }}
+                              >
+                                <RefreshCw className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-yellow-600">⚠ Sin calcular</div>
+                          )}
                         </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${getEstadoBadge(
-                            periodo.estado
-                          )}`}
-                        >
-                          {periodo.estado}
-                        </span>
-                      </div>
+                      )}
                     </div>
                   </div>
                 ))}
