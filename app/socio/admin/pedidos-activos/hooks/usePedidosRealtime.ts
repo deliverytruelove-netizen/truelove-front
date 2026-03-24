@@ -127,7 +127,7 @@ export function usePedidosRealtime() {
     (p) => Number(p.ultimo_estado_tracking) === 1
   )
   const pedidosEnProceso = pedidos.filter(
-    (p) => [2, 3, 9].includes(Number(p.ultimo_estado_tracking))
+    (p) => [2, 3].includes(Number(p.ultimo_estado_tracking))
   )
 
   return {
