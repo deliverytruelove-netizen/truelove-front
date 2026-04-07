@@ -56,8 +56,19 @@ export const subirComprobante = async (request: SubirComprobanteRequest): Promis
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || "Error al subir comprobante")
+    let errorMessage = "Error al subir comprobante"
+    try {
+      const errorData = await response.json()
+      if (errorData.errors && typeof errorData.errors === "object") {
+        const allErrors = Object.values(errorData.errors).flat() as string[]
+        errorMessage = allErrors.join("\n")
+      } else if (errorData.message) {
+        errorMessage = errorData.message
+      }
+    } catch {
+      errorMessage = `Error ${response.status}: ${response.statusText}`
+    }
+    throw new Error(errorMessage)
   }
 
   const data = await response.json()
@@ -176,8 +187,19 @@ export const subirComprobantePeriodo = async (
   })
 
   if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || "Error al subir comprobante")
+    let errorMessage = "Error al subir comprobante"
+    try {
+      const errorData = await response.json()
+      if (errorData.errors && typeof errorData.errors === "object") {
+        const allErrors = Object.values(errorData.errors).flat() as string[]
+        errorMessage = allErrors.join("\n")
+      } else if (errorData.message) {
+        errorMessage = errorData.message
+      }
+    } catch {
+      errorMessage = `Error ${response.status}: ${response.statusText}`
+    }
+    throw new Error(errorMessage)
   }
 
   const data = await response.json()

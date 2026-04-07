@@ -289,14 +289,14 @@ export default function SubirComprobanteForm({
                       <span>Seleccionar imagen</span>
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/jpg"
+                        accept="image/*"
                         onChange={handleFileChange}
                         className="sr-only"
                       />
                     </label>
                     <p className="pl-1">o arrastra y suelta</p>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">PNG, JPG hasta 5MB</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">PNG, JPG, WEBP, HEIC hasta 5MB</p>
                 </div>
               </div>
             ) : (
