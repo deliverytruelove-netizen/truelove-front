@@ -292,7 +292,7 @@ export const fetchPedidosActivos = async (): Promise<PedidoActivo[]> => {
   const socioId = getSocioId();
 
   const response = await fetch(
-    `${API_URL}/socio/pedidos/${socioId}?tipo=activos&fecha=todas`,
+    `${API_URL}/socio/pedidos/${socioId}?tipo=activos&fecha=hoy`,
     {
       method: "GET",
       headers: {
