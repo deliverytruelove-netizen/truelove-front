@@ -40,8 +40,7 @@ jobs:
             npm run build # <--- Primero el build
 
             echo "➡️ Reiniciando aplicación en PM2..."
-            # Usamos 'restart' o 'reload' para no borrarla. 
-            # Si no existe, la iniciamos.
-            pm2 start npm --name "true-love" -- start || pm2 restart true-love
+            pm2 delete true-love 2>/dev/null || true
+            pm2 start npm --name "true-love" -- start
 
             echo "⬅️ Deploy completado con éxito."
