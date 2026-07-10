@@ -33,6 +33,9 @@ jobs:
             echo "➡️ Instalando dependencias..."
             npm install
 
+            echo "➡️ Instalando sharp para linux-x64..."
+            npm install --os=linux --cpu=x64 sharp
+
             echo "➡️ Generando build..."
             npm run build # <--- Primero el build
 
