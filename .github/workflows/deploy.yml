@@ -27,6 +27,7 @@ jobs:
             cd /usr/share/nginx/html/truelove-front
 
             echo "➡️ Haciendo git pull..."
+            git checkout package-lock.json 2>/dev/null || true
             git pull
 
             echo "➡️ Instalando dependencias..."
