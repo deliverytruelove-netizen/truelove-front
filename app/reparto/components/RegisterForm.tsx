@@ -389,51 +389,36 @@ const validarFormulario = useCallback((formData: FormData) => {
 }, [isMobile, setValidationError])
 // Usar useCallback para handleSaveAndRedirect
 const handleSaveAndRedirect = useCallback(async (): Promise<void> => {
+  const datosBasicos = {
+    departamento: formData.departamento,
+    vehiculo: formData.vehiculo,
+    tipo_documento: formData.tipoDocumento,
+    nro_documento: formData.nroDocumento,
+    nombres: formData.nombres,
+    apellidos: formData.apellidos,
+    celular: formData.celular,
+    email: formData.email,
+    mayor_edad: formData.mayorEdad,
+    aceptaPolitica: formData.aceptaPolitica,
+    documentoImagenFrente: formData.documentoImagenFrente,
+    documentoImagenReverso: formData.documentoImagenReverso,
+    documentosAdicionales: formData.documentosAdicionales,
+  };
+
+  // Intentar guardar en IndexedDB — si falla (iOS Safari, cuota llena, etc.) igual continúa
   try {
-    // ✅ PREPARAR DATOS BÁSICOS
-    const datosBasicos = {
-      departamento: formData.departamento,
-      vehiculo: formData.vehiculo,
-      tipo_documento: formData.tipoDocumento,
-      nro_documento: formData.nroDocumento,
-      nombres: formData.nombres,
-      apellidos: formData.apellidos,
-      celular: formData.celular,
-      email: formData.email,
-      mayor_edad: formData.mayorEdad,
-      aceptaPolitica: formData.aceptaPolitica,
-      documentoImagenFrente: formData.documentoImagenFrente,
-      documentoImagenReverso: formData.documentoImagenReverso,
-      documentosAdicionales: formData.documentosAdicionales,
-    };
-
-    // ✅ GUARDAR CON INDEXEDDB (async)
     await FormDataServiceV2.guardarDatosBasicos(datosBasicos);
-    
-    console.log("✅ Datos guardados exitosamente en IndexedDB");
-
-    // Generar un ID temporal para identificar el registro
-    const registroId = "temp_" + Date.now().toString();
-    sessionStorage.setItem("repartoRegistroId", registroId);
-    sessionStorage.setItem("repartoCurrentStep", "/reparto/zonas");
-
-    // Redireccionar al siguiente paso
-    router.push("/reparto/zonas");
+    console.log("✅ Datos guardados en IndexedDB");
   } catch (error) {
-    console.error("Error al guardar y redireccionar:", error);
-    
-    let errorMessage = "Hubo un problema al procesar el formulario.";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    
-    toast({
-      title: "Error",
-      description: errorMessage,
-      variant: "destructive",
-    });
+    console.error("IndexedDB no disponible, continuando sin caché local:", error);
   }
-}, [formData, router, toast]);
+
+  // Siempre redirigir — el flujo no puede quedar bloqueado aquí
+  const registroId = "temp_" + Date.now().toString();
+  sessionStorage.setItem("repartoRegistroId", registroId);
+  sessionStorage.setItem("repartoCurrentStep", "/reparto/zonas");
+  router.push("/reparto/zonas");
+}, [formData, router]);
 
 const handleSubmit = useCallback(async (): Promise<void> => {
   setIsLoading(true)
@@ -675,8 +660,14 @@ const handleCaptchaVerify = useCallback(
   (success: boolean) => {
     if (success) {
       setShowCaptcha(false);
-      // Llamar directamente a la función de guardado
-      handleSaveAndRedirect();
+      handleSaveAndRedirect().catch((error) => {
+        console.error("Error inesperado al redirigir:", error);
+        toast({
+          title: "Error",
+          description: "Hubo un problema al continuar. Por favor, intenta de nuevo.",
+          variant: "destructive",
+        });
+      });
     } else {
       toast({
         title: "Error de verificación",
@@ -686,7 +677,7 @@ const handleCaptchaVerify = useCallback(
       setShowCaptcha(false);
     }
   },
-  [handleSaveAndRedirect, toast] // Solo incluir las dependencias necesarias
+  [handleSaveAndRedirect, toast]
 );
 
   const handleDocumentChange = async (value: string): Promise<void> => {
