@@ -164,6 +164,27 @@ useEffect(() => {
 }, [router]);
 
   const cargarDatosExistentes = async (id: string) => {
+    // Con el flujo offline-first el ID es temporal — solo cargar catálogos, no datos del servidor
+    if (id.startsWith("temp_")) {
+      try {
+        setIsLoading(true);
+        const datosBasicos = await FormDataServiceV2.obtenerDatosBasicos();
+        if (datosBasicos && datosBasicos.tipo_documento) {
+          setTipoDocumentoOriginal(datosBasicos.tipo_documento);
+        }
+        const [bancosResponse, tiposCuentaResponse] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_WEB}/bancos`),
+          fetch(`${process.env.NEXT_PUBLIC_API_WEB}/tipos-cuenta`),
+        ]);
+        if (bancosResponse.ok) setBancos(await bancosResponse.json());
+        if (tiposCuentaResponse.ok) setTiposCuenta(await tiposCuentaResponse.json());
+      } catch (e) {
+        console.error("Error al cargar catálogos:", e);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
     try {
       setIsLoading(true);
 

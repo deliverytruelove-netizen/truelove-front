@@ -87,6 +87,11 @@ const obtenerDepartamentosFunc = async () => {
 
   // Modificar la función cargarDatosExistentes para manejar correctamente la carga de ubicación
   const cargarDatosExistentesFunc = async (id: string) => {
+    // Con el flujo offline-first el ID es temporal hasta el envío final — no buscar en servidor
+    if (id.startsWith("temp_")) {
+      setCargandoDatos(false)
+      return
+    }
     try {
       setCargandoDatos(true)
       const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_WEB}/datos-personales/${id}`)

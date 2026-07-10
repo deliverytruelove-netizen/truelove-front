@@ -135,6 +135,11 @@ return imagenesRequeridas
 
   const cargarDatosExistentes = useCallback(
     async (id: string) => {
+      // Con el flujo offline-first el ID es temporal — no buscar en servidor
+      if (id.startsWith("temp_")) {
+        setIsLoading(false);
+        return;
+      }
       try {
         setIsLoading(true);
         const response = await fetch(
