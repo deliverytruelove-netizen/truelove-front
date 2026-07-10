@@ -24,8 +24,13 @@ export default function EntregaMaterial() {
         const id = sessionStorage.getItem("repartoRegistroId")
 
         if (id) {
+          // Si aún es un ID temporal, el registro no fue enviado — redirigir a finalizar
+          if (id.startsWith("temp_")) {
+            console.warn("ID temporal detectado, redirigiendo a registro-exitoso")
+            router.push("/reparto/registro-exitoso")
+            return
+          }
           console.log("ID de registro encontrado en sessionStorage:", id)
-          // Ya no necesitamos setRegistroId
           setIsLoading(false)
           return
         }
