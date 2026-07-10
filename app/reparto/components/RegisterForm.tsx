@@ -170,13 +170,13 @@ export default function RegisterForm() {
       return;
     }
 
-    // ✅ VALIDAR TAMAÑO MÁXIMO (10MB para PDFs con IndexedDB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Limit PDF to 1MB so base64 payload stays under Nginx's client_max_body_size
+    const maxSize = 1 * 1024 * 1024; // 1MB
     if (file.size > maxSize) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       toast({
         title: "Archivo muy pesado",
-        description: `El PDF pesa ${sizeMB}MB. El tamaño máximo es 10MB. Por favor, comprime el PDF o usa uno más liviano.`,
+        description: `El PDF pesa ${sizeMB}MB. El tamaño máximo es 1MB. Por favor, comprime el PDF antes de subirlo.`,
         variant: "destructive",
       });
       return;
@@ -491,13 +491,9 @@ const handleSubmit = useCallback(async (): Promise<void> => {
         return
       } catch (fetchError) {
         clearTimeout(timeoutId)
-        if (fetchError instanceof Error && fetchError.name === "AbortError") {
-          setValidationError(
-            "La validación está tomando demasiado tiempo. Por favor, verifica tu conexión e intenta nuevamente.",
-          )
-        } else {
-          setValidationError("Error de conexión. Por favor, verifica tu internet e intenta nuevamente.")
-        }
+        // On network error, proceed anyway — the backend will catch duplicates on final submit
+        console.warn("validate-document-email falló, continuando sin validación previa:", fetchError)
+        setShowCaptcha(true)
         setIsLoading(false)
         return
       }
