@@ -162,10 +162,32 @@ class IndexedDBService {
 
   // ✅ GUARDAR IMAGEN DESDE BASE64
   async guardarImagenDesdeBase64(id: string, base64: string, nombre: string): Promise<void> {
-    // Convertir base64 a Blob
-    const response = await fetch(base64);
-    const blob = await response.blob();
+    // Convertir base64 a Blob usando método compatible con Safari iOS
+    let blob: Blob;
+    try {
+      // Método 1: usando fetch (puede fallar en Safari iOS con data URIs grandes)
+      const response = await fetch(base64);
+      blob = await response.blob();
+    } catch {
+      // Método 2: conversión manual (fallback para Safari iOS)
+      console.warn('fetch(base64) falló, usando conversión manual');
+      blob = this.base64ToBlob(base64);
+    }
     return this.guardarArchivo(id, blob, nombre);
+  }
+
+  // Conversión manual de base64 a Blob (compatible con todos los navegadores)
+  private base64ToBlob(base64: string): Blob {
+    // Separar el header del data URI del contenido
+    const parts = base64.split(',');
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const binaryString = atob(parts[1]);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mime });
   }
 
   // ✅ GUARDAR IMAGEN DESDE FILE

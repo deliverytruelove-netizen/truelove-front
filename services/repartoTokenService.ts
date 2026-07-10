@@ -9,9 +9,12 @@ interface DecodedToken {
 }
 
 const getSecretKey = () => {
-  const secret = process.env.JWT_SECRET
+  const secret = process.env.JWT_SECRET || process.env.NEXT_PUBLIC_JWT_SECRET
   if (!secret || secret.length === 0) {
-    throw new Error("JWT_SECRET no está configurado en las variables de entorno")
+    // En producción, si no hay JWT_SECRET disponible en el cliente, usar un fallback
+    // Esto permite que el flujo offline-first continúe sin tokens JWT
+    console.warn("JWT_SECRET no está disponible en el cliente - tokens deshabilitados")
+    return null
   }
   return new TextEncoder().encode(secret)
 }
@@ -78,7 +81,9 @@ export const isRepartoTokenValid = async (): Promise<boolean> => {
   if (!token) return false
 
   try {
-    await jwtVerify(token, getSecretKey())
+    const secretKey = getSecretKey()
+    if (!secretKey) return false
+    await jwtVerify(token, secretKey)
     return true
   } catch (error) {
     console.error("Error al verificar el token:", error)
@@ -92,7 +97,9 @@ export const getRepartoData = async (): Promise<DecodedToken | null> => {
   if (!token) return null
 
   try {
-    const { payload } = await jwtVerify(token, getSecretKey())
+    const secretKey = getSecretKey()
+    if (!secretKey) return null
+    const { payload } = await jwtVerify(token, secretKey)
 
     if (
       typeof payload.exp === "number" &&
@@ -118,13 +125,22 @@ export const createRepartoToken = async (registration_id: string, current_step: 
   try {
     console.log("Creando token para:", { registration_id, current_step })
 
+    const secretKey = getSecretKey()
+    if (!secretKey) {
+      // Si no hay JWT_SECRET, guardar solo en sessionStorage (flujo offline-first)
+      console.warn("JWT_SECRET no disponible, guardando solo en sessionStorage")
+      sessionStorage.setItem("repartoRegistroId", registration_id)
+      sessionStorage.setItem("repartoCurrentStep", current_step)
+      return ""
+    }
+
     const token = await new SignJWT({
       registration_id,
       current_step,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("1h")
-      .sign(getSecretKey())
+      .sign(secretKey)
 
     // Guardar el token en todas las ubicaciones
     localStorage.setItem("repartoToken", token)
@@ -138,6 +154,13 @@ export const createRepartoToken = async (registration_id: string, current_step: 
     return token
   } catch (error) {
     console.error("Error al crear el token de registro:", error)
+    // Fallback: guardar en sessionStorage incluso si el token falla
+    try {
+      sessionStorage.setItem("repartoRegistroId", registration_id)
+      sessionStorage.setItem("repartoCurrentStep", current_step)
+    } catch (e) {
+      console.error("Error al guardar en sessionStorage:", e)
+    }
     throw error
   }
 }

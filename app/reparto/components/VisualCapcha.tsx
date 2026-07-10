@@ -363,7 +363,7 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setRotation((prev) => (prev - 90) % 360)}
+                      onClick={() => setRotation((prev) => ((prev - 90) % 360 + 360) % 360)}
                       className="rounded-full h-8 w-8"
                     >
                       <RotateCcw className="h-4 w-4" />
@@ -371,7 +371,7 @@ export function VisualCaptcha({ isOpen, onVerify, onClose }: VisualCaptchaProps)
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                      onClick={() => setRotation((prev) => ((prev + 90) % 360 + 360) % 360)}
                       className="rounded-full h-8 w-8"
                     >
                       <RotateCw className="h-4 w-4" />

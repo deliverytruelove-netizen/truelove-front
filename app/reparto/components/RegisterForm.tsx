@@ -414,9 +414,13 @@ const handleSaveAndRedirect = useCallback(async (): Promise<void> => {
   }
 
   // Siempre redirigir — el flujo no puede quedar bloqueado aquí
-  const registroId = "temp_" + Date.now().toString();
-  sessionStorage.setItem("repartoRegistroId", registroId);
-  sessionStorage.setItem("repartoCurrentStep", "/reparto/zonas");
+  try {
+    const registroId = "temp_" + Date.now().toString();
+    sessionStorage.setItem("repartoRegistroId", registroId);
+    sessionStorage.setItem("repartoCurrentStep", "/reparto/zonas");
+  } catch (storageError) {
+    console.error("Error al guardar en sessionStorage:", storageError);
+  }
   router.push("/reparto/zonas");
 }, [formData, router]);
 
