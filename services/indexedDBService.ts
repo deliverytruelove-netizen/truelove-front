@@ -5,12 +5,20 @@
  */
 
 const DB_NAME = 'TrueLoveRepartoDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'archivos';
 
 interface ArchivoGuardado {
   id: string;
   blob: Blob;
+  nombre: string;
+  tipo: string;
+  timestamp: number;
+}
+
+interface ArchivoGuardadoRaw {
+  id: string;
+  data: ArrayBuffer;
   nombre: string;
   tipo: string;
   timestamp: number;
@@ -41,17 +49,19 @@ class IndexedDBService {
     });
   }
 
-  // ✅ GUARDAR ARCHIVO (BLOB)
+  // ✅ GUARDAR ARCHIVO (BLOB → ArrayBuffer para compatibilidad con Safari iOS)
   async guardarArchivo(id: string, blob: Blob, nombre: string): Promise<void> {
     if (!this.db) await this.init();
+
+    const buffer = await blob.arrayBuffer();
 
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
 
-      const archivo: ArchivoGuardado = {
+      const archivo: ArchivoGuardadoRaw = {
         id,
-        blob,
+        data: buffer,
         nombre,
         tipo: blob.type,
         timestamp: Date.now(),
@@ -77,7 +87,14 @@ class IndexedDBService {
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(id);
 
-      request.onsuccess = () => resolve(request.result || null);
+      request.onsuccess = () => {
+        const raw = request.result as ArchivoGuardadoRaw | null;
+        if (!raw) { resolve(null); return; }
+        const blob = raw.data instanceof ArrayBuffer
+          ? new Blob([raw.data], { type: raw.tipo })
+          : (raw as unknown as ArchivoGuardado).blob;
+        resolve({ id: raw.id, blob, nombre: raw.nombre, tipo: raw.tipo, timestamp: raw.timestamp });
+      };
       request.onerror = () => reject(request.error);
     });
   }

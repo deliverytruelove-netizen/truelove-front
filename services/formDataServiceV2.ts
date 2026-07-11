@@ -128,24 +128,23 @@ export const FormDataServiceV2 = {
 
   // ✅ GUARDAR DATOS PERSONALES (con selfie)
   async guardarDatosPersonales(datos: Record<string, unknown>) {
-    try {
-      const { selfie, ...datosTexto } = datos;
+    const { selfie, ...datosTexto } = datos;
 
-      sessionStorage.setItem(this.KEYS.DATOS_PERSONALES, JSON.stringify(datosTexto));
+    sessionStorage.setItem(this.KEYS.DATOS_PERSONALES, JSON.stringify(datosTexto));
 
-      if (selfie && typeof selfie === 'string') {
+    if (selfie && typeof selfie === 'string') {
+      try {
         await indexedDBService.guardarImagenDesdeBase64(
           this.FILE_IDS.SELFIE,
           selfie,
           'selfie.jpg'
         );
+      } catch (imgError) {
+        console.warn('⚠️ No se pudo guardar selfie en IndexedDB, continuando:', imgError);
       }
-
-      console.log('✅ Datos personales guardados');
-    } catch (error) {
-      console.error('❌ Error al guardar datos personales:', error);
-      throw error;
     }
+
+    console.log('✅ Datos personales guardados');
   },
 
   // ✅ OBTENER DATOS PERSONALES
