@@ -42,7 +42,7 @@ const DialogContent = React.forwardRef<
         "border bg-background shadow-lg duration-200",
         // ✅ RESPONSIVO: Altura máxima y scroll
         "max-h-[95vh] md:max-h-[90vh]",
-        "flex flex-col",
+        "flex flex-col gap-4 p-6",
         // Animaciones
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
