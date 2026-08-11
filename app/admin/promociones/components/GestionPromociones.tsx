@@ -25,14 +25,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import {
   Promocion,
+  TipoDestinoPromocion,
   getPromociones,
   createPromocion,
   updatePromocion,
   deletePromocion,
 } from "../services/promosiones.service";
+import { fetchTiposNegocio } from "../../tiposNegocio/services/TiposNegocio.service";
+import { TipoNegocio } from "../../tiposNegocio/types/TiposNegocio.types";
+import { fetchLocales, Local } from "../../local-rating/services/rating.service";
+
+const PANTALLAS_FIJAS = [
+  { value: "cupones", label: "Cupones" },
+  { value: "perfil", label: "Perfil" },
+  { value: "home", label: "Inicio" },
+];
 
 export default function GestionPromociones() {
   const { toast } = useToast();
@@ -43,11 +60,18 @@ export default function GestionPromociones() {
     titulo: "",
     subtitulo: "",
     estado: true,
+    tipo_destino: "",
   });
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [tiposNegocio, setTiposNegocio] = useState<TipoNegocio[]>([]);
+  const [locales, setLocales] = useState<Local[]>([]);
 
+  useEffect(() => {
+    fetchTiposNegocio().then(setTiposNegocio).catch(() => setTiposNegocio([]));
+    fetchLocales().then(setLocales).catch(() => setLocales([]));
+  }, []);
 
   const loadPromociones = useCallback (async () => {
     try {
@@ -72,11 +96,11 @@ export default function GestionPromociones() {
 
   const handleOpenDialog = (promocion?: Promocion) => {
     if (promocion) {
-      setCurrentPromocion(promocion);
+      setCurrentPromocion({ ...promocion, tipo_destino: promocion.tipo_destino || "" });
       setIsEditing(true);
       setImagePreview((promocion.imagen as string) || null);
     } else {
-      setCurrentPromocion({ titulo: "", subtitulo: "", estado: true });
+      setCurrentPromocion({ titulo: "", subtitulo: "", estado: true, tipo_destino: "" });
       setIsEditing(false);
       setImagePreview(null);
     }
@@ -85,7 +109,7 @@ export default function GestionPromociones() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setCurrentPromocion({ titulo: "", subtitulo: "", estado: true });
+    setCurrentPromocion({ titulo: "", subtitulo: "", estado: true, tipo_destino: "" });
     setImagePreview(null);
   };
 
@@ -125,6 +149,14 @@ export default function GestionPromociones() {
 
       if (currentPromocion.imagen instanceof File) {
         formData.append("imagen", currentPromocion.imagen);
+      }
+
+      // Siempre se envía (incluso vacío) para poder limpiar un destino ya asignado al editar.
+      formData.append("tipo_destino", currentPromocion.tipo_destino || "");
+      if (currentPromocion.tipo_destino === "pantalla") {
+        formData.append("pantalla", currentPromocion.pantalla || "");
+      } else if (currentPromocion.tipo_destino === "restaurante" || currentPromocion.tipo_destino === "categoria") {
+        formData.append("destino_id", String(currentPromocion.destino_id ?? ""));
       }
 
       if (isEditing && currentPromocion.id) {
@@ -376,6 +408,107 @@ export default function GestionPromociones() {
                   </Label>
                 </div>
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="tipo_destino" className="text-right">
+                  Al presionar
+                </Label>
+                <Select
+                  value={currentPromocion.tipo_destino || "ninguno"}
+                  onValueChange={(value: string) =>
+                    setCurrentPromocion({
+                      ...currentPromocion,
+                      tipo_destino: (value === "ninguno" ? "" : value) as TipoDestinoPromocion,
+                      pantalla: null,
+                      destino_id: null,
+                    })
+                  }
+                >
+                  <SelectTrigger id="tipo_destino" className="col-span-3">
+                    <SelectValue placeholder="Selecciona un destino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ninguno">Sin acción</SelectItem>
+                    <SelectItem value="pantalla">Pantalla del app</SelectItem>
+                    <SelectItem value="restaurante">Un restaurante específico</SelectItem>
+                    <SelectItem value="categoria">Una categoría específica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {currentPromocion.tipo_destino === "pantalla" && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="pantalla" className="text-right">
+                    Pantalla
+                  </Label>
+                  <Select
+                    value={currentPromocion.pantalla || ""}
+                    onValueChange={(value: string) =>
+                      setCurrentPromocion({ ...currentPromocion, pantalla: value })
+                    }
+                  >
+                    <SelectTrigger id="pantalla" className="col-span-3">
+                      <SelectValue placeholder="Selecciona una pantalla" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PANTALLAS_FIJAS.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {currentPromocion.tipo_destino === "restaurante" && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="destino_id" className="text-right">
+                    Restaurante
+                  </Label>
+                  <Select
+                    value={currentPromocion.destino_id ? String(currentPromocion.destino_id) : ""}
+                    onValueChange={(value: string) =>
+                      setCurrentPromocion({ ...currentPromocion, destino_id: Number(value) })
+                    }
+                  >
+                    <SelectTrigger id="destino_id" className="col-span-3">
+                      <SelectValue placeholder="Selecciona un restaurante" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locales.map((local) => (
+                        <SelectItem key={local.business_id} value={String(local.business_id)}>
+                          {local.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {currentPromocion.tipo_destino === "categoria" && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="destino_id" className="text-right">
+                    Categoría
+                  </Label>
+                  <Select
+                    value={currentPromocion.destino_id ? String(currentPromocion.destino_id) : ""}
+                    onValueChange={(value: string) =>
+                      setCurrentPromocion({ ...currentPromocion, destino_id: Number(value) })
+                    }
+                  >
+                    <SelectTrigger id="destino_id" className="col-span-3">
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tiposNegocio.map((tipo) => (
+                        <SelectItem key={tipo.id} value={String(tipo.id)}>
+                          {tipo.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button

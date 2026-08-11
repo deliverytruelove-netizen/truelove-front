@@ -5,6 +5,9 @@ import axios from "axios"
 // URL base de la API desde variables de entorno
 const API_URL = process.env.NEXT_PUBLIC_API_WEB
 
+// Tipo de destino al presionar la promoción en el app
+export type TipoDestinoPromocion = "pantalla" | "restaurante" | "categoria" | ""
+
 // Interfaz para la promoción
 export interface Promocion {
   id?: number
@@ -12,6 +15,9 @@ export interface Promocion {
   subtitulo: string
   imagen?: string | File
   estado: boolean
+  tipo_destino?: TipoDestinoPromocion
+  pantalla?: string | null
+  destino_id?: number | null
 }
 
 // Obtener promociones con soporte para paginación y búsqueda
