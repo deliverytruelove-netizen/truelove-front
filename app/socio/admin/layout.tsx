@@ -22,6 +22,7 @@ import {
   History,
   Coins,
   LogOut,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AvatarSettings from "./components/AvatarSettings";
@@ -69,6 +70,7 @@ const menuItems = [
   { name: "Menú", href: "/socio/admin/menu", icon: Utensils },
   { name: "Pedidos Activos", href: "/socio/admin/pedidos-activos", icon: Bell },
   { name: "Historial", href: "/socio/admin/pedidos", icon: History },
+  { name: "Promociones", href: "/socio/admin/promociones", icon: Megaphone },
   {
     name: "Acerca negocio",
     icon: ShoppingBag,
