@@ -62,41 +62,36 @@ const SocioList: React.FC = () => {
     queryKey: ["socios-lista"],
     queryFn: async () => {
       const socios = await fetchSocios()
-      console.log("Socios obtenidos:", socios)
 
-      // Mapear socios básicos con información de cuota (sin fetchSocioDetails)
-      const sociosConCuotas = await Promise.all(
-        socios.map(async (socio) => {
-          // Crear objeto base con los datos del socio en la estructura que espera la tabla
-          const socioBase: DetallesSocioConCuota = {
-            ...socio,
-            personal: {
-              name: socio.name,
-              lastName: socio.lastName,
-              businessType: socio.businessType,
-              phone: socio.phone,
-              email: socio.email,
-              cuota_socio_id: socio.cuota_socio_id || null,
-              created_at: socio.created_at,
-            },
-          } as unknown as DetallesSocioConCuota
+      // Pedir cada cuota una sola vez (varios socios pueden compartir el mismo cuota_socio_id)
+      const idsUnicos = Array.from(
+        new Set(socios.map((socio) => socio.cuota_socio_id).filter((id): id is number => !!id))
+      )
 
-          // Si tiene cuota asignada, obtener solo los detalles de la cuota
-          if (socio.cuota_socio_id) {
-            try {
-              const cuotaDetalle = await obtenerDetalleCuota(socio.cuota_socio_id)
-              socioBase.cuotaDetalle = cuotaDetalle
-            } catch (error) {
-              console.error(`Error al obtener cuota ${socio.cuota_socio_id}:`, error)
-            }
+      const cuotasPorId = new Map<number, CuotaSocio>()
+      await Promise.all(
+        idsUnicos.map(async (id) => {
+          try {
+            cuotasPorId.set(id, await obtenerDetalleCuota(id))
+          } catch (error) {
+            console.error(`Error al obtener cuota ${id}:`, error)
           }
-
-          return socioBase
         })
       )
 
-      console.log("Socios con cuotas mapeados:", sociosConCuotas)
-      return sociosConCuotas
+      return socios.map((socio) => ({
+        ...socio,
+        personal: {
+          name: socio.name,
+          lastName: socio.lastName,
+          businessType: socio.businessType,
+          phone: socio.phone,
+          email: socio.email,
+          cuota_socio_id: socio.cuota_socio_id || null,
+          created_at: socio.created_at,
+        },
+        cuotaDetalle: socio.cuota_socio_id ? cuotasPorId.get(socio.cuota_socio_id) : undefined,
+      })) as unknown as DetallesSocioConCuota[]
     },
   })
 
@@ -106,8 +101,8 @@ const SocioList: React.FC = () => {
       if (!selectedSocioId) return null
       const detalle = await fetchSocioDetails(selectedSocioId)
 
-      // Buscar el socio original para obtener el estado de aprobación
-      const socios = await fetchSocios()
+      // Buscar el socio original (ya cargado en "socios-lista") para obtener el estado de aprobación
+      const socios = queryClient.getQueryData<DetallesSocioConCuota[]>(["socios-lista"]) ?? []
       const socioOriginal = socios.find((s) => s.id === selectedSocioId)
 
       if (socioOriginal && detalle) {
