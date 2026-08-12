@@ -94,6 +94,10 @@ const nextConfig = {
         destination: `${apiBaseUrl}/logos-negocio/:path*`,
       },
       {
+        source: '/banners-negocio/:path*',
+        destination: `${apiBaseUrl}/banners-negocio/:path*`,
+      },
+      {
         source: '/fotos-perfil/:path*',
         destination: `${apiBaseUrl}/fotos-perfil/:path*`,
       },
