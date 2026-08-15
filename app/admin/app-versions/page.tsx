@@ -15,7 +15,7 @@ const APP_NAME_LABELS: Record<string, string> = {
   motorizado: 'App Motorizado',
 };
 
-const AppVersionsPage: React.FC = () => {
+const AppVersionsContent: React.FC = () => {
   const [seleccionada, setSeleccionada] = useState<AppVersion | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
 
@@ -35,7 +35,6 @@ const AppVersionsPage: React.FC = () => {
   };
 
   return (
-    <MainLayout>
     <div className="space-y-4 pt-4 pb-20">
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-4 sm:px-5 py-3 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center gap-2">
@@ -149,9 +148,14 @@ const AppVersionsPage: React.FC = () => {
         onClose={handleCerrarModal}
       />
     </div>
-    </MainLayout>
   );
 };
+
+const AppVersionsPage: React.FC = () => (
+  <MainLayout>
+    <AppVersionsContent />
+  </MainLayout>
+);
 
 const PlataformaInfo: React.FC<{ min: string; latest: string; forzada: boolean }> = ({ min, latest, forzada }) => (
   <span className="inline-flex items-center gap-1.5">
