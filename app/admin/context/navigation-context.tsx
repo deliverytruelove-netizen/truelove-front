@@ -13,6 +13,7 @@ import {
   RiUser2Line,
   RiNotification3Line,
   RiImageLine,
+  RiSmartphoneLine,
 } from "react-icons/ri";
 
 export interface NavItem {
@@ -124,6 +125,11 @@ export const navigationItems: NavItem[] = [
     title: "Pruebas Notificaciones",
     path: "/admin/test-notificaciones",
     icon: RiNotification3Line,
+  },
+  {
+    title: "Versiones de Apps",
+    path: "/admin/app-versions",
+    icon: RiSmartphoneLine,
   },
 ];
 

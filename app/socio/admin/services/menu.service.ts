@@ -113,8 +113,7 @@ export const menuService = {
       return user.businessRegistration.id.toString()
     } catch (error) {
       console.error("Error al obtener ID de empresa:", error)
-      // No usar un valor por defecto
-      return ""
+      throw new Error("No se pudo obtener el ID de la empresa")
     }
   },
 
