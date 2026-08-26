@@ -14,6 +14,7 @@ import {
   RiNotification3Line,
   RiImageLine,
   RiSmartphoneLine,
+  RiFileList3Line,
 } from "react-icons/ri";
 
 export interface NavItem {
@@ -54,6 +55,11 @@ export const navigationItems: NavItem[] = [
     title: "Mis Clientes",
     path: "/admin/clientes",
     icon: RiUser2Line,
+  },
+  {
+    title: "Pedidos",
+    path: "/admin/pedidos",
+    icon: RiFileList3Line,
   },
   {
     title: "Prioridad Locales",

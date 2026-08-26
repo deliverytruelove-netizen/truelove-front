@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   actualizarEstadoPedidoActivo,
+  solicitarCancelacionPedido,
   verificarConfirmacionPago,
   getEstadoActivoLabel,
   getEstadoNumerico,
@@ -11,6 +12,7 @@ import {
   type PedidoActivo,
   type PedidoDetalle,
 } from "../../services/pedido.service";
+import Swal from "sweetalert2";
 import {
   Dialog,
   DialogContent,
@@ -330,6 +332,21 @@ function PedidoDetalleContent({
     },
   });
 
+  const solicitarCancelacionMutation = useMutation({
+    mutationFn: (motivo: string) => solicitarCancelacionPedido(pedido.id, motivo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] });
+      showCustomAlert(
+        "Solicitud enviada",
+        "Un administrador debe aprobarla para que el pedido se cancele.",
+        "info"
+      );
+    },
+    onError: (error: Error) => {
+      showCustomAlert("Error", error.message || "No se pudo enviar la solicitud de cancelación.", "error");
+    },
+  });
+
   const handleAceptar = () => {
     if (estadoNum === 1) {
       setShowTiempoInput(true);
@@ -363,7 +380,32 @@ function PedidoDetalleContent({
     });
   };
 
-  const handleCancelar = () => {
+  const handleCancelar = async () => {
+    if ([5, 6, 7].includes(estadoNum)) {
+      const { value: motivo } = await Swal.fire({
+        title: "Solicitar cancelación",
+        html:
+          "Este pedido ya fue recogido por el motorizado. Indica el motivo; " +
+          "un administrador debe aprobar la solicitud para que se cancele.",
+        input: "textarea",
+        inputPlaceholder: "Ej: el cliente ya no se encuentra en la dirección",
+        showCancelButton: true,
+        confirmButtonText: "Enviar solicitud",
+        cancelButtonText: "Volver",
+        confirmButtonColor: "#e74c3c",
+        inputValidator: (value) => {
+          if (!value || value.trim().length < 5) {
+            return "Escribe al menos 5 caracteres.";
+          }
+          return undefined;
+        },
+      });
+      if (motivo) {
+        solicitarCancelacionMutation.mutate(motivo.trim());
+      }
+      return;
+    }
+
     setConfirmModal({
       isOpen: true,
       title: "¿Cancelar pedido?",
@@ -902,12 +944,20 @@ function PedidoDetalleContent({
               </div>
               <Button
                 onClick={handleCancelar}
-                disabled={mutation.isPending}
+                disabled={
+                  mutation.isPending ||
+                  solicitarCancelacionMutation.isPending ||
+                  pedido.cancelacion_solicitud_pendiente
+                }
                 variant="destructive"
                 className="shrink-0 h-11 text-sm"
               >
                 <X className="h-4 w-4 mr-2" />
-                Cancelar
+                {pedido.cancelacion_solicitud_pendiente
+                  ? "Solicitud pendiente"
+                  : estadoNum >= 5
+                    ? "Solicitar cancelación"
+                    : "Cancelar"}
               </Button>
             </>
           )}
@@ -1060,6 +1110,21 @@ function PedidoDetalleDesktop({
     },
   });
 
+  const solicitarCancelacionMutation = useMutation({
+    mutationFn: (motivo: string) => solicitarCancelacionPedido(pedido.id, motivo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] });
+      showCustomAlert(
+        "Solicitud enviada",
+        "Un administrador debe aprobarla para que el pedido se cancele.",
+        "info"
+      );
+    },
+    onError: (error: Error) => {
+      showCustomAlert("Error", error.message || "No se pudo enviar la solicitud de cancelación.", "error");
+    },
+  });
+
   const handleAceptar = () => {
     if (estadoNum === 1) {
       setShowTiempoInput(true);
@@ -1117,7 +1182,32 @@ function PedidoDetalleDesktop({
     });
   };
 
-  const handleCancelar = () => {
+  const handleCancelar = async () => {
+    if ([5, 6, 7].includes(estadoNum)) {
+      const { value: motivo } = await Swal.fire({
+        title: "Solicitar cancelación",
+        html:
+          "Este pedido ya fue recogido por el motorizado. Indica el motivo; " +
+          "un administrador debe aprobar la solicitud para que se cancele.",
+        input: "textarea",
+        inputPlaceholder: "Ej: el cliente ya no se encuentra en la dirección",
+        showCancelButton: true,
+        confirmButtonText: "Enviar solicitud",
+        cancelButtonText: "Volver",
+        confirmButtonColor: "#e74c3c",
+        inputValidator: (value) => {
+          if (!value || value.trim().length < 5) {
+            return "Escribe al menos 5 caracteres.";
+          }
+          return undefined;
+        },
+      });
+      if (motivo) {
+        solicitarCancelacionMutation.mutate(motivo.trim());
+      }
+      return;
+    }
+
     setConfirmModal({
       isOpen: true,
       title: "¿Cancelar pedido?",
@@ -1421,8 +1511,21 @@ function PedidoDetalleDesktop({
                   {estadoNum === 7 && "Motorizado llegó al destino..."}
                 </p>
               </div>
-              <Button onClick={handleCancelar} disabled={mutation.isPending} variant="destructive">
-                <X className="h-4 w-4 mr-2" /> Cancelar
+              <Button
+                onClick={handleCancelar}
+                disabled={
+                  mutation.isPending ||
+                  solicitarCancelacionMutation.isPending ||
+                  pedido.cancelacion_solicitud_pendiente
+                }
+                variant="destructive"
+              >
+                <X className="h-4 w-4 mr-2" />
+                {pedido.cancelacion_solicitud_pendiente
+                  ? "Solicitud pendiente"
+                  : estadoNum >= 5
+                    ? "Solicitar cancelación"
+                    : "Cancelar"}
               </Button>
             </>
           )}

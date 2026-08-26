@@ -53,6 +53,7 @@ export interface Pedido {
   descuento?: string;
   tipo_comprobante?: string;
   documento?: string;
+  cancelacion_solicitud_pendiente?: boolean;
 }
 
 export const fetchPedidos = async (
@@ -345,7 +346,7 @@ export const actualizarEstadoPedidoActivo = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Error al actualizar el estado");
+      throw new Error(errorData.message || errorData.error || "Error al actualizar el estado");
     }
   } catch (error: unknown) {
     clearTimeout(timeoutId);
@@ -359,6 +360,30 @@ export const actualizarEstadoPedidoActivo = async (
 
 export const getEstadoNumerico = (estado: string | number): number => {
   return typeof estado === "string" ? parseInt(estado, 10) : estado;
+};
+
+export const solicitarCancelacionPedido = async (
+  pedidoId: number,
+  motivo: string,
+): Promise<void> => {
+  const token = getAuthToken();
+
+  const response = await fetch(
+    `${API_URL}/socio/pedidos/${pedidoId}/solicitar-cancelacion`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ motivo }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Error al solicitar la cancelación");
+  }
 };
 
 export const guardarTokenFcmWeb = async (tokenFcm: string): Promise<void> => {

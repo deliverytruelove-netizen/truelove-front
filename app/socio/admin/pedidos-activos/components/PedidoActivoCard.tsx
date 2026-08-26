@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   actualizarEstadoPedidoActivo,
+  solicitarCancelacionPedido,
   verificarConfirmacionPago,
   getEstadoActivoLabel,
   getEstadoNumerico,
@@ -11,6 +12,7 @@ import {
   type PedidoActivo,
   type PedidoDetalle,
 } from "../../services/pedido.service";
+import Swal from "sweetalert2";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +79,25 @@ export default function PedidoActivoCard({ pedido }: Props) {
     },
   });
 
+  const solicitarCancelacionMutation = useMutation({
+    mutationFn: (motivo: string) => solicitarCancelacionPedido(pedido.id, motivo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pedidos-activos"] });
+      showAlert({
+        title: "Solicitud enviada",
+        text: "Un administrador debe aprobarla para que el pedido se cancele.",
+        icon: "info",
+      });
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "No se pudo enviar la solicitud de cancelación.",
+        icon: "error",
+      });
+    },
+  });
+
   const verificarPagoMutation = useMutation({
     mutationFn: () => verificarConfirmacionPago(pedido.id),
     onSuccess: () => {
@@ -118,6 +139,31 @@ export default function PedidoActivoCard({ pedido }: Props) {
   };
 
   const handleCancelar = async () => {
+    if ([5, 6, 7].includes(estadoNum)) {
+      const { value: motivo } = await Swal.fire({
+        title: "Solicitar cancelación",
+        html:
+          "Este pedido ya fue recogido por el motorizado. Indica el motivo; " +
+          "un administrador debe aprobar la solicitud para que se cancele.",
+        input: "textarea",
+        inputPlaceholder: "Ej: el cliente ya no se encuentra en la dirección",
+        showCancelButton: true,
+        confirmButtonText: "Enviar solicitud",
+        cancelButtonText: "Volver",
+        confirmButtonColor: "#e74c3c",
+        inputValidator: (value) => {
+          if (!value || value.trim().length < 5) {
+            return "Escribe al menos 5 caracteres.";
+          }
+          return undefined;
+        },
+      });
+      if (motivo) {
+        solicitarCancelacionMutation.mutate(motivo.trim());
+      }
+      return;
+    }
+
     const result = await confirmAlert({
       title: "¿Cancelar pedido?",
       text: `¿Estás seguro de cancelar el pedido #${pedido.id}? Esta acción no se puede deshacer.`,
@@ -614,13 +660,21 @@ export default function PedidoActivoCard({ pedido }: Props) {
                       )}
                       <Button
                         onClick={handleCancelar}
-                        disabled={mutation.isPending}
+                        disabled={
+                          mutation.isPending ||
+                          solicitarCancelacionMutation.isPending ||
+                          pedido.cancelacion_solicitud_pendiente
+                        }
                         variant="destructive"
                         size="sm"
                         className="flex-1 h-10"
                       >
                         <X className="h-4 w-4 mr-1" />
-                        Cancelar
+                        {pedido.cancelacion_solicitud_pendiente
+                          ? "Solicitud pendiente"
+                          : [5, 6, 7].includes(estadoNum)
+                            ? "Solicitar cancelación"
+                            : "Cancelar"}
                       </Button>
                     </div>
                   </div>
