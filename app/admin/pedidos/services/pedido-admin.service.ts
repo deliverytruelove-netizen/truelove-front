@@ -18,12 +18,18 @@ const getAuthHeaders = () => {
 };
 
 export const fetchPedidos = async (params?: {
-  fecha?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  local?: string;
   estado?: string;
+  page?: number;
 }): Promise<PaginatedResponse<PedidoAdmin>> => {
   const query = new URLSearchParams();
-  if (params?.fecha) query.set("fecha", params.fecha);
+  if (params?.fechaDesde) query.set("fecha_desde", params.fechaDesde);
+  if (params?.fechaHasta) query.set("fecha_hasta", params.fechaHasta);
+  if (params?.local) query.set("local", params.local);
   if (params?.estado) query.set("estado", params.estado);
+  if (params?.page) query.set("page", String(params.page));
 
   const response = await fetch(`${API_URL}/admin/pedidos?${query.toString()}`, {
     headers: getAuthHeaders(),

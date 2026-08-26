@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, AlertCircle, AlertTriangle, Pencil } from "lucide-react";
+import { Loader2, AlertCircle, AlertTriangle, Pencil, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Swal from "sweetalert2";
 import {
   fetchPedidos,
@@ -21,12 +21,44 @@ const toDatetimeLocalValue = (dateString: string) => {
 
 export default function PedidosTable() {
   const queryClient = useQueryClient();
-  const [fecha, setFecha] = useState("hoy");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("");
+  const [localInput, setLocalInput] = useState("");
+  const [localFiltro, setLocalFiltro] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Debounce del buscador de locales para no disparar una request por tecla.
+  useEffect(() => {
+    const timeout = setTimeout(() => setLocalFiltro(localInput.trim()), 400);
+    return () => clearTimeout(timeout);
+  }, [localInput]);
+
+  // Cualquier cambio de filtro vuelve a la página 1.
+  useEffect(() => {
+    setPage(1);
+  }, [fechaDesde, fechaHasta, estadoFiltro, localFiltro]);
+
+  const hayFiltros = !!(fechaDesde || fechaHasta || estadoFiltro || localFiltro);
+
+  const limpiarFiltros = () => {
+    setFechaDesde("");
+    setFechaHasta("");
+    setEstadoFiltro("");
+    setLocalInput("");
+    setLocalFiltro("");
+  };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["pedidos-admin", fecha, estadoFiltro],
-    queryFn: () => fetchPedidos({ fecha, estado: estadoFiltro || undefined }),
+    queryKey: ["pedidos-admin", fechaDesde, fechaHasta, estadoFiltro, localFiltro, page],
+    queryFn: () =>
+      fetchPedidos({
+        fechaDesde: fechaDesde || undefined,
+        fechaHasta: fechaHasta || undefined,
+        estado: estadoFiltro || undefined,
+        local: localFiltro || undefined,
+        page,
+      }),
     refetchInterval: 15000,
   });
 
@@ -136,17 +168,33 @@ export default function PedidosTable() {
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center gap-4 justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Pedidos</h2>
-        <div className="flex gap-3">
-          <select
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
+      <div className="px-6 py-4 border-b border-gray-200 flex flex-wrap items-end gap-3">
+        <h2 className="text-xl font-bold text-gray-900 mr-2">Pedidos</h2>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-500">Desde</label>
+          <input
+            type="date"
+            value={fechaDesde}
+            onChange={(e) => setFechaDesde(e.target.value)}
+            max={fechaHasta || undefined}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="hoy">Hoy</option>
-            <option value="todas">Todas las fechas</option>
-          </select>
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-500">Hasta</label>
+          <input
+            type="date"
+            value={fechaHasta}
+            onChange={(e) => setFechaHasta(e.target.value)}
+            min={fechaDesde || undefined}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-500">Estado</label>
           <select
             value={estadoFiltro}
             onChange={(e) => setEstadoFiltro(e.target.value)}
@@ -160,6 +208,30 @@ export default function PedidosTable() {
             ))}
           </select>
         </div>
+
+        <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+          <label className="text-xs text-gray-500">Local</label>
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={localInput}
+              onChange={(e) => setLocalInput(e.target.value)}
+              placeholder="Buscar local..."
+              className="border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm w-full"
+            />
+          </div>
+        </div>
+
+        {hayFiltros && (
+          <button
+            onClick={limpiarFiltros}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 transition px-2 py-2"
+          >
+            <X className="w-4 h-4" />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -246,6 +318,32 @@ export default function PedidosTable() {
           </table>
         )}
       </div>
+
+      {data && data.last_page > 1 && (
+        <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
+          <span>
+            Página {data.current_page} de {data.last_page} · {data.total} pedidos
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={data.current_page <= 1}
+              className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Anterior
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(data.last_page, p + 1))}
+              disabled={data.current_page >= data.last_page}
+              className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Siguiente
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
