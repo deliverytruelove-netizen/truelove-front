@@ -88,10 +88,10 @@ export const useFormHandlers = (
     try {
       const url =
         type === "DNI"
-          ? `https://dniruc.apisperu.com/api/v1/dni/${number}`
-          : `https://dniruc.apisperu.com/api/v1/ruc/${number}`
+          ? `${process.env.NEXT_PUBLIC_API_WEB}/documento/dni/${number}`
+          : `${process.env.NEXT_PUBLIC_API_WEB}/documento/ruc/${number}`
 
-      const response = await fetch(`${url}?token=${process.env.NEXT_PUBLIC_API_TOKEN}`)
+      const response = await fetch(url)
       const data = await response.json()
 
       if (type === "DNI") {

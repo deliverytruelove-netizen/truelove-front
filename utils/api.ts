@@ -1,9 +1,8 @@
-const API_BASE_URL = 'https://dniruc.apisperu.com/api/v1';
-const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN;
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_WEB}/documento`;
 
 export async function fetchDocumentInfo(type: 'dni' | 'ruc', number: string) {
-  const url = `${API_BASE_URL}/${type}/${number}?token=${API_TOKEN}`;
-  
+  const url = `${API_BASE_URL}/${type}/${number}`;
+
   try {
     const response = await fetch(url, {
       method: 'GET',
