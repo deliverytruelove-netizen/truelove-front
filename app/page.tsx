@@ -1,43 +1,30 @@
-// app\page.tsx
-"use client"
-import { motion, useScroll } from "framer-motion"; // Importar Framer Motion
+// app/page.tsx
 import HomePage from "@/components/HomePage";
 import Footer from "@/components/Footer";
-import AboutContent from "@/components/AboutContent";
-import About from "@/components/About";
-import DeliveryAboutUs from "@/components/DeliveryAbout";
+import StatsStrip from "@/components/StatsStrip";
+import BenefitsSection from "@/components/BenefitsSection";
+import HowItWorks from "@/components/HowItWorks";
+import AppShowcase from "@/components/AppShowcase";
 import Navbar from "@/components/Navbar";
+import ScrollProgressBar from "@/components/ScrollProgressBar";
+import { getLandingStats } from "@/services/landingService";
 
-export default function Home() {
-  const { scrollYProgress } = useScroll(); 
+export default async function Home() {
+  const stats = await getLandingStats();
 
   return (
-    <>
-      {/* Barra de progreso de scroll */}
-      <motion.div
-        style={{
-          scaleX: scrollYProgress,
-          backgroundColor: "red",
-          height: "6px",
-          width: "100%",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          transformOrigin: "0 0",
-          zIndex: 50,
-        }}
-      />
+    <div className="min-h-screen flex flex-col bg-slate-950">
+      <ScrollProgressBar />
 
-      <main >
-        <Navbar/>
-        <div>
-          <HomePage />
-          <AboutContent />
-          <About />
-          <DeliveryAboutUs />
-        </div>
-        <Footer />
+      <Navbar />
+      <main className="flex-grow">
+        <HomePage stats={stats} />
+        <StatsStrip stats={stats} />
+        <BenefitsSection />
+        <HowItWorks />
+        <AppShowcase />
       </main>
-    </>
+      <Footer />
+    </div>
   );
 }

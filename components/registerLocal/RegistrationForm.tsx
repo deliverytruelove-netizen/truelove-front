@@ -188,8 +188,14 @@ export default function RegistrationForm() {
   }
 
   return (
-    <div className="w-full bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-lg shadow-xl">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">¡Registra tu local ahora!</h2>
+    <div className="w-full bg-white/95 backdrop-blur-xl p-6 sm:p-7 rounded-2xl shadow-2xl border border-white/40">
+      <div className="text-center mb-6">
+        <span className="inline-block px-3 py-1 rounded-full bg-[#D9043D]/10 text-[#D9043D] text-xs font-bold uppercase tracking-wider mb-2">
+          Comienza Hoy
+        </span>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">¡Registra tu local ahora!</h2>
+        <p className="text-xs text-slate-500 mt-1">Completa los datos en menos de 2 minutos</p>
+      </div>
 
       {/* Modal de cambio de correo */}
       {originalEmail && (
@@ -203,7 +209,7 @@ export default function RegistrationForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 sm:space-y-6"
+        className="space-y-4 sm:space-y-5"
       >
         <FormFields
           formData={formData}
@@ -222,24 +228,24 @@ export default function RegistrationForm() {
           ) : error.includes("registrado como repartidor") ? (
             <ValidationAlert message={error} onClose={() => setError(null)} />
           ) : (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3.5">
               <p className="text-red-700 text-sm font-medium">{error}</p>
             </div>
           ))}
 
-        <div className="space-y-3">
+        <div className="pt-2">
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full px-4 py-3 rounded-lg bg-red-500 text-white font-semibold
-                     focus:ring-2 focus:ring-red-400 focus:ring-opacity-50
-                     hover:bg-red-600 disabled:bg-gray-300 disabled:text-gray-500
-                     transition-colors duration-200 flex items-center justify-center gap-2"
+            className="w-full px-5 py-3.5 rounded-xl bg-gradient-to-r from-[#D9043D] via-[#e21b50] to-[#b8032f] hover:from-[#c20336] hover:to-[#9c0228] text-white font-bold text-base
+                     shadow-lg shadow-[#D9043D]/25 hover:shadow-xl hover:shadow-[#D9043D]/35
+                     disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none
+                     transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             {isLoading ? (
               <>
                 <Loader2 className="animate-spin h-5 w-5" />
-                <span>Procesando...</span>
+                <span>Procesando solicitud...</span>
               </>
             ) : (
               "Registrar Negocio"
