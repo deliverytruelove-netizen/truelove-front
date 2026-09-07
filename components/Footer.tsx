@@ -256,14 +256,7 @@ const Footer = () => {
           </p>
           <p>
             Desarrollado con excelencia por{" "}
-            <Link
-              href="https://magustechnologies.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FF5C7A] hover:underline font-semibold"
-            >
-              Magus Technologies
-            </Link>
+            <span className="text-[#FF5C7A] font-semibold">MDCM Solutions</span>
           </p>
         </div>
       </div>
