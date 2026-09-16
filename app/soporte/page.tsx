@@ -143,10 +143,10 @@ export default function SoportePage() {
                     <div>
                       <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Email</p>
                       <a
-                        href="mailto:info@deliverytruelove.com"
+                        href="mailto:truelovedeliveryperu@hotmail.com"
                         className="text-[#D9043D] hover:underline font-medium"
                       >
-                        info@deliverytruelove.com
+                        truelovedeliveryperu@hotmail.com
                       </a>
                     </div>
                   </div>
