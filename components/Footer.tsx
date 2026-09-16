@@ -5,7 +5,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Facebook, Twitter, Instagram, Mail, Phone, ShoppingBag, Store, Bike } from "lucide-react";
+import { Facebook, Twitter, Instagram, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/src/assets/img/logotipo.png";
 
@@ -124,7 +124,7 @@ const Footer = () => {
               {/* Cliente */}
               <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10">
                 <div className="flex items-center gap-1.5 font-bold text-white mb-1.5">
-                  <ShoppingBag className="w-3.5 h-3.5 text-[#FF5C7A]" />
+                  <Image src="/apps/truelove-cliente.png" alt="True Love Cliente" width={16} height={16} className="w-4 h-4 rounded-md object-cover" />
                   <span>True Love Cliente</span>
                 </div>
                 <div className="flex gap-2">
@@ -151,7 +151,7 @@ const Footer = () => {
               {/* Socio */}
               <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10">
                 <div className="flex items-center gap-1.5 font-bold text-white mb-1.5">
-                  <Store className="w-3.5 h-3.5 text-rose-400" />
+                  <Image src="/apps/truelove-socio.png" alt="True Love Socio" width={16} height={16} className="w-4 h-4 rounded-md object-cover" />
                   <span>True Love Socio</span>
                 </div>
                 <div className="flex gap-2">
@@ -178,7 +178,7 @@ const Footer = () => {
               {/* Repartidor */}
               <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10">
                 <div className="flex items-center gap-1.5 font-bold text-white mb-1.5">
-                  <Bike className="w-3.5 h-3.5 text-amber-400" />
+                  <Image src="/apps/truelove-repartidor.png" alt="True Love Repartidor" width={16} height={16} className="w-4 h-4 rounded-md object-cover" />
                   <span>True Love Repartidor</span>
                 </div>
                 <div className="flex gap-2">

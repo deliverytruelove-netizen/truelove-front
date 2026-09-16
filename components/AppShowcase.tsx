@@ -3,7 +3,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Smartphone, Store, Bike, ShoppingBag } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Smartphone, Store, Bike } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const appsData = [
@@ -12,7 +13,7 @@ const appsData = [
     name: "True Love Cliente",
     role: "Para Comensales",
     tag: "Pide Delivery",
-    icon: ShoppingBag,
+    iconSrc: "/apps/truelove-cliente.png",
     color: "from-rose-500 to-red-600",
     description: "Pide tus platos y productos favoritos a domicilio con seguimiento en tiempo real.",
     playStoreUrl: "https://play.google.com/store/apps/details?id=com.truelove.trueloveclient",
@@ -23,7 +24,7 @@ const appsData = [
     name: "True Love Socio",
     role: "Para Negocios y Restaurantes",
     tag: "Gestión de Pedidos",
-    icon: Store,
+    iconSrc: "/apps/truelove-socio.png",
     color: "from-[#D9043D] to-[#9c0228]",
     description: "Administra tu catálogo, pedidos entrantes y métricas de venta en tiempo real.",
     playStoreUrl: "https://play.google.com/store/apps/details?id=com.truelove.truelovesocio",
@@ -34,7 +35,7 @@ const appsData = [
     name: "True Love Repartidor",
     role: "Para Motorizados (Bikers)",
     tag: "Genera Ingresos",
-    icon: Bike,
+    iconSrc: "/apps/truelove-repartidor.png",
     color: "from-amber-500 to-orange-600",
     description: "Acepta pedidos en tu zona con rutas optimizadas y genera ingresos en tu propio horario.",
     playStoreUrl: "https://play.google.com/store/apps/details?id=com.truelove.truelovebiker",
@@ -76,7 +77,6 @@ export default function AppShowcase() {
         {/* 3 Apps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-16">
           {appsData.map((app, index) => {
-            const Icon = app.icon;
             return (
               <motion.div
                 key={app.id}
@@ -89,8 +89,8 @@ export default function AppShowcase() {
                 <div>
                   {/* Top Badge & Icon */}
                   <div className="flex items-center justify-between mb-5">
-                    <div className={`w-12 h-12 p-2.5 rounded-2xl bg-gradient-to-tr ${app.color} text-white shadow-lg flex items-center justify-center`}>
-                      <Icon className="w-6 h-6" />
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${app.color} shadow-lg flex items-center justify-center overflow-hidden`}>
+                      <Image src={app.iconSrc} alt={app.name} width={48} height={48} className="w-full h-full object-cover" />
                     </div>
                     <span className="text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-white/10 text-slate-200 border border-white/10">
                       {app.tag}
@@ -119,11 +119,8 @@ export default function AppShowcase() {
                   >
                     {/* Google Play Vector Icon */}
                     <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5 transition-transform group-hover/btn:scale-110" viewBox="0 0 512 512">
-                        <path fill="#4285F4" d="M32.5 13.7C20.6 20.3 12 33.7 12 50.4v411.2c0 16.7 8.6 30.1 20.5 36.7l228.6-242.3L32.5 13.7z"/>
-                        <path fill="#FBBC04" d="M374.8 178.6L241.1 256l133.7 77.4 56.4-32.6c16.3-9.4 16.3-24.9 0-34.3l-56.4-87.9z"/>
-                        <path fill="#EA4335" d="M32.5 498.3c7.2 4 15.6 4.9 23.9.1l318.4-184.2L241.1 256 32.5 498.3z"/>
-                        <path fill="#34A853" d="M374.8 178.6L56.4 13.6c-8.3-4.8-16.7-3.9-23.9.1L241.1 256l133.7-77.4z"/>
+                      <svg className="w-5 h-5 fill-white transition-transform group-hover/btn:scale-110" viewBox="0 0 16 16">
+                        <path d="M14.222 9.374c1.037-.61 1.037-2.137 0-2.748L11.528 5.04 8.32 8l3.207 2.96zm-3.595 2.116L7.583 8.68 1.03 14.73c.201 1.029 1.36 1.61 2.303 1.055zM1 13.396V2.603L6.846 8zM1.03 1.27l6.553 6.05 3.044-2.81L3.333.215C2.39-.341 1.231.24 1.03 1.27"/>
                       </svg>
                     </div>
                     <div className="text-left">
@@ -145,8 +142,8 @@ export default function AppShowcase() {
                   >
                     {/* Apple Vector Icon */}
                     <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5 fill-white transition-transform group-hover/btn:scale-110" viewBox="0 0 170 170">
-                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.6-7.79-11.72-14.24-6.3-9.84-11.25-20.91-14.86-33.22-3.61-12.31-5.42-24.13-5.42-35.46 0-14.07 3.5-25.99 10.5-35.76 7-9.77 15.99-14.78 26.96-15.02 5.01 0 10.42 1.34 16.23 4.02 5.8 2.68 9.5 4.09 11.08 4.23 1.83-.28 5.75-1.8 11.77-4.57 6.01-2.77 11.38-4.04 16.09-3.81 12.32.61 22.09 5.09 29.31 13.43-10.79 6.53-16.07 15.65-15.84 27.35.23 9.17 3.63 16.89 10.2 23.16 6.57 6.27 14.44 9.87 23.61 10.8-2.29 6.74-5.06 13.68-8.32 20.82zM119.22 33.15c0-6.73 2.45-13.14 7.35-19.22 4.9-6.09 11-10.36 18.29-12.82.76 1.41 1.14 3.04 1.14 4.88 0 6.62-2.52 13.06-7.56 19.33-5.04 6.27-11.2 10.46-18.49 12.58-.22-1.63-.73-3.21-.73-4.75z"/>
+                      <svg className="w-5 h-5 fill-white transition-transform group-hover/btn:scale-110" viewBox="0 0 16 16">
+                        <path d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516s1.52.087 2.475-1.258.762-2.391.728-2.43m3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422s1.675-2.789 1.698-2.854-.597-.79-1.254-1.157a3.7 3.7 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56s.625 1.924 1.273 2.796c.576.984 1.34 1.667 1.659 1.899s1.219.386 1.843.067c.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758q.52-1.185.473-1.282"/>
                       </svg>
                     </div>
                     <div className="text-left">
