@@ -1,14 +1,30 @@
 // app\socio\admin\num-negocio\page.tsx
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import { Smartphone, Save, AlertCircle, CheckCircle2,  CreditCard, Phone } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Smartphone, Save, AlertCircle, CheckCircle2, CreditCard, Phone, QrCode, Upload, Trash2, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+
+const API_URL = process.env.NEXT_PUBLIC_API_WEB;
+
+function getAuthToken(): string | null {
+  const local = localStorage.getItem('auth_token');
+  if (local) return local;
+  return (
+    document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('authToken='))
+      ?.split('=')[1] ?? null
+  );
+}
+
 interface PagoDigitalSettings {
   tipo_pago_digital: number;
   numero_pago_digital: string;
   nombre_titular_pago_digital: string;
+  qr_pago_digital: string | null;
 }
 
 const NumeroDigitalPage: React.FC = () => {
@@ -16,10 +32,14 @@ const NumeroDigitalPage: React.FC = () => {
     tipo_pago_digital: 0,
     numero_pago_digital: '',
     nombre_titular_pago_digital: '',
+    qr_pago_digital: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [uploadingQr, setUploadingQr] = useState(false);
+  const [deletingQr, setDeletingQr] = useState(false);
+  const qrInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSettings();
@@ -62,6 +82,7 @@ const NumeroDigitalPage: React.FC = () => {
         tipo_pago_digital: data.tipo_pago_digital,
         numero_pago_digital: data.numero_pago_digital || '',
         nombre_titular_pago_digital: data.nombre_titular_pago_digital || '',
+        qr_pago_digital: data.qr_pago_digital || null,
       });
     } catch (error) {
       console.error('Error loading payment settings:', error);
@@ -110,6 +131,81 @@ const NumeroDigitalPage: React.FC = () => {
       setMessage({ type: 'error', text: 'Error al guardar la configuración' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQrChange = async (evento: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = evento.target.files?.[0];
+    if (!archivo) return;
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+    if (!tiposPermitidos.includes(archivo.type)) {
+      setMessage({ type: 'error', text: 'Solo se permiten archivos JPG, PNG y GIF.' });
+      evento.target.value = '';
+      return;
+    }
+    if (archivo.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'El archivo es demasiado grande. Máximo 2MB permitido.' });
+      evento.target.value = '';
+      return;
+    }
+
+    setUploadingQr(true);
+    setMessage(null);
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('No se encontró el token de autenticación');
+
+      const formData = new FormData();
+      formData.append('qr', archivo);
+
+      const respuesta = await fetch(`${API_URL}/negocio/pago-digital/qr`, {
+        method: 'POST',
+        body: formData,
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      });
+
+      if (!respuesta.ok) {
+        const errorData = await respuesta.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Error al subir el QR');
+      }
+
+      const datos = await respuesta.json();
+      setSettings((prev) => ({ ...prev, qr_pago_digital: datos.qr_pago_digital }));
+      setMessage({ type: 'success', text: 'QR actualizado correctamente' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Error al subir el QR' });
+    } finally {
+      setUploadingQr(false);
+      evento.target.value = '';
+    }
+  };
+
+  const handleQrDelete = async () => {
+    setDeletingQr(true);
+    setMessage(null);
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('No se encontró el token de autenticación');
+
+      const respuesta = await fetch(`${API_URL}/negocio/pago-digital/qr`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      });
+
+      if (!respuesta.ok) {
+        const errorData = await respuesta.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Error al eliminar el QR');
+      }
+
+      setSettings((prev) => ({ ...prev, qr_pago_digital: null }));
+      setMessage({ type: 'success', text: 'QR eliminado correctamente' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Error al eliminar el QR' });
+    } finally {
+      setDeletingQr(false);
     }
   };
 
@@ -322,6 +418,78 @@ const NumeroDigitalPage: React.FC = () => {
                         El nombre debe tener al menos 2 caracteres.
                       </p>
                     )}
+                  </div>
+
+                  {/* QR de Yape/Plin */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <QrCode className="h-4 w-4 text-gray-500" />
+                      QR de {getTipoPagoLabel(settings.tipo_pago_digital)} (opcional)
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      Si subes tu QR, los clientes lo verán directamente al pagar en vez de tu número.
+                    </p>
+
+                    {settings.qr_pago_digital ? (
+                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-gray-50">
+                        <div className="relative w-24 h-24 rounded-lg overflow-hidden border bg-white shrink-0">
+                          <Image
+                            src={settings.qr_pago_digital}
+                            alt="QR de pago digital"
+                            fill
+                            className="object-contain"
+                            unoptimized
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700 mb-2">QR guardado</p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => qrInputRef.current?.click()}
+                              disabled={uploadingQr}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-md border border-gray-300 hover:bg-white disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              {uploadingQr ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                              Reemplazar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleQrDelete}
+                              disabled={deletingQr}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              {deletingQr ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                              Quitar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => qrInputRef.current?.click()}
+                        disabled={uploadingQr}
+                        className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded-lg border-2 border-dashed border-gray-300 hover:border-red-300 hover:bg-red-50/30 transition-colors disabled:opacity-50"
+                      >
+                        {uploadingQr ? (
+                          <Loader2 className="h-6 w-6 text-gray-400 animate-spin" />
+                        ) : (
+                          <Upload className="h-6 w-6 text-gray-400" />
+                        )}
+                        <span className="text-sm text-gray-500">
+                          {uploadingQr ? 'Subiendo...' : 'Subir imagen del QR'}
+                        </span>
+                      </button>
+                    )}
+
+                    <input
+                      ref={qrInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,image/gif"
+                      onChange={handleQrChange}
+                      className="hidden"
+                    />
                   </div>
                 </>
               )}
