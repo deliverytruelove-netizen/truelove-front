@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Smartphone,
+  User,
 } from "lucide-react";
 import Logotipo from "@/src/assets/img/logotipo.png";
 
@@ -27,12 +28,14 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useClienteAuth } from "@/context/ClienteAuthContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const { cliente, isAuthenticated } = useClienteAuth();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -145,6 +148,20 @@ export default function Navbar() {
 
           {/* Desktop Actions (CTA Buttons) */}
           <div className="hidden sm:flex items-center gap-3">
+            <Button
+              asChild
+              variant="ghost"
+              className="text-slate-700 hover:text-[#D9043D] hover:bg-slate-100 font-semibold text-sm rounded-full px-4 h-10 transition-all group"
+            >
+              <Link
+                href={isAuthenticated ? "/cliente/cuenta" : "/cliente/login"}
+                className="flex items-center gap-1.5"
+              >
+                <User className="w-4 h-4 text-slate-500 group-hover:text-[#D9043D] transition-colors" />
+                <span>{isAuthenticated ? `Hola, ${cliente?.nombre}` : "Soy Cliente"}</span>
+              </Link>
+            </Button>
+
             <Button
               asChild
               variant="ghost"
@@ -279,6 +296,21 @@ export default function Navbar() {
                       <Store className="w-4 h-4" />
                       <span>Registra tu negocio</span>
                       <ArrowRight className="w-4 h-4 ml-auto" />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full border-slate-200 text-slate-700 hover:bg-slate-100 font-bold h-10 rounded-xl"
+                  >
+                    <Link
+                      href={isAuthenticated ? "/cliente/cuenta" : "/cliente/login"}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <User className="w-4 h-4 text-slate-500" />
+                      <span>{isAuthenticated ? `Hola, ${cliente?.nombre}` : "Soy Cliente"}</span>
                     </Link>
                   </Button>
 

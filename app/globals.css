@@ -85,6 +85,16 @@ body {
   }
 }
 
+/* Oculta la barra de scroll nativa (p. ej. carruseles de chips horizontales) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Específico para elementos con scroll */
 .custom-scrollbar {
   scrollbar-width: thin !important;
