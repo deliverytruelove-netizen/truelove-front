@@ -14,10 +14,14 @@ import {
   deleteSocio,
 } from "@/app/admin/socios/services/Socios.service"
 import type { DetallesSocio } from "@/app/admin/socios/types/Socios.types"
-import { obtenerDetalleCuota, type CuotaSocio } from "@/app/admin/cuotas-socios/services/cuota-admin.service"
+import {
+  obtenerDetalleCuota,
+  removerCuotaDeSocio,
+  type CuotaSocio,
+} from "@/app/admin/cuotas-socios/services/cuota-admin.service"
 // import type { ColumnSort } from "@tanstack/react-table"
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst"
-import { showAlert } from "@/components/ui/DataTable/Alert"
+import { showAlert, confirmAlert } from "@/components/ui/DataTable/Alert"
 import { DetallesSocioModal } from "./modals/DetallesSocioModal"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -175,6 +179,34 @@ const SocioList: React.FC = () => {
       setIsDeleteDialogOpen(false)
     },
   })
+
+  // mutación para quitar la cuota asignada a un socio (elimina sus períodos pendientes)
+  const mutationRemoverCuota = useMutation({
+    mutationFn: removerCuotaDeSocio,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["socios-lista"] })
+      showAlert({
+        title: "Éxito",
+        text: "Se quitó la cuota del socio. Ya no se le cobrará.",
+        icon: "success",
+      })
+    },
+    onError: (error: Error) => {
+      showAlert({ title: "Error", text: error.message, icon: "error" })
+    },
+  })
+
+  const handleRemoverCuota = async (id: number, nombre: string) => {
+    const result = await confirmAlert({
+      title: "¿Quitar cuota?",
+      text: `A ${nombre} ya no se le cobrará la cuota/comisión y se eliminarán sus períodos pendientes. Los períodos ya pagados se conservan.`,
+      icon: "warning",
+      confirmButtonText: "Sí, quitar",
+    })
+    if (result.isConfirmed) {
+      mutationRemoverCuota.mutate(id)
+    }
+  }
 
   // const handleDeactivate = (id: number) => {
   //   mutationChangeState.mutate(id)
@@ -488,8 +520,10 @@ const SocioList: React.FC = () => {
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {socio.personal?.cuota_socio_id && socio.cuotaDetalle ? (
+                        {socio.personal?.cuota_socio_id ? (
                           <div className="flex flex-col items-center gap-1">
+                            {socio.cuotaDetalle ? (
+                              <>
                             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 capitalize">
                               <Coins className="w-3 h-3 mr-1" />
                               {socio.cuotaDetalle.periodicidad}
@@ -512,12 +546,29 @@ const SocioList: React.FC = () => {
                                 Día {socio.cuotaDetalle.dia_pago}
                               </span>
                             )}
+                              </>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                                <Coins className="w-3 h-3 mr-1" />
+                                Asignada
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleRemoverCuota(
+                                  socio.id,
+                                  `${socio.personal?.name || ""} ${socio.personal?.lastName || ""}`.trim() || "este socio",
+                                )
+                              }
+                              disabled={mutationRemoverCuota.isPending}
+                              className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 hover:underline disabled:opacity-50"
+                              title="Quitar cuota"
+                            >
+                              <X className="w-3 h-3" />
+                              Quitar cuota
+                            </button>
                           </div>
-                        ) : socio.personal?.cuota_socio_id ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                            <Coins className="w-3 h-3 mr-1" />
-                            Asignada
-                          </span>
                         ) : (
                           <Button
                             size="sm"
