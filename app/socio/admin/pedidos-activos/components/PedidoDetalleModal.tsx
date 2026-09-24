@@ -823,7 +823,7 @@ function PedidoDetalleContent({
           <div className="flex gap-2">
             <Button
               onClick={confirmarAceptar}
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || !(parseInt(tiempo) > 0)}
               className="flex-1 h-10 bg-green-600 hover:bg-green-700"
             >
               {mutation.isPending ? (
@@ -1452,7 +1452,7 @@ function PedidoDetalleDesktop({
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <Button onClick={confirmarAceptar} disabled={mutation.isPending} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={confirmarAceptar} disabled={mutation.isPending || !(parseInt(tiempo) > 0)} className="bg-green-600 hover:bg-green-700">
               {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
               Confirmar
             </Button>

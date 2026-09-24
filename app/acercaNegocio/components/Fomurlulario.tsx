@@ -1,7 +1,8 @@
 // app\acercaNegocio\components\Fomurlulario.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { QrCode, Upload, Trash2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -26,12 +27,41 @@ import { PhoneInput } from "./phone-input";
 
 interface BusinessFormProps {
   form: UseFormReturn<BusinessFormValues>;
+  qrPreview: string | null;
+  onQrSelect: (file: File) => void;
+  onQrRemove: () => void;
 }
 
+const QR_TIPOS_PERMITIDOS = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+const QR_TAMANO_MAXIMO = 2 * 1024 * 1024;
+
 export function BusinessForm({
-  form
+  form,
+  qrPreview,
+  onQrSelect,
+  onQrRemove,
 }: BusinessFormProps) {
   const { watch, setValue } = form;
+  const qrInputRef = useRef<HTMLInputElement>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
+
+  const handleQrChange = (evento: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = evento.target.files?.[0];
+    evento.target.value = "";
+    if (!archivo) return;
+
+    if (!QR_TIPOS_PERMITIDOS.includes(archivo.type)) {
+      setQrError("Solo se permiten archivos JPG, PNG y GIF.");
+      return;
+    }
+    if (archivo.size > QR_TAMANO_MAXIMO) {
+      setQrError("El archivo es demasiado grande. Máximo 2MB permitido.");
+      return;
+    }
+
+    setQrError(null);
+    onQrSelect(archivo);
+  };
   const digitalWallet = watch("digitalWallet");
   const useSamePhone = watch("useSamePhone");
   const mainPhoneNumber = watch("phoneNumber");
@@ -261,6 +291,68 @@ export function BusinessForm({
     </FormItem>
   )}
 />
+
+            {/* QR de Yape/Plin (opcional) */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <QrCode className="h-4 w-4 text-muted-foreground" />
+                QR de {digitalWallet === "1" ? "Yape" : "Plin"} (opcional)
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Si subes tu QR, los clientes lo verán directamente al pagar en vez de tu número.
+              </p>
+
+              {qrPreview ? (
+                <div className="flex items-center gap-4 p-4 rounded-md border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrPreview}
+                    alt="QR de pago digital"
+                    className="w-24 h-24 rounded-md border bg-white object-contain shrink-0"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => qrInputRef.current?.click()}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-md border hover:bg-muted flex items-center gap-1.5"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Reemplazar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQrError(null);
+                        onQrRemove();
+                      }}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-md border border-red-300 text-red-600 hover:bg-red-50 flex items-center gap-1.5"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Quitar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => qrInputRef.current?.click()}
+                  className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded-md border-2 border-dashed hover:border-red-300 transition-colors"
+                >
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Subir imagen del QR</span>
+                </button>
+              )}
+
+              {qrError && <p className="text-sm text-red-500">{qrError}</p>}
+
+              <input
+                ref={qrInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/jpg,image/gif"
+                onChange={handleQrChange}
+                className="hidden"
+              />
+            </div>
           </div>
         )}
       </form>

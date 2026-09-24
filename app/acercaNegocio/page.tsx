@@ -26,6 +26,11 @@ function FormularioDetallesNegocioContent() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // QR de Yape/Plin: archivo nuevo elegido, QR ya guardado en el servidor y si existía al cargar
+  const [qrFile, setQrFile] = useState<File | null>(null);
+  const [qrFilePreview, setQrFilePreview] = useState<string | null>(null);
+  const [qrGuardadoUrl, setQrGuardadoUrl] = useState<string | null>(null);
+  const [teniaQrGuardado, setTeniaQrGuardado] = useState(false);
   const currentStep = 1;
   const totalSteps = 8;
 
@@ -101,6 +106,8 @@ function FormularioDetallesNegocioContent() {
           useSamePhone: true,
           walletOwnerName: negocioData.nombre_titular_pago_digital || "",
         });
+        setQrGuardadoUrl(negocioData.qr_pago_digital_url || null);
+        setTeniaQrGuardado(!!negocioData.qr_pago_digital_url);
       } else {
         // Precargar teléfono del registro si no hay negocio aún
         const savedPhone = localStorage.getItem("registrationPhone")
@@ -114,6 +121,55 @@ function FormularioDetallesNegocioContent() {
 
     checkToken();
   }, [form, router]);
+
+  useEffect(() => {
+    if (!qrFile) {
+      setQrFilePreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(qrFile);
+    setQrFilePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [qrFile]);
+
+  const handleQrRemove = () => {
+    setQrFile(null);
+    setQrGuardadoUrl(null);
+  };
+
+  // Sube el QR nuevo o elimina el guardado según lo que haya elegido el socio
+  const sincronizarQr = async (negocioId: number, digitalWallet: string) => {
+    const baseUrl = `${process.env.NEXT_PUBLIC_API_WEB}/negocios/${negocioId}/qr-pago-digital`;
+    const headers = {
+      Authorization: `Bearer ${getRegistrationToken()}`,
+      Accept: "application/json",
+    };
+
+    if (digitalWallet !== "0" && qrFile) {
+      const qrData = new FormData();
+      qrData.append("qr", qrFile);
+      const response = await fetch(baseUrl, { method: "POST", headers, body: qrData });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "No se pudo subir el QR. Intente con otra imagen.");
+      }
+      const datos = await response.json();
+      setQrFile(null);
+      setQrGuardadoUrl(datos.qr_pago_digital);
+      setTeniaQrGuardado(true);
+      return;
+    }
+
+    const debeEliminar = teniaQrGuardado && (digitalWallet === "0" || !qrGuardadoUrl);
+    if (debeEliminar) {
+      const response = await fetch(baseUrl, { method: "DELETE", headers });
+      if (!response.ok) {
+        throw new Error("No se pudo quitar el QR");
+      }
+      setQrGuardadoUrl(null);
+      setTeniaQrGuardado(false);
+    }
+  };
 
 
 
@@ -170,6 +226,11 @@ function FormularioDetallesNegocioContent() {
           throw new Error(responseData.message || "Error al guardar los datos");
         }
 
+        const negocioId = existingBusiness?.id ?? responseData.negocio?.id;
+        if (negocioId) {
+          await sincronizarQr(negocioId, data.digitalWallet);
+        }
+
         // Actualizar el paso del registro
         await updateRegistrationStep("/ubicar-local");
 
@@ -188,7 +249,8 @@ function FormularioDetallesNegocioContent() {
         setIsSubmitting(false);
       }
     },
-    [router]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router, qrFile, qrGuardadoUrl, teniaQrGuardado]
   );
 
   const handleNext = form.handleSubmit(onSubmit);
@@ -236,6 +298,9 @@ function FormularioDetallesNegocioContent() {
 
               <BusinessForm
                 form={form}
+                qrPreview={qrFilePreview ?? qrGuardadoUrl}
+                onQrSelect={setQrFile}
+                onQrRemove={handleQrRemove}
               />
             </div>
           </div>

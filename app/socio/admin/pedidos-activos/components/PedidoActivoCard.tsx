@@ -488,7 +488,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
             <div className="flex gap-2">
               <Button
                 onClick={confirmarAceptar}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || !(parseInt(tiempo) > 0)}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 h-8"
               >
