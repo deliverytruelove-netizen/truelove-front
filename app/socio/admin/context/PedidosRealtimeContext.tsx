@@ -62,10 +62,12 @@ export function PedidosRealtimeProvider({
   const [hasInteracted, setHasInteracted] = useState(false);
   const fcmJustNotified = useRef(false);
 
-  // Pre-cargar el audio
+  // Pre-cargar el audio. loop=true: suena sin parar mientras haya un pedido
+  // "por aceptar" (antes sonaba una sola vez y era fácil no notarlo).
   useEffect(() => {
     audioRef.current = new Audio("/sounds/nuevo_pedido.wav");
     audioRef.current.volume = 1.0;
+    audioRef.current.loop = true;
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -109,6 +111,12 @@ export function PedidosRealtimeProvider({
       // Ignorar errores de autoplay en móvil
     }
   }, [soundEnabled]);
+
+  const stopSound = useCallback(() => {
+    if (!audioRef.current) return;
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+  }, []);
 
   const showBrowserNotification = useCallback((title: string, body: string) => {
     if (!("Notification" in window)) return;
@@ -253,6 +261,18 @@ export function PedidosRealtimeProvider({
 
     prevIdsRef.current = currentIds;
   }, [pedidos, isLoading, playSound, showBrowserNotification]);
+
+  // Timbre en bucle: suena sin parar mientras quede algún pedido "por
+  // aceptar" (estado 1) y se detiene solo cuando esa lista queda vacía
+  // (el socio aceptó o rechazó todos los pendientes), sin importar si el
+  // cambio llegó por FCM, por el polling o porque el propio socio actuó.
+  useEffect(() => {
+    if (pedidosPendientes.length > 0 && soundEnabled && hasInteracted) {
+      playSound();
+    } else {
+      stopSound();
+    }
+  }, [pedidosPendientes.length, soundEnabled, hasInteracted, playSound, stopSound]);
 
   // Asegurar que suene al volver a la pestaña si hay pedidos pendientes sin atender
   useEffect(() => {
