@@ -65,14 +65,24 @@ export function PedidosRealtimeProvider({
   // Pre-cargar el audio. loop=true: suena sin parar mientras haya un pedido
   // "por aceptar" (antes sonaba una sola vez y era fácil no notarlo).
   useEffect(() => {
-    audioRef.current = new Audio("/sounds/nuevo_pedido.wav");
-    audioRef.current.volume = 1.0;
-    audioRef.current.loop = true;
+    const audio = new Audio("/sounds/nuevo_pedido.wav");
+    audio.volume = 1.0;
+    audio.loop = true;
+
+    // Salvavidas: si por lo que sea el navegador no reinicia solo con
+    // loop=true (poco común, pero se vio pasar en el equivalente móvil),
+    // lo reiniciamos manualmente. Si loop sí funciona, "ended" nunca llega.
+    const handleEnded = () => {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    };
+    audio.addEventListener("ended", handleEnded);
+
+    audioRef.current = audio;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audio.removeEventListener("ended", handleEnded);
+      audio.pause();
+      audioRef.current = null;
     };
   }, []);
 
