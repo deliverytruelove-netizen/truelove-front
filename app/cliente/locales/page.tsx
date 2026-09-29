@@ -1,7 +1,7 @@
 // app/cliente/locales/page.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -36,7 +36,7 @@ function formatDistancia(km: number): string {
   return `${km.toFixed(1)} km`;
 }
 
-export default function ClienteLocalesPage() {
+function ClienteLocalesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { cliente, isAuthenticated, isLoading: authLoading } = useClienteAuth();
@@ -306,5 +306,19 @@ export default function ClienteLocalesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ClienteLocalesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+        </div>
+      }
+    >
+      <ClienteLocalesContent />
+    </Suspense>
   );
 }

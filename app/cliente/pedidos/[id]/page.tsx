@@ -1,7 +1,7 @@
 // app/cliente/pedidos/[id]/page.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -32,7 +32,7 @@ interface ItemGroup {
   adicionales: PedidoDetalle["detalleArray"];
 }
 
-export default function ClientePedidoDetallePage() {
+function ClientePedidoDetalleContent() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -377,5 +377,19 @@ export default function ClientePedidoDetallePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ClientePedidoDetallePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+        </div>
+      }
+    >
+      <ClientePedidoDetalleContent />
+    </Suspense>
   );
 }
