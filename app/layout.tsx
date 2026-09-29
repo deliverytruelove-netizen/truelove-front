@@ -55,11 +55,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col notranslate`}
       >
-        <main className="flex-grow">
-          {children}
-        </main>
-
-        <ClientProviders />
+        <ClientProviders>
+          <main className="flex-grow">
+            {children}
+          </main>
+        </ClientProviders>
       </body>
     </html>
   );
