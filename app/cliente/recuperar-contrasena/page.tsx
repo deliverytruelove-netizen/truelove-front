@@ -65,7 +65,7 @@ export default function ClienteRecuperarContrasenaPage() {
     try {
       const response = await clienteResetPassword(clienteId, password);
       login(response.token, response.cliente);
-      router.push("/cliente/cuenta");
+      router.push("/cliente/locales");
     } catch (err) {
       setError(err instanceof ClienteAuthError ? err.message : "No se pudo actualizar la contraseña");
     } finally {

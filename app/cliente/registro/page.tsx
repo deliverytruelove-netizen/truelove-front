@@ -6,9 +6,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { FcGoogle } from "react-icons/fc";
 import { Loader2, ShieldCheck, MapPin, CheckCircle2, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Logotipo from "@/src/assets/img/logotipo.png";
+import { signInWithGoogleProfile } from "@/lib/firebase";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import {
   clienteSendCode,
@@ -53,6 +55,15 @@ function calcAge(dateStr: string): number {
   return age;
 }
 
+// Google entrega un solo "nombre completo": los dos últimos términos se toman
+// como apellidos y el resto como nombres (ej. "Yuri Martin Marroquin Mejia").
+function splitGoogleName(fullName: string): { nombre: string; apellido: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return { nombre: parts[0] ?? "", apellido: "" };
+  if (parts.length === 2) return { nombre: parts[0], apellido: parts[1] };
+  return { nombre: parts.slice(0, -2).join(" "), apellido: parts.slice(-2).join(" ") };
+}
+
 function maxAdultBirthDate(): string {
   const d = new Date();
   d.setFullYear(d.getFullYear() - 18);
@@ -88,6 +99,12 @@ export default function ClienteRegistroPage() {
     celular_whatsapp: "",
   });
   const [fieldsLocked, setFieldsLocked] = useState(false);
+  // Nombre/apellido que vienen de Google: quedan bloqueados (solo lo que Google trajo)
+  const [googleLock, setGoogleLock] = useState<{ nombre: boolean; apellido: boolean }>({
+    nombre: false,
+    apellido: false,
+  });
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isLookingUpDni, setIsLookingUpDni] = useState(false);
   const [documentoTaken, setDocumentoTaken] = useState(false);
 
@@ -111,6 +128,7 @@ export default function ClienteRegistroPage() {
   useEffect(() => {
     const doc = profile.documento;
     setDocumentoTaken(false);
+    if (googleLock.nombre || googleLock.apellido) return; // el nombre ya viene de Google
     if (profile.nacionalidad !== "Peruana" || doc.length !== 8) {
       setFieldsLocked(false);
       return;
@@ -144,7 +162,7 @@ export default function ClienteRegistroPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile.documento, profile.nacionalidad]);
+  }, [profile.documento, profile.nacionalidad, googleLock]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -166,6 +184,31 @@ export default function ClienteRegistroPage() {
       setEmailAlreadyRegistered(/ya está registrado/i.test(message));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError(null);
+    setEmailAlreadyRegistered(false);
+    setIsGoogleLoading(true);
+    try {
+      const google = await signInWithGoogleProfile();
+      const { nombre, apellido } = splitGoogleName(google.displayName);
+      setEmail(google.email);
+      setProfile((prev) => ({ ...prev, nombre, apellido }));
+      setGoogleLock({ nombre: !!nombre, apellido: !!apellido });
+
+      const response = await clienteSendCode(google.email);
+      setSentCode(response.verification_code);
+      setStep("otp");
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
+      const message = err instanceof ClienteAuthError ? err.message : "No se pudo continuar con Google";
+      setError(message);
+      setEmailAlreadyRegistered(/ya está registrado/i.test(message));
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -261,7 +304,7 @@ export default function ClienteRegistroPage() {
         // El backend espera coordinates[0]=latitud, [1]=longitud; location.center es [lng, lat].
         selectedPosition: { coordinates: [location.center[1], location.center[0]] },
       });
-      router.push("/cliente/cuenta");
+      router.push("/cliente/locales");
     } catch (err) {
       setError(err instanceof ClienteAuthError ? err.message : "No se pudo guardar tu ubicación");
     } finally {
@@ -336,7 +379,10 @@ export default function ClienteRegistroPage() {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setGoogleLock({ nombre: false, apellido: false });
+                  }}
                   placeholder="tucorreo@ejemplo.com"
                   className="h-11 rounded-xl"
                   required
@@ -347,6 +393,26 @@ export default function ClienteRegistroPage() {
                   className="w-full h-11 bg-[#D9043D] hover:bg-[#b8032f] text-white font-bold rounded-xl transition-colors disabled:opacity-70"
                 >
                   {isSubmitting ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : "Enviar código"}
+                </button>
+                <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <span className="flex-1 h-px bg-slate-200" />
+                  o
+                  <span className="flex-1 h-px bg-slate-200" />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  disabled={isGoogleLoading || isSubmitting}
+                  className="w-full h-11 flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-colors disabled:opacity-70"
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="animate-spin h-5 w-5" />
+                  ) : (
+                    <>
+                      <FcGoogle className="h-5 w-5" />
+                      Registrarme con Google
+                    </>
+                  )}
                 </button>
                 <p className="text-center text-sm text-slate-500">
                   ¿Ya tienes cuenta?{" "}
@@ -433,26 +499,26 @@ export default function ClienteRegistroPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1.5">
-                      Nombres {fieldsLocked && <Lock className="w-3 h-3 text-slate-400" />}
+                      Nombres {(fieldsLocked || googleLock.nombre) && <Lock className="w-3 h-3 text-slate-400" />}
                     </label>
                     <Input
                       name="nombre"
                       value={profile.nombre}
                       onChange={handleProfileChange}
-                      disabled={fieldsLocked}
+                      disabled={fieldsLocked || googleLock.nombre}
                       className="h-11 rounded-xl"
                       required
                     />
                   </div>
                   <div>
                     <label className="flex items-center gap-1 text-sm font-semibold text-slate-700 mb-1.5">
-                      Apellidos {fieldsLocked && <Lock className="w-3 h-3 text-slate-400" />}
+                      Apellidos {(fieldsLocked || googleLock.apellido) && <Lock className="w-3 h-3 text-slate-400" />}
                     </label>
                     <Input
                       name="apellido"
                       value={profile.apellido}
                       onChange={handleProfileChange}
-                      disabled={fieldsLocked}
+                      disabled={fieldsLocked || googleLock.apellido}
                       className="h-11 rounded-xl"
                       required
                     />

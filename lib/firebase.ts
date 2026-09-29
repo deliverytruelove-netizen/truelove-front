@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import type { Messaging } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -81,3 +82,27 @@ export async function onForegroundMessage(
 }
 
 export { app };
+
+/** Abre el popup de Google y devuelve el ID token de Firebase para validarlo en el backend. */
+export async function signInWithGoogle(): Promise<string> {
+  return (await signInWithGoogleProfile()).idToken;
+}
+
+/** Igual que signInWithGoogle, pero también devuelve correo y nombre de la cuenta de Google. */
+export async function signInWithGoogleProfile(): Promise<{
+  idToken: string;
+  email: string;
+  displayName: string;
+}> {
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  const result = await signInWithPopup(auth, provider);
+  const idToken = await result.user.getIdToken();
+  await auth.signOut(); // la sesión real es la de Sanctum, no la de Firebase
+  return {
+    idToken,
+    email: result.user.email ?? "",
+    displayName: result.user.displayName ?? "",
+  };
+}

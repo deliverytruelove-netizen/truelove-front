@@ -20,10 +20,11 @@ export interface Cliente {
 interface ApiErrorPayload {
   message?: string;
   errors?: Record<string, string[]>;
+  code?: string;
 }
 
 class ClienteAuthError extends Error {
-  constructor(message: string, public fieldErrors?: Record<string, string[]>) {
+  constructor(message: string, public fieldErrors?: Record<string, string[]>, public code?: string) {
     super(message);
   }
 }
@@ -44,7 +45,7 @@ async function request<T>(endpoint: string, body: Record<string, unknown>, token
   if (!response.ok) {
     const payload = data as ApiErrorPayload;
     const firstFieldError = payload.errors ? Object.values(payload.errors)[0]?.[0] : undefined;
-    throw new ClienteAuthError(firstFieldError || payload.message || "Ocurrió un error inesperado", payload.errors);
+    throw new ClienteAuthError(firstFieldError || payload.message || "Ocurrió un error inesperado", payload.errors, payload.code);
   }
 
   return data as T;
@@ -57,6 +58,9 @@ export interface LoginResponse {
 
 export const clienteLogin = (email: string, password: string) =>
   request<LoginResponse>("login", { email, password });
+
+export const clienteGoogleLogin = (idToken: string) =>
+  request<LoginResponse>("google-login", { id_token: idToken });
 
 export interface RegisterPayload {
   nombre: string;

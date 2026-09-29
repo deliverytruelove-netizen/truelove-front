@@ -7,11 +7,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { Loader2, MapPin, Percent, Timer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Logotipo from "@/src/assets/img/logotipo.png";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
-import { clienteLogin, ClienteAuthError } from "@/services/clienteAuthService";
+import { signInWithGoogle } from "@/lib/firebase";
+import { clienteLogin, clienteGoogleLogin, ClienteAuthError } from "@/services/clienteAuthService";
 
 const perks = [
   { icon: Timer, text: "Sigue tu pedido en tiempo real, desde la cocina hasta tu puerta." },
@@ -31,9 +33,39 @@ export default function ClienteLoginPage() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.replace("/cliente/cuenta");
+      router.replace("/cliente/locales");
     }
   }, [authLoading, isAuthenticated, router]);
+
+  const [notRegistered, setNotRegistered] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    setError(null);
+    setNotRegistered(false);
+    setIsGoogleLoading(true);
+    try {
+      const idToken = await signInWithGoogle();
+      const response = await clienteGoogleLogin(idToken);
+      login(response.token, response.cliente);
+      router.push("/cliente/locales");
+    } catch (err) {
+      if (err instanceof ClienteAuthError && err.code === "not_registered") {
+        setNotRegistered(true);
+        setError(err.message);
+      } else if ((err as { code?: string })?.code?.startsWith("auth/")) {
+        // popup cerrado / cancelado: no es un error a mostrar
+        const code = (err as { code: string }).code;
+        if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
+          setError("No se pudo iniciar sesión con Google");
+        }
+      } else {
+        setError(err instanceof ClienteAuthError ? err.message : "No se pudo iniciar sesión con Google");
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +75,7 @@ export default function ClienteLoginPage() {
     try {
       const response = await clienteLogin(email, password);
       login(response.token, response.cliente);
-      router.push("/cliente/cuenta");
+      router.push("/cliente/locales");
     } catch (err) {
       setError(err instanceof ClienteAuthError ? err.message : "No se pudo iniciar sesión");
     } finally {
@@ -133,6 +165,11 @@ export default function ClienteLoginPage() {
             {error && (
               <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
                 {error}
+                {notRegistered && (
+                  <Link href="/cliente/registro" className="block mt-1 font-bold underline">
+                    Regístrate aquí
+                  </Link>
+                )}
               </div>
             )}
 
@@ -189,6 +226,28 @@ export default function ClienteLoginPage() {
               className="w-full h-11 bg-gradient-to-r from-[#D9043D] via-[#e21b50] to-[#b8032f] hover:from-[#c20336] hover:to-[#9c0228] text-white font-bold rounded-xl shadow-md shadow-[#D9043D]/25 hover:shadow-lg hover:shadow-[#D9043D]/40 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70 disabled:hover:scale-100"
             >
               {isSubmitting ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : "Iniciar sesión"}
+            </button>
+
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="flex-1 h-px bg-slate-200" />
+              o
+              <span className="flex-1 h-px bg-slate-200" />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={isGoogleLoading || isSubmitting}
+              className="w-full h-11 flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-colors disabled:opacity-70"
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="animate-spin h-5 w-5" />
+              ) : (
+                <>
+                  <FcGoogle className="h-5 w-5" />
+                  Continuar con Google
+                </>
+              )}
             </button>
 
             <p className="text-center text-sm text-slate-500 pt-1">
