@@ -31,6 +31,7 @@ const TestNotificationsModule: React.FC = () => {
   const [sonido, setSonido] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [manualToken, setManualToken] = useState("");
 
   // Queries
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
@@ -72,7 +73,9 @@ const TestNotificationsModule: React.FC = () => {
 
   const users = getCurrentUsers();
   const selectedUser = users.find(u => u.id.toString() === selectedUserId);
-  const token = selectedUser ? (("token_fmc" in selectedUser ? selectedUser.token_fmc : null) || ("token_fmc_web" in selectedUser ? (selectedUser as Socio).token_fmc_web : null) || "") : "";
+  const selectedUserToken = selectedUser ? (("token_fmc" in selectedUser ? selectedUser.token_fmc : null) || ("token_fmc_web" in selectedUser ? (selectedUser as Socio).token_fmc_web : null) || "") : "";
+  // Si se pega un token FCM a mano (p. ej. de un emulador), tiene prioridad sobre el usuario seleccionado.
+  const token = manualToken.trim() || selectedUserToken;
 // ... rest of handleSend ...
 
   const handleSend = async () => {
@@ -167,6 +170,20 @@ const TestNotificationsModule: React.FC = () => {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="manual-token">Token FCM manual (opcional)</Label>
+            <Input
+              id="manual-token"
+              placeholder="Pega aquí un token FCM para probar sin elegir usuario (ej. emulador)"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              className="h-11 font-mono text-xs"
+            />
+            <p className="text-xs text-gray-500">
+              Si lo llenas, se usa este token y se ignora el usuario seleccionado.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="selected-user">Lista de Usuarios ({users.length})</Label>
             <div className="border rounded-md max-h-[250px] overflow-y-auto">
               {(loadingClientes || loadingMotorizados || loadingSocios) ? (
@@ -248,7 +265,7 @@ const TestNotificationsModule: React.FC = () => {
 
           <Button 
             className="w-full h-12 text-lg font-bold shadow-lg shadow-red-100" 
-            disabled={loading || !selectedUserId}
+            disabled={loading || !token}
             onClick={handleSend}
             variant="destructive"
           >
@@ -299,6 +316,7 @@ const TestNotificationsModule: React.FC = () => {
               </div>
               <p className="text-[10px] font-mono leading-tight">
                 {token || "Sin token disponible"}
+                {manualToken.trim() ? " (manual)" : ""}
               </p>
             </div>
           </div>
