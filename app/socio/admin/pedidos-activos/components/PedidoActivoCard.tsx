@@ -346,9 +346,9 @@ export default function PedidoActivoCard({ pedido }: Props) {
 
         {/* Nota */}
         {pedido.nota && pedido.nota !== "Sin nota" && (
-          <div className="flex items-start gap-1.5 text-xs text-muted-foreground italic">
-            <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <span className="line-clamp-1">{pedido.nota}</span>
+          <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-md px-2.5 py-2">
+            <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-medium text-amber-800 dark:text-amber-200 leading-snug">{pedido.nota}</span>
           </div>
         )}
 
@@ -377,7 +377,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
                     <span className="flex items-center gap-1">
                       <span className="text-gray-400">└─</span>
                       <span className="italic">{adicional.nombre}</span>
-                      <span className="text-blue-600 text-[10px]">(adic.)</span>
+                      <span className="text-blue-600 dark:text-blue-400 text-[10px]">(adic.)</span>
                     </span>
                     <span className="tabular-nums">
                       S/{(parseFloat(adicional.precio) * adicional.cantidad).toFixed(2)}

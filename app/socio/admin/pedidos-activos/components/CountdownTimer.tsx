@@ -47,20 +47,20 @@ export default function CountdownTimer({
 
   // Color based on remaining time
   let strokeColor = "#22c55e"; // green
-  let textColor = "text-green-700";
-  let bgColor = "bg-green-50";
+  let textColor = "text-green-700 dark:text-green-400";
+  let bgColor = "bg-green-50 dark:bg-green-900/20";
   if (isOvertime) {
     strokeColor = "#ef4444"; // red
-    textColor = "text-red-700";
-    bgColor = "bg-red-50";
+    textColor = "text-red-700 dark:text-red-400";
+    bgColor = "bg-red-50 dark:bg-red-900/20";
   } else if (progress < 0.25) {
     strokeColor = "#ef4444"; // red
-    textColor = "text-red-700";
-    bgColor = "bg-red-50";
+    textColor = "text-red-700 dark:text-red-400";
+    bgColor = "bg-red-50 dark:bg-red-900/20";
   } else if (progress < 0.5) {
     strokeColor = "#f59e0b"; // amber
-    textColor = "text-amber-700";
-    bgColor = "bg-amber-50";
+    textColor = "text-amber-700 dark:text-amber-400";
+    bgColor = "bg-amber-50 dark:bg-amber-900/20";
   }
 
   // SVG circle

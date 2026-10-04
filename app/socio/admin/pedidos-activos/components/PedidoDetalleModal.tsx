@@ -83,10 +83,10 @@ function ConfirmModal({
   if (!isOpen) return null;
 
   const iconColors = {
-    warning: "text-amber-500 bg-amber-100",
-    danger: "text-red-500 bg-red-100",
-    success: "text-green-500 bg-green-100",
-    info: "text-blue-500 bg-blue-100",
+    warning: "text-amber-500 bg-amber-100 dark:bg-amber-900/30",
+    danger: "text-red-500 bg-red-100 dark:bg-red-900/30",
+    success: "text-green-500 bg-green-100 dark:bg-green-900/30",
+    info: "text-blue-500 bg-blue-100 dark:bg-blue-900/30",
   };
 
   const buttonColors = {
@@ -100,7 +100,7 @@ function ConfirmModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200 text-foreground">
         <div className="p-5 text-center">
           <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 ${iconColors[type]}`}>
             <Icon className="h-7 w-7" />
@@ -150,10 +150,10 @@ function AlertModal({
   if (!isOpen) return null;
 
   const iconColors = {
-    warning: "text-amber-500 bg-amber-100",
-    error: "text-red-500 bg-red-100",
-    success: "text-green-500 bg-green-100",
-    info: "text-blue-500 bg-blue-100",
+    warning: "text-amber-500 bg-amber-100 dark:bg-amber-900/30",
+    error: "text-red-500 bg-red-100 dark:bg-red-900/30",
+    success: "text-green-500 bg-green-100 dark:bg-green-900/30",
+    info: "text-blue-500 bg-blue-100 dark:bg-blue-900/30",
   };
 
   const buttonColors = {
@@ -167,7 +167,7 @@ function AlertModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200 text-foreground">
         <div className="p-5 text-center">
           <div className={`mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 ${iconColors[type]}`}>
             <Icon className="h-7 w-7" />
@@ -491,7 +491,7 @@ function PedidoDetalleContent({
             {esDelivery ? "Delivery" : "Recojo"}
           </Badge>
           {pedido.tiempo > 0 && (
-            <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            <span className="flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
               <Timer className="h-3 w-3" />
               {pedido.tiempo} min
             </span>
@@ -517,8 +517,8 @@ function PedidoDetalleContent({
                 <div
                   className={`
                     w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all
-                    ${isCompleted ? "bg-black text-white" : "bg-white border-2 border-gray-300 text-gray-400"}
-                    ${isCurrent ? "ring-2 ring-black ring-offset-1 scale-110" : ""}
+                    ${isCompleted ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900" : "bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-400"}
+                    ${isCurrent ? "ring-2 ring-gray-900 dark:ring-white ring-offset-1 scale-110" : ""}
                   `}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -545,8 +545,8 @@ function PedidoDetalleContent({
                 <div
                   className={`
                     w-8 h-8 rounded-full flex items-center justify-center shrink-0
-                    ${isCompleted ? "bg-black text-white" : "bg-white border-2 border-gray-300 text-gray-400"}
-                    ${isCurrent ? "ring-2 ring-black ring-offset-2" : ""}
+                    ${isCompleted ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900" : "bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-400"}
+                    ${isCurrent ? "ring-2 ring-gray-900 dark:ring-white ring-offset-2" : ""}
                   `}
                 >
                   <Icon className="h-4 w-4" />
@@ -700,7 +700,7 @@ function PedidoDetalleContent({
                     <span className="text-xs md:text-sm italic">
                       ({adicional.cantidad}) {adicional.nombre}
                     </span>
-                    <Badge variant="secondary" className="text-[9px] md:text-[10px] px-1 py-0 bg-blue-100 text-blue-700">
+                    <Badge variant="secondary" className="text-[9px] md:text-[10px] px-1 py-0 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                       adic.
                     </Badge>
                   </div>
@@ -1259,7 +1259,7 @@ function PedidoDetalleDesktop({
           <Badge className={`${estadoInfo.bgColor} ${estadoInfo.color} border-0`}>{estadoInfo.label}</Badge>
           <Badge variant="outline">{esDelivery ? "Delivery" : "Recojo"}</Badge>
           {pedido.tiempo > 0 && (
-            <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
               <Timer className="h-3 w-3" />
               {pedido.tiempo} min
             </span>
@@ -1287,14 +1287,14 @@ function PedidoDetalleDesktop({
                   <div key={step.estado} className="flex items-center">
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center transition-all
-                        ${isCompleted ? "bg-black text-white" : "bg-white border border-gray-300 text-gray-400"}
-                        ${isCurrent ? "ring-2 ring-black ring-offset-1" : ""}`}
+                        ${isCompleted ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900" : "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-400"}
+                        ${isCurrent ? "ring-2 ring-gray-900 dark:ring-white ring-offset-1" : ""}`}
                       title={step.label}
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </div>
                     {index < estadosTimeline.length - 1 && (
-                      <div className={`w-3 h-0.5 ${isCompleted ? "bg-black" : "bg-gray-300"}`} />
+                      <div className={`w-3 h-0.5 ${isCompleted ? "bg-gray-900 dark:bg-white" : "bg-gray-300 dark:bg-gray-600"}`} />
                     )}
                   </div>
                 );
@@ -1303,9 +1303,9 @@ function PedidoDetalleDesktop({
           </div>
 
           {/* Cliente */}
-          <div className="flex items-center justify-between bg-white border rounded-lg p-3">
+          <div className="flex items-center justify-between bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                 <User className="h-4 w-4 text-red-600" />
               </div>
               <div>
@@ -1320,9 +1320,9 @@ function PedidoDetalleDesktop({
 
           {/* Motorizado */}
           {pedido.motorizado && estadoNum >= 2 && (
-            <div className="flex items-center justify-between bg-white border rounded-lg p-3">
+            <div className="flex items-center justify-between bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
                   <Bike className="h-4 w-4 text-orange-600" />
                 </div>
                 <div>
@@ -1340,9 +1340,9 @@ function PedidoDetalleDesktop({
 
           {/* Nota */}
           {pedido.nota && pedido.nota !== "Sin nota" && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs font-medium text-amber-800">Nota del cliente</p>
-              <p className="text-sm text-amber-700">{pedido.nota}</p>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-200">Nota del cliente</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">{pedido.nota}</p>
             </div>
           )}
 
@@ -1353,7 +1353,7 @@ function PedidoDetalleDesktop({
               <p className="font-semibold text-sm">{pedido.tipo_pago || "No especificado"}</p>
             </div>
             {(pedido.tipo_comprobante || pedido.documento) && (
-              <div className="bg-gray-100 rounded-lg p-2.5">
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-2.5">
                 <p className="text-[10px] text-muted-foreground">Comprobante</p>
                 <p className="text-sm font-medium">{pedido.tipo_comprobante} {pedido.documento && `- ${pedido.documento}`}</p>
               </div>
@@ -1362,7 +1362,7 @@ function PedidoDetalleDesktop({
 
           {/* Dirección */}
           {esDelivery && pedido.direccion_entrega && (
-            <div className="bg-white border rounded-lg p-3">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
@@ -1375,7 +1375,7 @@ function PedidoDetalleDesktop({
         </div>
 
         {/* Columna derecha - Productos */}
-        <div className="bg-white border rounded-lg p-3 flex flex-col">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 flex flex-col">
           <h4 className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide flex items-center gap-1">
             <ShoppingBag className="h-3.5 w-3.5" /> Productos
           </h4>
@@ -1400,7 +1400,7 @@ function PedidoDetalleDesktop({
                       <span className="text-gray-400 text-xs">└─</span>
                       <span className="text-xs">({adicional.cantidad})</span>
                       <span className="italic text-sm">{adicional.nombre}</span>
-                      <Badge variant="secondary" className="text-[9px] px-1 py-0 bg-blue-100 text-blue-700">
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                         adic.
                       </Badge>
                     </div>
@@ -1429,7 +1429,7 @@ function PedidoDetalleDesktop({
 
       {/* Input de tiempo */}
       {showTiempoInput && (
-        <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 space-y-2">
           <p className="text-sm font-medium">Tiempo de preparación (minutos):</p>
           <div className="flex gap-2">
             {[10, 15, 20, 30, 45].map((min) => (
@@ -1493,7 +1493,7 @@ function PedidoDetalleDesktop({
           )}
           {(estadoNum === 3 || estadoNum === 9) && (
             <>
-              <div className="flex-1 text-center py-2 bg-gray-50 rounded-lg">
+              <div className="flex-1 text-center py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <p className="text-sm text-muted-foreground">{estadoNum === 3 ? "Esperando motorizado..." : "Esperando al cliente..."}</p>
               </div>
               <Button onClick={handleCancelar} disabled={mutation.isPending} variant="destructive">
@@ -1503,8 +1503,8 @@ function PedidoDetalleDesktop({
           )}
           {estadoNum >= 4 && estadoNum <= 7 && (
             <>
-              <div className="flex-1 text-center py-2 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
+              <div className="flex-1 text-center py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
                   {estadoNum === 4 && "Motorizado en camino al local..."}
                   {estadoNum === 5 && "Motorizado recogiendo pedido..."}
                   {estadoNum === 6 && "Pedido en camino..."}
@@ -1533,23 +1533,23 @@ function PedidoDetalleDesktop({
       )}
 
       {estadoNum === 0 && (
-        <div className="flex items-center justify-center gap-2 py-2 bg-red-50 rounded-lg">
-          <XCircle className="h-4 w-4 text-red-600" />
-          <p className="text-sm font-medium text-red-700">Pedido cancelado</p>
+        <div className="flex items-center justify-center gap-2 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <p className="text-sm font-medium text-red-700 dark:text-red-400">Pedido cancelado</p>
         </div>
       )}
 
       {estadoNum === 8 && (
-        <div className="flex items-center justify-center gap-2 py-2 bg-green-50 rounded-lg">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <p className="text-sm font-medium text-green-700">Pedido entregado</p>
+        <div className="flex items-center justify-center gap-2 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <p className="text-sm font-medium text-green-700 dark:text-green-400">Pedido entregado</p>
         </div>
       )}
 
       {/* Modal de foto de pago */}
       {showFotoPago && pedido.foto_pago && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-lg w-full overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full overflow-hidden">
             <div className="bg-brand-600 text-white p-3 flex items-center justify-between">
               <h3 className="font-semibold">Comprobante de pago</h3>
               <div className="flex gap-2">
