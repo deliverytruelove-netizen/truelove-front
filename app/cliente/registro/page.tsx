@@ -301,8 +301,8 @@ export default function ClienteRegistroPage() {
         alias,
         celular: profile.celular,
         celular_whatsapp: profile.celular_whatsapp || profile.celular,
-        // El backend espera coordinates[0]=latitud, [1]=longitud; location.center es [lng, lat].
-        selectedPosition: { coordinates: [location.center[1], location.center[0]] },
+        // GeoJSON: coordinates = [lng, lat], igual que location.center (y que la app cliente).
+        selectedPosition: { coordinates: [location.center[0], location.center[1]] },
       });
       router.push("/cliente/locales");
     } catch (err) {

@@ -36,9 +36,8 @@ export const updateClienteDireccion = async (
     body: JSON.stringify({
       idCliente,
       direccion,
-      // El backend espera coordinates[0]=latitud, coordinates[1]=longitud
-      // (mismo criterio ya usado en el registro web).
-      selectedPosition: { coordinates: [center[1], center[0]] },
+      // GeoJSON: coordinates = [lng, lat] (igual que la app cliente).
+      selectedPosition: { coordinates: [center[0], center[1]] },
     }),
   });
 
