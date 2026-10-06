@@ -263,6 +263,10 @@ function ClienteLocalesContent() {
                   src={buildStorageUrl(local.banner)}
                   alt={local.nombre_establecimiento}
                   fill
+                  // Las primeras tarjetas (lo que se ve sin hacer scroll) cargan con prioridad;
+                  // el resto se carga de forma diferida al acercarse a la pantalla.
+                  priority={index < 4}
+                  loading={index < 4 ? undefined : "lazy"}
                   className="object-cover object-center"
                   fallback={
                     <div className="w-full h-full flex items-center justify-center text-slate-300">

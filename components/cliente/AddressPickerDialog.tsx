@@ -2,10 +2,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import MapComponent from "@/app/ubicar-local/components/BusinessMap";
-import SearchComponent from "@/app/ubicar-local/components/Search";
+import MapaDireccionCentrado from "@/components/cliente/MapaDireccionCentrado";
 import type { GoogleMapsLocation } from "@/app/ubicar-local/types/google-maps";
 import { loadLibrary } from "@/app/ubicar-local/services/maps.service";
 import { updateClienteDireccion } from "@/services/clienteProfileService";
@@ -38,15 +37,21 @@ export default function AddressPickerDialog({
   onClose,
   onSaved,
 }: AddressPickerDialogProps) {
+  // Dónde centrar el mapa al abrir (dirección guardada o GPS)
+  const [inicial, setInicial] = useState<GoogleMapsLocation | null>(null);
+  const [inicialListo, setInicialListo] = useState(false);
+  // Punto que marca el pin ahora mismo
   const [location, setLocation] = useState<GoogleMapsLocation | null>(null);
+  const [buscando, setBuscando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingInicial, setIsLoadingInicial] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Igual que la app: al abrir se ubica la dirección guardada en el mapa; si no hay
   // (o no se encuentra), se intenta con la ubicación actual del dispositivo.
   useEffect(() => {
     if (!open) {
+      setInicial(null);
+      setInicialListo(false);
       setLocation(null);
       setError(null);
       return;
@@ -54,7 +59,6 @@ export default function AddressPickerDialog({
 
     let cancelado = false;
     const cargarInicial = async () => {
-      setIsLoadingInicial(true);
       try {
         const lib = await loadLibrary<google.maps.GeocodingLibrary>("geocoding");
         const geocoder = new lib.Geocoder();
@@ -64,7 +68,7 @@ export default function AddressPickerDialog({
           try {
             const res = await geocoder.geocode({ address: direccion, region: "pe" });
             if (!cancelado && res.results[0]) {
-              setLocation(aUbicacion(res.results[0]));
+              setInicial(aUbicacion(res.results[0]));
               return;
             }
           } catch {
@@ -73,25 +77,26 @@ export default function AddressPickerDialog({
         }
 
         if (typeof navigator !== "undefined" && navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-              try {
-                const res = await geocoder.geocode({
-                  location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
-                });
-                if (!cancelado && res.results[0]) setLocation(aUbicacion(res.results[0]));
-              } catch {
-                // sin ubicación inicial: el cliente elige en el mapa
-              }
-            },
-            () => undefined,
-            { timeout: 8000 }
-          );
+          await new Promise<void>((resolver) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                if (!cancelado) {
+                  setInicial({
+                    formatted_address: "",
+                    center: [pos.coords.longitude, pos.coords.latitude],
+                  });
+                }
+                resolver();
+              },
+              () => resolver(),
+              { timeout: 8000 }
+            );
+          });
         }
       } catch {
         // si Google Maps no carga, el mapa mostrará su propio error
       } finally {
-        if (!cancelado) setIsLoadingInicial(false);
+        if (!cancelado) setInicialListo(true);
       }
     };
 
@@ -125,24 +130,34 @@ export default function AddressPickerDialog({
 
         {error && <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">{error}</div>}
 
-        <SearchComponent onLocationSelect={setLocation} />
-        <MapComponent selectedLocation={location} onLocationUpdate={setLocation} />
+        <p className="text-xs text-slate-500 -mt-1">
+          Mueve el mapa hasta que el pin quede en el lugar correcto.
+        </p>
 
-        <div className="text-sm text-slate-600 min-h-[2.5rem]">
-          {isLoadingInicial ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> Ubicando tu dirección…
-            </span>
-          ) : location ? (
-            <span className="font-semibold text-slate-800">{location.formatted_address}</span>
-          ) : (
-            "Busca tu dirección o toca el mapa para elegir el punto de entrega."
-          )}
+        {/* El mapa se crea cuando ya se sabe dónde centrarlo, para no abrir en otra ciudad */}
+        {inicialListo ? (
+          <MapaDireccionCentrado inicial={inicial} onChange={setLocation} onBuscando={setBuscando} />
+        ) : (
+          <div className="h-[55vh] min-h-[280px] max-h-[460px] rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+            <Loader2 className="w-6 h-6 animate-spin" />
+          </div>
+        )}
+
+        {/* La dirección se rellena sola al mover el mapa: no es un buscador */}
+        <div className="flex items-center gap-2 h-11 px-3 rounded-xl border border-slate-200 bg-slate-50">
+          <MapPin className="w-4 h-4 text-[#D9043D] shrink-0" />
+          <input
+            readOnly
+            value={buscando ? "Buscando dirección…" : location?.formatted_address || ""}
+            placeholder="Dirección seleccionada"
+            className="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-800 outline-none truncate"
+          />
+          {buscando && <Loader2 className="w-4 h-4 animate-spin text-slate-400 shrink-0" />}
         </div>
 
         <button
           onClick={handleConfirm}
-          disabled={!location || isSaving || isLoadingInicial}
+          disabled={!location || buscando || isSaving}
           className="w-full h-11 bg-[#D9043D] hover:bg-[#b8032f] text-white font-bold rounded-xl transition-colors disabled:opacity-50"
         >
           {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Continuar"}

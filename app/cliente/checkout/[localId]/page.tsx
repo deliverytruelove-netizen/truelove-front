@@ -3,7 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Bike, Loader2, MapPin, Pencil, Store, Tag, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Loader2, MapPin, Pencil, Store, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import { useClienteCart, cartItemTotal } from "@/context/ClienteCartContext";
@@ -29,7 +29,7 @@ export default function ClienteCheckoutPage() {
   const params = useParams<{ localId: string }>();
   const localId = Number(params.localId);
   const { cliente, refresh } = useClienteAuth();
-  const { getCartForLocal, clearCart, getDeliveryType, setDeliveryType: guardarTipoEntrega } = useClienteCart();
+  const { getCartForLocal, clearCart, getDeliveryType } = useClienteCart();
   // Tipo de entrega elegido antes en la página del local (no se vuelve a pedir)
   const deliveryType = getDeliveryType(localId);
   const cart = getCartForLocal(localId);
@@ -243,38 +243,26 @@ export default function ClienteCheckoutPage() {
                 Editar
               </button>
             </div>
+            <p className="text-xs text-slate-500 mt-3 pl-7">
+              {isLoadingDelivery ? "Calculando costo de envío..." : `Costo de envío: S/ ${precioDelivery.toFixed(2)}`}
+            </p>
           </div>
         )}
 
-        {/* Delivery / Recojo */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <h2 className="text-sm font-black text-slate-900 mb-3">Tipo de entrega</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => guardarTipoEntrega(localId, "delivery")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                deliveryType === "delivery" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              <Bike className="w-4 h-4" />
-              Delivery
-            </button>
-            <button
-              onClick={() => guardarTipoEntrega(localId, "pickup")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                deliveryType === "pickup" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              <Store className="w-4 h-4" />
-              Recojo en tienda
-            </button>
+        {/* Recojo en tienda: ya se eligió en la página del local, solo se informa */}
+        {deliveryType === "pickup" && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-4">
+            <div className="flex items-start gap-3">
+              <Store className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide">Recojo en tienda</p>
+                <p className="text-sm text-slate-700">
+                  Recoges tu pedido en {cart?.localName || "el local"}. No tiene costo de envío.
+                </p>
+              </div>
+            </div>
           </div>
-          {deliveryType === "delivery" && (
-            <p className="text-xs text-slate-500 mt-2">
-              {isLoadingDelivery ? "Calculando costo de envío..." : `Costo de envío: S/ ${precioDelivery.toFixed(2)}`}
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Método de pago */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
