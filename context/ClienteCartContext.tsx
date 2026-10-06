@@ -4,6 +4,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const CART_STORAGE_KEY = "cart_data";
+const DELIVERY_STORAGE_KEY = "cart_delivery_types";
+
+/** Cómo recibe el cliente el pedido: a domicilio o recogiéndolo en la tienda. */
+export type TipoEntrega = "delivery" | "pickup";
 
 export interface CartAdicionalItem {
   id: number;
@@ -39,6 +43,9 @@ interface ClienteCartContextValue {
   carts: CartsState;
   totalItemsCount: number;
   getCartForLocal: (localId: number) => LocalCart | undefined;
+  /** Tipo de entrega elegido para ese local ("delivery" si no se eligió nada). */
+  getDeliveryType: (localId: number) => TipoEntrega;
+  setDeliveryType: (localId: number, tipo: TipoEntrega) => void;
   addItem: (localId: number, localName: string, item: CartItem) => void;
   removeItem: (localId: number, cartItemId: string) => void;
   updateQuantity: (localId: number, cartItemId: string, quantity: number) => void;
@@ -57,6 +64,7 @@ export function cartItemTotal(item: CartItem): number {
 
 export function ClienteCartProvider({ children }: { children: React.ReactNode }) {
   const [carts, setCarts] = useState<CartsState>({});
+  const [deliveryTypes, setDeliveryTypes] = useState<Record<string, TipoEntrega>>({});
 
   useEffect(() => {
     try {
@@ -65,7 +73,32 @@ export function ClienteCartProvider({ children }: { children: React.ReactNode })
     } catch {
       // ignorar carrito corrupto
     }
+    try {
+      const storedTypes = localStorage.getItem(DELIVERY_STORAGE_KEY);
+      if (storedTypes) setDeliveryTypes(JSON.parse(storedTypes));
+    } catch {
+      // ignorar preferencia corrupta
+    }
   }, []);
+
+  const persistDeliveryTypes = useCallback((next: Record<string, TipoEntrega>) => {
+    setDeliveryTypes(next);
+    try {
+      localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // almacenamiento no disponible, se mantiene solo en memoria
+    }
+  }, []);
+
+  const getDeliveryType = useCallback(
+    (localId: number): TipoEntrega => deliveryTypes[String(localId)] ?? "delivery",
+    [deliveryTypes]
+  );
+
+  const setDeliveryType = useCallback(
+    (localId: number, tipo: TipoEntrega) => persistDeliveryTypes({ ...deliveryTypes, [String(localId)]: tipo }),
+    [deliveryTypes, persistDeliveryTypes]
+  );
 
   const persist = useCallback((next: CartsState) => {
     setCarts(next);
@@ -123,8 +156,15 @@ export function ClienteCartProvider({ children }: { children: React.ReactNode })
       const next = { ...carts };
       delete next[String(localId)];
       persist(next);
+
+      // Pedido terminado: la próxima vez se vuelve a elegir el tipo de entrega
+      if (deliveryTypes[String(localId)]) {
+        const types = { ...deliveryTypes };
+        delete types[String(localId)];
+        persistDeliveryTypes(types);
+      }
     },
-    [carts, persist]
+    [carts, persist, deliveryTypes, persistDeliveryTypes]
   );
 
   const totalItemsCount = Object.values(carts).reduce(
@@ -134,7 +174,17 @@ export function ClienteCartProvider({ children }: { children: React.ReactNode })
 
   return (
     <ClienteCartContext.Provider
-      value={{ carts, totalItemsCount, getCartForLocal, addItem, removeItem, updateQuantity, clearCart }}
+      value={{
+        carts,
+        totalItemsCount,
+        getCartForLocal,
+        getDeliveryType,
+        setDeliveryType,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+      }}
     >
       {children}
     </ClienteCartContext.Provider>

@@ -39,7 +39,7 @@ export default function SolicitudesCancelacionList() {
         title: variables.yaCancelado ? "Revisión guardada" : "Aprobada",
         text: variables.yaCancelado
           ? variables.deuda?.generar_deuda
-            ? "Se generó la deuda al cliente."
+            ? "Se generó la deuda al cliente. La encuentras (y puedes revocarla) en Deudas de clientes."
             : "Se guardó sin generar deuda."
           : "El pedido fue cancelado.",
         icon: "success",
@@ -222,6 +222,23 @@ export default function SolicitudesCancelacionList() {
                     <p>{solicitud.motivo}</p>
                     {solicitud.detalle && (
                       <p className="text-xs text-gray-500">{solicitud.detalle}</p>
+                    )}
+                    {solicitud.foto_evidencia_url && (
+                      <a
+                        href={solicitud.foto_evidencia_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ver foto de evidencia"
+                        className="inline-block mt-2"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={solicitud.foto_evidencia_url}
+                          alt="Evidencia del motorizado"
+                          className="w-20 h-20 object-cover rounded-lg border"
+                        />
+                        <span className="block text-xs text-blue-600 mt-1">Ver evidencia</span>
+                      </a>
                     )}
                     {solicitud.culpa_cliente && (
                       <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">

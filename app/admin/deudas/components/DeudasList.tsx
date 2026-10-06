@@ -10,6 +10,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
   Trash2,
 } from "lucide-react";
@@ -21,7 +22,7 @@ import DeudaFormModal from "./DeudaFormModal";
 const FILTROS: { valor: EstadoDeuda | "todas"; etiqueta: string }[] = [
   { valor: "pendiente", etiqueta: "Solo pendientes" },
   { valor: "pagado", etiqueta: "Pagadas" },
-  { valor: "anulado", etiqueta: "Anuladas" },
+  { valor: "anulado", etiqueta: "Revocadas" },
   { valor: "todas", etiqueta: "Todas" },
 ];
 
@@ -34,7 +35,7 @@ const BADGE: Record<EstadoDeuda, string> = {
 const ETIQUETA: Record<EstadoDeuda, string> = {
   pendiente: "Pendiente",
   pagado: "Pagado",
-  anulado: "Anulado",
+  anulado: "Revocada",
 };
 
 export default function DeudasList() {
@@ -65,8 +66,19 @@ export default function DeudasList() {
     });
 
   const mutEstado = useMutation({
-    mutationFn: ({ id, nuevo }: { id: number; nuevo: EstadoDeuda }) =>
-      actualizarDeuda(id, { estado: nuevo }),
+    mutationFn: ({
+      id,
+      nuevo,
+      observaciones,
+    }: {
+      id: number;
+      nuevo: EstadoDeuda;
+      observaciones?: string;
+    }) =>
+      actualizarDeuda(id, {
+        estado: nuevo,
+        ...(observaciones ? { observaciones_admin: observaciones } : {}),
+      }),
     onSuccess: refrescar,
     onError: avisoError,
   });
@@ -79,20 +91,43 @@ export default function DeudasList() {
   const cambiarEstado = async (d: Deuda, nuevo: "pagado" | "anulado") => {
     const pagar = nuevo === "pagado";
     const result = await Swal.fire({
-      title: pagar ? "¿Marcar como pagada?" : "¿Condonar esta deuda?",
-      html: `<p><b>${d.cliente ?? "Cliente"}</b> · S/ ${d.monto}</p><p style="margin-top:8px">El cliente podrá volver a hacer pedidos de inmediato${
-        d.estado === "pendiente" ? "" : " (si no tiene otras deudas pendientes)"
-      }.</p>`,
+      title: pagar ? "¿Marcar como pagada?" : "¿Revocar esta deuda?",
+      html: `<p><b>${d.cliente ?? "Cliente"}</b> · S/ ${d.monto}</p><p style="margin-top:8px">El cliente podrá volver a hacer pedidos de inmediato (si no tiene otras deudas pendientes) y recibirá un aviso.</p>`,
+      input: "text",
+      inputPlaceholder: pagar
+        ? "Nota (opcional): cómo pagó"
+        : "Motivo de la revocación (opcional)",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: pagar ? "#16a34a" : "#dc2626",
       cancelButtonColor: "#6b7280",
-      confirmButtonText: pagar ? "Sí, marcar pagada" : "Sí, condonar",
+      confirmButtonText: pagar ? "Sí, marcar pagada" : "Sí, revocar",
       cancelButtonText: "Cancelar",
     });
-    if (result.isConfirmed) mutEstado.mutate({ id: d.id, nuevo });
+    if (!result.isConfirmed) return;
+
+    // La nota queda en las observaciones, junto a lo que ya hubiera
+    const nota = (result.value as string | undefined)?.trim();
+    const etiqueta = pagar ? "Pagada" : "Revocada";
+    const observaciones = nota
+      ? [d.observaciones_admin, `${etiqueta}: ${nota}`].filter(Boolean).join(" | ")
+      : undefined;
+    mutEstado.mutate({ id: d.id, nuevo, observaciones });
   };
 
+  const reactivar = async (d: Deuda) => {
+    const result = await Swal.fire({
+      title: "¿Reactivar la deuda?",
+      html: `<p><b>${d.cliente ?? "Cliente"}</b> · S/ ${d.monto}</p><p style="margin-top:8px">Vuelve a quedar pendiente y el cliente no podrá hacer pedidos hasta regularizarla.</p>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, reactivar",
+      cancelButtonText: "Cancelar",
+    });
+    if (result.isConfirmed) mutEstado.mutate({ id: d.id, nuevo: "pendiente" });
+  };
   const handleEliminar = async (d: Deuda) => {
     const result = await Swal.fire({
       title: "¿Eliminar la deuda?",
@@ -143,7 +178,7 @@ export default function DeudasList() {
             <p className="text-2xl font-bold">{conteos.pagado}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 border-l-4 border-gray-400">
-            <p className="text-sm text-gray-500">Anuladas</p>
+            <p className="text-sm text-gray-500">Revocadas</p>
             <p className="text-2xl font-bold">{conteos.anulado}</p>
           </div>
         </div>
@@ -179,7 +214,7 @@ export default function DeudasList() {
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, DNI o teléfono"
+            placeholder="Buscar por nombre, DNI, teléfono o N.º de pedido"
             className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-64"
           />
           <button type="submit" className="px-3 py-1.5 bg-gray-800 text-white rounded-lg" title="Buscar">
@@ -237,6 +272,23 @@ export default function DeudasList() {
                     {d.observaciones_admin && (
                       <p className="text-xs text-gray-500">{d.observaciones_admin}</p>
                     )}
+                    {d.foto_evidencia_url && (
+                      <a
+                        href={d.foto_evidencia_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ver foto de evidencia"
+                        className="inline-block mt-2"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={d.foto_evidencia_url}
+                          alt="Evidencia del motorizado"
+                          className="w-16 h-16 object-cover rounded-lg border"
+                        />
+                        <span className="block text-xs text-blue-600 mt-1">Ver evidencia</span>
+                      </a>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900 whitespace-nowrap">
                     S/ {d.monto}
@@ -245,6 +297,11 @@ export default function DeudasList() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${BADGE[d.estado]}`}>
                       {ETIQUETA[d.estado]}
                     </span>
+                    {d.estado !== "pendiente" && d.gestionada_at && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(d.gestionada_at).toLocaleDateString("es-ES")}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                     {new Date(d.created_at).toLocaleDateString("es-ES")}
@@ -263,11 +320,20 @@ export default function DeudasList() {
                           <button
                             onClick={() => cambiarEstado(d, "anulado")}
                             className="text-orange-600 hover:text-orange-800"
-                            title="Condonar (anular)"
+                            title="Revocar deuda (el cliente queda libre)"
                           >
                             <Ban className="w-5 h-5" />
                           </button>
                         </>
+                      )}
+                      {d.estado !== "pendiente" && (
+                        <button
+                          onClick={() => reactivar(d)}
+                          className="text-purple-600 hover:text-purple-800"
+                          title="Reactivar (vuelve a pendiente)"
+                        >
+                          <RotateCcw className="w-5 h-5" />
+                        </button>
                       )}
                       <button
                         onClick={() => setModal({ abierto: true, deuda: d })}

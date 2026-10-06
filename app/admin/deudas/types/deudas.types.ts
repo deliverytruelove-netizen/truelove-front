@@ -15,6 +15,8 @@ export interface Deuda {
   estado: EstadoDeuda;
   registrado_por: "motorizado" | "admin";
   observaciones_admin: string | null;
+  /** Foto de evidencia del motorizado (si la cancelación la tenía) */
+  foto_evidencia_url: string | null;
   created_at: string;
   gestionada_at: string | null;
 }

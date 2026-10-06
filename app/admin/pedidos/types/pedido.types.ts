@@ -37,6 +37,8 @@ export interface SolicitudCancelacion {
   solicitado_por_motorizado_id?: number | null;
   culpa_cliente?: boolean;
   detalle?: string | null;
+  /** Foto de evidencia que adjuntó el motorizado al cancelar */
+  foto_evidencia_url?: string | null;
   deuda_id?: number | null;
   /** Total del pedido: monto sugerido si se genera una deuda */
   monto_sugerido?: number;

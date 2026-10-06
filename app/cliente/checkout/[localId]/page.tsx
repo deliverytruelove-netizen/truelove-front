@@ -17,7 +17,6 @@ import {
   TipoDescuento,
 } from "@/services/clienteCheckoutService";
 
-type DeliveryType = "delivery" | "pickup";
 type TipoComprobante = "ninguno" | "boleta" | "factura";
 
 // Recargo por pago con POS, igual que en la app (ids de medios de pago fijos).
@@ -30,13 +29,14 @@ export default function ClienteCheckoutPage() {
   const params = useParams<{ localId: string }>();
   const localId = Number(params.localId);
   const { cliente, refresh } = useClienteAuth();
-  const { getCartForLocal, clearCart } = useClienteCart();
+  const { getCartForLocal, clearCart, getDeliveryType, setDeliveryType: guardarTipoEntrega } = useClienteCart();
+  // Tipo de entrega elegido antes en la página del local (no se vuelve a pedir)
+  const deliveryType = getDeliveryType(localId);
   const cart = getCartForLocal(localId);
 
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [addressVersion, setAddressVersion] = useState(0);
 
-  const [deliveryType, setDeliveryType] = useState<DeliveryType>("delivery");
   const [mediosPago, setMediosPago] = useState<MedioPago[]>([]);
   const [idTipoPago, setIdTipoPago] = useState<number | null>(null);
   const [pagaConModo, setPagaConModo] = useState<"exacto" | "cambio">("exacto");
@@ -251,7 +251,7 @@ export default function ClienteCheckoutPage() {
           <h2 className="text-sm font-black text-slate-900 mb-3">Tipo de entrega</h2>
           <div className="flex gap-2">
             <button
-              onClick={() => setDeliveryType("delivery")}
+              onClick={() => guardarTipoEntrega(localId, "delivery")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors ${
                 deliveryType === "delivery" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
               }`}
@@ -260,7 +260,7 @@ export default function ClienteCheckoutPage() {
               Delivery
             </button>
             <button
-              onClick={() => setDeliveryType("pickup")}
+              onClick={() => guardarTipoEntrega(localId, "pickup")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-colors ${
                 deliveryType === "pickup" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
               }`}
@@ -451,6 +451,7 @@ export default function ClienteCheckoutPage() {
       <AddressPickerDialog
         open={showAddressPicker}
         idCliente={cliente?.id || 0}
+        direccionActual={cliente?.direccion}
         onClose={() => setShowAddressPicker(false)}
         onSaved={async () => {
           await refresh();

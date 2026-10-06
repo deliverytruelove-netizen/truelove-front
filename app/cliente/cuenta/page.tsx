@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import AddressPickerDialog from "@/components/cliente/AddressPickerDialog";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import { updateClienteField, deleteClienteAccount, ProfileFieldType } from "@/services/clienteProfileService";
 
@@ -30,10 +31,12 @@ interface EditableRowProps {
   value: string;
   field: ProfileFieldType;
   type?: "text" | "email" | "date";
+  /** Si se indica, el campo se edita con una lista de opciones. */
+  options?: string[];
   onSaved: (value: string) => void;
 }
 
-function EditableRow({ icon: Icon, label, value, field, type = "text", onSaved }: EditableRowProps) {
+function EditableRow({ icon: Icon, label, value, field, type = "text", options, onSaved }: EditableRowProps) {
   const { cliente } = useClienteAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -61,13 +64,27 @@ function EditableRow({ icon: Icon, label, value, field, type = "text", onSaved }
         <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1.5">{label}</p>
         {error && <p className="text-xs text-red-600 mb-1.5">{error}</p>}
         <div className="flex gap-2">
-          <Input
-            type={type}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            className="h-9 text-sm"
-            autoFocus
-          />
+          {options ? (
+            <select
+              value={options.includes(draft) ? draft : options[0]}
+              onChange={(e) => setDraft(e.target.value)}
+              className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm"
+            >
+              {options.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              type={type}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="h-9 text-sm"
+              autoFocus
+            />
+          )}
           <button
             onClick={handleSave}
             disabled={isSaving}
@@ -111,6 +128,7 @@ export default function ClienteCuentaPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -199,15 +217,28 @@ export default function ClienteCuentaPage() {
               onSaved={refresh}
             />
 
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <EditableRow
+              icon={User}
+              label="Género"
+              value={cliente.genero || ""}
+              field="genero"
+              options={["Masculino", "Femenino", "Otro"]}
+              onSaved={refresh}
+            />
+
+            <button
+              onClick={() => setShowAddressPicker(true)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 text-left group"
+            >
               <MapPin className="w-4 h-4 text-red-500 shrink-0" />
-              <div className="min-w-0">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Dirección</p>
                 <p className="text-sm font-semibold text-slate-800 truncate">
                   {cliente.direccion || "No registrada"}
                 </p>
               </div>
-            </div>
+              <Pencil className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 shrink-0" />
+            </button>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
@@ -283,6 +314,17 @@ export default function ClienteCuentaPage() {
           )}
         </div>
       </div>
+
+      <AddressPickerDialog
+        open={showAddressPicker}
+        idCliente={cliente.id}
+        direccionActual={cliente.direccion}
+        onClose={() => setShowAddressPicker(false)}
+        onSaved={async () => {
+          await refresh();
+          setShowAddressPicker(false);
+        }}
+      />
     </div>
   );
 }

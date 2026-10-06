@@ -14,7 +14,6 @@ import ClienteHeaderActions from "@/components/cliente/ClienteHeaderActions";
 import SafeImage from "@/components/cliente/SafeImage";
 import HorizontalScroller from "@/components/cliente/HorizontalScroller";
 
-type DeliveryType = "delivery" | "recojo";
 
 export default function ClienteLocalDetallePage() {
   const router = useRouter();
@@ -27,14 +26,15 @@ export default function ClienteLocalDetallePage() {
   const [activeCategoria, setActiveCategoria] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [deliveryType, setDeliveryType] = useState<DeliveryType>("delivery");
   const [query, setQuery] = useState("");
 
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const chipsContainerRef = useRef<HTMLDivElement | null>(null);
   const suppressObserverRef = useRef(false);
-  const { getCartForLocal, addItem } = useClienteCart();
+  const { getCartForLocal, addItem, getDeliveryType, setDeliveryType } = useClienteCart();
+  // Se guarda por local para que el checkout lo respete (antes volvía a pedirlo)
+  const deliveryType = getDeliveryType(localId);
   const cart = getCartForLocal(localId);
   const cartCount = cart?.items.reduce((s, i) => s + i.quantity, 0) || 0;
   const cartTotal = cart?.items.reduce((s, i) => s + cartItemTotal(i), 0) || 0;
@@ -184,7 +184,7 @@ export default function ClienteLocalDetallePage() {
         {/* Delivery / Recojo en tienda */}
         <div className="flex gap-2 mb-4">
           <button
-            onClick={() => setDeliveryType("delivery")}
+            onClick={() => setDeliveryType(localId, "delivery")}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors ${
               deliveryType === "delivery" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
@@ -193,9 +193,9 @@ export default function ClienteLocalDetallePage() {
             Delivery
           </button>
           <button
-            onClick={() => setDeliveryType("recojo")}
+            onClick={() => setDeliveryType(localId, "pickup")}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors ${
-              deliveryType === "recojo" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              deliveryType === "pickup" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
             <Store className="w-4 h-4" />
