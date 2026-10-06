@@ -31,13 +31,17 @@ export default function SolicitudesCancelacionList() {
   };
 
   const mutationAprobar = useMutation({
-    mutationFn: ({ id, deuda }: { id: number; deuda?: OpcionesDeuda }) =>
+    mutationFn: ({ id, deuda }: { id: number; deuda?: OpcionesDeuda; yaCancelado: boolean }) =>
       aprobarSolicitudCancelacion(id, deuda),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       invalidar();
       Swal.fire({
-        title: "Aprobada",
-        text: "El pedido fue cancelado.",
+        title: variables.yaCancelado ? "Revisión guardada" : "Aprobada",
+        text: variables.yaCancelado
+          ? variables.deuda?.generar_deuda
+            ? "Se generó la deuda al cliente."
+            : "Se guardó sin generar deuda."
+          : "El pedido fue cancelado.",
         icon: "success",
         confirmButtonColor: "#dc2626",
       });
@@ -48,12 +52,14 @@ export default function SolicitudesCancelacionList() {
   });
 
   const mutationRechazar = useMutation({
-    mutationFn: (id: number) => rechazarSolicitudCancelacion(id),
-    onSuccess: () => {
+    mutationFn: ({ id }: { id: number; yaCancelado: boolean }) => rechazarSolicitudCancelacion(id),
+    onSuccess: (_data, variables) => {
       invalidar();
       Swal.fire({
-        title: "Declinada",
-        text: "El pedido continúa su curso normal.",
+        title: variables.yaCancelado ? "Revisión cerrada" : "Declinada",
+        text: variables.yaCancelado
+          ? "Sin deuda. El pedido sigue cancelado."
+          : "El pedido continúa su curso normal.",
         icon: "success",
         confirmButtonColor: "#dc2626",
       });
@@ -67,10 +73,19 @@ export default function SolicitudesCancelacionList() {
     const sugerido = (solicitud.monto_sugerido ?? 0).toFixed(2);
     const escapar = (t: string) => t.replace(/"/g, "&quot;");
 
+    // Si la pidió el motorizado, el pedido ya está cancelado: solo se revisa y se decide la deuda
+    const yaCancelado = !!solicitud.solicitado_por_motorizado_id;
+
     const result = await Swal.fire({
-      title: `¿Aprobar cancelación del pedido #${solicitud.pedido_id}?`,
+      title: yaCancelado
+        ? `Revisar cancelación del pedido #${solicitud.pedido_id}`
+        : `¿Aprobar cancelación del pedido #${solicitud.pedido_id}?`,
       html: `
-        <p style="margin-bottom:12px">El pedido pasará a estado Cancelado y se notificará al cliente.</p>
+        <p style="margin-bottom:12px">${
+          yaCancelado
+            ? "El motorizado ya canceló este pedido. Decide si el cliente queda con una deuda."
+            : "El pedido pasará a estado Cancelado y se notificará al cliente."
+        }</p>
         <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:10px">
           <input type="checkbox" id="swal-deuda" ${solicitud.culpa_cliente ? "checked" : ""} />
           <span><b>Generar deuda al cliente</b>${solicitud.culpa_cliente ? " (el repartidor indicó culpa del cliente)" : ""}</span>
@@ -85,7 +100,7 @@ export default function SolicitudesCancelacionList() {
       showCancelButton: true,
       confirmButtonColor: "#dc2626",
       cancelButtonColor: "#6b7280",
-      confirmButtonText: "Sí, aprobar y cancelar",
+      confirmButtonText: yaCancelado ? "Guardar revisión" : "Sí, aprobar y cancelar",
       cancelButtonText: "Volver",
       didOpen: () => {
         const check = document.getElementById("swal-deuda") as HTMLInputElement;
@@ -107,22 +122,27 @@ export default function SolicitudesCancelacionList() {
       },
     });
     if (result.isConfirmed) {
-      mutationAprobar.mutate({ id: solicitud.id, deuda: result.value as OpcionesDeuda });
+      mutationAprobar.mutate({ id: solicitud.id, deuda: result.value as OpcionesDeuda, yaCancelado });
     }
   };
 
-  const handleRechazar = async (id: number, pedidoId: number) => {
+  const handleRechazar = async (solicitud: SolicitudCancelacion) => {
+    const yaCancelado = !!solicitud.solicitado_por_motorizado_id;
     const result = await Swal.fire({
-      title: `¿Declinar cancelación del pedido #${pedidoId}?`,
-      text: "El pedido continuará su curso normal y se notificará al socio.",
+      title: yaCancelado
+        ? `¿Cerrar la revisión del pedido #${solicitud.pedido_id} sin deuda?`
+        : `¿Declinar cancelación del pedido #${solicitud.pedido_id}?`,
+      text: yaCancelado
+        ? "El pedido seguirá cancelado y el cliente no quedará con ninguna deuda."
+        : "El pedido continuará su curso normal y se notificará al socio.",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#6b7280",
       cancelButtonColor: "#9ca3af",
-      confirmButtonText: "Sí, declinar",
+      confirmButtonText: yaCancelado ? "Sí, cerrar sin deuda" : "Sí, declinar",
       cancelButtonText: "Volver",
     });
-    if (result.isConfirmed) mutationRechazar.mutate(id);
+    if (result.isConfirmed) mutationRechazar.mutate({ id: solicitud.id, yaCancelado });
   };
 
   const formatDate = (dateString: string) => {
@@ -218,15 +238,15 @@ export default function SolicitudesCancelacionList() {
                         onClick={() => handleAprobar(solicitud)}
                         disabled={mutationAprobar.isPending || mutationRechazar.isPending}
                         className="text-green-600 hover:text-green-800 transition disabled:opacity-50"
-                        title="Aprobar (cancela el pedido)"
+                        title={solicitud.solicitado_por_motorizado_id ? "Revisar y decidir la deuda (el pedido ya está cancelado)" : "Aprobar (cancela el pedido)"}
                       >
                         <CheckCircle className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => handleRechazar(solicitud.id, solicitud.pedido_id)}
+                        onClick={() => handleRechazar(solicitud)}
                         disabled={mutationAprobar.isPending || mutationRechazar.isPending}
                         className="text-red-600 hover:text-red-800 transition disabled:opacity-50"
-                        title="Declinar (el pedido continúa)"
+                        title={solicitud.solicitado_por_motorizado_id ? "Cerrar sin deuda (el pedido sigue cancelado)" : "Declinar (el pedido continúa)"}
                       >
                         <XCircle className="w-5 h-5" />
                       </button>
