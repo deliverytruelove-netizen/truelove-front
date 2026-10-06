@@ -120,12 +120,22 @@ export const fetchHistorialSolicitudesCancelacion = async (): Promise<
   return response.json();
 };
 
-export const aprobarSolicitudCancelacion = async (id: number): Promise<void> => {
+export interface OpcionesDeuda {
+  generar_deuda: boolean;
+  monto?: number;
+  motivo_deuda?: string;
+}
+
+export const aprobarSolicitudCancelacion = async (
+  id: number,
+  deuda?: OpcionesDeuda
+): Promise<void> => {
   const response = await fetch(
     `${API_URL}/admin/pedidos/cancelacion-solicitudes/${id}/approve`,
     {
       method: "POST",
       headers: getAuthHeaders(),
+      body: JSON.stringify(deuda ?? {}),
     }
   );
 

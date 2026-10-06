@@ -8,7 +8,9 @@ import {
   fetchSolicitudesCancelacionPendientes,
   aprobarSolicitudCancelacion,
   rechazarSolicitudCancelacion,
+  type OpcionesDeuda,
 } from "../services/pedido-admin.service";
+import type { SolicitudCancelacion } from "../types/pedido.types";
 
 export default function SolicitudesCancelacionList() {
   const queryClient = useQueryClient();
@@ -29,7 +31,8 @@ export default function SolicitudesCancelacionList() {
   };
 
   const mutationAprobar = useMutation({
-    mutationFn: (id: number) => aprobarSolicitudCancelacion(id),
+    mutationFn: ({ id, deuda }: { id: number; deuda?: OpcionesDeuda }) =>
+      aprobarSolicitudCancelacion(id, deuda),
     onSuccess: () => {
       invalidar();
       Swal.fire({
@@ -60,18 +63,52 @@ export default function SolicitudesCancelacionList() {
     },
   });
 
-  const handleAprobar = async (id: number, pedidoId: number) => {
+  const handleAprobar = async (solicitud: SolicitudCancelacion) => {
+    const sugerido = (solicitud.monto_sugerido ?? 0).toFixed(2);
+    const escapar = (t: string) => t.replace(/"/g, "&quot;");
+
     const result = await Swal.fire({
-      title: `¿Aprobar cancelación del pedido #${pedidoId}?`,
-      text: "El pedido pasará a estado Cancelado y se notificará al cliente.",
+      title: `¿Aprobar cancelación del pedido #${solicitud.pedido_id}?`,
+      html: `
+        <p style="margin-bottom:12px">El pedido pasará a estado Cancelado y se notificará al cliente.</p>
+        <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:10px">
+          <input type="checkbox" id="swal-deuda" ${solicitud.culpa_cliente ? "checked" : ""} />
+          <span><b>Generar deuda al cliente</b>${solicitud.culpa_cliente ? " (el repartidor indicó culpa del cliente)" : ""}</span>
+        </label>
+        <div id="swal-deuda-campos" style="text-align:left">
+          <label style="font-size:13px">Monto (S/) — por defecto el total del pedido</label>
+          <input id="swal-monto" class="swal2-input" type="number" min="0.01" step="0.01" value="${sugerido}" style="margin:4px 0 10px;width:100%" />
+          <label style="font-size:13px">Motivo de la deuda</label>
+          <input id="swal-motivo" class="swal2-input" type="text" maxlength="255" value="${escapar(solicitud.motivo)}" style="margin:4px 0 0;width:100%" />
+        </div>`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#dc2626",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "Sí, aprobar y cancelar",
       cancelButtonText: "Volver",
+      didOpen: () => {
+        const check = document.getElementById("swal-deuda") as HTMLInputElement;
+        const campos = document.getElementById("swal-deuda-campos") as HTMLElement;
+        const sync = () => (campos.style.display = check.checked ? "block" : "none");
+        check.addEventListener("change", sync);
+        sync();
+      },
+      preConfirm: () => {
+        const generar = (document.getElementById("swal-deuda") as HTMLInputElement).checked;
+        if (!generar) return { generar_deuda: false } as OpcionesDeuda;
+        const monto = parseFloat((document.getElementById("swal-monto") as HTMLInputElement).value);
+        const motivo = (document.getElementById("swal-motivo") as HTMLInputElement).value.trim();
+        if (!monto || monto <= 0) {
+          Swal.showValidationMessage("Ingresa un monto mayor a 0");
+          return false;
+        }
+        return { generar_deuda: true, monto, motivo_deuda: motivo || undefined } as OpcionesDeuda;
+      },
     });
-    if (result.isConfirmed) mutationAprobar.mutate(id);
+    if (result.isConfirmed) {
+      mutationAprobar.mutate({ id: solicitud.id, deuda: result.value as OpcionesDeuda });
+    }
   };
 
   const handleRechazar = async (id: number, pedidoId: number) => {
@@ -159,7 +196,18 @@ export default function SolicitudesCancelacionList() {
                     {solicitud.pedido?.cliente || "-"}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
-                    {solicitud.motivo}
+                    {solicitud.solicitante && (
+                      <p className="text-xs text-gray-400">{solicitud.solicitante}</p>
+                    )}
+                    <p>{solicitud.motivo}</p>
+                    {solicitud.detalle && (
+                      <p className="text-xs text-gray-500">{solicitud.detalle}</p>
+                    )}
+                    {solicitud.culpa_cliente && (
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                        Culpa del cliente
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatDate(solicitud.created_at)}
@@ -167,7 +215,7 @@ export default function SolicitudesCancelacionList() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex gap-3">
                       <button
-                        onClick={() => handleAprobar(solicitud.id, solicitud.pedido_id)}
+                        onClick={() => handleAprobar(solicitud)}
                         disabled={mutationAprobar.isPending || mutationRechazar.isPending}
                         className="text-green-600 hover:text-green-800 transition disabled:opacity-50"
                         title="Aprobar (cancela el pedido)"

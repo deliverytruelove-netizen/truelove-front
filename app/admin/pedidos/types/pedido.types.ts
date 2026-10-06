@@ -34,6 +34,14 @@ export interface SolicitudCancelacion {
   motivo: string;
   status: "pending" | "approved" | "rejected";
   solicitado_por_socio_id: number | null;
+  solicitado_por_motorizado_id?: number | null;
+  culpa_cliente?: boolean;
+  detalle?: string | null;
+  deuda_id?: number | null;
+  /** Total del pedido: monto sugerido si se genera una deuda */
+  monto_sugerido?: number;
+  /** "Local" o "Motorizado Nombre" */
+  solicitante?: string;
   revisado_por_admin_id: number | null;
   revisado_at: string | null;
   created_at: string;

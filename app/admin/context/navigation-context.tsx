@@ -16,6 +16,7 @@ import {
   RiSmartphoneLine,
   RiFileList3Line,
   RiHome4Line,
+  RiMoneyDollarCircleLine,
 } from "react-icons/ri";
 
 export interface NavItem {
@@ -117,6 +118,11 @@ export const navigationItems: NavItem[] = [
     title: "Tipos de Negocio",
     path: "/admin/tiposNegocio",
     icon: RiShieldUserLine,
+  },
+  {
+    title: "Deudas de clientes",
+    path: "/admin/deudas",
+    icon: RiMoneyDollarCircleLine,
   },
   {
     title: "Notas de casas",
