@@ -5,11 +5,12 @@ import React, { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, MapPin, Search, Store } from "lucide-react";
+import { ChevronDown, Loader2, MapPin, Search, Store } from "lucide-react";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import BannerCarousel from "@/components/cliente/BannerCarousel";
 import PromocionesCarousel from "@/components/cliente/PromocionesCarousel";
 import ClienteHeaderActions from "@/components/cliente/ClienteHeaderActions";
+import DireccionesDialog from "@/components/cliente/DireccionesDialog";
 import SafeImage from "@/components/cliente/SafeImage";
 import HorizontalScroller from "@/components/cliente/HorizontalScroller";
 import {
@@ -39,7 +40,7 @@ function formatDistancia(km: number): string {
 function ClienteLocalesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { cliente, isAuthenticated, isLoading: authLoading } = useClienteAuth();
+  const { cliente, isAuthenticated, isLoading: authLoading, refresh } = useClienteAuth();
 
   const [tipos, setTipos] = useState<TipoNegocio[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -53,6 +54,8 @@ function ClienteLocalesContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [needsAddress, setNeedsAddress] = useState(false);
+  const [showDirecciones, setShowDirecciones] = useState(false);
+  const [direccionVersion, setDireccionVersion] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -100,7 +103,7 @@ function ClienteLocalesContent() {
     return () => {
       cancelled = true;
     };
-  }, [cliente?.id, selectedCategory]);
+  }, [cliente?.id, selectedCategory, direccionVersion]);
 
   const filteredLocales = useMemo(() => {
     return locales.filter((local) => {
@@ -126,10 +129,14 @@ function ClienteLocalesContent() {
             <p className="text-xs font-semibold text-white/70 uppercase tracking-wide">Pidiendo a</p>
             <ClienteHeaderActions variant="light" />
           </div>
-          <h1 className="flex items-center gap-2 text-lg sm:text-xl font-bold mb-4">
+          <button
+            onClick={() => setShowDirecciones(true)}
+            className="flex items-center gap-2 text-left text-lg sm:text-xl font-bold mb-4 max-w-full"
+          >
             <MapPin className="w-5 h-5 shrink-0" />
-            {cliente.direccion || "Tu dirección"}
-          </h1>
+            <span className="truncate">{cliente.direccion || "Tu dirección"}</span>
+            <ChevronDown className="w-5 h-5 shrink-0" />
+          </button>
 
           {/* Igual que en la app: tocar el buscador abre la pantalla de
               búsqueda completa, no filtra en línea. */}
@@ -309,6 +316,16 @@ function ClienteLocalesContent() {
           ))}
         </div>
       </div>
+      <DireccionesDialog
+        open={showDirecciones}
+        idCliente={cliente.id}
+        nombre={cliente.nombre}
+        onClose={() => setShowDirecciones(false)}
+        onChanged={async () => {
+          await refresh();
+          setDireccionVersion((v) => v + 1);
+        }}
+      />
     </div>
   );
 }

@@ -14,8 +14,9 @@ export const fetchMediosPago = async (idEmpresa: number): Promise<MedioPago[]> =
   return Array.isArray(data) ? data : [];
 };
 
-export const fetchPrecioDelivery = async (idLocal: number, idCliente: number): Promise<number> => {
-  const response = await fetch(`${API_URL}/get/precio/delivery/${idLocal}/${idCliente}`);
+export const fetchPrecioDelivery = async (idLocal: number, idCliente: number, idDireccion?: number): Promise<number> => {
+  const query = idDireccion ? `?id_direccion=${idDireccion}` : "";
+  const response = await fetch(`${API_URL}/get/precio/delivery/${idLocal}/${idCliente}${query}`);
   if (!response.ok) return 0;
   const data = await response.json();
   return Number(data) || 0;
@@ -56,6 +57,8 @@ export interface CrearPedidoPayload {
   id_tipo_pago: number;
   tipo_comprobante: string;
   documento?: string;
+  /** Dirección elegida; sin ella el back usa la activa. */
+  id_direccion?: number;
   precio_delivery: number;
   descuento: number;
   subtotal: number;

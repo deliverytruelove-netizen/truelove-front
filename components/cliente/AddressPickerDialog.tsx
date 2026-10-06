@@ -7,13 +7,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import MapaDireccionCentrado from "@/components/cliente/MapaDireccionCentrado";
 import type { GoogleMapsLocation } from "@/app/ubicar-local/types/google-maps";
 import { loadLibrary } from "@/app/ubicar-local/services/maps.service";
-import { updateClienteDireccion } from "@/services/clienteProfileService";
+import { actualizarDireccion, crearDireccion, type DireccionCliente } from "@/services/clienteDireccionesService";
+
+const ALIAS = ["Casa", "Trabajo", "Hotel", "Otro"];
 
 interface AddressPickerDialogProps {
   open: boolean;
   idCliente: number;
-  /** Dirección guardada: al abrir, el mapa se centra ahí (como en la app). */
-  direccionActual?: string | null;
+  /** Dirección a editar; sin ella se crea una nueva. Al abrir, el mapa se centra ahí (como en la app). */
+  direccion?: DireccionCliente | null;
   onClose: () => void;
   onSaved: (direccion: string) => void;
 }
@@ -33,7 +35,7 @@ const aUbicacion = (r: google.maps.GeocoderResult): GoogleMapsLocation => ({
 export default function AddressPickerDialog({
   open,
   idCliente,
-  direccionActual,
+  direccion: editando,
   onClose,
   onSaved,
 }: AddressPickerDialogProps) {
@@ -45,6 +47,8 @@ export default function AddressPickerDialog({
   const [buscando, setBuscando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alias, setAlias] = useState("Casa");
+  const [referencia, setReferencia] = useState("");
 
   // Igual que la app: al abrir se ubica la dirección guardada en el mapa; si no hay
   // (o no se encuentra), se intenta con la ubicación actual del dispositivo.
@@ -57,13 +61,27 @@ export default function AddressPickerDialog({
       return;
     }
 
+    setAlias(editando?.alias && ALIAS.includes(editando.alias) ? editando.alias : editando?.alias ? "Otro" : "Casa");
+    setReferencia(editando?.referencia ?? "");
+
     let cancelado = false;
     const cargarInicial = async () => {
       try {
         const lib = await loadLibrary<google.maps.GeocodingLibrary>("geocoding");
         const geocoder = new lib.Geocoder();
 
-        const direccion = direccionActual?.trim();
+        // Dirección guardada con coordenadas: se centra exactamente ahí
+        if (editando?.latitud != null && editando?.longitud != null) {
+          if (!cancelado) {
+            setInicial({
+              formatted_address: editando.direccion,
+              center: [editando.longitud, editando.latitud],
+            });
+          }
+          return;
+        }
+
+        const direccion = editando?.direccion?.trim();
         if (direccion) {
           try {
             const res = await geocoder.geocode({ address: direccion, region: "pe" });
@@ -104,14 +122,22 @@ export default function AddressPickerDialog({
     return () => {
       cancelado = true;
     };
-  }, [open, direccionActual]);
+  }, [open, editando]);
 
   const handleConfirm = async () => {
     if (!location) return;
     setIsSaving(true);
     setError(null);
     try {
-      await updateClienteDireccion(idCliente, location.formatted_address, location.center);
+      const payload = {
+        direccion: location.formatted_address,
+        center: location.center,
+        alias,
+        referencia: referencia.trim() || null,
+        departamento: editando?.departamento ?? null,
+      };
+      if (editando) await actualizarDireccion(idCliente, editando.id, payload);
+      else await crearDireccion(idCliente, payload);
       onSaved(location.formatted_address);
       setLocation(null);
     } catch (err) {
@@ -125,7 +151,7 @@ export default function AddressPickerDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Confirmar dirección</DialogTitle>
+          <DialogTitle>{editando ? "Editar dirección" : "Nueva dirección"}</DialogTitle>
         </DialogHeader>
 
         {error && <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">{error}</div>}
@@ -155,12 +181,35 @@ export default function AddressPickerDialog({
           {buscando && <Loader2 className="w-4 h-4 animate-spin text-slate-400 shrink-0" />}
         </div>
 
+        <div className="flex flex-wrap gap-2">
+          {ALIAS.map((a) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => setAlias(a)}
+              className={`h-8 px-3 rounded-full text-xs font-bold border transition-colors ${
+                alias === a ? "bg-[#D9043D] border-[#D9043D] text-white" : "bg-white border-slate-200 text-slate-600"
+              }`}
+            >
+              {a}
+            </button>
+          ))}
+        </div>
+
+        <input
+          value={referencia}
+          onChange={(e) => setReferencia(e.target.value)}
+          maxLength={100}
+          placeholder="Referencia (piso, color de puerta, etc.)"
+          className="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-[#D9043D]"
+        />
+
         <button
           onClick={handleConfirm}
           disabled={!location || buscando || isSaving}
           className="w-full h-11 bg-[#D9043D] hover:bg-[#b8032f] text-white font-bold rounded-xl transition-colors disabled:opacity-50"
         >
-          {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Continuar"}
+          {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Guardar dirección"}
         </button>
       </DialogContent>
     </Dialog>

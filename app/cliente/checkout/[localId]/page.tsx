@@ -7,7 +7,8 @@ import { AlertTriangle, ArrowLeft, Loader2, MapPin, Pencil, Store, Tag, X } from
 import { Input } from "@/components/ui/input";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import { useClienteCart, cartItemTotal } from "@/context/ClienteCartContext";
-import AddressPickerDialog from "@/components/cliente/AddressPickerDialog";
+import DireccionesDialog from "@/components/cliente/DireccionesDialog";
+import { fetchDirecciones } from "@/services/clienteDireccionesService";
 import {
   fetchMediosPago,
   fetchPrecioDelivery,
@@ -36,6 +37,8 @@ export default function ClienteCheckoutPage() {
 
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [addressVersion, setAddressVersion] = useState(0);
+  // Dirección activa elegida (apps/web nuevas ligan el pedido a ella)
+  const [idDireccion, setIdDireccion] = useState<number | undefined>(undefined);
 
   const [mediosPago, setMediosPago] = useState<MedioPago[]>([]);
   const [idTipoPago, setIdTipoPago] = useState<number | null>(null);
@@ -64,15 +67,22 @@ export default function ClienteCheckoutPage() {
   }, [localId]);
 
   useEffect(() => {
+    if (!cliente?.id) return;
+    fetchDirecciones(cliente.id)
+      .then((lista) => setIdDireccion(lista.find((d) => d.activa)?.id))
+      .catch(() => setIdDireccion(undefined));
+  }, [cliente?.id, addressVersion]);
+
+  useEffect(() => {
     if (!cliente?.id || !localId || deliveryType !== "delivery") {
       setPrecioDelivery(0);
       return;
     }
     setIsLoadingDelivery(true);
-    fetchPrecioDelivery(localId, cliente.id)
+    fetchPrecioDelivery(localId, cliente.id, idDireccion)
       .then(setPrecioDelivery)
       .finally(() => setIsLoadingDelivery(false));
-  }, [cliente?.id, localId, deliveryType, addressVersion]);
+  }, [cliente?.id, localId, deliveryType, addressVersion, idDireccion]);
 
   const subtotal = useMemo(() => cart?.items.reduce((s, i) => s + cartItemTotal(i), 0) || 0, [cart]);
 
@@ -130,6 +140,7 @@ export default function ClienteCheckoutPage() {
       const response = await crearPedido({
         id_local: localId,
         id_cliente: cliente.id,
+        id_direccion: idDireccion,
         latitud: 0,
         longitud: 0,
         nota,
@@ -436,15 +447,14 @@ export default function ClienteCheckoutPage() {
         </div>
       </div>
 
-      <AddressPickerDialog
+      <DireccionesDialog
         open={showAddressPicker}
         idCliente={cliente?.id || 0}
-        direccionActual={cliente?.direccion}
+        nombre={cliente?.nombre}
         onClose={() => setShowAddressPicker(false)}
-        onSaved={async () => {
+        onChanged={async () => {
           await refresh();
           setAddressVersion((v) => v + 1);
-          setShowAddressPicker(false);
         }}
       />
 

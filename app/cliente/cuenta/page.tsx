@@ -21,7 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import AddressPickerDialog from "@/components/cliente/AddressPickerDialog";
+import DireccionesDialog from "@/components/cliente/DireccionesDialog";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import { updateClienteField, deleteClienteAccount, ProfileFieldType } from "@/services/clienteProfileService";
 
@@ -315,15 +315,12 @@ export default function ClienteCuentaPage() {
         </div>
       </div>
 
-      <AddressPickerDialog
+      <DireccionesDialog
         open={showAddressPicker}
         idCliente={cliente.id}
-        direccionActual={cliente.direccion}
+        nombre={cliente.nombre}
         onClose={() => setShowAddressPicker(false)}
-        onSaved={async () => {
-          await refresh();
-          setShowAddressPicker(false);
-        }}
+        onChanged={refresh}
       />
     </div>
   );
