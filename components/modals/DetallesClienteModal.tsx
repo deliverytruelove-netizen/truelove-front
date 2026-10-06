@@ -153,6 +153,11 @@ export const DetallesClienteModal: React.FC<DetallesClienteModalProps> = ({
                   label="Celular"
                   value={data.personal.celular || "No especificado"}
                 />
+                <InfoItem
+                  icon={<Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />}
+                  label="WhatsApp"
+                  value={data.personal.celular_whatsapp || "No especificado"}
+                />
               </div>
             </div>
 

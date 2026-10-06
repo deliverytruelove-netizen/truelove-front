@@ -1,4 +1,4 @@
-// app/admin/clientes/types/cliente.types.ts
+﻿// app/admin/clientes/types/cliente.types.ts
 
 export interface Cliente {
   id: number;
@@ -7,6 +7,7 @@ export interface Cliente {
   email: string;
   documento: string;
   celular: string | null;
+    celular_whatsapp: string | null;
   fecha_nacimiento: string;
   genero: string;
   nacionalidad: string;
@@ -47,6 +48,7 @@ export interface DetallesCliente {
     email: string;
     documento: string;
     celular: string | null;
+    celular_whatsapp: string | null;
     fecha_nacimiento: string;
     genero: string;
     nacionalidad: string;
