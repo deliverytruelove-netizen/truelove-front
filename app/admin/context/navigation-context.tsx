@@ -44,7 +44,7 @@ export const navigationItems: NavItem[] = [
     icon: RiShieldUserLine,
   },
   {
-    title: "socios",
+    title: "Socios",
     path: "/admin/socios",
     icon: RiShieldUserLine,
   },
@@ -74,7 +74,7 @@ export const navigationItems: NavItem[] = [
     icon: RiImageLine,
   },
   {
-    title: "Califcaciones",
+    title: "Calificaciones",
     path: "/admin/local-rating",
     icon: RiAncientGateLine,
   },
@@ -89,7 +89,7 @@ export const navigationItems: NavItem[] = [
   //     icon : RiCoupon3Line,
   // },
   {
-    title: "Metodos De Pagos",
+    title: "Métodos de pago",
     path: "/admin/metodo-pago",
     icon: RiBankCardFill,
   },
@@ -109,7 +109,7 @@ export const navigationItems: NavItem[] = [
     icon: RiShieldUserLine,
   },
   {
-    title: "kilómetros de la tarifa",
+    title: "Kilómetros de la tarifa",
     path: "/admin/kilometros-tarifa",
     icon: RiAncientGateLine,
   },
@@ -148,6 +148,43 @@ export const navigationItems: NavItem[] = [
     title: "Versiones de Apps",
     path: "/admin/app-versions",
     icon: RiSmartphoneLine,
+  },
+];
+
+export interface NavGroup {
+  title: string;
+  /** Rutas (path) de los items del grupo, en el orden en que se muestran */
+  paths: string[];
+}
+
+// Agrupación del sidebar: evita una lista larga con scroll. El Dashboard va suelto arriba.
+export const navigationGroups: NavGroup[] = [
+  {
+    title: "Operación",
+    paths: ["/admin/pedidos", "/admin/deudas", "/admin/entrega-notas", "/admin/solicitudes-eliminacion"],
+  },
+  {
+    title: "Usuarios",
+    paths: ["/admin/usuarios", "/admin/socios", "/admin/motorizado", "/admin/clientes"],
+  },
+  {
+    title: "Negocios",
+    paths: [
+      "/admin/locales",
+      "/admin/negocios",
+      "/admin/local-rating",
+      "/admin/promociones",
+      "/admin/tiposNegocio",
+      "/admin/horarios",
+    ],
+  },
+  {
+    title: "Pagos y tarifas",
+    paths: ["/admin/metodo-pago", "/admin/coutas-drivers", "/admin/cuotas-socios", "/admin/kilometros-tarifa"],
+  },
+  {
+    title: "Sistema",
+    paths: ["/admin/notificaciones", "/admin/test-notificaciones", "/admin/app-versions"],
   },
 ];
 

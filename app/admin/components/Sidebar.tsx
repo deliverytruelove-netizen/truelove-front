@@ -6,9 +6,9 @@ import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useCallback, useEffect, useRef } from "react"
-import { RiArrowLeftSLine, RiArrowRightSLine, RiMenu3Line } from "react-icons/ri"
-import { navigationItems } from "../context/navigation-context"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { RiArrowDownSLine, RiArrowLeftSLine, RiArrowRightSLine, RiMenu3Line } from "react-icons/ri"
+import { navigationGroups, navigationItems } from "../context/navigation-context"
 
 interface Props {
   showSidebar: boolean
@@ -64,9 +64,30 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
       : `flex items-center ${collapsed ? "justify-center" : "gap-3"} rounded-lg p-3 text-gray-600 hover:bg-gray-100 hover:text-red-600 transition-all duration-200`
   }
 
-  // Filtrar los elementos de navegación por sección
   const mainNavItems = navigationItems.filter((item) => item.path === "/admin/dashboard")
-  const userNavItems = navigationItems.filter((item) => item.path !== "/admin/dashboard")
+
+  // Grupos con sus items resueltos
+  const groups = useMemo(
+    () =>
+      navigationGroups.map((g) => ({
+        title: g.title,
+        items: g.paths
+          .map((path) => navigationItems.find((item) => item.path === path))
+          .filter((item): item is (typeof navigationItems)[number] => Boolean(item)),
+      })),
+    []
+  )
+
+  // Grupo abierto: el de la página actual; el resto, plegados
+  const grupoActual = groups.find((g) => g.items.some((i) => pathname.startsWith(i.path)))?.title
+  const [abiertos, setAbiertos] = useState<string[]>(grupoActual ? [grupoActual] : [])
+
+  useEffect(() => {
+    if (grupoActual) setAbiertos((prev) => (prev.includes(grupoActual) ? prev : [...prev, grupoActual]))
+  }, [grupoActual])
+
+  const alternarGrupo = (titulo: string) =>
+    setAbiertos((prev) => (prev.includes(titulo) ? prev.filter((t) => t !== titulo) : [...prev, titulo]))
 
   return (
     <div
@@ -126,18 +147,35 @@ export const Sidebar: React.FC<Props> = ({ showSidebar, setShowSidebar, openSide
           </Link>
         ))}
 
-        {!collapsed && (
-          <div className="mt-6 mb-2 px-2 text-xs font-semibold uppercase text-gray-400">Gestión de usuarios</div>
-        )}
-        {collapsed && <div className="my-6 border-t border-gray-100"></div>}
-
-        {/* Renderizar elementos de navegación de usuarios */}
-        {userNavItems.map((item) => (
-          <Link key={item.path} href={item.path} className={navItemClass(item.path)} title={item.title}>
-            <item.icon className="text-xl" />
-            {!collapsed && <span>{item.title}</span>}
-          </Link>
-        ))}
+        {groups.map((group) => {
+          const abierto = abiertos.includes(group.title)
+          const tieneActivo = group.items.some((i) => matchPath(i.path))
+          return (
+            <div key={group.title} className={collapsed ? "border-t border-gray-100 pt-2 mt-2" : "mt-2"}>
+              {!collapsed && (
+                <button
+                  onClick={() => alternarGrupo(group.title)}
+                  className="w-full flex items-center justify-between px-2 py-2 text-xs font-semibold uppercase text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-expanded={abierto}
+                >
+                  <span className={tieneActivo ? "text-red-500" : ""}>{group.title}</span>
+                  <RiArrowDownSLine className={`text-base transition-transform ${abierto ? "rotate-180" : ""}`} />
+                </button>
+              )}
+              {/* Con el sidebar colapsado solo hay iconos: se muestran todos */}
+              {(abierto || collapsed) && (
+                <div className="flex flex-col gap-1">
+                  {group.items.map((item) => (
+                    <Link key={item.path} href={item.path} className={navItemClass(item.path)} title={item.title}>
+                      <item.icon className="text-xl" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </nav>
 
       {/* Footer */}
