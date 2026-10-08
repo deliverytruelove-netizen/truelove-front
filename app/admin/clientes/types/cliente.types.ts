@@ -16,6 +16,8 @@ export interface Cliente {
   selfie_photo: string | null;
   token_fmc: string | null;
   password: string | null;
+  /** El número de contacto se validó con un código (o lo marcó el admin) */
+  numero_validado?: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -3,13 +3,14 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Eye, Search, RefreshCw, X, Trash2, User } from "lucide-react";
+import { Eye, Search, RefreshCw, X, Trash2, User, ShieldCheck, ShieldOff } from "lucide-react";
 import Section from "@/components/layout/Section";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchClientes,
   fetchClienteDetails,
   deleteCliente,
+  cambiarNumeroValidado,
 } from "@/app/admin/clientes/services/cliente.service";
 import type { Cliente, DetallesCliente } from "@/app/admin/clientes/types/cliente.types";
 import { DEFAULT_PAGE_SIZE } from "@/config/constanst";
@@ -77,6 +78,31 @@ const ClienteList: React.FC = () => {
       setIsDeleteDialogOpen(false);
     },
   });
+
+  // Mutación para forzar (o quitar) la validación del número
+  const mutationValidar = useMutation({
+    mutationFn: ({ id, validado }: { id: number; validado: boolean }) => cambiarNumeroValidado(id, validado),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+    },
+    onError: (error: Error) => {
+      showAlert({
+        title: "Error",
+        text: error.message || "No se pudo cambiar la validación del número.",
+        icon: "error",
+      });
+    },
+  });
+
+  const handleValidar = (cliente: Cliente) => {
+    const validado = !cliente.numero_validado;
+    const accion = validado
+      ? `¿Marcar el número de ${cliente.nombre} ${cliente.apellido} como validado sin pedirle el código?`
+      : `¿Quitar la validación del número de ${cliente.nombre} ${cliente.apellido}? Tendrá que validarlo para hacer pedidos.`;
+    if (window.confirm(accion)) {
+      mutationValidar.mutate({ id: cliente.id, validado });
+    }
+  };
 
   const handleDelete = (id: number, name: string) => {
     setClienteToDelete({ id, name });
@@ -167,6 +193,9 @@ const ClienteList: React.FC = () => {
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Teléfono
+                </th>
+                <th scope="col" className="px-4 py-3 text-center">
+                  Número
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Correo
@@ -263,6 +292,17 @@ const ClienteList: React.FC = () => {
                       <td className="px-4 py-3 text-gray-600">
                         {cliente.celular || "No especificado"}
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        {cliente.numero_validado ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                            <ShieldCheck className="w-3.5 h-3.5" /> Validado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                            <ShieldOff className="w-3.5 h-3.5" /> Sin validar
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-gray-600 truncate max-w-[180px]">
                         {cliente.email}
                       </td>
@@ -282,6 +322,21 @@ const ClienteList: React.FC = () => {
                             title="Ver detalles"
                           >
                             <Eye className="w-5 h-5" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleValidar(cliente)}
+                            disabled={mutationValidar.isPending}
+                            className={
+                              cliente.numero_validado
+                                ? "text-amber-600 hover:text-amber-800 hover:bg-amber-50"
+                                : "text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
+                            }
+                            title={cliente.numero_validado ? "Quitar validación del número" : "Marcar número como validado"}
+                          >
+                            {cliente.numero_validado ? <ShieldOff className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
                           </Button>
 
                           <Button

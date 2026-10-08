@@ -74,6 +74,29 @@ export const fetchClienteDetails = async (id: number): Promise<DetallesCliente> 
   }
 };
 
+// Marcar (o desmarcar) el número de un cliente como validado
+export const cambiarNumeroValidado = async (id: number, validado: boolean): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('No se encontró el token de autenticación');
+  }
+
+  const response = await fetch(`${API_URL}/admin/cliente/${id}/numero-validado`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ validado }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'No se pudo cambiar la validación del número');
+  }
+};
+
 // Eliminar un cliente
 export const deleteCliente = async (id: number): Promise<void> => {
   try {
