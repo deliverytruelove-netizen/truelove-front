@@ -22,6 +22,8 @@ import {
 import MapComponent from "@/app/ubicar-local/components/BusinessMap";
 import SearchComponent from "@/app/ubicar-local/components/Search";
 import type { GoogleMapsLocation } from "@/app/ubicar-local/types/google-maps";
+import { useVerificarCelular } from "@/components/cliente/VerificarCelularDialog";
+import { esCelularValido, validarNumeroCliente } from "@/services/clienteVerificacionService";
 
 type Step = "email" | "otp" | "profile" | "map" | "final";
 
@@ -76,6 +78,7 @@ export default function ClienteRegistroPage() {
   const maxBirthDate = maxAdultBirthDate();
 
   const [step, setStep] = useState<Step>("email");
+  const { verificar, dialog } = useVerificarCelular();
   const [error, setError] = useState<string | null>(null);
   const [emailAlreadyRegistered, setEmailAlreadyRegistered] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -243,10 +246,19 @@ export default function ClienteRegistroPage() {
       setError("Debes ser mayor de edad para registrarte");
       return;
     }
-    if (!/^\d{9}$/.test(profile.celular)) {
-      setError("El celular debe tener 9 dígitos");
+    if (!esCelularValido(profile.celular)) {
+      setError("Ingresa un celular válido: 9 dígitos que empiecen con 9");
       return;
     }
+    if (profile.celular_whatsapp && !esCelularValido(profile.celular_whatsapp)) {
+      setError("El WhatsApp debe tener 9 dígitos y empezar con 9");
+      return;
+    }
+
+    // El número de contacto (WhatsApp, o el celular si no hay) se verifica con un código antes de crear la cuenta
+    const numeroContacto = profile.celular_whatsapp || profile.celular;
+    const verif = await verificar(numeroContacto);
+    if (verif.resultado === "cancelado") return;
 
     setIsSubmitting(true);
     try {
@@ -263,6 +275,10 @@ export default function ClienteRegistroPage() {
       });
       login(response.token, response.cliente);
       setClienteId(response.cliente.id);
+      // El servidor comprueba el código y marca el número como validado
+      if (verif.resultado === "verificado") {
+        await validarNumeroCliente(response.cliente.id, numeroContacto, verif.codigo ?? null);
+      }
       setStep("map");
     } catch (err) {
       setError(err instanceof ClienteAuthError ? err.message : "No se pudo crear la cuenta");
@@ -321,6 +337,8 @@ export default function ClienteRegistroPage() {
       <Link href="/" className="mb-8">
         <Image src={Logotipo} alt="True Love" width={130} height={48} className="h-10 w-auto object-contain" />
       </Link>
+
+      {dialog}
 
       {/* Stepper */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 mb-8 max-w-lg w-full justify-center">

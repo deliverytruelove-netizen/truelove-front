@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
 import { useClienteCart, cartItemTotal } from "@/context/ClienteCartContext";
 import DireccionesDialog from "@/components/cliente/DireccionesDialog";
+import { useVerificarCelular } from "@/components/cliente/VerificarCelularDialog";
+import { validarNumeroCliente } from "@/services/clienteVerificacionService";
 import { fetchDirecciones } from "@/services/clienteDireccionesService";
 import {
   fetchMediosPago,
@@ -30,6 +32,7 @@ export default function ClienteCheckoutPage() {
   const params = useParams<{ localId: string }>();
   const localId = Number(params.localId);
   const { cliente, refresh } = useClienteAuth();
+  const { verificar, dialog: dialogVerificar } = useVerificarCelular();
   const { getCartForLocal, clearCart, getDeliveryType } = useClienteCart();
   // Tipo de entrega elegido antes en la página del local (no se vuelve a pedir)
   const deliveryType = getDeliveryType(localId);
@@ -141,6 +144,7 @@ export default function ClienteCheckoutPage() {
         id_local: localId,
         id_cliente: cliente.id,
         id_direccion: idDireccion,
+        exige_validacion: true,
         latitud: 0,
         longitud: 0,
         nota,
@@ -164,6 +168,22 @@ export default function ClienteCheckoutPage() {
           })),
         })),
       });
+
+      // El número de contacto aún no está validado: se pide el código y se repite el pedido
+      if (response.code === "numero_no_validado") {
+        const numero = String(cliente.celular_whatsapp || cliente.celular || "").replace(/\D/g, "").slice(-9);
+        const verif = await verificar(numero);
+        if (verif.resultado === "cancelado") {
+          setError("Necesitas validar tu número de celular para hacer pedidos. Puedes cambiarlo en tu cuenta.");
+          return;
+        }
+        if (verif.resultado === "verificado") {
+          await validarNumeroCliente(cliente.id, numero, verif.codigo ?? null);
+        }
+        setIsSubmitting(false);
+        await handleSubmit();
+        return;
+      }
 
       if (response.status !== "success" || !response.pedido_id) {
         setError(response.message || "No se pudo crear el pedido");
@@ -446,6 +466,8 @@ export default function ClienteCheckoutPage() {
           </p>
         </div>
       </div>
+
+      {dialogVerificar}
 
       <DireccionesDialog
         open={showAddressPicker}

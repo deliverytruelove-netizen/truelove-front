@@ -49,6 +49,8 @@ export interface PedidoItemPayload {
 }
 
 export interface CrearPedidoPayload {
+  /** Esta versión sabe validar el número: el back exige que esté validado. */
+  exige_validacion?: boolean;
   id_local: number;
   id_cliente: number;
   latitud: number;
@@ -74,6 +76,8 @@ export interface CrearPedidoResponse {
   requiere_confirmacion?: boolean;
   precio_delivery?: number;
   message?: string;
+  /** numero_no_validado: hay que validar el celular antes de pedir. */
+  code?: string;
 }
 
 export const crearPedido = async (payload: CrearPedidoPayload): Promise<CrearPedidoResponse> => {

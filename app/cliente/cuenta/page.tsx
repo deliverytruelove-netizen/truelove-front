@@ -23,6 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import DireccionesDialog from "@/components/cliente/DireccionesDialog";
 import { useClienteAuth } from "@/context/ClienteAuthContext";
+import { useVerificarCelular } from "@/components/cliente/VerificarCelularDialog";
+import { esCelularValido, validarNumeroCliente } from "@/services/clienteVerificacionService";
 import { updateClienteField, deleteClienteAccount, ProfileFieldType } from "@/services/clienteProfileService";
 
 interface EditableRowProps {
@@ -38,6 +40,7 @@ interface EditableRowProps {
 
 function EditableRow({ icon: Icon, label, value, field, type = "text", options, onSaved }: EditableRowProps) {
   const { cliente } = useClienteAuth();
+  const { verificar, dialog } = useVerificarCelular();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,7 +51,24 @@ function EditableRow({ icon: Icon, label, value, field, type = "text", options, 
     setIsSaving(true);
     setError(null);
     try {
+      // Un número nuevo (celular o WhatsApp) debe verificarse con un código antes de guardarse
+      let codigoVerificado: string | null = null;
+      const esNumero = field === "celular" || field === "celular_whatsapp";
+      const nuevo = draft.trim();
+      const vaciaWhatsapp = field === "celular_whatsapp" && nuevo === "";
+      if (esNumero && !vaciaWhatsapp && nuevo !== value.trim()) {
+        if (!esCelularValido(nuevo)) {
+          setError("Ingresa un celular válido: 9 dígitos que empiecen con 9");
+          return;
+        }
+        const verif = await verificar(nuevo);
+        if (verif.resultado === "cancelado") return;
+        if (verif.resultado === "verificado") codigoVerificado = verif.codigo ?? null;
+      }
+
       await updateClienteField(cliente.id, field, draft);
+      // Con el número ya guardado, el servidor comprueba el código y lo marca como validado
+      if (codigoVerificado) await validarNumeroCliente(cliente.id, nuevo, codigoVerificado);
       onSaved(draft);
       setIsEditing(false);
     } catch (err) {
@@ -61,6 +81,7 @@ function EditableRow({ icon: Icon, label, value, field, type = "text", options, 
   if (isEditing) {
     return (
       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+        {dialog}
         <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1.5">{label}</p>
         {error && <p className="text-xs text-red-600 mb-1.5">{error}</p>}
         <div className="flex gap-2">
