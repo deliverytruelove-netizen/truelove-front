@@ -254,10 +254,16 @@ const Footer = () => {
           <p>
             &copy; {currentYear} TRUE LOVE. Todos los derechos reservados.
           </p>
-          <p>
-            Desarrollado con excelencia por{" "}
-            <span className="text-[#FF5C7A] font-semibold">MDCM Solutions</span>
-          </p>
+          <div className="space-y-1 sm:text-right">
+            <p>
+              Desarrollado y mantenido actualmente por{" "}
+              <span className="text-[#FF5C7A] font-semibold">MDCM Solutions</span>
+            </p>
+            {/* Crédito a la empresa que hizo la versión inicial; deja claro que ya no participa */}
+            <p className="text-slate-600 text-[11px] sm:text-xs">
+              Versión inicial desarrollada por Magus Technologies, empresa que ya no participa en este proyecto.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
