@@ -260,8 +260,17 @@ const Footer = () => {
               <span className="text-[#FF5C7A] font-semibold">MDCM Solutions</span>
             </p>
             {/* Crédito a la empresa que hizo la versión inicial; deja claro que ya no participa */}
-            <p className="text-slate-600 text-[11px] sm:text-xs">
-              Versión inicial desarrollada por Magus Technologies, empresa que ya no participa en este proyecto.
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Versión inicial desarrollada por{" "}
+              <a
+                href="https://magustechnologies.com/"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="text-slate-200 font-semibold underline underline-offset-2 hover:text-white transition-colors"
+              >
+                Magus Technologies
+              </a>
+              , empresa que ya no participa en este proyecto.
             </p>
           </div>
         </div>
