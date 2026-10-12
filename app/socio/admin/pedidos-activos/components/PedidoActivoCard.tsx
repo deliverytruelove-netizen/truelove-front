@@ -139,11 +139,11 @@ export default function PedidoActivoCard({ pedido }: Props) {
   };
 
   const handleCancelar = async () => {
-    if ([5, 6, 7].includes(estadoNum)) {
+    if (pedido.requiere_solicitud_cancelacion ?? [5, 6, 7].includes(estadoNum)) {
       const { value: motivo } = await Swal.fire({
         title: "Solicitar cancelación",
         html:
-          "Este pedido ya fue recogido por el motorizado. Indica el motivo; " +
+          "Este pedido ya tiene un motorizado asignado. Indica el motivo; " +
           "un administrador debe aprobar la solicitud para que se cancele.",
         input: "textarea",
         inputPlaceholder: "Ej: el cliente ya no se encuentra en la dirección",
@@ -672,7 +672,7 @@ export default function PedidoActivoCard({ pedido }: Props) {
                         <X className="h-4 w-4 mr-1" />
                         {pedido.cancelacion_solicitud_pendiente
                           ? "Solicitud pendiente"
-                          : [5, 6, 7].includes(estadoNum)
+                          : (pedido.requiere_solicitud_cancelacion ?? [5, 6, 7].includes(estadoNum))
                             ? "Solicitar cancelación"
                             : "Cancelar"}
                       </Button>

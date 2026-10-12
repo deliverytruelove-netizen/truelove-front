@@ -54,6 +54,8 @@ export interface Pedido {
   tipo_comprobante?: string;
   documento?: string;
   cancelacion_solicitud_pendiente?: boolean;
+  /** Con motorizado asignado (o ya recogido) el local solo puede solicitar la cancelación */
+  requiere_solicitud_cancelacion?: boolean;
 }
 
 export const fetchPedidos = async (

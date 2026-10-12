@@ -381,11 +381,11 @@ function PedidoDetalleContent({
   };
 
   const handleCancelar = async () => {
-    if ([5, 6, 7].includes(estadoNum)) {
+    if (pedido.requiere_solicitud_cancelacion ?? [5, 6, 7].includes(estadoNum)) {
       const { value: motivo } = await Swal.fire({
         title: "Solicitar cancelación",
         html:
-          "Este pedido ya fue recogido por el motorizado. Indica el motivo; " +
+          "Este pedido ya tiene un motorizado asignado. Indica el motivo; " +
           "un administrador debe aprobar la solicitud para que se cancele.",
         input: "textarea",
         inputPlaceholder: "Ej: el cliente ya no se encuentra en la dirección",
@@ -955,7 +955,7 @@ function PedidoDetalleContent({
                 <X className="h-4 w-4 mr-2" />
                 {pedido.cancelacion_solicitud_pendiente
                   ? "Solicitud pendiente"
-                  : estadoNum >= 5
+                  : (pedido.requiere_solicitud_cancelacion ?? estadoNum >= 5)
                     ? "Solicitar cancelación"
                     : "Cancelar"}
               </Button>
@@ -1183,11 +1183,11 @@ function PedidoDetalleDesktop({
   };
 
   const handleCancelar = async () => {
-    if ([5, 6, 7].includes(estadoNum)) {
+    if (pedido.requiere_solicitud_cancelacion ?? [5, 6, 7].includes(estadoNum)) {
       const { value: motivo } = await Swal.fire({
         title: "Solicitar cancelación",
         html:
-          "Este pedido ya fue recogido por el motorizado. Indica el motivo; " +
+          "Este pedido ya tiene un motorizado asignado. Indica el motivo; " +
           "un administrador debe aprobar la solicitud para que se cancele.",
         input: "textarea",
         inputPlaceholder: "Ej: el cliente ya no se encuentra en la dirección",
@@ -1523,7 +1523,7 @@ function PedidoDetalleDesktop({
                 <X className="h-4 w-4 mr-2" />
                 {pedido.cancelacion_solicitud_pendiente
                   ? "Solicitud pendiente"
-                  : estadoNum >= 5
+                  : (pedido.requiere_solicitud_cancelacion ?? estadoNum >= 5)
                     ? "Solicitar cancelación"
                     : "Cancelar"}
               </Button>
