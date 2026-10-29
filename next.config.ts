@@ -101,6 +101,21 @@ const nextConfig = {
         source: '/fotos-perfil/:path*',
         destination: `${apiBaseUrl}/fotos-perfil/:path*`,
       },
+      // Deep link de "ver local" (WhatsApp, redes, etc.) y los dos archivos
+      // de verificación de app links — sirven desde el backend pero deben
+      // mantener el dominio del sitio en la URL, por eso van sin redirigir.
+      {
+        source: '/l/:id',
+        destination: `${apiBaseUrl}/l/:id`,
+      },
+      {
+        source: '/.well-known/assetlinks.json',
+        destination: `${apiBaseUrl}/.well-known/assetlinks.json`,
+      },
+      {
+        source: '/.well-known/apple-app-site-association',
+        destination: `${apiBaseUrl}/.well-known/apple-app-site-association`,
+      },
     ];
   },
 };
