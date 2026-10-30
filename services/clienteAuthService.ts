@@ -98,24 +98,25 @@ export const clienteSendCode = async (email: string) => {
 };
 
 export const clienteForgotPasswordSendCode = async (email: string) => {
+  // El backend ya NO devuelve el código en esta respuesta (antes sí, lo que
+  // permitía resetear la contraseña de cualquiera sin tocar su correo, solo
+  // sabiendo/adivinando el id) — ahora se guarda en el servidor y se valida
+  // de verdad en clienteResetPassword.
   const response = await request<{
     success: boolean;
     message: string;
-    verification_code?: string | number;
     id?: number;
   }>("forgot-password/send-code", { email });
 
-  if (!response.success || response.verification_code === undefined || !response.id) {
+  if (!response.success || !response.id) {
     throw new ClienteAuthError(response.message || "No se pudo enviar el código de verificación");
   }
 
-  response.verification_code = String(response.verification_code);
-
-  return response as { success: boolean; message: string; verification_code: string; id: number };
+  return response as { success: boolean; message: string; id: number };
 };
 
-export const clienteResetPassword = (id: number, password: string) =>
-  request<LoginResponse>("forgot-password/reset", { id, password });
+export const clienteResetPassword = (id: number, code: string, password: string) =>
+  request<LoginResponse>("forgot-password/reset", { id, code, password });
 
 export const clienteLogout = async (token: string) => {
   await fetch(`${API_URL}/web/cliente/logout`, {

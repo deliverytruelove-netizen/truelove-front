@@ -22,7 +22,6 @@ export default function ClienteRecuperarContrasenaPage() {
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [sentCode, setSentCode] = useState<string | null>(null);
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +32,6 @@ export default function ClienteRecuperarContrasenaPage() {
     setIsSubmitting(true);
     try {
       const response = await clienteForgotPasswordSendCode(email);
-      setSentCode(response.verification_code);
       setClienteId(response.id);
       setStep("reset");
     } catch (err) {
@@ -47,8 +45,10 @@ export default function ClienteRecuperarContrasenaPage() {
     e.preventDefault();
     setError(null);
 
-    if (otp.trim() !== sentCode) {
-      setError("El código ingresado no es correcto");
+    // El código ya no se compara aquí en el navegador — el backend es quien
+    // lo valida de verdad contra el que guardó al enviarlo por correo.
+    if (otp.trim().length !== 6) {
+      setError("Ingresa el código de 6 dígitos que te llegó por correo");
       return;
     }
     if (password.length < 6) {
@@ -63,7 +63,7 @@ export default function ClienteRecuperarContrasenaPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await clienteResetPassword(clienteId, password);
+      const response = await clienteResetPassword(clienteId, otp.trim(), password);
       login(response.token, response.cliente);
       router.push("/cliente/locales");
     } catch (err) {
